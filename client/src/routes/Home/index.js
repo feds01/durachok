@@ -7,6 +7,7 @@
  */
 
 import React from "react";
+import {ReactComponent as PlayingCardIcon}from './../../assets/image/playing-card.svg';
 import PlayingCardsIcon from './../../assets/image/playing-cards.svg'
 
 const HomeRoute = () => {
@@ -20,6 +21,17 @@ const HomeRoute = () => {
                 <br/>
             </div>
             <div className={'App-wrapper'}>
+                <PlayingCardIcon/>
+                <PlayingCardIcon/>
+                <PlayingCardIcon/>
+                <PlayingCardIcon/>
+                <PlayingCardIcon/>
+                <PlayingCardIcon/>
+                <PlayingCardIcon/>
+                <PlayingCardIcon/>
+                <PlayingCardIcon/>
+                <PlayingCardIcon/>
+                <PlayingCardIcon/>
             </div>
         </>
     );
