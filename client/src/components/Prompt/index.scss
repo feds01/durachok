@@ -1,0 +1,24 @@
+.Prompt {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  max-width: 384px;
+  //align-content: center;
+  margin: 0 auto;
+  //justify-content: center;
+
+
+  &-code {
+    padding-bottom: 12px !important;
+  }
+
+  &-enter {
+    height: 60px;
+    font-size: 18px !important;
+
+    // disable default changing colour behaviour when hovering over button
+    &:hover {
+      background-color: #3f51b5 !important;
+    }
+  }
+}

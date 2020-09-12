@@ -18,6 +18,14 @@ $purple: #3b3d54;
     font-weight: 900;
     font-style: italic;
     color: #dad8ec;
+
+    @media screen and (min-width: 1200px) {
+      font-size: 64px;
+    }
+  }
+
+  &-prompt {
+
   }
 }
 
@@ -31,7 +39,7 @@ svg {
 
 
 // Floating cards icons
-$total: 10;
+$total: 12;
 
 @for $i from 1 through $total {
   $scale: random(2) - .4;

@@ -7,31 +7,28 @@
  */
 
 import React from "react";
-import {ReactComponent as PlayingCardIcon}from './../../assets/image/playing-card.svg';
+import Prompt from "../../components/Prompt";
 import PlayingCardsIcon from './../../assets/image/playing-cards.svg'
+import {ReactComponent as PlayingCardIcon} from './../../assets/image/playing-card.svg';
 
 const HomeRoute = () => {
     return (
         <>
             <div className="App-join">
                 <h2>
-                    <img src={PlayingCardsIcon} width={48} height={48} alt={''} />
+                    <img src={PlayingCardsIcon} width={48} height={48} alt={''}/>
                     Durachok
                 </h2>
                 <br/>
+                <div className={'App-join-prompt'}>
+                    <Prompt/>
+                </div>
             </div>
             <div className={'App-wrapper'}>
-                <PlayingCardIcon/>
-                <PlayingCardIcon/>
-                <PlayingCardIcon/>
-                <PlayingCardIcon/>
-                <PlayingCardIcon/>
-                <PlayingCardIcon/>
-                <PlayingCardIcon/>
-                <PlayingCardIcon/>
-                <PlayingCardIcon/>
-                <PlayingCardIcon/>
-                <PlayingCardIcon/>
+                {/* This is a bit of a hack to render 16 cards without using 16 lines*/}
+                {
+                    [...Array(12)].map((e, i) => <PlayingCardIcon key={i}/>)
+                }
             </div>
         </>
     );
