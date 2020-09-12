@@ -1,8 +1,9 @@
 import './index.scss';
-import React, {useEffect, useState} from 'react';
+import React from 'react';
+import {Formik} from "formik";
+import Loader from 'react-loader-spinner';
 import Button from "@material-ui/core/Button";
 import TextField from "@material-ui/core/TextField";
-import {Formik} from "formik";
 
 const Prompt = () => {
     return (
@@ -18,6 +19,8 @@ const Prompt = () => {
                 return errors;
             }}
             onSubmit={async (values, {setSubmitting, setErrors}) => {
+                // await new Promise(res => setTimeout(res, 500));
+
                 // make a request to the API to check if there is a game with the given pin,
                 // and if so we'll set the next stage of the prompt (enter the pin).
                 if (values.pin === '123456') console.log('yay!')
@@ -30,6 +33,7 @@ const Prompt = () => {
                 const {
                     values,
                     errors,
+                    isSubmitting,
                     handleSubmit,
                     handleChange
                 } = props;
@@ -61,11 +65,15 @@ const Prompt = () => {
                             variant={'contained'}
                             className={'Prompt-enter'}
                             disableElevation
+                            style={{
+                                marginTop: 19
+                            }}
                             disableRipple
+                            disabled={isSubmitting}
                             onClick={handleSubmit}
                             color={'primary'}
                         >
-                            Enter
+                            {isSubmitting ? <Loader type="ThreeDots" color="#FFFFFF" height={20} width={40} /> : "Enter"}
                         </Button>
                     </div>
                 );

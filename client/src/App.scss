@@ -29,7 +29,7 @@ $purple: #3b3d54;
   }
 }
 
-svg {
+.floating-card {
   width: 64px;
   height: 64px;
   position: absolute;
@@ -44,7 +44,7 @@ $total: 12;
 @for $i from 1 through $total {
   $scale: random(2) - .4;
 
-  svg:nth-child(#{$i}) {
+  .floating-card:nth-child(#{$i}) {
     left: random(120) * 1% - 20;
     animation: raise#{$i} 6 + random(15) +s linear infinite;
     animation-delay: random(5) - 5 + s;

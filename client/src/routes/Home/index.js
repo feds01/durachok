@@ -27,7 +27,7 @@ const HomeRoute = () => {
             <div className={'App-wrapper'}>
                 {/* This is a bit of a hack to render 16 cards without using 16 lines*/}
                 {
-                    [...Array(12)].map((e, i) => <PlayingCardIcon key={i}/>)
+                    [...Array(12)].map((e, i) => <PlayingCardIcon className={'floating-card'} key={i}/>)
                 }
             </div>
         </>
