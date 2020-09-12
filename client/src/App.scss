@@ -1,6 +1,5 @@
-* {
-  box-sizing: border-box;
-}
+$green: #7ceaa4;
+$purple: #3b3d54;
 
 .App-wrapper {
   perspective-origin: 50% 50%;
@@ -19,5 +18,37 @@
     font-weight: 900;
     font-style: italic;
     color: #dad8ec;
+  }
+}
+
+svg {
+  width: 64px;
+  height: 64px;
+  position: absolute;
+  bottom: -100vh;
+  transform-style: preserve-3d;
+}
+
+
+// Floating cards icons
+$total: 10;
+
+@for $i from 1 through $total {
+  $scale: random(2) - .4;
+
+  svg:nth-child(#{$i}) {
+    left: random(120) * 1% - 20;
+    animation: raise#{$i} 6 + random(15) +s linear infinite;
+    animation-delay: random(5) - 5 + s;
+    transform: scale(.3 * $i - .6) rotate(random(360) + deg);
+    z-index: $i - 7;
+    filter: blur($i - 6 + px);
+
+    @keyframes raise#{$i} {
+      to {
+        bottom: 150vh;
+        transform: scale(.3 * $i - .6) rotate(random(360) + deg);
+      }
+    }
   }
 }

@@ -1,5 +1,9 @@
 @import 'https://fonts.googleapis.com/css?family=Playfair+Display:400,700i,900i';
 
+* {
+    box-sizing: border-box;
+}
+
 body {
     font-family: 'Playfair Display', serif;
     color: rgba(172, 170, 190, 1);
