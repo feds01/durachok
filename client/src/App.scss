@@ -1,0 +1,23 @@
+* {
+  box-sizing: border-box;
+}
+
+.App-wrapper {
+  perspective-origin: 50% 50%;
+}
+
+.App-join {
+  max-width: 600px;
+  margin: 3% auto;
+  padding: 30px;
+  border-radius: 3px;
+  text-align: center;
+  font-size: 1.4vw;
+
+  h2 {
+    font-size: 6.5vw;
+    font-weight: 900;
+    font-style: italic;
+    color: #dad8ec;
+  }
+}
