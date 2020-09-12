@@ -9,12 +9,12 @@
 
 
   &-code {
-    padding-bottom: 12px !important;
   }
 
   &-enter {
     height: 60px;
     font-size: 18px !important;
+    background-color: #3f51b5 !important;
 
     // disable default changing colour behaviour when hovering over button
     &:hover {
