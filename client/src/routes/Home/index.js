@@ -7,12 +7,21 @@
  */
 
 import React from "react";
+import PlayingCardsIcon from './../../assets/image/playing-cards.svg'
 
 const HomeRoute = () => {
     return (
-        <React.Fragment>
-            Home
-        </React.Fragment>
+        <>
+            <div className="App-join">
+                <h2>
+                    <img src={PlayingCardsIcon} width={48} height={48} alt={''} />
+                    Durachok
+                </h2>
+                <br/>
+            </div>
+            <div className={'App-wrapper'}>
+            </div>
+        </>
     );
 };
 
