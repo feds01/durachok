@@ -9,8 +9,8 @@ import mongoose from 'mongoose';
 import * as WebSocket from 'ws';
 import createError from 'http-errors';
 
-import userRouter from './routes/user';
-import lobbyRouter from './routes/lobby';
+import userRouter from './api/routes/user';
+import lobbyRouter from './api/routes/lobby';
 
 const app = express();
 
