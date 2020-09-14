@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
 const gameSchema = new mongoose.Schema({
-    id: {type: Number, required: true},
+    pin: {type: Number, required: true, unique: true},
     maxPlayers: {type: Number, required: true},
     players: {type: Object, required: true},
     state: {type: Object, required: false},
@@ -9,6 +9,6 @@ const gameSchema = new mongoose.Schema({
     rngSeed: {type: String, required: true}
 });
 
-const gameModel = mongoose.Model('game', gameSchema);
+const GameModel = mongoose.model('game', gameSchema);
 
-export default gameModel;
+export default GameModel;

@@ -1,5 +1,6 @@
 import express from 'express';
 import * as error from "../error";
+import Lobby from './../models/game';
 
 const router = express.Router();
 
@@ -22,8 +23,7 @@ const router = express.Router();
  * @return sends an OK response to requester with some game data.
  *
  * */
-router.get('/:pin', function (req, res, next) {
-
+router.get('/:pin', async (req, res, next) => {
     // Check if 'pin' parameter follows the pin format we except - as in 6 digits long and only numerical characters
     if (req.params.pin.length !== 6 || isNaN(req.params.pin)) {
         return res.status(400).json({
@@ -33,12 +33,8 @@ router.get('/:pin', function (req, res, next) {
         });
     }
 
-    // Query Mongo to check if the game exists and if so, return a OK response. Otherwise
-    // if the game entry doesn't exist then return a NOT_FOUND response.
-
-    return res.status(200).json({
-        status: true,
-        message: 'Game exists'
+    await Lobby.find({}, (err, collection) => {
+        console.log(collection);
     });
 });
 
