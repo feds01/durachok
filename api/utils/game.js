@@ -46,9 +46,21 @@ export function shuffleDeck(deck) {
     return deck;
 }
 
+
+/**
+ * @version 1.0.0
+ * Class holds all game logic and all game state access methods.
+ *
+ * @author Alexander. E. Fedotov
+ * */
 export class Game {
     static DECK_SIZE = 6;
 
+    /**
+     * @version 1.0.0
+     * Game constructor initialises the game deck, players and the
+     * history object.
+     * */
     constructor(id, players, history) {
         this.history = {};
         this.players = new Map();
@@ -99,6 +111,7 @@ export class Game {
     }
 
     /**
+     * @version 1.0.0
      * This function will setup the next round of the game. The method performs
      * several check and operations in order to prepare for the next round. Firstly,
      * we should determine who the the next defending player should be. This depends
@@ -331,7 +344,8 @@ export class Game {
         }
     }
 
-    /** @version 1.0.0
+    /**
+     * @version 1.0.0
      * This method will transfer the status of defending player to the
      * specified player id.
      *
