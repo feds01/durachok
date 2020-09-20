@@ -1,4 +1,6 @@
 // Import our environment variables
+import {Game, generateCardDeck, shuffleDeck} from "./api/utils/game";
+
 require('dotenv').config();
 
 import cors from 'cors';
@@ -71,4 +73,6 @@ server.listen(process.env.PORT || 5000, () => {
 
         console.log('Established connection with MongoDB service.')
     });
+
+    const game = new Game(12346, 8, {});
 });
