@@ -297,6 +297,14 @@ export class Game {
         return nextItem.value;
     }
 
+    /**
+     * @version 1.0.0
+     * This function is used to retrieve the current attacking player from the
+     * player list or the player before the defending player as the order is in
+     * clockwise.
+     *
+     * @return {String} the 'id' of attacking player.
+     * */
     getAttackingPlayerId() {
         const playerIds = Array.from(this.players.keys());
         const defendingPlayerIdx = playerIds.indexOf(this.getDefendingPlayerId());
@@ -308,6 +316,13 @@ export class Game {
         return playerIds[(defendingPlayerIdx - 1) % this.players.size];
     }
 
+    /**
+     * @version 1.0.0
+     * This function is used to retrieve the player after the defending player, or left
+     * in the player list as it is clockwise.
+     *
+     * @return {String} the 'id' of the player after the defending player.
+     * */
     getNextPlayerId() {
         const playerIds = Array.from(this.players.keys());
         const defendingPlayerIdx = playerIds.indexOf(this.getDefendingPlayerId());
@@ -391,6 +406,19 @@ export class Game {
         this.tableTop.clear();
     }
 
+    /**
+     * This method is used to serialize the object so it can be written to the database
+     * or send over a http transmission.
+     *
+     * @return {{players: Map, history: Object, trumpSuit: String, deck: Array, tableTop: Map}}
+     * */
     serialize() {
+        return {
+            players: this.players,
+            history: this.history,
+            trumpSuit: this.trumpSuit,
+            deck: this.deck,
+            tableTop: this.tableTop,
+        }
     }
 }
