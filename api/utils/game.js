@@ -78,9 +78,7 @@ export class Game {
 
                 this.players.set(id, {
                     deck: [],
-                    startsFirst: false,
                     defending: false,
-                    failedToDefend: false,
                 });
             }
         }
@@ -98,6 +96,60 @@ export class Game {
         this.deck.push(this.deck.shift());
 
         // Setup the initial state of the game if it hasn't been created yet.
+    }
+
+    /**
+     * This function will setup the next round of the game. The method performs
+     * several check and operations in order to prepare for the next round. Firstly,
+     * we should determine who the the next defending player should be. This depends
+     * on the fact if the current defending player managed to successfully defend
+     * themselves or has decided to pickup the cards. Additionally, the method should
+     * iterate over all the players to replenish the player card decks.
+     * */
+    finaliseRound() {
+        const generator = this.tableTop.entries();
+        let nextItem = generator.next();
+        let forfeitRound = false;
+
+        while(!nextItem.done || forfeitRound) {
+            if (nextItem.value[1] === null) {
+                forfeitRound = true
+            }
+
+            generator.next();
+        }
+
+        if (forfeitRound) {
+            // Take the cards from the table top and move them into the players
+            // personal deck
+            const player = this.players.get(this.getDefendingPlayerId());
+
+            player.deck = [player.deck, ...this.getTableTopDeck()];
+
+            this.setDefendingPlayer(this.getPlayerIdByOffset(1));
+        } else {
+            this.setDefendingPlayer(this.getPlayerIdByOffset(2));
+        }
+
+        this.voidTableTop();
+
+        // Check if the 'spare' deck size is greater than zero and therefore we can
+        // replenish the players' card decks.
+        if (this.deck.length > 0) {
+
+            // we need to transpose the player list to begin with the current
+            // attacking player and the rest following in a clockwise manner.
+            const playerIds = Array.from(this.players.keys());
+            const playerIdx = playerIds.indexOf(this.getDefendingPlayerId());
+
+            for (let id of [...playerIds.slice(0, playerIdx), ...playerIds.slice(playerIdx, playerIds.length)]) {
+                const player = this.players.get(id);
+
+                if (player.deck.length < 6) {
+                    player.deck = [...player.deck, this.deck.splice(0, 6 - player.deck.length)];
+                }
+            }
+        }
     }
 
     /**
@@ -222,7 +274,7 @@ export class Game {
             }
 
             // check that the next player can handle the defense round...
-            let nextPlayer = this.players.get(this.getNextPlayerId());
+            let nextPlayer = this.players.get(this.getPlayerIdByOffset(1));
 
             if (nextPlayer.deck.length < this.tableTop.size + 1) {
                 throw new Error("Cannot transfer defense state to next player since they don't have enough cards.");
@@ -279,6 +331,30 @@ export class Game {
         }
     }
 
+    /** @version 1.0.0
+     * This method will transfer the status of defending player to the
+     * specified player id.
+     *
+     * @param {String} id - The id of the player that the defending status
+     *        is being transferred to.
+     * */
+    setDefendingPlayer(id) {
+        if (this.players.get(id) === null) {
+            throw new Error("Player with the given id doesn't exist.");
+        }
+
+        // unset the current defending player status, and then set the status
+        // of the given player id as defending.
+        const defendingPlayerId = this.getDefendingPlayerId();
+
+        // only unset if there even exists a defending player
+        if (typeof defendingPlayerId !== "undefined") {
+            this.players.get(defendingPlayerId).defending = false;
+        }
+
+        this.players.get(id).defending = true;
+    }
+
     /**
      * @version 1.0.0
      * This function is used to retrieve the current defending player from the
@@ -299,41 +375,21 @@ export class Game {
 
     /**
      * @version 1.0.0
-     * This function is used to retrieve the current attacking player from the
-     * player list or the player before the defending player as the order is in
-     * clockwise.
+     * This function is used to retrieve a player based by an index from the
+     * current defending player. If the index is negative, it will index it from
+     * the left hand side. If it's positive, then it will return the index from
+     * the right hand side.
+     *
+     * @param {number} offset - The offset from the current defending player.
      *
      * @return {String} the 'id' of attacking player.
      * */
-    getAttackingPlayerId() {
+    getPlayerIdByOffset(offset) {
         const playerIds = Array.from(this.players.keys());
         const defendingPlayerIdx = playerIds.indexOf(this.getDefendingPlayerId());
 
-        if (defendingPlayerIdx === 0) {
-            return playerIds.pop();
-        }
-
-        return playerIds[(defendingPlayerIdx - 1) % this.players.size];
+        return playerIds[Math.abs(defendingPlayerIdx + offset) % this.players.size];
     }
-
-    /**
-     * @version 1.0.0
-     * This function is used to retrieve the player after the defending player, or left
-     * in the player list as it is clockwise.
-     *
-     * @return {String} the 'id' of the player after the defending player.
-     * */
-    getNextPlayerId() {
-        const playerIds = Array.from(this.players.keys());
-        const defendingPlayerIdx = playerIds.indexOf(this.getDefendingPlayerId());
-
-        if (defendingPlayerIdx === this.players.size - 1) {
-            return playerIds[0];
-        }
-
-        return playerIds[(defendingPlayerIdx + 1) % this.players.size];
-    }
-
 
     /**
      * @version 1.0.0
