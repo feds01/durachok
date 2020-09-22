@@ -1,14 +1,12 @@
 import express from 'express';
-import * as error from "../error";
-import User from './../models/user';
 import bcrypt from 'bcryptjs';
+import User from './../models/user';
+
+import * as error from "../error";
+import * as credentials from "../credentials";
+import {createTokens} from "../authentication";
 
 const router = express.Router();
-
-/* GET users listing. */
-router.get('/', function(req, res, next) {
-    res.send('respond with a resource');
-});
 
 /**
  * @version v1.0.0
@@ -57,6 +55,14 @@ router.post('/register', async (req, res, next) => {
         })
     }
 
+    if (!credentials.validateEmail(email)) {
+        return res.status(400).json({
+            message: error.BAD_REQUEST,
+            extra: error.INVALID_EMAIL
+        });
+    }
+
+
     if (password.length < 8) {
         return res.status(400).json({
             status: false,
@@ -70,8 +76,8 @@ router.post('/register', async (req, res, next) => {
 
         if (existingUser.length !== 0) {
             return res.status(400).json({
-               status: false,
-               message: error.MAIL_EXISTS
+                status: false,
+                message: error.MAIL_EXISTS
             });
         }
 
@@ -107,10 +113,120 @@ router.post('/register', async (req, res, next) => {
         console.log(err);
 
         return res.status(500).json({
-           status: false,
-           message: error.INTERNAL_SERVER_ERROR
+            status: false,
+            message: error.INTERNAL_SERVER_ERROR
         });
     }
 });
+
+/**
+ * @version v1.0.0
+ * @method POST
+ * @url https://durachok.game/api/user/login
+ * @example
+ * https://durachok.game/api/user/login
+ * body: {
+ *     "email": "feds01@gmail.com",
+ *     "password": "Password2020"
+ * }
+ *
+ * @description This route is used to login users into the Durachok game app, the route
+ * will accept a username or email & password within the request body. The method will determine
+ * which authentication strategy the request is using. If an email is provided, the user will
+ * be authenticated using email, and vice versa for username. If a user is found with email/username,
+ * the sent over password will be compared with stored hash. If hash and password match, the request
+ * will create two request tokens 'x-token' and 'x-refresh-token' and apply them to response header.
+ * Additionally, the 'last_login' column is updated, and a 'USER_LOGIN' event is added in user's timeline.
+ *
+ * @param {string} email: a string in the format of an email, this will be used to carry out security
+ * checks on the user account & user notifications.
+ *
+ * @param {string} password: a string which will be the used for logging in and confirming sensitive operations.
+ *
+ * @error {BAD_REQUEST} if no email field is provided in the request
+ * @error {BAD_REQUEST} if no password field was provided in the request
+ * @error {UNAUTHORIZED} if password does not match hash
+ * @error {AUTHENTICATION_FAILED} if the username/email do not exist within the database,
+ *
+ * @return sends a response to client if user successfully (or not) logged in.
+ *
+ * */
+router.post("/login", async (req, res) => {
+    const {email, password} = req.body;
+
+    // If the request contains the 'email' parameter in the query string and it's
+    // a valid email string, then use email to authenticate the user.
+    if (typeof email !== 'string' || !credentials.validateEmail(email)) {
+        return res.status(400).json({
+            message: error.INVALID_EMAIL,
+            extra: "No email provided to login route."
+        });
+    }
+
+    if (typeof password !== 'string') {
+        return res.status(400).json({
+            message: error.BAD_REQUEST,
+            extra: "No password provided to login route."
+        });
+    }
+
+    await User.find({email: email}, async (err, result) => {
+        if (err) {
+            // Log the error in the server console & respond to the client with an
+            // INTERNAL_SERVER_ERROR, since this was an unexpected exception.
+            console.error(err);
+
+            return res.status(500).json({
+                message: error.INTERNAL_SERVER_ERROR
+            });
+        }
+
+        // Important to send an authentication failure request, rather than a
+        // username not found. This could lead to a brute force attack to retrieve
+        // all existent user names.
+        if (result.length === 1) {
+            bcrypt.compare(password, result[0].password, async (err, response) => {
+                if (err) {
+                    // Log the error in the server console & respond to the client with an
+                    // INTERNAL_SERVER_ERROR, since this was an unexpected exception.
+                    console.error(err);
+
+                    return res.status(500).json({
+                        message: error.INTERNAL_SERVER_ERROR
+                    });
+                }
+
+                // If the sent over password matches the hashed password within the database, generate the
+                // 'x-token' and 'x-refresh-token' JWT's . Also, update the 'last_login' timestamp and record
+                // an entry for the user logging in into the system.
+                if (response) {
+                    const [token, refreshToken] = await createTokens(result[0].email, result[0]._id);
+
+                    // set the tokens in the response headers
+                    res.set("Access-Control-Expose-Headers", "x-token, x-refresh-token");
+                    res.set("x-token", token);
+                    res.set("x-refresh-token", refreshToken);
+
+                    return res.status(302).json({
+                        message: "Authentication successful",
+                        token: token
+                    });
+                } else {
+                    // password did not match the stored hashed password within the database
+                    return res.status(401).json({
+                        message: error.BAD_REQUEST,
+                        extra: error.UNAUTHORIZED
+                    });
+                }
+            });
+        } else {
+            return res.status(401).json({
+                message: error.AUTHENTICATION_FAILED,
+                extra: error.UNAUTHORIZED
+            });
+        }
+    });
+});
+
 
 export default router;
