@@ -1,3 +1,4 @@
+
 /**
  * api/error.js
  *
@@ -11,6 +12,8 @@
  * @author Alexander. E. Fedotov
  * @email <alexander.fedotov.uk@gmail.com>
  */
+
+export const UNAUTHORIZED = "password or email fields incorrect/don't match.";
 export const BAD_REQUEST = "The API request is malformed or invalid";
 export const AUTHENTICATION_FAILED = "Authentication failed";
 export const INTERNAL_SERVER_ERROR = "Durachok Internal Server Error.";
