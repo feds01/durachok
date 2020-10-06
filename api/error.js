@@ -1,4 +1,3 @@
-
 /**
  * api/error.js
  *
@@ -13,13 +12,17 @@
  * @email <alexander.fedotov.uk@gmail.com>
  */
 
-export const UNAUTHORIZED = "password or email fields incorrect/don't match.";
+export const MISMATCHING_LOGIN = "password or email fields incorrect/don't match.";
 export const BAD_REQUEST = "The API request is malformed or invalid";
+export const UNAUTHORIZED = "User doesn't have permissions to perform this action.";
 export const AUTHENTICATION_FAILED = "Authentication failed";
 export const INTERNAL_SERVER_ERROR = "Durachok Internal Server Error.";
 
+// Lobby API request errors
+export let NON_EXISTENT_LOBBY = "No lobby exists with the given PIN.";
+
 // User Accounts API request errors
-export const NON_EXISTENT_USER = "No user with given username exists";
+export const NON_EXISTENT_USER = "No user with the given username exists";
 export const INVALID_EMAIL = "The given mail is invalid or not provided.";
 export const INVALID_USERNAME = "The given username is invalid or not provided";
 export const MAIL_EXISTS = "The given mail is already registered.";
