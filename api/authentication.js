@@ -13,6 +13,7 @@
 
 import jwt from "jsonwebtoken";
 import * as error from "./error";
+import User from "./models/user";
 
 
 /**
@@ -105,7 +106,6 @@ const refreshTokens = async (refreshToken) => {
 export const createTokens = async (email, userId) => {
     const token = jwt.sign(
         {
-            email: email,
             userId: userId,
         },
         process.env.JWT_SECRET_KEY,
@@ -117,8 +117,7 @@ export const createTokens = async (email, userId) => {
     // sign the refresh-token
     const refreshToken = jwt.sign(
         {
-            username: email,
-            user_id: userId,
+            userId: userId,
         },
         process.env.JWT_REFRESH_SECRET_KEY,
         {
@@ -136,6 +135,7 @@ export const createTokens = async (email, userId) => {
  * authentication middleware function is only used for user routes rather than document
  * routes.
  * */
+// TODO: validate for the PIN of a lobby too, based on the request.
 export const authenticate = async (req, res, next) => {
     await getToken(req, res); // unpack JWT token
 
@@ -143,11 +143,15 @@ export const authenticate = async (req, res, next) => {
         // check if the token email matches the email, if it does we know
         // that this request is valid, otherwise reject this request and return an
         // 'Unauthorized' status to the client.
-        if (req.token.email !== req.params.email) {
-            return res.status(401).json({
-                message: error.AUTHENTICATION_FAILED,
-                extra: "User Accounts API Request: authorisation failed.",
-            });
+        if (req.token.userId) {
+            const existingUser = await User.find({_id: req.token.userId});
+
+            if (existingUser.length === 0) {
+                return res.status(404).json({
+                    message: error.NON_EXISTENT_USER,
+                    extra: "User doesn't exist."
+                });
+            }
         }
         next();
     }

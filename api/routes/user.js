@@ -4,7 +4,7 @@ import User from './../models/user';
 
 import * as error from "../error";
 import * as credentials from "../credentials";
-import {createTokens} from "../authentication";
+import {authenticate, createTokens} from "../authentication";
 
 const router = express.Router();
 
@@ -215,14 +215,14 @@ router.post("/login", async (req, res) => {
                     // password did not match the stored hashed password within the database
                     return res.status(401).json({
                         message: error.BAD_REQUEST,
-                        extra: error.UNAUTHORIZED
+                        extra: error.MISMATCHING_LOGIN
                     });
                 }
             });
         } else {
             return res.status(401).json({
                 message: error.AUTHENTICATION_FAILED,
-                extra: error.UNAUTHORIZED
+                extra: error.MISMATCHING_LOGIN
             });
         }
     });
