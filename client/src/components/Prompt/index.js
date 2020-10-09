@@ -11,11 +11,11 @@ class Prompt extends React.Component {
         this.state = {
             stage: 'pin',
             pin: undefined,
+            nodeRef: React.createRef(),
         }
     }
-
     render() {
-        const {stage, pin} = this.state;
+        const {stage, nodeRef, pin} = this.state;
 
         // Essentially we first render the game pin if the stage is equal to 'pin'. If the 'pin' stage
         // returns a query to progress to the next stage, then we push it to the next stage of 'security'.
@@ -26,18 +26,25 @@ class Prompt extends React.Component {
                 {stage === 'pin' && <GamePin onSuccess={(pin) => {
                     this.setState({pin: pin, stage: 'security'})
                 }}/>}
+
                 <CSSTransition
                     in={stage === 'security'}
+                    nodeRef={nodeRef}
                     timeout={300}
                     appear
                     classNames={'security'}
                     unmountOnExit
                 >
-                    <GameSecurity pin={pin}/>
+                    <div ref={nodeRef}>
+                        <GameSecurity pin={pin}/>
+                    </div>
                 </CSSTransition>
             </div>
         );
     }
 }
 
-export default Prompt;
+
+export default React.forwardRef((props, ref) => <Prompt
+    innerRef={ref} {...props}
+/>);

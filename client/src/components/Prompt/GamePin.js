@@ -18,17 +18,16 @@ const GamePin = (props) => {
                 return errors;
             }}
             onSubmit={async (values, {setSubmitting, setErrors}) => {
-                // await new Promise(res => setTimeout(res, 500));
-
                 // make a request to the API to check if there is a game with the given pin,
                 // and if so we'll set the next stage of the prompt (enter the pin).
-
-                // TODO: this is temporary and only for demo (replace with API auth call).
-                if (values.pin === '123456') {
-                    setSubmitting(false);
-                    props.onSuccess(values.pin)
-                }
-                else setErrors({pin: "Invalid game PIN."})
+                await fetch(`/api/lobby/${values.pin}`).then((res) => res.json()).then((res) => {
+                    if (!res.status) {
+                        setErrors({pin: "Invalid game PIN."});
+                    } else {
+                        setSubmitting(false);
+                        props.onSuccess(values.pin);
+                    }
+                });
             }}
         >
             {props => {
