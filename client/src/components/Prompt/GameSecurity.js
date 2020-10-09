@@ -16,7 +16,7 @@ const GameSecurityCard = (props) => {
 }
 
 
-const GameSecurity = (props) => {
+const GameSecurity = React.memo(function GameSecurity({pin}) {
     const history = useHistory();
     const [order, setOrder] = useState('');
     const [valid, setValid] = useState(false);
@@ -26,34 +26,51 @@ const GameSecurity = (props) => {
 
     // This is used as a reset function when user enters an incorrect security code.
     useEffect(() => {
+        let mounted = true;
+
         if (!valid && !checking && order.length === 4) {
             setTimeout(() => {
-                setOrder('');
+                if (mounted) setOrder('');
             }, 2000);
         }
+
+        return () => mounted = false;
     }, [valid, order, checking])
 
     useEffect(() => {
+        let mounted = true;
+
         // Only invoke a pin check when the user has selected all four cards
         // The order that the user selected the cards is then sent to auth API
         // and a response if it's valid or not is returned.
         if (order.length === 4) {
             setChecking(true);
-            setTimeout(() => {
-                // TODO: this is temporary and only for demo (replace with API auth call).
-                if (order === '♡♢♣♤') {
-                    history.push(`/lobby/${props.pin}`)
-                }
-                else setValid(false);
 
-                setChecking(false);
-            }, 500);
+            const payload = {passphrase: order};
+
+            fetch(`/api/lobby/${pin}/join`, {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            }).then((res) => res.json()).then((res) => {
+                if (res.status) {
+                    history.push(`/lobby/${pin}`);
+                } else {
+                    setValid(false);
+                }
+
+                if (mounted) setChecking(false);
+            });
         }
-    }, [order])
+
+        return () => mounted = false;
+    }, [order, history, pin]);
 
     return (
         <div className={'App-Security'}>
-            <p className={'label'}>Security code for: <code>{props.pin}</code></p>
+            <p className={'label'}>Security code for: <code>{pin}</code></p>
             <div
                 className={'App-Security-selector' + ((!valid && !checking && order.length === 4) ? ' incorrect' : '')}>
                 {
@@ -78,6 +95,6 @@ const GameSecurity = (props) => {
 
         </div>
     );
-};
+});
 
 export default GameSecurity;

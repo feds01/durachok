@@ -15,6 +15,7 @@ import userRouter from './api/routes/user';
 import lobbyRouter from './api/routes/lobby';
 
 const app = express();
+app.set('view engine', 'ejs');
 
 app.use(logger(process.env.NODE_ENV || 'dev'));
 app.use(express.json());
@@ -22,8 +23,8 @@ app.use(cors());
 app.use(express.urlencoded({ extended: false }));
 
 // Add our routes to the root router
-app.use('/user', userRouter);
-app.use('/lobby', lobbyRouter);
+app.use('/api/user', userRouter);
+app.use('/api/lobby', lobbyRouter);
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => {

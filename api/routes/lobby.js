@@ -139,7 +139,7 @@ router.post("/", authenticate, async (req, res) => {
  * @return sends an OK response to requester with some game data.
  *
  * */
-router.get('/:pin', validatePin, authenticate, async (req, res) => {
+router.get('/:pin', validatePin, async (req, res) => {
     const {pin} = req.params;
 
     const lobby = await Lobby.findOne({pin});
@@ -153,8 +153,8 @@ router.get('/:pin', validatePin, authenticate, async (req, res) => {
 
     return res.status(200).json({
         status: true,
-        item: lobby,
-    })
+        message: "Lobby exists.",
+    });
 });
 
 
@@ -243,15 +243,39 @@ router.delete("/:pin", validatePin, authenticate, async (req, res) => {
  * */
 router.post("/:pin/join", validatePin, async (req, res) => {
     const {pin} = req.params;
+    const {passphrase} = req.body;
 
+    console.log("JOIN_AUTH")
 
+    console.log(req.body)
+
+    // check that the requesting user is the owner/creator of the lobby
+    const lobby = await Lobby.findOne({pin});
+
+    if (!lobby) {
+        return res.status(404).json({
+            status: false,
+            message: error.NON_EXISTENT_LOBBY,
+        });
+    }
+
+    if (lobby.passphrase !== passphrase) {
+        console.log(passphrase, lobby.passphrase)
+        return res.status(401).json({
+            status: false,
+            message: error.INVALID_PASSPHRASE,
+        });
+    }
 
     const forwarded = req.headers['x-forwarded-for']
     const ip = forwarded ? forwarded.split(/, /)[0] : req.connection.remoteAddress
 
     console.log(req.ip, ip);
 
-    return res.redirect(`/lobby/${pin}`);
+    return res.status(200).json({
+        status: true,
+        message: "Pin Valid"
+    });
 });
 
 export default router;
