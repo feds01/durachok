@@ -15,7 +15,6 @@ const GameSecurityCard = (props) => {
     )
 }
 
-
 const GameSecurity = React.memo(function GameSecurity({pin}) {
     const history = useHistory();
     const [order, setOrder] = useState('');
