@@ -3,6 +3,7 @@ import React from 'react';
 import GamePin from "./GamePin";
 import GameSecurity from "./GameSecurity";
 import {CSSTransition} from 'react-transition-group';
+import GameName from "./GameName";
 
 class Prompt extends React.Component {
     constructor(props) {
@@ -10,12 +11,13 @@ class Prompt extends React.Component {
 
         this.state = {
             stage: 'pin',
-            pin: undefined,
+            pin: null,
+            name: "",
             nodeRef: React.createRef(),
         }
     }
     render() {
-        const {stage, nodeRef, pin} = this.state;
+        const {stage, name, nodeRef, pin} = this.state;
 
         // Essentially we first render the game pin if the stage is equal to 'pin'. If the 'pin' stage
         // returns a query to progress to the next stage, then we push it to the next stage of 'security'.
@@ -24,7 +26,10 @@ class Prompt extends React.Component {
         return (
             <div>
                 {stage === 'pin' && <GamePin onSuccess={(pin) => {
-                    this.setState({pin: pin, stage: 'security'})
+                    this.setState({pin: pin, stage: 'name'})
+                }}/>}
+                {stage === 'name' && <GameName onSuccess={(name) => {
+                    this.setState({name: name, stage: 'security'})
                 }}/>}
 
                 <CSSTransition
@@ -36,7 +41,7 @@ class Prompt extends React.Component {
                     unmountOnExit
                 >
                     <div ref={nodeRef}>
-                        <GameSecurity pin={pin}/>
+                        <GameSecurity name={name} pin={pin}/>
                     </div>
                 </CSSTransition>
             </div>

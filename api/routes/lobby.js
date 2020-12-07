@@ -243,11 +243,7 @@ router.delete("/:pin", validatePin, authenticate, async (req, res) => {
  * */
 router.post("/:pin/join", validatePin, async (req, res) => {
     const {pin} = req.params;
-    const {passphrase} = req.body;
-
-    console.log("JOIN_AUTH")
-
-    console.log(req.body)
+    const {passphrase, name} = req.body;
 
     // check that the requesting user is the owner/creator of the lobby
     const lobby = await Lobby.findOne({pin});
@@ -257,6 +253,11 @@ router.post("/:pin/join", validatePin, async (req, res) => {
             status: false,
             message: error.NON_EXISTENT_LOBBY,
         });
+    }
+
+    // If the requester is checking for username availability...
+    if (typeof passphrase === 'undefined' || typeof name !== 'undefined') {
+
     }
 
     if (lobby.passphrase !== passphrase) {
@@ -270,6 +271,8 @@ router.post("/:pin/join", validatePin, async (req, res) => {
     const forwarded = req.headers['x-forwarded-for']
     const ip = forwarded ? forwarded.split(/, /)[0] : req.connection.remoteAddress
 
+
+    // generate an authentication token for the lobby and send it with thr response
     console.log(req.ip, ip);
 
     return res.status(200).json({
