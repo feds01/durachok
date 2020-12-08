@@ -4,7 +4,7 @@ const gameSchema = new mongoose.Schema({
     pin: {type: String, required: true, unique: true},
     passphrase: {type: String, required: false},
     maxPlayers: {type: Number, required: true},
-    players: {type: Object, required: true},
+    players: {type: Array, required: true},
     state: {type: Object, required: false},
     history: {type: Object, required: false},
     rngSeed: {type: String, required: true},

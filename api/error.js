@@ -19,8 +19,9 @@ export const AUTHENTICATION_FAILED = "Authentication failed";
 export const INTERNAL_SERVER_ERROR = "Durachok Internal Server Error.";
 
 // Lobby API request errors
-export let NON_EXISTENT_LOBBY = "No lobby exists with the given PIN.";
-export let INVALID_PASSPHRASE = "Invalid passphrase for lobby.";
+export const NON_EXISTENT_LOBBY = "No lobby exists with the given PIN.";
+export const INVALID_PASSPHRASE = "Invalid passphrase for lobby.";
+export const LOBBY_FULL = "Lobby is full.";
 
 // User Accounts API request errors
 export const NON_EXISTENT_USER = "No user with the given username exists";

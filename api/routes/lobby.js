@@ -2,8 +2,10 @@ import express from 'express';
 import {nanoid} from "nanoid";
 import * as error from "../error";
 import Lobby from './../models/game';
-import {authenticate} from "../authentication";
-import {createGamePassphrase, createGamePin} from "../utils/lobby";
+import Players from "./../models/user"
+import {BAD_REQUEST} from "../error";
+import {authenticate, createTokens} from "../authentication";
+import {checkNameFree, createGamePassphrase, createGamePin} from "../utils/lobby";
 
 const router = express.Router();
 
@@ -50,7 +52,7 @@ function validatePin(req, res, next) {
  * @return sends a response to client if the document was created and added to the system.
  * */
 router.post("/", authenticate, async (req, res) => {
-    const {userId} = req.token;
+    const {id} = req.token;
 
 
     // Perform some validation on the passed parameters
@@ -94,11 +96,13 @@ router.post("/", authenticate, async (req, res) => {
         roundTimeout,
         pin: gamePin,
         passphrase: createGamePassphrase(),
-        players: {
-            [userId]: [],
-        },
+
+        // automatically put the user into the lobby
+        players: [
+            id
+        ],
         rngSeed: nanoid(),
-        owner: userId,
+        owner: id,
     });
 
     try {
@@ -255,10 +259,31 @@ router.post("/:pin/join", validatePin, async (req, res) => {
         });
     }
 
-    // If the requester is checking for username availability...
-    if (typeof passphrase === 'undefined' || typeof name !== 'undefined') {
-
+    // check that there are free slots within the lobby
+    if (lobby.players.length === lobby.maxPlayers) {
+        return res.status(400).json({
+            status: false,
+            message: error.LOBBY_FULL,
+        });
     }
+
+
+    if (typeof name === "undefined" || typeof passphrase === "undefined") {
+        return res.status(400).json({
+            status: false,
+            message: BAD_REQUEST
+        });
+    }
+
+
+    // check that the name is not taken within the lobby
+    if (!(await checkNameFree(lobby, name))) {
+        return res.status(400).json({
+            status: false,
+            message: "Name already taken."
+        })
+    }
+
 
     if (lobby.passphrase !== passphrase) {
         console.log(passphrase, lobby.passphrase)
@@ -268,17 +293,69 @@ router.post("/:pin/join", validatePin, async (req, res) => {
         });
     }
 
-    const forwarded = req.headers['x-forwarded-for']
-    const ip = forwarded ? forwarded.split(/, /)[0] : req.connection.remoteAddress
+    // get the IP for the current request
+    const forwarded = req.headers['x-forwarded-for'];
+    const ip = forwarded ? forwarded.split(/, /)[0] : req.connection.remoteAddress;
 
+    // Generate JWT token for the current user connection with an encoded name and IP
+    const {token, refreshToken} = await createTokens({ip, name, pin});
 
-    // generate an authentication token for the lobby and send it with thr response
-    console.log(req.ip, ip);
+    // Add the player object to the players list in the game object and update
+    // it in the collection
+    const players = lobby.players;
+
+    players.push({
+        name, ip
+    });
+
+    await Lobby.update(
+        {_id: lobby._id},
+        {$set: {'players': lobby.players}}
+    );
 
     return res.status(200).json({
         status: true,
-        message: "Pin Valid"
+        message: "Pin Valid",
+        token,
+        refreshToken,
     });
 });
+
+
+router.get("/:pin/name", async (req, res) => {
+    const {pin} = req.params;
+    const {name} = req.body;
+
+    // check that the requesting user is the owner/creator of the lobby
+    const lobby = await Lobby.findOne({pin});
+
+    if (!lobby) {
+        return res.status(404).json({
+            status: false,
+            message: error.NON_EXISTENT_LOBBY,
+        });
+    }
+
+    if (typeof name === "undefined") {
+        return res.status(400).json({
+            status: false,
+            message: BAD_REQUEST
+        });
+    }
+
+    if (!(await checkNameFree(lobby, name))) {
+        return res.status(400).json({
+            status: false,
+            message: "Name already taken."
+        })
+    }
+
+    // notify the client that the user can register as that name
+    return res.status(200).json({
+        status: true,
+        message: "Name not taken."
+    });
+});
+
 
 export default router;

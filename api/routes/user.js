@@ -47,7 +47,7 @@ const router = express.Router();
 router.post('/register', async (req, res, next) => {
     let {email, password, name} = req.body;
 
-    if (typeof email === 'undefined' || typeof password === 'undefined') {
+    if (typeof email === 'undefined' || typeof password === 'undefined' || typeof name === "undefined") {
         return res.status(400).json({
             status: false,
             message: error.BAD_REQUEST,
@@ -72,7 +72,12 @@ router.post('/register', async (req, res, next) => {
     }
 
     try {
-        const existingUser = await User.find({email: email});
+        const existingUser = await User.find({
+            $or: [
+                {name: name},
+                {email: email}
+            ]
+        });
 
         if (existingUser.length !== 0) {
             return res.status(400).json({
@@ -200,7 +205,7 @@ router.post("/login", async (req, res) => {
                 // 'x-token' and 'x-refresh-token' JWT's . Also, update the 'last_login' timestamp and record
                 // an entry for the user logging in into the system.
                 if (response) {
-                    const [token, refreshToken] = await createTokens(result[0].email, result[0]._id);
+                    const {token, refreshToken} = await createTokens({email: result[0].email, id: result[0]._id});
 
                     // set the tokens in the response headers
                     res.set("Access-Control-Expose-Headers", "x-token, x-refresh-token");
@@ -209,7 +214,8 @@ router.post("/login", async (req, res) => {
 
                     return res.status(302).json({
                         message: "Authentication successful",
-                        token: token
+                        token,
+                        refreshToken
                     });
                 } else {
                     // password did not match the stored hashed password within the database

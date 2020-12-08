@@ -1,5 +1,5 @@
 // Import our environment variables
-import {Game, generateCardDeck, shuffleDeck} from "./api/utils/game";
+import {Game, generateCardDeck, shuffleDeck} from "./api/common/game";
 
 require('dotenv').config();
 
