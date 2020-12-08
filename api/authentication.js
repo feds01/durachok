@@ -71,26 +71,22 @@ const getToken = async (req, res) => {
  * @error if the refreshToken is stale, the method will return an empty object.
  * */
 const refreshTokens = async (refreshToken) => {
-    let decodedToken;
-
     try {
-        decodedToken = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET_KEY);
+        const decodedToken = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET_KEY);
+
+        // generate new token values to replace old token's with refreshed ones.
+        const {newToken, newRefreshToken} = await createTokens(decodedToken);
+
+        return {
+            token: newToken,
+            refreshToken: newRefreshToken,
+        };
+
     } catch (e) {
+        console.log("failed to refresh JWT.")
         return {};
     }
-
-    // generate new token values to replace old token's with refreshed ones.
-    const [newToken, newRefreshToken] = await createTokens(decodedToken.email, decodedToken.userId);
-
-    return {
-        token: newToken,
-        refreshToken: newRefreshToken,
-        data: {
-            email: decodedToken.email,
-            userId: decodedToken.userId
-        }
-    };
-};
+}
 
 /**
  * This function will generate two JWT tokens from a user's username and UUID. This
@@ -99,15 +95,12 @@ const refreshTokens = async (refreshToken) => {
  * 'JWT_SECRET_KEY' whereas the 'refresh-token' is signed using the 'JWT_REFRESH_SECRET_KEY'
  * which differ in values.
  *
- * @param {string} email: string representing the user's email
- * @param {string} userId: string representing the user's UUID
- * @returns {Promise} a list comprised of the token and refresh token.
+ * @param {Object} payload: string representing the user's email
+ * @returns an object comprised of the token and refresh token.
  * */
-export const createTokens = async (email, userId) => {
-    const token = jwt.sign(
-        {
-            userId: userId,
-        },
+export const createTokens = async (payload) => {
+    const token = await jwt.sign(
+        {...payload},
         process.env.JWT_SECRET_KEY,
         {
             expiresIn: "1h"
@@ -115,10 +108,8 @@ export const createTokens = async (email, userId) => {
     );
 
     // sign the refresh-token
-    const refreshToken = jwt.sign(
-        {
-            userId: userId,
-        },
+    const refreshToken = await jwt.sign(
+        {...payload},
         process.env.JWT_REFRESH_SECRET_KEY,
         {
             expiresIn: "7d",
@@ -126,8 +117,8 @@ export const createTokens = async (email, userId) => {
     );
 
     // return the tokens as a resolved promise
-    return Promise.all([token, refreshToken]);
-};
+    return {token, refreshToken};
+}
 
 /**
  * This is a user specific authentication method. It will check if the request parameter
@@ -143,8 +134,8 @@ export const authenticate = async (req, res, next) => {
         // check if the token email matches the email, if it does we know
         // that this request is valid, otherwise reject this request and return an
         // 'Unauthorized' status to the client.
-        if (req.token.userId) {
-            const existingUser = await User.find({_id: req.token.userId});
+        if (req.token.id) {
+            const existingUser = await User.find({_id: req.token.id});
 
             if (existingUser.length === 0) {
                 return res.status(404).json({
