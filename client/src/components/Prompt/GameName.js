@@ -3,11 +3,12 @@ import {Formik} from "formik";
 import Loader from 'react-loader-spinner';
 import Button from "@material-ui/core/Button";
 import TextField from "@material-ui/core/TextField";
+import {checkName} from "../../utils/networking";
 
 const GameName = (props) => {
     return (
         <Formik
-            initialValues={{pin: ''}}
+            initialValues={{name: ''}}
             validateOnChange={false}
             validate={(values) => {
                 const errors = {};
@@ -20,14 +21,14 @@ const GameName = (props) => {
             onSubmit={async (values, {setSubmitting, setErrors}) => {
                 // make a request to the API to check if there is a game with the given pin,
                 // and if so we'll set the next stage of the prompt (enter the pin).
-                await fetch(`/api/lobby/${values.pin}`).then((res) => res.json()).then((res) => {
-                    if (!res.status) {
-                        setErrors({name: "Name already taken."});
-                    } else {
-                        setSubmitting(false);
-                        props.onSuccess(values.name);
-                    }
-                });
+                const nameCheck = await checkName(props.pin, values.name)
+
+                if (!nameCheck.status) {
+                    setErrors({name: "Name already taken."});
+                } else {
+                    setSubmitting(false);
+                    props.onSuccess(values.name);
+                }
             }}
         >
             {props => {
@@ -74,7 +75,7 @@ const GameName = (props) => {
                             onClick={handleSubmit}
                             color={'primary'}
                         >
-                            {isSubmitting ? <Loader type="ThreeDots" color="#FFFFFF" height={20} width={40} /> : "Enter"}
+                            {isSubmitting ? <Loader type="ThreeDots" color="#FFFFFF" height={20} width={40}/> : "Enter"}
                         </Button>
                     </div>
                 );

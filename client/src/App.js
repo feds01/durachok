@@ -9,7 +9,7 @@ function App() {
         <BrowserRouter>
             <Switch>
                 <Route exact path={'/'} component={HomeRoute}/>
-                <Route path={'/lobby'} component={LobbyRoute}/>
+                <Route exact path={'/lobby/:id'} component={LobbyRoute}/>
             </Switch>
         </BrowserRouter>
     );

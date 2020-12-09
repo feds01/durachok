@@ -1,9 +1,13 @@
 import './index.scss';
-import React from 'react';
 import GamePin from "./GamePin";
-import GameSecurity from "./GameSecurity";
-import {CSSTransition} from 'react-transition-group';
 import GameName from "./GameName";
+import GameSecurity from "./GameSecurity";
+import {joinLobby} from "../../utils/networking";
+import {updateTokens} from "./../../utils/auth";
+
+import React from 'react';
+import {withRouter} from "react-router";
+import {CSSTransition} from 'react-transition-group';
 
 class Prompt extends React.Component {
     constructor(props) {
@@ -11,13 +15,34 @@ class Prompt extends React.Component {
 
         this.state = {
             stage: 'pin',
+            showStages: true,
             pin: null,
             name: "",
             nodeRef: React.createRef(),
         }
+
+        this.onSubmit = this.onSubmit.bind(this);
     }
+
+    async onSubmit(passphrase) {
+        const credentials = {name: this.state.name, passphrase};
+        const res = await joinLobby(this.state.pin, credentials);
+
+        if (res.status) {
+
+            // update our local storage with the tokens
+            updateTokens(res.token, res.refreshToken);
+
+            this.props.history.push(`/lobby/${this.state.pin}`);
+        }
+
+        // pass the res object back to the GameSecurity component to display
+        // information on the request failing.
+        return res;
+    }
+
     render() {
-        const {stage, name, nodeRef, pin} = this.state;
+        const {stage, showStages, name, nodeRef, pin} = this.state;
 
         // Essentially we first render the game pin if the stage is equal to 'pin'. If the 'pin' stage
         // returns a query to progress to the next stage, then we push it to the next stage of 'security'.
@@ -25,10 +50,10 @@ class Prompt extends React.Component {
         // the lobby.
         return (
             <div>
-                {stage === 'pin' && <GamePin onSuccess={(pin) => {
+                {showStages && stage === 'pin' && <GamePin onSuccess={(pin) => {
                     this.setState({pin: pin, stage: 'name'})
                 }}/>}
-                {stage === 'name' && <GameName onSuccess={(name) => {
+                {showStages && stage === 'name' && <GameName pin={pin} onSuccess={(name) => {
                     this.setState({name: name, stage: 'security'})
                 }}/>}
 
@@ -37,11 +62,24 @@ class Prompt extends React.Component {
                     nodeRef={nodeRef}
                     timeout={300}
                     appear
+                    onEntered={() => this.setState({showStages: false})}
+                    onExited={() => this.setState({showStages: true})}
                     classNames={'security'}
                     unmountOnExit
                 >
                     <div ref={nodeRef}>
-                        <GameSecurity name={name} pin={pin}/>
+                        <GameSecurity
+                            name={name}
+                            pin={pin}
+                            onError={() => {
+                                this.setState({
+                                    name: "",
+                                    pin: null,
+                                    stage: "pin"
+                                })
+                            }}
+                            onSubmit={this.onSubmit}
+                        />
                     </div>
                 </CSSTransition>
             </div>
@@ -50,6 +88,4 @@ class Prompt extends React.Component {
 }
 
 
-export default React.forwardRef((props, ref) => <Prompt
-    innerRef={ref} {...props}
-/>);
+export default withRouter(React.forwardRef((props, ref) => <Prompt innerRef={ref} {...props}/>));
