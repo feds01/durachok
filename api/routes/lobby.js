@@ -2,7 +2,6 @@ import express from 'express';
 import {nanoid} from "nanoid";
 import * as error from "../error";
 import Lobby from './../models/game';
-import Players from "./../models/user"
 import {BAD_REQUEST} from "../error";
 import {authenticate, createTokens} from "../authentication";
 import {checkNameFree, createGamePassphrase, createGamePin} from "../utils/lobby";

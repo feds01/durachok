@@ -18,7 +18,6 @@ const LobbyRoute = () => {
     useEffect(() => {
         console.log(id);
 
-
     }, [id, history])
 
     return (
