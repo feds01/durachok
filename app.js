@@ -1,5 +1,5 @@
 // Import our environment variables
-import {Game, generateCardDeck, shuffleDeck} from "./api/common/game";
+import {Game} from "./api/common/game";
 
 require('dotenv').config();
 
@@ -9,7 +9,6 @@ import * as http from 'http';
 import express from 'express';
 import mongoose from 'mongoose';
 import * as WebSocket from 'ws';
-import createError from 'http-errors';
 
 import userRouter from './api/routes/user';
 import lobbyRouter from './api/routes/lobby';
@@ -28,7 +27,9 @@ app.use('/api/lobby', lobbyRouter);
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => {
-    next(createError(404));
+    res.status(404).send({
+        status: false
+    });
 });
 
 // error handler
@@ -38,8 +39,9 @@ app.use((err, req, res, next) => {
     res.locals.error = req.app.get('env') === 'development' ? err : {};
 
     // render the error page
-    res.status(err.status || 500);
-    res.render('error');
+    res.status(err.status || 500).json({
+        status: false
+    })
 });
 
 

@@ -6,13 +6,25 @@
  * @email <alexander.fedotov.uk@gmail.com>
  */
 
-import React from "react";
+import React, {useEffect} from "react";
+import {useHistory, useParams} from "react-router";
 
 const LobbyRoute = () => {
+    const {id} = useParams();
+    const history = useHistory();
+
+    // check that the user is authenticated for the current
+    // lobby
+    useEffect(() => {
+        console.log(id);
+
+
+    }, [id, history])
+
     return (
-        <React.Fragment>
+        <>
             Lobby
-        </React.Fragment>
+        </>
     );
 };
 

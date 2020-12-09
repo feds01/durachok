@@ -263,6 +263,7 @@ router.post("/:pin/join", validatePin, async (req, res) => {
     if (lobby.players.length === lobby.maxPlayers) {
         return res.status(400).json({
             status: false,
+            err: "LOBBY_FULL",
             message: error.LOBBY_FULL,
         });
     }
@@ -271,6 +272,7 @@ router.post("/:pin/join", validatePin, async (req, res) => {
     if (typeof name === "undefined" || typeof passphrase === "undefined") {
         return res.status(400).json({
             status: false,
+            err: "MISSING_INFO",
             message: BAD_REQUEST
         });
     }
@@ -280,6 +282,7 @@ router.post("/:pin/join", validatePin, async (req, res) => {
     if (!(await checkNameFree(lobby, name))) {
         return res.status(400).json({
             status: false,
+            err: "BAD_INFO",
             message: "Name already taken."
         })
     }
@@ -289,6 +292,7 @@ router.post("/:pin/join", validatePin, async (req, res) => {
         console.log(passphrase, lobby.passphrase)
         return res.status(401).json({
             status: false,
+            err: "INVALID_PASSPHRASE",
             message: error.INVALID_PASSPHRASE,
         });
     }
@@ -322,9 +326,10 @@ router.post("/:pin/join", validatePin, async (req, res) => {
 });
 
 
-router.get("/:pin/name", async (req, res) => {
+router.post("/:pin/name", async (req, res) => {
     const {pin} = req.params;
     const {name} = req.body;
+    console.log(req.body)
 
     // check that the requesting user is the owner/creator of the lobby
     const lobby = await Lobby.findOne({pin});
