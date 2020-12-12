@@ -14,4 +14,12 @@ body {
     background-color: #3b3d54;
     font-size: 14px;
     overflow: hidden;
+    display: flex;
+}
+
+#root {
+    width: 100vw;
+    height: 100vh;
+    flex: 1;
+
 }

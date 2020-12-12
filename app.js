@@ -75,7 +75,6 @@ lobbies.use(async (socket, next) => {
 });
 
 lobbies.use((socket, next) => {
-
     if (socket.handshake.query && socket.handshake.query.token) {
         jwt.verify(socket.handshake.query.token, process.env.JWT_SECRET_KEY, (err, decoded) => {
             if (err) return next(new Error(error.AUTHENTICATION_FAILED));
