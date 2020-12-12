@@ -1,9 +1,7 @@
 /**
- * Function to update the localstorage with a new token and refresh
- * token.
+ * Function to get the token and refresh token from the localstorage.
  *
- * @parma {String} token - The new token to be added to the localstorage.
- * @parma {String} refreshToken - The new refresh token to be added to the localstorage.
+ *  * @return {{"token": ?String, "refreshToken": ?String}} the tokens.
  * */
 export function getAuthTokens() {
     const token = localStorage.getItem("token");
@@ -17,9 +15,22 @@ export function getAuthTokens() {
  * token.
  *
  * @parma {String} token - The new token to be added to the localstorage.
- * @parma {String} refreshToken - The new refresh token to be added to the localstorage.
+ * @param {String} refreshToken - The new refresh token to be added to the localstorage.
  * */
 export const updateTokens = (token, refreshToken) => {
     localStorage.setItem("token", token);
     localStorage.setItem("refreshToken", refreshToken);
+}
+
+/**
+ * Function to create headers for an authenticated request using the localstorage with a new token
+ * and refresh token.
+ *
+ * @return {{"x-token": ?String, "x-refresh-token": ?String}} the constructed headers.
+ * */
+export function getAuthHeader() {
+    return {
+        "x-token": localStorage.getItem("token"),
+        "x-refresh-token": localStorage.getItem("refreshToken")
+    }
 }

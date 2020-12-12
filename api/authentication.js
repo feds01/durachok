@@ -46,6 +46,7 @@ const getToken = async (req, res) => {
                 req.token = newTokens.data;
             } else {
                 return res.status(401).json({
+                    status: false,
                     message: error.AUTHENTICATION_FAILED,
                 });
             }
@@ -53,6 +54,7 @@ const getToken = async (req, res) => {
     } else {
         // only send an un-authorized response if there was no provided token in the request
         return res.status(401).json({
+            status: false,
             message: error.AUTHENTICATION_FAILED,
         });
     }
@@ -126,7 +128,6 @@ export const createTokens = async (payload) => {
  * authentication middleware function is only used for user routes rather than document
  * routes.
  * */
-// TODO: validate for the PIN of a lobby too, based on the request.
 export const authenticate = async (req, res, next) => {
     await getToken(req, res); // unpack JWT token
 
@@ -139,6 +140,7 @@ export const authenticate = async (req, res, next) => {
 
             if (existingUser.length === 0) {
                 return res.status(404).json({
+                    status: false,
                     message: error.NON_EXISTENT_USER,
                     extra: "User doesn't exist."
                 });
@@ -148,3 +150,31 @@ export const authenticate = async (req, res, next) => {
     }
 };
 
+export const userAuth = async (req, res, next) => {
+    await getToken(req, res); // unpack JWT token
+
+    console.log(req.token)
+    if (!res.headersSent) {
+
+        if (req.token.id) {
+            const existingUser = await User.find({_id: req.token.id});
+
+            if (existingUser.length === 0) {
+                return res.status(404).json({
+                    status: false,
+                    message: error.NON_EXISTENT_USER,
+                    extra: "User doesn't exist."
+                });
+            } else {
+                // the request was fine and is authenticated.
+                next();
+            }
+        } else {
+            return res.status(401).json({
+                status: false,
+                message: error.UNAUTHORIZED,
+                extra: "Missing required request headers."
+            });
+        }
+    }
+};

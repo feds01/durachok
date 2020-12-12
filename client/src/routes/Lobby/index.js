@@ -11,9 +11,9 @@ import styles from "./index.module.scss";
 import {io} from "socket.io-client";
 import * as error from "../../error";
 import {withRouter} from "react-router";
-import Loader from "react-loader-spinner";
 import {getAuthTokens} from "../../utils/auth";
 import Divider from "@material-ui/core/Divider";
+import LoadingScreen from "../../components/LoadingScreen";
 import StarBorderOutlined from "@material-ui/icons/StarBorderOutlined";
 
 
@@ -78,30 +78,19 @@ class LobbyRoute extends React.Component {
     }
 
     componentWillUnmount() {
+        // disconnect the socket if a connection was established.
+        if (this.state.ws !== null) {
+            this.state.ws.disconnect();
+        }
+
+        // this.state?.ws.disconnect();
     }
 
     render() {
         const {id, loaded, lobby, ws} = this.state;
 
-
-        console.log(lobby.players)
         if (!loaded) {
-            return (
-                <div
-                    style={{
-                        display: "flex",
-                        height: "100%",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        justifyContent: "center"
-                    }}
-                >
-                    <div>
-                        <Loader className={styles.lobbyLoader} type="Bars" color="#FFFFFF" height={80} width={80}/>
-                        <b>Joining Lobby...</b>
-                    </div>
-                </div>
-            );
+            return <LoadingScreen><b>Joining Lobby...</b></LoadingScreen>
         } else {
             return (
                 <div>
@@ -122,26 +111,6 @@ class LobbyRoute extends React.Component {
             );
         }
     }
-
-
 }
-
-// const LobbyRoute = () => {
-//     const {id} = useParams();
-//     const history = useHistory();
-//
-//     // check that the user is authenticated for the current
-//     // lobby
-//     useEffect(() => {
-//         console.log(id);
-//
-//     }, [id, history])
-//
-//     return (
-//         <>
-//             Lobby
-//         </>
-//     );
-// };
 
 export default withRouter(LobbyRoute);

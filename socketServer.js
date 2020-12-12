@@ -31,7 +31,7 @@ export const makeSocketServer = (server) => {
 
     lobbies.use((socket, next) => {
         if (socket.handshake.query && socket.handshake.query.token) {
-            jwt.verify(socket.handshake.query.token, process.env.JWT_SECRET_KEY, (err, decoded) => {
+            jwt.verify(socket.handshake.query.token, process.env.JWT_SECRET_KEY, async (err, decoded) => {
                 if (err) return next(new Error(error.AUTHENTICATION_FAILED));
 
                 // check that the nsp matched the pin or the user of the Durachok
@@ -39,15 +39,16 @@ export const makeSocketServer = (server) => {
                 const isAdmin = typeof decoded.id !== "undefined";
 
                 if (isAdmin) {
-                    const user = Player.findOne({_id: decoded.id});
+                    const user = await Player.findOne({_id: decoded.id});
 
                     // This shouldn't happen unless the user was deleted and the token is stale.
                     if (!user) {
+                        console.log("couldn't find player");
                         return next(new Error(error.AUTHENTICATION_FAILED));
                     }
 
                     // check that id of the owner is equal to the id in the JWT
-                    if (user._id !== socket.lobby.owner._id) {
+                    if (user._id.toString() !== socket.lobby.owner._id.toString()) {
                         return next(new Error(error.AUTHENTICATION_FAILED));
                     }
                 }

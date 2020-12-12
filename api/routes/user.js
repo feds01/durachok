@@ -1,10 +1,11 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import User from './../models/user';
+import Lobby from './../models/game';
 
 import * as error from "../error";
 import * as credentials from "../credentials";
-import {authenticate, createTokens} from "../authentication";
+import {createTokens, userAuth} from "../authentication";
 
 const router = express.Router();
 
@@ -157,31 +158,37 @@ router.post('/register', async (req, res, next) => {
  *
  * */
 router.post("/login", async (req, res) => {
-    const {email, password} = req.body;
+    const {email, name, password} = req.body;
+    let searchQuery = {email: email};
 
     // If the request contains the 'email' parameter in the query string and it's
     // a valid email string, then use email to authenticate the user.
-    if (typeof email !== 'string' || !credentials.validateEmail(email)) {
+    if (typeof name === "string") {
+        searchQuery = {name: name}
+    } else if (typeof email !== 'string' || !credentials.validateEmail(email)) {
         return res.status(400).json({
+            status: false,
             message: error.INVALID_EMAIL,
-            extra: "No email provided to login route."
+            extra: "No username or email provided to login route."
         });
     }
 
     if (typeof password !== 'string') {
         return res.status(400).json({
+            status: false,
             message: error.BAD_REQUEST,
             extra: "No password provided to login route."
         });
     }
 
-    await User.find({email: email}, async (err, result) => {
+    await User.find(searchQuery, async (err, result) => {
         if (err) {
             // Log the error in the server console & respond to the client with an
             // INTERNAL_SERVER_ERROR, since this was an unexpected exception.
             console.error(err);
 
             return res.status(500).json({
+                status: false,
                 message: error.INTERNAL_SERVER_ERROR
             });
         }
@@ -197,6 +204,7 @@ router.post("/login", async (req, res) => {
                     console.error(err);
 
                     return res.status(500).json({
+                        status: false,
                         message: error.INTERNAL_SERVER_ERROR
                     });
                 }
@@ -213,6 +221,7 @@ router.post("/login", async (req, res) => {
                     res.set("x-refresh-token", refreshToken);
 
                     return res.status(302).json({
+                        status: true,
                         message: "Authentication successful",
                         token,
                         refreshToken
@@ -220,6 +229,7 @@ router.post("/login", async (req, res) => {
                 } else {
                     // password did not match the stored hashed password within the database
                     return res.status(401).json({
+                        status: false,
                         message: error.BAD_REQUEST,
                         extra: error.MISMATCHING_LOGIN
                     });
@@ -227,6 +237,7 @@ router.post("/login", async (req, res) => {
             });
         } else {
             return res.status(401).json({
+                status: false,
                 message: error.AUTHENTICATION_FAILED,
                 extra: error.MISMATCHING_LOGIN
             });
@@ -234,5 +245,49 @@ router.post("/login", async (req, res) => {
     });
 });
 
+/**
+ * @version v1.0.0
+ * @method GET
+ * @url https://durachok.game/api/user
+ * @example
+ * https://durachok.game/api/user
+ *
+ * @description This route is used to login users into the Durachok game app, the route
+ * will accept a username or email & password within the request body. The method will determine
+ * which authentication strategy the request is using. If an email is provided, the user will
+ * be authenticated using email, and vice versa for username. If a user is found with email/username,
+ * the sent over password will be compared with stored hash. If hash and password match, the request
+ * will create two request tokens 'x-token' and 'x-refresh-token' and apply them to response header.
+ * Additionally, the 'last_login' column is updated, and a 'USER_LOGIN' event is added in user's timeline.
+ *
+ *
+ * @error {UNAUTHORIZED} if the request does not contain a token or refreshToken
+ *
+ * @return sends a response to client if user successfully (or not) logged in. The response contains
+ * a list of the current games the user is hosting and the users name.
+ *
+ * */
+router.get("/", userAuth, async (req, res) => {
+    const id = req.token.id;
 
-export default router;
+    // find all the games that are owned by the current player.
+    const games = (await Lobby.find({owner: id})).map((game) => {
+       return {
+           players: game.players.length,
+           pin: game.pin,
+           roundTimeout: game.roundTimeout,
+           maxPlayers: game.maxPlayers,
+       }
+    });
+
+    return res.status(200).json({
+        status: true,
+        data: {
+            games: games,
+            name: req.token.name,
+        }
+    })
+});
+
+
+    export default router;

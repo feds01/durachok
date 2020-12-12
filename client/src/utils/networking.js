@@ -11,6 +11,20 @@ export async function joinLobby(pin, credentials) {
 }
 
 
+export async function login(name, password) {
+    const payload = JSON.stringify({name, password});
+
+    return await fetch(`/api/user/login`, {
+        method: "POST",
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: payload
+    }).then(res => res.json());
+}
+
+
+
 export async function checkName(lobby, name) {
     const payload = JSON.stringify({name});
 
