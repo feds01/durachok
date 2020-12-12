@@ -1,8 +1,8 @@
 import React from 'react';
 import {Formik} from "formik";
+import Input from "../Input";
 import Loader from 'react-loader-spinner';
 import Button from "@material-ui/core/Button";
-import TextField from "@material-ui/core/TextField";
 
 const GamePin = (props) => {
     return (
@@ -41,24 +41,12 @@ const GamePin = (props) => {
 
                 return (
                     <div className={'Prompt'}>
-                        <TextField
+                        <Input
                             id={'pin'}
-                            className={'Prompt-code'}
                             placeholder={'Enter game PIN'}
                             autoFocus
                             error={Boolean(errors.pin)}
                             helperText={errors.pin || ""}
-                            inputProps={{
-                                style:
-                                    {
-                                        textAlign: 'center',
-                                        color: '#dad8ec',
-                                        width: 360,
-                                        fontSize: 20,
-                                        letterSpacing: 2
-                                    }
-                            }}
-                            variant={'filled'}
                             value={values.pin}
                             onChange={handleChange}
                         />
