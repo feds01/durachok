@@ -14,6 +14,7 @@ import {withRouter} from "react-router";
 import Loader from "react-loader-spinner";
 import {getAuthTokens} from "../../utils/auth";
 import Divider from "@material-ui/core/Divider";
+import StarBorderOutlined from "@material-ui/icons/StarBorderOutlined";
 
 
 class LobbyRoute extends React.Component {
@@ -108,9 +109,13 @@ class LobbyRoute extends React.Component {
                     <Divider style={{backgroundColor: "rgba(172, 170, 190, 1)"}}/>
                     <div className={styles.lobbyPlayers}>
                         {
-                            lobby.players.map((player, index) => (
-                                <span key={index}>{player}</span>
-                            ))
+                            lobby.players.map((player, index) => {
+                                if (player === lobby.owner) {
+                                    return (<div key={index}>{player} <StarBorderOutlined/></div>);
+                                } else {
+                                    return (<span key={index}>{player}</span>);
+                                }
+                            })
                         }
                     </div>
                 </div>
