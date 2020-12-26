@@ -153,7 +153,6 @@ export const authenticate = async (req, res, next) => {
 export const userAuth = async (req, res, next) => {
     await getToken(req, res); // unpack JWT token
 
-    console.log(req.token)
     if (!res.headersSent) {
 
         if (req.token.id) {

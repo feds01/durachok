@@ -213,7 +213,7 @@ router.post("/login", async (req, res) => {
                 // 'x-token' and 'x-refresh-token' JWT's . Also, update the 'last_login' timestamp and record
                 // an entry for the user logging in into the system.
                 if (response) {
-                    const {token, refreshToken} = await createTokens({email: result[0].email, id: result[0]._id});
+                    const {token, refreshToken} = await createTokens({email: result[0].email, name: result[0].name, id: result[0]._id});
 
                     // set the tokens in the response headers
                     res.set("Access-Control-Expose-Headers", "x-token, x-refresh-token");
