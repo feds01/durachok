@@ -6,10 +6,13 @@
  * @email <alexander.fedotov.uk@gmail.com>
  */
 
+import styles from "./index.module.scss";
 import React, {useEffect, useState} from "react";
 import {getAuthHeader, getAuthTokens} from "../../utils/auth";
 import {useHistory} from "react-router";
 import LoadingScreen from "../../components/LoadingScreen";
+import {Divider} from "@material-ui/core";
+import GameCard from "../../components/GameCard";
 
 const UserRoute = () => {
     const history = useHistory();
@@ -46,7 +49,20 @@ const UserRoute = () => {
     } else {
         return (
             <>
-                {JSON.stringify(userData)}
+                <div className={styles.Dashboard}>
+                    <h1>{userData.name}</h1>
+                    <Divider/>
+
+                    <div className={styles.Games}>
+                        <h2>Active games</h2>
+                        {
+                            userData.games.map((game) => {
+                                return <GameCard {...game} />
+                            })
+                        }
+                        {JSON.stringify(userData.games)}
+                    </div>
+                </div>
             </>
         );
     }
