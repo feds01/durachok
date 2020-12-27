@@ -3,6 +3,12 @@ import {nanoid} from "nanoid";
 export const CardLabels = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "Jack", "Queen", "King", "Ace"];
 export const CardSuits = ['♡', '♢', '♣', '♤'];
 
+export const GameState = Object.freeze({
+    WAITING: "WAITING",
+    STARTED: "STARTED",
+    PLAYING: "PLAYING",
+});
+
 /**
  * Generates a whole card deck for use in the format of a list. Each
  * element follows the format of '<label> of <suit>'.

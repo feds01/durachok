@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "start": "nodemon --exec babel-node ./app.js"
+    "start": "nodemon  --ignore client --exec babel-node ./app.js"
   },
   "dependencies": {
     "bcryptjs": "2.4.3",

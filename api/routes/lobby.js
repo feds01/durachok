@@ -3,7 +3,7 @@ import {nanoid} from "nanoid";
 import * as error from "../error";
 import Lobby from './../models/game';
 import {BAD_REQUEST} from "../error";
-import {authenticate, createTokens} from "../authentication";
+import {createTokens, userAuth} from "../authentication";
 import {checkNameFree, createGamePassphrase, createGamePin} from "../utils/lobby";
 
 const router = express.Router();
@@ -50,7 +50,7 @@ function validatePin(req, res, next) {
  *
  * @return sends a response to client if the document was created and added to the system.
  * */
-router.post("/", authenticate, async (req, res) => {
+router.post("/", userAuth, async (req, res) => {
     const {id} = req.token;
 
 
@@ -182,7 +182,7 @@ router.get('/:pin', validatePin, async (req, res) => {
  *
  * @return sends an OK response to requester with some game data.
  * */
-router.delete("/:pin", validatePin, authenticate, async (req, res) => {
+router.delete("/:pin", validatePin, userAuth, async (req, res) => {
     const {pin} = req.params;
 
     // check that the requesting user is the owner/creator of the lobby
@@ -195,9 +195,9 @@ router.delete("/:pin", validatePin, authenticate, async (req, res) => {
         })
     }
 
-    // The lobby owner parameter should be the same as the the userId in the token.
+    // The lobby owner parameter should be the same as the the user id in the token.
     // If it's not we return a Unauthorized error code.
-    if (!lobby.owner._id.equals(req.token.userId)) {
+    if (!lobby.owner._id.equals(req.token.id)) {
         return res.status(401).json({
             status: false,
             message: "Unable to delete the game",
@@ -205,7 +205,7 @@ router.delete("/:pin", validatePin, authenticate, async (req, res) => {
         })
     }
 
-    return await Lobby.deleteOne({pin}, (err) => {
+    return Lobby.deleteOne({pin}, (err) => {
         if (err) {
             return res.status(500).json({
                 status: false,

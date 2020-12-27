@@ -7,16 +7,22 @@
  */
 
 import styles from "./index.module.scss";
-import React, {useEffect, useState} from "react";
-import {getAuthHeader, getAuthTokens} from "../../utils/auth";
 import {useHistory} from "react-router";
-import LoadingScreen from "../../components/LoadingScreen";
-import {Divider} from "@material-ui/core";
+import React, {useEffect, useState} from "react";
+import Divider from "@material-ui/core/Divider";
+
+
 import GameCard from "../../components/GameCard";
+import GameDialog from "../../components/GameDialog";
+import LoadingScreen from "../../components/LoadingScreen";
+import {getAuthHeader, getAuthTokens} from "../../utils/auth";
+import {RefreshDashboardContext} from "../../contexts/RefreshDashboard";
 
 const UserRoute = () => {
     const history = useHistory();
 
+    const [dialogOpen, setDialogOpen] = useState(false);
+    const [refreshData, setRefreshData] = useState(false);
     const [userData, setUserData] = useState({});
 
     // check if the client has JWT auth tokens that represent
@@ -41,29 +47,43 @@ const UserRoute = () => {
                     }
                 });
         }
-    }, []);
+    }, [refreshData]);
 
 
     if (Object.keys(userData).length === 0) {
         return <LoadingScreen><b>Loading...</b></LoadingScreen>
     } else {
         return (
-            <>
+            <RefreshDashboardContext.Provider value={{
+                onRefresh: () => {
+                    setUserData({});
+                    setRefreshData(!refreshData);
+                }
+            }}>
                 <div className={styles.Dashboard}>
                     <h1>{userData.name}</h1>
                     <Divider/>
 
+                    <div className={styles.Actions}>
+                        <button onClick={() => setDialogOpen(true)}>
+                            Create game
+                        </button>
+                    </div>
+
                     <div className={styles.Games}>
                         <h2>Active games</h2>
                         {
-                            userData.games.map((game) => {
-                                return <GameCard {...game} />
+                            userData.games.map((game, index) => {
+                                return <GameCard key={index} {...game} />
                             })
                         }
-                        {JSON.stringify(userData.games)}
+                        {userData.games.length === 0 && (
+                            <p>No active games.</p>
+                        )}
                     </div>
                 </div>
-            </>
+                <GameDialog open={dialogOpen} onClose={() => setDialogOpen(false)} />
+            </RefreshDashboardContext.Provider>
         );
     }
 };

@@ -122,33 +122,6 @@ export const createTokens = async (payload) => {
     return {token, refreshToken};
 }
 
-/**
- * This is a user specific authentication method. It will check if the request parameter
- * 'username' is equal to the username in the 'x-token' header within the request. This
- * authentication middleware function is only used for user routes rather than document
- * routes.
- * */
-export const authenticate = async (req, res, next) => {
-    await getToken(req, res); // unpack JWT token
-
-    if (!res.headersSent) {
-        // check if the token email matches the email, if it does we know
-        // that this request is valid, otherwise reject this request and return an
-        // 'Unauthorized' status to the client.
-        if (req.token.id) {
-            const existingUser = await User.find({_id: req.token.id});
-
-            if (existingUser.length === 0) {
-                return res.status(404).json({
-                    status: false,
-                    message: error.NON_EXISTENT_USER,
-                    extra: "User doesn't exist."
-                });
-            }
-        }
-        next();
-    }
-};
 
 export const userAuth = async (req, res, next) => {
     await getToken(req, res); // unpack JWT token

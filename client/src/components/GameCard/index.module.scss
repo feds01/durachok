@@ -1,0 +1,40 @@
+.GameCard {
+  display: flex;
+  flex-direction: row;
+  padding: 1em;
+  margin-bottom: 0.5em;
+  margin-top: 0.5em;
+  border-radius: 12px;
+  background: #3f51b5;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+
+  color: white;
+
+  &:hover {
+    cursor: pointer;
+  }
+
+  & .Info {
+    flex-grow: 1;
+
+    & .Title {
+      display: flex;
+      flex-direction: row;
+      flex-grow: 1;
+      flex-wrap: nowrap;
+
+      h2 {
+        margin: 0;
+      }
+    }
+
+    & .Players {
+    }
+  }
+
+  & .Action {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+}
