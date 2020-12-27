@@ -85,5 +85,13 @@ export const makeSocketServer = (server) => {
                 owner: owner.name,
             });
         });
+
+        socket.on("start_game", async (message) => {
+            if (!socket.isAdmin) {
+                io.to(socket).emit("unauthorized", {status: false, message: "Failed to start game."});
+            }
+
+
+        })
     });
 }

@@ -1,3 +1,5 @@
+import {getAuthHeader} from "./auth";
+
 export async function joinLobby(pin, credentials) {
     const payload = JSON.stringify(credentials);
 
@@ -23,6 +25,13 @@ export async function login(name, password) {
     }).then(res => res.json());
 }
 
+
+export async function deleteGame(pin) {
+    return await fetch(`/api/lobby/${pin}`, {
+        method: "DELETE",
+        headers: getAuthHeader(),
+    }).then(res => res.json());
+}
 
 
 export async function checkName(lobby, name) {

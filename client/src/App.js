@@ -14,7 +14,7 @@ function App() {
                 <Route exact path={'/login'} component={LoginRoute}/>
                 <Route exact path={'/user'} component={UserRoute}/>
                 <Route exact path={'/lobby/:id'} component={LobbyRoute}/>
-                <Route render={() => <Redirect to="/" />} />
+                <Route render={() => <Redirect to="/"/>}/>
             </Switch>
         </BrowserRouter>
     );
