@@ -47,7 +47,7 @@ const UserRoute = () => {
                     }
                 });
         }
-    }, [refreshData]);
+    }, [refreshData, history]);
 
 
     if (Object.keys(userData).length === 0) {

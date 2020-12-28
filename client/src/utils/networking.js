@@ -33,6 +33,20 @@ export async function deleteGame(pin) {
     }).then(res => res.json());
 }
 
+export async function createGame(settings) {
+    const payload = JSON.stringify(settings);
+
+    return await fetch(`/api/lobby`, {
+        method: "POST",
+        headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeader()
+        },
+        body: payload,
+    }).then(res => res.json());
+}
+
+
 
 export async function checkName(lobby, name) {
     const payload = JSON.stringify({name});
