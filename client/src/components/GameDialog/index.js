@@ -82,9 +82,9 @@ const GameDialog = (props) => {
                             <div className={styles.Submit}>
                                 <Button
                                     variant={'contained'}
-                                    className={'Prompt-enter'}
                                     disableElevation
                                     style={{
+                                        fontSize: 16,
                                         marginTop: 19
                                     }}
                                     disableRipple

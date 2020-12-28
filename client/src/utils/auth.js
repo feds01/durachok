@@ -4,8 +4,8 @@
  *  * @return {{"token": ?String, "refreshToken": ?String}} the tokens.
  * */
 export function getAuthTokens() {
-    const token = localStorage.getItem("token");
-    const refreshToken = localStorage.getItem("refreshToken");
+    const token = sessionStorage.getItem("token");
+    const refreshToken = sessionStorage.getItem("refreshToken");
 
     return {token, refreshToken};
 }
@@ -18,8 +18,8 @@ export function getAuthTokens() {
  * @param {String} refreshToken - The new refresh token to be added to the localstorage.
  * */
 export const updateTokens = (token, refreshToken) => {
-    localStorage.setItem("token", token);
-    localStorage.setItem("refreshToken", refreshToken);
+    sessionStorage.setItem("token", token);
+    sessionStorage.setItem("refreshToken", refreshToken);
 }
 
 /**
@@ -30,7 +30,7 @@ export const updateTokens = (token, refreshToken) => {
  * */
 export function getAuthHeader() {
     return {
-        "x-token": localStorage.getItem("token"),
-        "x-refresh-token": localStorage.getItem("refreshToken")
+        "x-token": sessionStorage.getItem("token"),
+        "x-refresh-token": sessionStorage.getItem("refreshToken")
     }
 }

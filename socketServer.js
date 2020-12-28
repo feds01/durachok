@@ -75,15 +75,24 @@ export const makeSocketServer = (server) => {
             const playerList = await lobbyUtils.buildPlayerList(socket.lobby);
             const owner = await Player.findOne({_id: socket.lobby.owner});
 
-            // oops was the owner account deleted
+            // oops, was the owner account deleted
             if (!owner) {
                 socket.emit("error", error.INTERNAL_SERVER_ERROR);
             }
 
-            io.of(socket.nsp.name).emit("joined_game", {
+            // send a private message to the socket with the required information
+            socket.emit("joined_game", {
                 isHost: socket.isAdmin,
                 lobby: {
                     ...(socket.isAdmin && {passphrase: socket.lobby.passphrase}),
+                    players: playerList,
+                    owner: owner.name,
+                }
+            })
+
+            // notify all other clients that a new player has joined the lobby...
+            socket.broadcast.emit("new_player", {
+                lobby: {
                     players: playerList,
                     owner: owner.name,
                 }
