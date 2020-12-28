@@ -45,6 +45,7 @@ const GamePin = (props) => {
                             id={'pin'}
                             placeholder={'Enter game PIN'}
                             autoFocus
+                            autoComplete={"off"}
                             error={Boolean(errors.pin)}
                             helperText={errors.pin || ""}
                             value={values.pin}

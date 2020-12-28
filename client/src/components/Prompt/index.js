@@ -1,7 +1,7 @@
 import './index.scss';
 import GamePin from "./GamePin";
 import GameName from "./GameName";
-import GameSecurity from "./GameSecurity";
+import GamePassphrase from "./GamePassphrase";
 import {joinLobby} from "../../utils/networking";
 import {updateTokens} from "./../../utils/auth";
 
@@ -36,7 +36,7 @@ class Prompt extends React.Component {
             this.props.history.push(`/lobby/${this.state.pin}`);
         }
 
-        // pass the res object back to the GameSecurity component to display
+        // pass the res object back to the GamePassphrase component to display
         // information on the request failing.
         return res;
     }
@@ -68,7 +68,7 @@ class Prompt extends React.Component {
                     unmountOnExit
                 >
                     <div ref={nodeRef}>
-                        <GameSecurity
+                        <GamePassphrase
                             name={name}
                             pin={pin}
                             onError={() => {

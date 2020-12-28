@@ -107,7 +107,7 @@ class LobbyRoute extends React.Component {
     }
 
     render() {
-        const {id, isHost, loaded, lobby} = this.state;
+        const {id, isHost, loaded, ws, lobby} = this.state;
 
         if (!loaded) {
             return <LoadingScreen><b>Joining Lobby...</b></LoadingScreen>
@@ -117,20 +117,24 @@ class LobbyRoute extends React.Component {
                     <div className={clsx({[styles.Header]: !isHost, [styles.HostHeader]: isHost})}>
                         <h1>Lobby {id}</h1>
                         {isHost && (
-                            <Passphrase passphrase={lobby.passphrase.split("")}/>
+                            <Passphrase ws={ws} timeout={10} passphrase={lobby.passphrase.split("")}/>
                         )}
                     </div>
-                    <Divider style={{backgroundColor: "rgba(172, 170, 190, 1)"}}/>
 
                     <div className={styles.SubHeader}>
-                        <PlayerCounter count={lobby.players.length} />
+                        <PlayerCounter
+                            style={{
+                                justifySelf: "start"
+                            }}
+                            count={lobby.players.length} />
                         <Logo size={48}/>
-                        {isHost ? (
+                        {isHost && (
                             <Button
                                 variant={'contained'}
                                 disableElevation
                                 disableRipple
                                 style={{
+                                    justifySelf: "end",
                                     height: 40
                                 }}
                                 disabled={lobby.players.length < 2}
@@ -139,7 +143,7 @@ class LobbyRoute extends React.Component {
                             >
                                Start
                             </Button>
-                        ) : <span/>}
+                        )}
                     </div>
 
                     <div className={styles.Players}>

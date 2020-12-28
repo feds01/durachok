@@ -46,6 +46,7 @@ const GameName = (props) => {
                             id={'name'}
                             placeholder={'Enter name'}
                             autoFocus
+                            autoComplete={"off"}
                             error={Boolean(errors.name)}
                             helperText={errors.name || ""}
                             value={values.name}
