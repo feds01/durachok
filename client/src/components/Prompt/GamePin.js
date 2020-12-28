@@ -22,7 +22,7 @@ const GamePin = (props) => {
                 // and if so we'll set the next stage of the prompt (enter the pin).
                 await fetch(`/api/lobby/${values.pin}`).then((res) => res.json()).then((res) => {
                     if (!res.status) {
-                        setErrors({pin: "Invalid game PIN."});
+                        setErrors({pin: res.message});
                     } else {
                         setSubmitting(false);
                         props.onSuccess(values.pin);

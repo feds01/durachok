@@ -90,6 +90,7 @@ export const makeSocketServer = (server) => {
                 isHost: socket.isAdmin,
                 lobby: {
                     ...(socket.isAdmin && {passphrase: socket.lobby.passphrase}),
+                    status: socket.lobby.status,
                     players: playerList,
                     owner: owner.name,
                 }
