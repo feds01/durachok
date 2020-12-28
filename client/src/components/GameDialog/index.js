@@ -1,37 +1,105 @@
 import React from 'react';
-import DialogTitle from "@material-ui/core/DialogTitle";
-import DialogContent from "@material-ui/core/DialogContent";
-import Dialog from "@material-ui/core/Dialog";
-import Typography from "@material-ui/core/Typography";
-import DialogActions from "@material-ui/core/DialogActions";
+import {Formik} from "formik";
+import {useHistory} from "react-router";
+import styles from './index.module.scss';
+import Loader from "react-loader-spinner";
 import Button from "@material-ui/core/Button";
+import Dialog from "@material-ui/core/Dialog";
+import Divider from "@material-ui/core/Divider";
+import Typography from "@material-ui/core/Typography";
+
+import MaterialSlider from "../MaterialSlider";
+import {createGame} from "../../utils/networking";
 
 const GameDialog = (props) => {
+    const history = useHistory();
+
     return (
         <Dialog {...props}>
-            <DialogTitle>
-                Modal title
-            </DialogTitle>
-            <DialogContent dividers>
-                <Typography gutterBottom>
-                    Cras mattis consectetur purus sit amet fermentum. Cras justo odio, dapibus ac facilisis
-                    in, egestas eget quam. Morbi leo risus, porta ac consectetur ac, vestibulum at eros.
-                </Typography>
-                <Typography gutterBottom>
-                    Praesent commodo cursus magna, vel scelerisque nisl consectetur et. Vivamus sagittis
-                    lacus vel augue laoreet rutrum faucibus dolor auctor.
-                </Typography>
-                <Typography gutterBottom>
-                    Aenean lacinia bibendum nulla sed consectetur. Praesent commodo cursus magna, vel
-                    scelerisque nisl consectetur et. Donec sed odio dui. Donec ullamcorper nulla non metus
-                    auctor fringilla.
-                </Typography>
-            </DialogContent>
-            <DialogActions>
-                <Button autoFocus onClick={props.onClose} color="primary">
-                    Save changes
-                </Button>
-            </DialogActions>
+            <Formik
+                initialValues={{roundTimeout: 300, maxPlayers: 2}}
+                onSubmit={async (values, {setSubmitting}) => {
+                    await createGame(values).then((res) => {
+                        if (!res.status) {
+                            console.log("failed to create game. Notify...")
+
+                            // close the dialog
+                            props.onClose();
+                        } else {
+                            setSubmitting(false);
+
+                            // re-direct the user of the lobby to the game lobby
+                            history.push(`/lobby/${res.game.pin}`)
+                        }
+                    })
+                }}
+            >
+                {props => {
+                    const {
+                        values,
+                        isSubmitting,
+                        handleSubmit,
+                    } = props;
+
+                    return (
+                        <div className={styles.Dialog}>
+                            <h2>
+                                Create new game
+                            </h2>
+                            <Divider style={{marginBottom: '1em', marginTop: 2, backgroundColor: ' #dad8ec'}}/>
+                            <div className={styles.Inputs}>
+                                <Typography gutterBottom>
+                                    Round Timeout (seconds)
+                                </Typography>
+                                <MaterialSlider
+                                    value={values.roundTimeout}
+                                    name={"roundTimeout"}
+                                    getAriaValueText={() => values.roundTimeout}
+                                    marks={[
+                                        {value: 100, label: "100"},
+                                        {value: 600, label: "600"}
+                                    ]}
+                                    min={100}
+                                    max={600}
+                                    valueLabelDisplay="auto"
+                                />
+                                <Typography gutterBottom>
+                                    Max Players
+                                </Typography>
+                                <MaterialSlider
+                                    value={values.maxPlayers}
+                                    name={'maxPlayers'}
+                                    getAriaValueText={() => values.maxPlayers}
+                                    marks={[
+                                        {value: 2, label: "2"},
+                                        {value: 8, label: "8"}
+                                    ]}
+                                    min={2}
+                                    max={8}
+                                    valueLabelDisplay="auto"
+                                />
+                            </div>
+                            <div className={styles.Submit}>
+                                <Button
+                                    variant={'contained'}
+                                    className={'Prompt-enter'}
+                                    disableElevation
+                                    style={{
+                                        marginTop: 19
+                                    }}
+                                    disableRipple
+                                    disabled={isSubmitting}
+                                    onClick={handleSubmit}
+                                    color={'primary'}
+                                >
+                                    {isSubmitting ?
+                                        <Loader type="ThreeDots" color="#FFFFFF" height={20} width={40}/> : "Create"}
+                                </Button>
+                            </div>
+                        </div>
+                    );
+                }}
+            </Formik>
         </Dialog>
     );
 };

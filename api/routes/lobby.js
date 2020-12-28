@@ -53,11 +53,14 @@ function validatePin(req, res, next) {
 router.post("/", userAuth, async (req, res) => {
     const {id} = req.token;
 
-
     // Perform some validation on the passed parameters
-    const {maxPlayers, roundTimeout} = req.body;
+    let {maxPlayers, roundTimeout} = req.body;
 
-    if (typeof maxPlayers !== "number") {
+    // attempt to parse both maxPlayers and roundTimeout
+    try {
+        maxPlayers = parseInt(maxPlayers);
+        roundTimeout = parseInt(roundTimeout);
+    } catch (e) {
         return res.status(400).json({
             message: error.BAD_REQUEST,
             extra: "Maximum players must be a number."
@@ -71,10 +74,12 @@ router.post("/", userAuth, async (req, res) => {
         });
     }
 
-    if (typeof roundTimeout !== "number") {
+    // if roundTimeout is set to '-1' this means that the game engine should not
+    // enforce that players make a move/decision within the 60seconds.
+    if (roundTimeout !== -1 && roundTimeout < 60) {
         return res.status(400).json({
             message: error.BAD_REQUEST,
-            extra: "Game timeout must be a number."
+            extra: "Round timeout must be at least one minute."
         });
     }
 
@@ -109,8 +114,10 @@ router.post("/", userAuth, async (req, res) => {
 
         return res.status(201).json({
             status: true,
-            message: "Successfully created new user account.",
-            extra: savedGame,
+            message: "Successfully created new game.",
+            game: {
+                pin: savedGame.pin
+            },
         })
     } catch (e) {
         console.log(e);
