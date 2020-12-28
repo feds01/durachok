@@ -7,31 +7,39 @@
  */
 
 import React from "react";
-import clsx from "clsx";
 import {io} from "socket.io-client";
 import {withRouter} from "react-router";
-import Divider from "@material-ui/core/Divider";
-import StarBorderOutlined from "@material-ui/icons/StarBorderOutlined";
-import ArrowForwardIosIcon from '@material-ui/icons/ArrowForwardIos';
 
+
+import Game from "./Game";
+import CountDown from "./CountDown";
+import WaitingRoom from "./WaitingRoom";
 import * as error from "../../error";
-import styles from "./index.module.scss";
 import {getAuthTokens} from "../../utils/auth";
 import LoadingScreen from "../../components/LoadingScreen";
-import Passphrase from "../../components/Passphrase";
-import Logo from "../../components/Logo";
-import PlayerCounter from "../../components/PlayerCounter";
-import Button from "@material-ui/core/Button";
 
 class LobbyRoute extends React.Component {
     constructor(props) {
         super(props);
 
-        this.state = {id: null, ws: null, isHost: false, loaded: false, lobby: {}, error: null};
+        this.state = {
+            id: null,
+            ws: null,
+            isHost: false,
+            loaded: false,
+            lobby: {},
+            error: null,
+            stage: "waiting"
+        };
     }
 
     componentDidMount() {
         const id = this.props.match.params.id;
+
+        // if the id does not match hello a 6 digit pin, then re-direct the user to home page..
+        if (!id.match(/^\d{6}$/g)) {
+            this.props.history.push("/");
+        }
 
         // TODO: move websocket endpoint to config
         const socket = io(`localhost:5000/${id}`, {query: getAuthTokens(), transports: ["websocket"]});
@@ -91,7 +99,18 @@ class LobbyRoute extends React.Component {
                     }
                 }
             });
-        })
+        });
+
+
+        // set the lobby stage to 'countdown'
+        socket.on("countdown", (message) => {
+            this.setState({stage: "countdown"});
+        });
+
+        // set the lobby stage to 'game'
+        socket.on("game_started", (message) => {
+            this.setState({stage: "game"});
+        });
 
         this.setState({
             ws: socket,
@@ -107,57 +126,17 @@ class LobbyRoute extends React.Component {
     }
 
     render() {
-        const {id, isHost, loaded, ws, lobby} = this.state;
+        const {loaded, stage} = this.state;
 
         if (!loaded) {
             return <LoadingScreen><b>Joining Lobby...</b></LoadingScreen>
         } else {
             return (
-                <div>
-                    <div className={clsx({[styles.Header]: !isHost, [styles.HostHeader]: isHost})}>
-                        <h1>Lobby {id}</h1>
-                        {isHost && (
-                            <Passphrase ws={ws} timeout={10} passphrase={lobby.passphrase.split("")}/>
-                        )}
-                    </div>
-
-                    <div className={styles.SubHeader}>
-                        <PlayerCounter
-                            style={{
-                                justifySelf: "start"
-                            }}
-                            count={lobby.players.length} />
-                        <Logo size={48}/>
-                        {isHost && (
-                            <Button
-                                variant={'contained'}
-                                disableElevation
-                                disableRipple
-                                style={{
-                                    justifySelf: "end",
-                                    height: 40
-                                }}
-                                disabled={lobby.players.length < 2}
-                                color={'primary'}
-                                endIcon={<ArrowForwardIosIcon/>}
-                            >
-                               Start
-                            </Button>
-                        )}
-                    </div>
-
-                    <div className={styles.Players}>
-                        {
-                            lobby.players.map((player, index) => {
-                                if (player === lobby.owner) {
-                                    return (<div key={index}>{player} <StarBorderOutlined/></div>);
-                                } else {
-                                    return (<div key={index}>{player}</div>);
-                                }
-                            })
-                        }
-                    </div>
-                </div>
+                <>
+                    {stage === "waiting" && <WaitingRoom {...this.state} />}
+                    {stage === "countdown" && <CountDown/>}
+                    {stage === "game" && <Game {...this.state} />}
+                </>
             );
         }
     }

@@ -1,0 +1,51 @@
+.Countdown {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+
+  height: 100%;
+  width: 100%;
+
+  .Number {
+    color: white;
+    position: absolute;
+    font-size: 98px;
+    line-height: 180px;
+    padding: 10px 0;
+    z-index: 2;
+  }
+
+  & p {
+    font-family: 'Cabin', sans-serif;
+    display: inline-block;
+    vertical-align: middle;
+  }
+
+  & svg {
+    width: 200px;
+    height: 200px;
+    transform: rotateY(-180deg) rotateZ(-90deg);
+  }
+
+  & svg circle {
+    stroke-dasharray: 565px;
+    stroke-dashoffset: 0;
+    stroke-linecap: round;
+    stroke-width: 2px;
+    stroke: white;
+    fill: none;
+    animation: countdown 5s linear 1 forwards;
+  }
+
+  @keyframes countdown {
+    from {
+      stroke-dashoffset: 0;
+    }
+    to {
+      stroke-dashoffset: 565px;
+    }
+  }
+
+}
