@@ -17,6 +17,7 @@ import WaitingRoom from "./WaitingRoom";
 import * as error from "../../error";
 import {getAuthTokens} from "../../utils/auth";
 import LoadingScreen from "../../components/LoadingScreen";
+import {GameState} from "../../common/Game";
 
 class LobbyRoute extends React.Component {
     constructor(props) {
@@ -29,7 +30,7 @@ class LobbyRoute extends React.Component {
             loaded: false,
             lobby: {},
             error: null,
-            stage: "waiting"
+            stage: GameState.WAITING,
         };
     }
 
@@ -83,7 +84,8 @@ class LobbyRoute extends React.Component {
             // console.log("players: ", message);
             this.setState({
                 loaded: true,
-                ...message
+                ...message,
+                stage: message.lobby.status
             });
         });
 
@@ -104,12 +106,12 @@ class LobbyRoute extends React.Component {
 
         // set the lobby stage to 'countdown'
         socket.on("countdown", (message) => {
-            this.setState({stage: "countdown"});
+            this.setState({stage: GameState.STARTED});
         });
 
         // set the lobby stage to 'game'
         socket.on("game_started", (message) => {
-            this.setState({stage: "game"});
+            this.setState({stage: GameState.PLAYING});
         });
 
         this.setState({
@@ -133,9 +135,9 @@ class LobbyRoute extends React.Component {
         } else {
             return (
                 <>
-                    {stage === "waiting" && <WaitingRoom {...this.state} />}
-                    {stage === "countdown" && <CountDown/>}
-                    {stage === "game" && <Game {...this.state} />}
+                    {stage === GameState.WAITING && <WaitingRoom {...this.state} />}
+                    {stage === GameState.STARTED && <CountDown/>}
+                    {stage === GameState.PLAYING && <Game {...this.state} />}
                 </>
             );
         }

@@ -5,6 +5,7 @@ import Lobby from './../models/game';
 import {BAD_REQUEST} from "../error";
 import {createTokens, userAuth} from "../authentication";
 import {checkNameFree, createGamePassphrase, createGamePin} from "../utils/lobby";
+import {GameState} from "../common/game";
 
 const router = express.Router();
 
@@ -161,6 +162,14 @@ router.get('/:pin', validatePin, async (req, res) => {
         })
     }
 
+    // notify client if they can't even join the current lobby if it's full or in sessions
+    if (lobby.players.length === lobby.maxPlayers || lobby.status !== GameState.WAITING) {
+        return res.status(400).json({
+            status: false,
+            message: error.LOBBY_FULL,
+        })
+    }
+
     return res.status(200).json({
         status: true,
         message: "Lobby exists.",
@@ -266,7 +275,7 @@ router.post("/:pin/join", validatePin, async (req, res) => {
     }
 
     // check that there are free slots within the lobby
-    if (lobby.players.length === lobby.maxPlayers) {
+    if (lobby.players.length === lobby.maxPlayers || lobby.status !== GameState.WAITING) {
         return res.status(400).json({
             status: false,
             err: "LOBBY_FULL",

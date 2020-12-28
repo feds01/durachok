@@ -34,6 +34,11 @@ class Prompt extends React.Component {
             updateTokens(res.token, res.refreshToken);
 
             this.props.history.push(`/lobby/${this.state.pin}`);
+        } else {
+            // wait a second to register error message and then re-direct to home page
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            this.props.history.push(`/`);
         }
 
         // pass the res object back to the GamePassphrase component to display
