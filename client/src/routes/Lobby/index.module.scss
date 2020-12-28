@@ -14,8 +14,9 @@
 .HostHeader {
   display: flex;
   flex-direction: row;
+  align-items: center;
   justify-content: space-between;
-  padding-bottom: 0.5em;
+  padding: 0.5em;
 
   h1 {
     margin: 0;
@@ -28,7 +29,6 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
 }
-
 
 
 .Players {

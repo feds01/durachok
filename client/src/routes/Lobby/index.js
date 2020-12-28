@@ -10,7 +10,6 @@ import React from "react";
 import clsx from "clsx";
 import {io} from "socket.io-client";
 import {withRouter} from "react-router";
-import Button from "@material-ui/core/Button";
 import Divider from "@material-ui/core/Divider";
 import StarBorderOutlined from "@material-ui/icons/StarBorderOutlined";
 
@@ -74,6 +73,20 @@ class LobbyRoute extends React.Component {
                 ...message
             });
         });
+
+        // If a new player joins the lobby, we should update the player
+        // list
+        socket.on("new_player", (message) => {
+            this.setState((oldState) => {
+                return {
+                    lobby: {
+                        ...oldState.lobby,
+                        players: message.lobby.players,
+                        owner: message.lobby.owner,
+                    }
+                }
+            });
+        })
 
         this.setState({
             ws: socket,
