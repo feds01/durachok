@@ -1,19 +1,7 @@
 import './GameSecurity.scss';
 import Loader from "react-loader-spinner";
 import React, {useEffect, useState} from 'react';
-
-
-const GameSecurityCard = (props) => {
-    return (
-        <button
-            onClick={props.onClick}
-            disabled={props.selected}
-            className={'card' + (props.selected ? ' selected' : '')}
-        >
-            {props.symbol}
-        </button>
-    )
-}
+import GameSecurityCard from "../SecurityCard";
 
 const symbols = ['♡', '♢', '♣', '♤'];
 const errorMessages = {

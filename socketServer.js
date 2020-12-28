@@ -81,8 +81,12 @@ export const makeSocketServer = (server) => {
             }
 
             io.of(socket.nsp.name).emit("joined_game", {
-                players: playerList,
-                owner: owner.name,
+                isHost: socket.isAdmin,
+                lobby: {
+                    ...(socket.isAdmin && {passphrase: socket.lobby.passphrase}),
+                    players: playerList,
+                    owner: owner.name,
+                }
             });
         });
 

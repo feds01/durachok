@@ -1,38 +1,56 @@
-.lobbyLoader {
+.Loader {
   & svg {
     margin: 0 auto;
     width: 100%;
   }
 }
 
-.lobbyTitle {
+.Header {
   font-size: 36px;
   font-weight: bold;
   text-align: center;
 }
 
-.lobbyPlayers {
-  padding-top: 2px;
-  display: block;
+.HostHeader {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  padding-bottom: 0.5em;
 
-  & div, span {
-    padding-left: 12px;
-    padding-right: 12px;
-    line-height: 28px;
-    font-size: 20px;
+  h1 {
+    margin: 0;
+    font-size: 48px;
     font-weight: bold;
   }
+}
+
+.SubHeader {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+}
+
+
+
+.Players {
+  padding-top: 2px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: minmax(160px, 1fr);
 
   & div {
     display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 28px;
+    font-weight: bold;
+    text-align: center;
+  }
 
-    &:first-child {
-      padding-left: 0;
-      padding-right: 0;
-    }
+  & div {
+    justify-content: center;
+    display: inline-flex;
 
     & svg {
-      margin: auto;
       height: 100%;
     }
   }
