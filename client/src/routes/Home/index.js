@@ -10,15 +10,13 @@ import React from "react";
 import Prompt from "../../components/Prompt";
 import PlayingCardsIcon from './../../assets/image/playing-cards.svg'
 import {ReactComponent as PlayingCardIcon} from './../../assets/image/playing-card.svg';
+import Logo from "../../components/Logo";
 
 const HomeRoute = () => {
     return (
         <>
             <div className="App-join">
-                <h2>
-                    <img src={PlayingCardsIcon} width={48} height={48} alt={''}/>
-                    Durachok
-                </h2>
+                <Logo size={64}/>
                 <br/>
                 <div className={'App-join-prompt'}>
                     <Prompt/>

@@ -12,6 +12,7 @@ import {io} from "socket.io-client";
 import {withRouter} from "react-router";
 import Divider from "@material-ui/core/Divider";
 import StarBorderOutlined from "@material-ui/icons/StarBorderOutlined";
+import ArrowForwardIosIcon from '@material-ui/icons/ArrowForwardIos';
 
 import * as error from "../../error";
 import styles from "./index.module.scss";
@@ -19,6 +20,8 @@ import {getAuthTokens} from "../../utils/auth";
 import LoadingScreen from "../../components/LoadingScreen";
 import Passphrase from "../../components/Passphrase";
 import Logo from "../../components/Logo";
+import PlayerCounter from "../../components/PlayerCounter";
+import Button from "@material-ui/core/Button";
 
 class LobbyRoute extends React.Component {
     constructor(props) {
@@ -29,6 +32,8 @@ class LobbyRoute extends React.Component {
 
     componentDidMount() {
         const id = this.props.match.params.id;
+
+        // TODO: move websocket endpoint to config
         const socket = io(`localhost:5000/${id}`, {query: getAuthTokens(), transports: ["websocket"]});
 
         // client-side
@@ -118,16 +123,24 @@ class LobbyRoute extends React.Component {
                     <Divider style={{backgroundColor: "rgba(172, 170, 190, 1)"}}/>
 
                     <div className={styles.SubHeader}>
-                        <div>
-                            <span>{lobby.players.length}</span>
-                            <p>players</p>
-                        </div>
-                        <Logo/>
-                        {isHost && (
-                            <p>Start Game</p>
-                        )}
+                        <PlayerCounter count={lobby.players.length} />
+                        <Logo size={48}/>
+                        {isHost ? (
+                            <Button
+                                variant={'contained'}
+                                disableElevation
+                                disableRipple
+                                style={{
+                                    height: 40
+                                }}
+                                disabled={lobby.players.length < 2}
+                                color={'primary'}
+                                endIcon={<ArrowForwardIosIcon/>}
+                            >
+                               Start
+                            </Button>
+                        ) : <span/>}
                     </div>
-                    <Divider style={{backgroundColor: "rgba(172, 170, 190, 1)"}}/>
 
                     <div className={styles.Players}>
                         {

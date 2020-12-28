@@ -13,17 +13,6 @@ $purple: #3b3d54;
   text-align: center;
   font-size: 1.4vw;
 
-  h2 {
-    font-size: 6.5vw;
-    font-weight: 900;
-    font-style: italic;
-    color: #dad8ec;
-
-    @media screen and (min-width: 1200px) {
-      font-size: 64px;
-    }
-  }
-
   &-prompt {
 
   }
