@@ -5,6 +5,7 @@ import * as error from "./api/error";
 import jwt from "jsonwebtoken";
 import Player from "./api/models/user";
 import * as lobbyUtils from "./api/utils/lobby";
+import {GameState} from "./api/common/game";
 
 
 export const makeSocketServer = (server) => {
@@ -66,12 +67,16 @@ export const makeSocketServer = (server) => {
         }
     });
 
-    lobbies.on('connect', (socket) => {
+    lobbies.on('connect', (socket, next) => {
         //connection is up, let's add a simple simple event
         socket.on('join_game', async (message) => {
 
-            //log the received message and send it back to the client
-            console.log('received: %s', message);
+            // check that the status of the lobby is on status 'WAITING'. If the game has
+            // started, return a 'Lobby full' error code.
+            if (socket.lobby.status !== GameState.WAITING || socket.lobby.players.length === socket.lobby.maxPlayers) {
+                next(new Error(error.LOBBY_FULL));
+            }
+
             const playerList = await lobbyUtils.buildPlayerList(socket.lobby);
             const owner = await Player.findOne({_id: socket.lobby.owner});
 
@@ -99,12 +104,32 @@ export const makeSocketServer = (server) => {
             });
         });
 
-        socket.on("start_game", async (message) => {
-            if (!socket.isAdmin) {
-                io.to(socket).emit("unauthorized", {status: false, message: "Failed to start game."});
+        // TODO: this should be ideally server side... Could be done with CRON
+        //      jobs but im not sure if that is also a suitable solution.
+        socket.on('update_passphrase', async (message) => {
+            if (!socket.isAdmin) return next(new Error(error.UNAUTHORIZED));
+
+            // update the passphrase in the MongoDB with the one the client said
+            try {
+                await Lobby.updateOne({_id: socket.lobby._id}, {passphrase: message.passphrase});
+
+                // @cleanup: this might be redundant since the server will return an error if it doesn't
+                // manage to update the passphrase.
+                socket.emit("updated_passphrase", {passphrase: message.passphrase});
+            } catch (e) {
+                console.log(e)
+                next(new Error(error.INTERNAL_SERVER_ERROR));
             }
+        });
+
+        socket.on("start_game", async (message) => {
+            if (!socket.isAdmin) return next(new Error(error.UNAUTHORIZED));
 
 
-        })
+        });
+
+        socket.on("turn", async (message) => {
+
+        });
     });
 }

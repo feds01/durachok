@@ -10,30 +10,39 @@
   font-family: 'Cabin', sans-serif;
   font-weight: bold;
   text-align: center;
+  background: #1a1d3d;
+  padding: 0.5em;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+
+  h1 {
+    font-size: 2em;
+    margin: 0;
+  }
 }
 
 .HostHeader {
   display: flex;
   flex-direction: row;
   font-family: 'Cabin', sans-serif;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   padding: 0.5em;
+  background: #1a1d3d;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
 
   h1 {
     margin: 0;
-    font-size: 48px;
+    font-size: 4em;
     font-weight: bold;
   }
 }
 
 .SubHeader {
+  justify-items: center;
   max-height: 100px;
   padding: 1em 0.5em;
-  display: flex;
-  flex: 0 0 auto;
-  justify-content: space-between;
-  flex-direction: row;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
 }
 
 

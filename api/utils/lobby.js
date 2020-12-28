@@ -47,6 +47,7 @@ export function createGamePin() {
     return generator();
 }
 
+
 export function createGamePassphrase() {
     const cardSuites = CardSuits.slice();
     let currentIndex = cardSuites.length, temporaryValue, randomIndex;

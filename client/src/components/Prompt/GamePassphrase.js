@@ -1,4 +1,4 @@
-import './GameSecurity.scss';
+import './GamePassphrase.scss';
 import Loader from "react-loader-spinner";
 import React, {useEffect, useState} from 'react';
 import GameSecurityCard from "../SecurityCard";
@@ -11,7 +11,7 @@ const errorMessages = {
     "MISSING_INFO": "Bad request, refresh browser"
 }
 
-const GameSecurity = React.memo(function GameSecurity({pin, onError, onSubmit}) {
+const GamePassphrase = React.memo(function GameSecurity({pin, onError, onSubmit}) {
     const [order, setOrder] = useState('');
     const [valid, setValid] = useState("");
     const [checking, setChecking] = useState(false);
@@ -92,4 +92,4 @@ const GameSecurity = React.memo(function GameSecurity({pin, onError, onSubmit}) 
     );
 });
 
-export default GameSecurity;
+export default GamePassphrase;

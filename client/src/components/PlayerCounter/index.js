@@ -5,11 +5,15 @@ import PersonIcon from '@material-ui/icons/Person';
 
 PlayerCounter.propTypes = {
     count: PropTypes.number.isRequired,
+    style: PropTypes.object,
 };
 
 function PlayerCounter(props) {
     return (
-        <div className={styles.Counter}>
+        <div
+            {...(props.style && {style: props.style})}
+            className={styles.Counter}
+        >
             <PersonIcon fontSize={"large"}/>
             <p>{props.count}</p>
         </div>
