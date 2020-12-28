@@ -7,21 +7,25 @@
  */
 
 import React from "react";
-import styles from "./index.module.scss";
+import clsx from "clsx";
 import {io} from "socket.io-client";
-import * as error from "../../error";
 import {withRouter} from "react-router";
-import {getAuthTokens} from "../../utils/auth";
+import Button from "@material-ui/core/Button";
 import Divider from "@material-ui/core/Divider";
-import LoadingScreen from "../../components/LoadingScreen";
 import StarBorderOutlined from "@material-ui/icons/StarBorderOutlined";
 
+import * as error from "../../error";
+import styles from "./index.module.scss";
+import {getAuthTokens} from "../../utils/auth";
+import LoadingScreen from "../../components/LoadingScreen";
+import Passphrase from "../../components/Passphrase";
+import Logo from "../../components/Logo";
 
 class LobbyRoute extends React.Component {
     constructor(props) {
         super(props);
 
-        this.state = {id: null, ws: null, loaded: false, lobby: {}, error: null};
+        this.state = {id: null, ws: null, isHost: false, loaded: false, lobby: {}, error: null};
     }
 
     componentDidMount() {
@@ -67,7 +71,7 @@ class LobbyRoute extends React.Component {
             // console.log("players: ", message);
             this.setState({
                 loaded: true,
-                lobby: message
+                ...message
             });
         });
 
@@ -82,27 +86,43 @@ class LobbyRoute extends React.Component {
         if (this.state.ws !== null) {
             this.state.ws.disconnect();
         }
-
-        // this.state?.ws.disconnect();
     }
 
     render() {
-        const {id, loaded, lobby, ws} = this.state;
+        const {id, isHost, loaded, lobby} = this.state;
 
         if (!loaded) {
             return <LoadingScreen><b>Joining Lobby...</b></LoadingScreen>
         } else {
             return (
                 <div>
-                    <h1 className={styles.lobbyTitle}>Lobby {id}</h1>
+                    <div className={clsx({[styles.Header]: !isHost, [styles.HostHeader]: isHost})}>
+                        <h1>Lobby {id}</h1>
+                        {isHost && (
+                            <Passphrase passphrase={lobby.passphrase.split("")}/>
+                        )}
+                    </div>
                     <Divider style={{backgroundColor: "rgba(172, 170, 190, 1)"}}/>
-                    <div className={styles.lobbyPlayers}>
+
+                    <div className={styles.SubHeader}>
+                        <div>
+                            <span>{lobby.players.length}</span>
+                            <p>players</p>
+                        </div>
+                        <Logo/>
+                        {isHost && (
+                            <p>Start Game</p>
+                        )}
+                    </div>
+                    <Divider style={{backgroundColor: "rgba(172, 170, 190, 1)"}}/>
+
+                    <div className={styles.Players}>
                         {
                             lobby.players.map((player, index) => {
                                 if (player === lobby.owner) {
                                     return (<div key={index}>{player} <StarBorderOutlined/></div>);
                                 } else {
-                                    return (<span key={index}>{player}</span>);
+                                    return (<div key={index}>{player}</div>);
                                 }
                             })
                         }

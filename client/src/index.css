@@ -15,6 +15,7 @@ body {
     font-size: 14px;
     overflow: hidden;
     display: flex;
+    margin: 0;
 }
 
 #root {

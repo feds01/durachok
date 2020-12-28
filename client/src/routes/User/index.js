@@ -12,7 +12,7 @@ import React, {useEffect, useState} from "react";
 import Divider from "@material-ui/core/Divider";
 
 
-import GameCard from "../../components/GameCard";
+import GameCard from "../../components/DashboardGameCard";
 import GameDialog from "../../components/GameDialog";
 import LoadingScreen from "../../components/LoadingScreen";
 import {getAuthHeader, getAuthTokens} from "../../utils/auth";
