@@ -2,7 +2,7 @@
 import {Server} from "socket.io";
 import jwt from "jsonwebtoken";
 import Lobby from "./src/models/game";
-import {error, game} from "shared";
+import {error, events, game} from "shared";
 import Player from "./src/models/user";
 import * as lobbyUtils from "./src/utils/lobby";
 
@@ -68,7 +68,7 @@ export const makeSocketServer = (server) => {
 
     lobbies.on('connect', (socket) => {
         //connection is up, let's add a simple simple event
-        socket.on('join_game', async (message) => {
+        socket.on(events.JOIN_GAME, async (message) => {
 
             // check that the status of the lobby is on status 'WAITING'. If the game has
             // started, return a 'Lobby full' error code.
@@ -131,7 +131,7 @@ export const makeSocketServer = (server) => {
             }
 
             // update the game state to 'STARTED' since the game has started
-            await Lobby.updateOne({_id: socket.lobby._id}, {status: GameState.STARTED});
+            await Lobby.updateOne({_id: socket.lobby._id}, {status: game.GameState.STARTED});
 
             // fire countdown event
             io.of(socket.lobby.pin.toString()).emit("countdown");
@@ -143,7 +143,7 @@ export const makeSocketServer = (server) => {
             // fire game_started event and update the game state to 'PLAYING'
             io.of(socket.lobby.pin.toString()).emit("game_started");
 
-            await Lobby.updateOne({_id: socket.lobby._id}, {status: GameState.PLAYING});
+            await Lobby.updateOne({_id: socket.lobby._id}, {status: game.GameState.PLAYING});
         });
 
         socket.on("turn", async (message) => {
