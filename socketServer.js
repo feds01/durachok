@@ -1,4 +1,3 @@
-//initialize the WebSocket server instance
 import {Server} from "socket.io";
 import jwt from "jsonwebtoken";
 import Lobby from "./src/models/game";
@@ -9,7 +8,6 @@ import * as lobbyUtils from "./src/utils/lobby";
 
 export const makeSocketServer = (server) => {
     const io = new Server(server, {});
-
     const lobbies = io.of(/^\/\d{6}$/);
 
     /**
@@ -73,7 +71,7 @@ export const makeSocketServer = (server) => {
             // check that the status of the lobby is on status 'WAITING'. If the game has
             // started, return a 'Lobby full' error code.
             if (socket.lobby.status !== game.GameState.WAITING || socket.lobby.players.length === socket.lobby.maxPlayers) {
-                socket.emit("error", new Error(error.LOBBY_FULL));
+                socket.emit(events.ERROR, new Error(error.LOBBY_FULL));
             }
 
             const playerList = await lobbyUtils.buildPlayerList(socket.lobby);
@@ -81,11 +79,11 @@ export const makeSocketServer = (server) => {
 
             // oops, was the owner account deleted
             if (!owner) {
-                socket.emit("error", error.INTERNAL_SERVER_ERROR);
+                socket.emit(events.ERROR, error.INTERNAL_SERVER_ERROR);
             }
 
             // send a private message to the socket with the required information
-            socket.emit("joined_game", {
+            socket.emit(events.JOINED_GAME, {
                 isHost: socket.isAdmin,
                 lobby: {
                     ...(socket.isAdmin && {passphrase: socket.lobby.passphrase}),
@@ -96,7 +94,7 @@ export const makeSocketServer = (server) => {
             })
 
             // notify all other clients that a new player has joined the lobby...
-            socket.broadcast.emit("new_player", {
+            socket.broadcast.emit(events.NEW_PLAYER, {
                 lobby: {
                     players: playerList,
                     owner: owner.name,
@@ -104,10 +102,11 @@ export const makeSocketServer = (server) => {
             });
         });
 
+
         // TODO: this should be ideally server side... Could be done with CRON
         //      jobs but im not sure if that is also a suitable solution.
-        socket.on('update_passphrase', async (message) => {
-            if (!socket.isAdmin) socket.emit("error", new Error(error.UNAUTHORIZED));
+        socket.on(events.UPDATE_PASSPHRASE, async (message) => {
+            if (!socket.isAdmin) socket.emit(events.ERROR, new Error(error.UNAUTHORIZED));
 
             // update the passphrase in the MongoDB with the one the client said
             try {
@@ -115,38 +114,47 @@ export const makeSocketServer = (server) => {
 
                 // @cleanup: this might be redundant since the server will return an error if it doesn't
                 // manage to update the passphrase.
-                socket.emit("updated_passphrase", {passphrase: message.passphrase});
+                socket.emit(events.UPDATE_PASSPHRASED, {passphrase: message.passphrase});
             } catch (e) {
                 console.log(e)
-                socket.emit("error", new Error(error.INTERNAL_SERVER_ERROR));
+                socket.emit(events.ERROR, new Error(error.INTERNAL_SERVER_ERROR));
             }
         });
 
-        socket.on("start_game", async (message) => {
-            if (!socket.isAdmin) socket.emit("error", new Error(error.UNAUTHORIZED));
+
+        // Handler method for the game starting event.
+        socket.on(events.START_GAME, async (message) => {
+            if (!socket.isAdmin) socket.emit(events.ERROR, new Error(error.UNAUTHORIZED));
 
             // check that there are at least 2 players in the lobby
             if (socket.lobby.players.length < 2) {
-                socket.emit("error", new Error(error.BAD_REQUEST));
+                socket.emit(events.ERROR, new Error(error.BAD_REQUEST));
             }
 
             // update the game state to 'STARTED' since the game has started
             await Lobby.updateOne({_id: socket.lobby._id}, {status: game.GameState.STARTED});
 
             // fire countdown event
-            io.of(socket.lobby.pin.toString()).emit("countdown");
+            io.of(socket.lobby.pin.toString()).emit(events.COUNTDOWN);
 
             // TODO: add mechanism to wait for all clients to confirm that they have finished
             //       counting down and are ready to begin the game...
             await new Promise(resolve => setTimeout(resolve, 5000)); // 5 sec wait
 
             // fire game_started event and update the game state to 'PLAYING'
-            io.of(socket.lobby.pin.toString()).emit("game_started");
+            io.of(socket.lobby.pin.toString()).emit(events.GAME_STARTED);
 
             await Lobby.updateOne({_id: socket.lobby._id}, {status: game.GameState.PLAYING});
         });
 
-        socket.on("turn", async (message) => {
+
+        // TODO: implement
+        socket.on(events.TURN, async (message) => {
+        });
+
+
+        // TODO: implement
+        socket.on(events.NEXT_ROUND, async (message) => {
 
         });
     });
