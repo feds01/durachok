@@ -22,8 +22,8 @@ app.use(cors());
 app.use(express.urlencoded({extended: false}));
 
 // Add our routes to the root router
-app.use('/src/user', userRouter);
-app.use('/src/lobby', lobbyRouter);
+app.use('/api/user', userRouter);
+app.use('/api/lobby', lobbyRouter);
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => {
