@@ -48,7 +48,7 @@ const router = express.Router();
 router.post('/register', async (req, res, next) => {
     let {email, password, name} = req.body;
 
-    if (typeof email === 'undefined' || typeof password === 'undefined' || typeof name === "undefined") {
+    if (typeof email !== 'string' || typeof password !== 'string' || typeof name !== "string") {
         return res.status(400).json({
             status: false,
             message: error.BAD_REQUEST,
