@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import User from './../models/user';
 import Lobby from './../models/game';
 
-import * as error from "../error";
+import {error} from "shared";
 import * as credentials from "../credentials";
 import {createTokens, userAuth} from "../authentication";
 

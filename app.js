@@ -8,10 +8,9 @@ import logger from 'morgan';
 import express from 'express';
 import mongoose from 'mongoose';
 import {createServer} from 'http';
-import {Game} from "./api/common/game";
 
-import userRouter from './api/routes/user';
-import lobbyRouter from './api/routes/lobby';
+import userRouter from './src/routes/user';
+import lobbyRouter from './src/routes/lobby';
 import {makeSocketServer} from "./socketServer";
 
 const app = express();
@@ -23,8 +22,8 @@ app.use(cors());
 app.use(express.urlencoded({extended: false}));
 
 // Add our routes to the root router
-app.use('/api/user', userRouter);
-app.use('/api/lobby', lobbyRouter);
+app.use('/src/user', userRouter);
+app.use('/src/lobby', lobbyRouter);
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => {
@@ -62,6 +61,4 @@ server.listen(process.env.PORT || 5000, () => {
 
     //initialize the WebSocket server instance
     makeSocketServer(server);
-
-    const game = new Game(12346, 8, {});
 });

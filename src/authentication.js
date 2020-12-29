@@ -1,5 +1,5 @@
 /**
- * api/authentication.js
+ * src/authentication.js
  *
  * Module description:
  * This module holds all the authentication tools that the API uses. The module
@@ -12,7 +12,7 @@
  */
 
 import jwt from "jsonwebtoken";
-import * as error from "./error";
+import {error} from "shared";
 import User from "./models/user";
 
 
