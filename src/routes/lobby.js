@@ -1,11 +1,9 @@
 import express from 'express';
 import {nanoid} from "nanoid";
-import * as error from "../error";
 import Lobby from './../models/game';
-import {BAD_REQUEST} from "../error";
 import {createTokens, userAuth} from "../authentication";
-import {checkNameFree, createGamePassphrase, createGamePin} from "../utils/lobby";
-import {GameState} from "../common/game";
+import {checkNameFree, createGamePin} from "../utils/lobby";
+import {error, game, lobby as LobbyUtils} from "shared";
 
 const router = express.Router();
 
@@ -25,7 +23,7 @@ function validatePin(req, res, next) {
 }
 
 /**
- * @version api-v0.0.1
+ * @version src-v0.0.1
  * @method POST
  * @url https://durachok.game/api/lobby
  * @example {
@@ -100,7 +98,7 @@ router.post("/", userAuth, async (req, res) => {
         maxPlayers,
         roundTimeout,
         pin: gamePin,
-        passphrase: createGamePassphrase(),
+        passphrase: LobbyUtils.createGamePassphrase(),
 
         // automatically put the user into the lobby
         players: [
@@ -163,7 +161,7 @@ router.get('/:pin', validatePin, async (req, res) => {
     }
 
     // notify client if they can't even join the current lobby if it's full or in sessions
-    if (lobby.players.length === lobby.maxPlayers || lobby.status !== GameState.WAITING) {
+    if (lobby.players.length === lobby.maxPlayers || lobby.status !== game.GameState.WAITING) {
         return res.status(400).json({
             status: false,
             message: error.LOBBY_FULL,
@@ -275,7 +273,7 @@ router.post("/:pin/join", validatePin, async (req, res) => {
     }
 
     // check that there are free slots within the lobby
-    if (lobby.players.length === lobby.maxPlayers || lobby.status !== GameState.WAITING) {
+    if (lobby.players.length === lobby.maxPlayers || lobby.status !== game.GameState.WAITING) {
         return res.status(400).json({
             status: false,
             err: "LOBBY_FULL",
@@ -288,7 +286,7 @@ router.post("/:pin/join", validatePin, async (req, res) => {
         return res.status(400).json({
             status: false,
             err: "MISSING_INFO",
-            message: BAD_REQUEST
+            message: error.BAD_REQUEST
         });
     }
 

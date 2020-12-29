@@ -1,11 +1,10 @@
 //initialize the WebSocket server instance
 import {Server} from "socket.io";
-import Lobby from "./api/models/game";
-import * as error from "./api/error";
 import jwt from "jsonwebtoken";
-import Player from "./api/models/user";
-import * as lobbyUtils from "./api/utils/lobby";
-import {GameState} from "./api/common/game";
+import Lobby from "./src/models/game";
+import {error, game} from "shared";
+import Player from "./src/models/user";
+import * as lobbyUtils from "./src/utils/lobby";
 
 
 export const makeSocketServer = (server) => {
@@ -73,7 +72,7 @@ export const makeSocketServer = (server) => {
 
             // check that the status of the lobby is on status 'WAITING'. If the game has
             // started, return a 'Lobby full' error code.
-            if (socket.lobby.status !== GameState.WAITING || socket.lobby.players.length === socket.lobby.maxPlayers) {
+            if (socket.lobby.status !== game.GameState.WAITING || socket.lobby.players.length === socket.lobby.maxPlayers) {
                 socket.emit("error", new Error(error.LOBBY_FULL));
             }
 

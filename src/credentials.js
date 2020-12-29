@@ -1,5 +1,5 @@
 /**
- * api/credentials.js
+ * src/credentials.js
  *
  * Module description:
  *
