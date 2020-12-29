@@ -3278,7 +3278,7 @@ setprototypeof@1.1.1:
 
 "shared@git+https://github.com/feds01/durak-cards-shared#master":
   version "1.0.0"
-  resolved "git+https://github.com/feds01/durak-cards-shared#eb91ed421a92f81046aa785883c917dfc48029ed"
+  resolved "git+https://github.com/feds01/durak-cards-shared#082c72eff6f166eadbf967aa09465f4e9e4e0844"
   dependencies:
     nanoid "^3.1.20"
 
