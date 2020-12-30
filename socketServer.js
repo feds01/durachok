@@ -65,8 +65,63 @@ export const makeSocketServer = (server) => {
     });
 
     lobbies.on('connect', (socket) => {
+
+        socket.on("disconnecting", async () => {
+            // if the socket connection is not an admin, we need to remove it from
+            // the player lobby and free up a space.
+            if (!socket.isAdmin) {
+
+                // TODO: what happens when the game is in progress and one of the players leave?
+                //       .
+                //       1). Potentially, the game has to be restarted and some condition is used to
+                //       determine which player leaves when winning the lobby.
+                //       .
+                //       2). A secondary solution is to use a bot service that plays for the other
+                //           player when the original player leaves...
+                if (socket.lobby.status === game.GameState.PLAYING) {
+                    console.log("Removing player from game whilst in session...");
+                }
+
+                // Remove the player from the list
+                if (socket.lobby.status === game.GameState.WAITING) {
+                    const players = socket.lobby.players;
+
+                    players.splice(players.findIndex((player) => player.sockedId === socket.id), 1);
+
+                    // update mongo with new player list and send out update about players
+                    const updatedLobby = await Lobby.findOneAndUpdate(
+                        {_id: socket.lobby._id},
+                        {$set: {'players': players}},
+                        {new: true}
+                    );
+
+                    // notify all other clients that a new player has joined the lobby...
+                    socket.broadcast.emit(events.NEW_PLAYER, {
+                        lobby: {
+                            players: await lobbyUtils.buildPlayerList(updatedLobby),
+                            owner: socket.lobby.name,
+                        }
+                    });
+                }
+
+            }
+        });
+
         //connection is up, let's add a simple simple event
         socket.on(events.JOIN_GAME, async (message) => {
+
+
+            // update the players object for the game with the socket id
+            const players = socket.lobby.players;
+            const idx = players.findIndex((player) => player.name === socket.decoded.name);
+
+            // set socket id and set the player as 'confirmed' for the lobby.
+            players[idx] = {name: players[idx].name, _id: players[idx]._id, socketId: socket.id, confirmed: true};
+
+            await Lobby.updateOne(
+                {_id: socket.lobby._id},
+                {$set: {'players': players}}
+            );
 
             // check that the status of the lobby is on status 'WAITING'. If the game has
             // started, return a 'Lobby full' error code.
@@ -114,7 +169,7 @@ export const makeSocketServer = (server) => {
 
                 // @cleanup: this might be redundant since the server will return an error if it doesn't
                 // manage to update the passphrase.
-                socket.emit(events.UPDATE_PASSPHRASED, {passphrase: message.passphrase});
+                socket.emit(events.UPDATED_PASSPHRASE, {passphrase: message.passphrase});
             } catch (e) {
                 console.log(e)
                 socket.emit(events.ERROR, new Error(error.INTERNAL_SERVER_ERROR));
@@ -132,7 +187,7 @@ export const makeSocketServer = (server) => {
             }
 
             // update the game state to 'STARTED' since the game has started
-            await Lobby.updateOne({_id: socket.lobby._id}, {status: game.GameState.STARTED});
+            // await Lobby.updateOne({_id: socket.lobby._id}, {status: game.GameState.STARTED});
 
             // fire countdown event
             io.of(socket.lobby.pin.toString()).emit(events.COUNTDOWN);
@@ -141,11 +196,38 @@ export const makeSocketServer = (server) => {
             //       counting down and are ready to begin the game...
             await new Promise(resolve => setTimeout(resolve, 5000)); // 5 sec wait
 
+            // Instantiate the game with the players and distribute the player cards to each player
+            const Game = new game.Game(await lobbyUtils.buildPlayerList(socket.lobby));
+
+            // console.log(socket.nsp.sockets.keys())
+
             // fire game_started event and update the game state to 'PLAYING'
             io.of(socket.lobby.pin.toString()).emit(events.GAME_STARTED);
 
-            await Lobby.updateOne({_id: socket.lobby._id}, {status: game.GameState.PLAYING});
+            // await Lobby.updateOne({_id: socket.lobby._id}, {status: game.GameState.PLAYING});
         });
+
+        socket.on(events.KICK_PLAYER, async (message) => {
+            if (!socket.isAdmin) socket.emit(events.ERROR, new Error(error.UNAUTHORIZED));
+
+            // check that we're currently waiting for players as the admin
+            // cannot kick players once the game has started.
+            if (socket.lobby.status !== game.GameState.WAITING) {
+                socket.emit(events.ERROR, new Error(error.BAD_REQUEST));
+            }
+
+            // check that the player 'name' is present in the current lobby
+            const playerSocket = socket.lobby.players.find((player) => player.name === message.name);
+
+            if (!playerSocket) {
+                socket.emit(events.ERROR, new Error(error.BAD_REQUEST));
+            }
+
+            // otherwise disconnect the socket from the current namespace.
+            if (io.of(socket.lobby.pin).connected[playerSocket.sockedId]) {
+                io.of(socket.lobby.pin).connected[playerSocket.sockedId].disconnect(true);
+            }
+        })
 
 
         // TODO: implement
