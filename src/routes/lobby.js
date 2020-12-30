@@ -102,7 +102,9 @@ router.post("/", userAuth, async (req, res) => {
 
         // automatically put the user into the lobby
         players: [
-            id
+            // TODO: technically this connection should also be monitored for disconnects.
+            //       If the connection severs, the lobby should be cleaned up.
+            {name: req.token.name, sockedId: null, confirmed: true}
         ],
         rngSeed: nanoid(),
         owner: id,
@@ -322,7 +324,7 @@ router.post("/:pin/join", validatePin, async (req, res) => {
     const players = lobby.players;
 
     players.push({
-        name, ip
+        name, socketId: null, confirmed: false,
     });
 
     await Lobby.update(

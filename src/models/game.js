@@ -5,7 +5,14 @@ const gameSchema = new mongoose.Schema({
     pin: {type: String, required: true, unique: true},
     passphrase: {type: String, required: false},
     maxPlayers: {type: Number, required: true},
-    players: {type: Array, required: true},
+    players: {
+        type: [{
+            name: {type: String, required: true},
+            socketId: {type: String, required: false},
+            confirmed: {type: Boolean, required: true}
+        }],
+        required: true
+    },
     state: {type: Object, required: false},
     status: {type: String, required: true, default: game.GameState.WAITING},
     history: {type: Object, required: false},
