@@ -66,6 +66,14 @@ export const makeSocketServer = (server) => {
 
     lobbies.on('connect', (socket) => {
 
+        // TODO: only refresh data for a particular number of events rather than any event.
+        // Listener to any event occurring on the socket
+        socket.onAny(async (event, ...args) => {
+            const lobbyPin = socket.nsp.name.split("/")[1];
+
+            socket.lobby = await Lobby.findOne({pin: lobbyPin});
+        })
+
         socket.on("disconnecting", async () => {
             // if the socket connection is not an admin, we need to remove it from
             // the player lobby and free up a space.
@@ -109,11 +117,17 @@ export const makeSocketServer = (server) => {
 
         //connection is up, let's add a simple simple event
         socket.on(events.JOIN_GAME, async (message) => {
-
+            console.log("join_game...")
 
             // update the players object for the game with the socket id
             const players = socket.lobby.players;
             const idx = players.findIndex((player) => player.name === socket.decoded.name);
+
+            // Couldn't find the player by name...
+            if (idx < 0) {
+                socket.emit("close", {"reason": "Invalid session."});
+                return socket.disconnect();
+            }
 
             // set socket id and set the player as 'confirmed' for the lobby.
             players[idx] = {name: players[idx].name, _id: players[idx]._id, socketId: socket.id, confirmed: true};
@@ -125,8 +139,8 @@ export const makeSocketServer = (server) => {
 
             // check that the status of the lobby is on status 'WAITING'. If the game has
             // started, return a 'Lobby full' error code.
-            if (socket.lobby.status !== game.GameState.WAITING || socket.lobby.players.length === socket.lobby.maxPlayers) {
-                socket.emit(events.ERROR, new Error(error.LOBBY_FULL));
+            if (socket.lobby.status !== game.GameState.WAITING) {
+                return socket.emit(events.ERROR, {status: false, type: "lobby_full", message: error.LOBBY_FULL});
             }
 
             const playerList = await lobbyUtils.buildPlayerList(socket.lobby);
@@ -134,7 +148,7 @@ export const makeSocketServer = (server) => {
 
             // oops, was the owner account deleted
             if (!owner) {
-                socket.emit(events.ERROR, error.INTERNAL_SERVER_ERROR);
+                return socket.emit(events.ERROR, {status: false, type: "internal_server_error", message: error.INTERNAL_SERVER_ERROR});
             }
 
             // send a private message to the socket with the required information
@@ -213,19 +227,44 @@ export const makeSocketServer = (server) => {
             // check that we're currently waiting for players as the admin
             // cannot kick players once the game has started.
             if (socket.lobby.status !== game.GameState.WAITING) {
-                socket.emit(events.ERROR, new Error(error.BAD_REQUEST));
+                return socket.emit(events.ERROR, {"status": false, "type": "bad_request", message: "can't kick player when playing."});
             }
 
             // check that the player 'name' is present in the current lobby
-            const playerSocket = socket.lobby.players.find((player) => player.name === message.name);
+            const players = socket.lobby.players;
+            const index = players.findIndex((player) => player.name === message.name);
 
-            if (!playerSocket) {
-                socket.emit(events.ERROR, new Error(error.BAD_REQUEST));
+            if (index < 0) {
+                return socket.emit(events.ERROR, {"status": false, "type": "bad_request", message: "Invalid player."});
+            }
+
+            // @cleanup: this shouldn't occur since connections should be automatically cleaned up.
+            if (!players[index].socketId) {
+                players.splice(index, 1);
+
+                // update mongo with new player list and send out update about players
+                const updatedLobby = await Lobby.findOneAndUpdate(
+                    {_id: socket.lobby._id},
+                    {$set: {players}},
+                    {new: true}
+                );
+
+                // notify all other clients that a new player has joined the lobby...
+                return socket.broadcast.emit(events.NEW_PLAYER, {
+                    lobby: {
+                        players: await lobbyUtils.buildPlayerList(updatedLobby),
+                        owner: socket.lobby.name,
+                    }
+                });
+
             }
 
             // otherwise disconnect the socket from the current namespace.
-            if (io.of(socket.lobby.pin).connected[playerSocket.sockedId]) {
-                io.of(socket.lobby.pin).connected[playerSocket.sockedId].disconnect(true);
+            const kickedPlayerSocket = io.of(socket.lobby.pin).sockets.get(players[index].socketId);
+
+            if (typeof kickedPlayerSocket !== "undefined") {
+                kickedPlayerSocket.emit("close", {"reason": "kicked"});
+                kickedPlayerSocket.disconnect();
             }
         })
 
