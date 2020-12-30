@@ -53,7 +53,12 @@ server.listen(process.env.PORT || 5000, () => {
     console.log(`Server started on port ${server.address().port}!`);
 
     console.log('Attempting connection with MongoDB cluster...')
-    mongoose.connect(process.env.MONGODB_CONNECTION_URI, {useNewUrlParser: true, useFindAndModify: false, useUnifiedTopology: true}, (err) => {
+    mongoose.connect(process.env.MONGODB_CONNECTION_URI, {
+        useNewUrlParser: true,
+        useCreateIndex: true,
+        useFindAndModify: false,
+        useUnifiedTopology: true
+    }, (err) => {
         if (err) throw err;
 
         console.log('Established connection with MongoDB service.')
