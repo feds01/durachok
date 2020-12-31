@@ -22,7 +22,7 @@ import User from "./models/user";
  * to unpack the contents into an object under the namespace 'user_data'. So, the data from
  * the token is accessible by using 'req.token'.
  */
-const getToken = async (req, res) => {
+export const getTokensFromHeader = async (req, res) => {
     const token = req.headers["x-token"];
 
     if (token) {
@@ -72,22 +72,16 @@ const getToken = async (req, res) => {
  * @returns {Object} The object contains the new token, new refresh token and the decoded user data
  * @error if the refreshToken is stale, the method will return an empty object.
  * */
-const refreshTokens = async (refreshToken) => {
-    try {
-        const decodedToken = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET_KEY);
+export const refreshTokens = async (refreshToken) => {
+    const decodedToken = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET_KEY);
 
-        // generate new token values to replace old token's with refreshed ones.
-        const {newToken, newRefreshToken} = await createTokens(decodedToken);
+    // generate new token values to replace old token's with refreshed ones.
+    const {newToken, newRefreshToken} = await createTokens(decodedToken);
 
-        return {
-            token: newToken,
-            refreshToken: newRefreshToken,
-        };
-
-    } catch (e) {
-        console.log("failed to refresh JWT.")
-        return {};
-    }
+    return {
+        token: newToken,
+        refreshToken: newRefreshToken,
+    };
 }
 
 /**
@@ -124,10 +118,9 @@ export const createTokens = async (payload) => {
 
 
 export const userAuth = async (req, res, next) => {
-    await getToken(req, res); // unpack JWT token
+    await getTokensFromHeader(req, res); // unpack JWT token
 
     if (!res.headersSent) {
-
         if (req.token.id) {
             const existingUser = await User.find({_id: req.token.id});
 
@@ -138,8 +131,7 @@ export const userAuth = async (req, res, next) => {
                     extra: "User doesn't exist."
                 });
             } else {
-                // the request was fine and is authenticated.
-                next();
+                next(); // the request was fine and is authenticated.
             }
         } else {
             return res.status(401).json({

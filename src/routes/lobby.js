@@ -230,6 +230,7 @@ router.delete("/:pin", validatePin, userAuth, async (req, res) => {
             });
         }
 
+        // TODO: kick everyone from the lobby if any connections are present.
         return res.status(200).json({
             status: true,
             message: "Successfully delete game lobby."
@@ -304,7 +305,6 @@ router.post("/:pin/join", validatePin, async (req, res) => {
 
 
     if (lobby.passphrase !== passphrase) {
-        console.log(passphrase, lobby.passphrase)
         return res.status(401).json({
             status: false,
             err: "INVALID_PASSPHRASE",
@@ -327,7 +327,7 @@ router.post("/:pin/join", validatePin, async (req, res) => {
         name, socketId: null, confirmed: false,
     });
 
-    await Lobby.update(
+    await Lobby.updateOne(
         {_id: lobby._id},
         {$set: {'players': lobby.players}}
     );
@@ -344,7 +344,6 @@ router.post("/:pin/join", validatePin, async (req, res) => {
 router.post("/:pin/name", async (req, res) => {
     const {pin} = req.params;
     const {name} = req.body;
-    console.log(req.body)
 
     // check that the requesting user is the owner/creator of the lobby
     const lobby = await Lobby.findOne({pin});
@@ -359,7 +358,7 @@ router.post("/:pin/name", async (req, res) => {
     if (typeof name === "undefined") {
         return res.status(400).json({
             status: false,
-            message: BAD_REQUEST
+            message: error.BAD_REQUEST
         });
     }
 
