@@ -110,7 +110,7 @@ export const makeSocketServer = (server) => {
                     const players = lobby.players;
                     const playerIdx = players.findIndex((player) => player.socketId === socket.id);
 
-                    console.log("disconnecting", playerIdx);
+                    // Should not happen but if it does we shouldn't proceed...
                     if (playerIdx < 0) {
                         return;
                     }
@@ -137,7 +137,7 @@ export const makeSocketServer = (server) => {
         });
 
         //connection is up, let's add a simple simple event
-        socket.on(events.JOIN_GAME, async (message) => {
+        socket.on(events.JOIN_GAME, async () => {
             const lobby = await Lobby.findOne({pin: socket.lobby.pin});
             socket.lobby = lobby;
 
@@ -170,7 +170,11 @@ export const makeSocketServer = (server) => {
 
             // oops, was the owner account deleted
             if (!owner) {
-                return socket.emit(events.ERROR, {status: false, type: "internal_server_error", message: error.INTERNAL_SERVER_ERROR});
+                return socket.emit(events.ERROR, {
+                    status: false,
+                    type: "internal_server_error",
+                    message: error.INTERNAL_SERVER_ERROR
+                });
             }
 
             // send a private message to the socket with the required information
@@ -235,10 +239,25 @@ export const makeSocketServer = (server) => {
             await new Promise(resolve => setTimeout(resolve, 5000)); // 5 sec wait
 
             // Instantiate the game with the players and distribute the player cards to each player
-            const Game = new game.Game(await lobbyUtils.buildPlayerList(lobby));
+            const players = await lobbyUtils.buildPlayerList(lobby);
 
             // fire game_started event and update the game state to 'PLAYING'
             io.of(lobby.pin.toString()).emit(events.GAME_STARTED);
+
+            const Game = new game.Game(players);
+
+            // iterate over each socket id in the 'namespace' that is connected and send them
+            // the cards...
+            Game.players.forEach(((value, key) => {
+                const socketId = lobby.players.find(p => p.name === key).socketId;
+
+                // send each player their cards, round metadata, etc...
+                io.of(lobby.pin.toString()).sockets.get(socketId).emit("begin_round", {
+                    cards: value,
+                    trumpSuit: Game.trumpSuit,
+                    deckSize: Game.deck.length
+                });
+            }));
 
             // await Lobby.updateOne({_id: socket.lobby._id}, {status: game.GameState.PLAYING});
         });
@@ -251,7 +270,11 @@ export const makeSocketServer = (server) => {
             // check that we're currently waiting for players as the admin
             // cannot kick players once the game has started.
             if (lobby.status !== game.GameState.WAITING) {
-                return socket.emit(events.ERROR, {"status": false, "type": "bad_request", message: "can't kick player when playing."});
+                return socket.emit(events.ERROR, {
+                    "status": false,
+                    "type": "bad_request",
+                    message: "can't kick player when playing."
+                });
             }
 
             // check that the player 'name' is present in the current lobby
@@ -284,7 +307,7 @@ export const makeSocketServer = (server) => {
                     }
                 });
             } else {
-                kickedPlayerSocket.emit("close", {"reason": "kicked"});
+                kickedPlayerSocket.emit("close", {"reason": "kicked", "extra": "sorry."});
                 kickedPlayerSocket.disconnect();
             }
         });
