@@ -259,7 +259,15 @@ export const makeSocketServer = (server) => {
                 io.of(lobby.pin.toString()).sockets.get(socketId).emit("begin_round", {
                     cards: value,
                     trumpSuit: Game.trumpSuit,
-                    deckSize: Game.deck.length
+                    deckSize: Game.deck.length,
+
+                    // provide information about the table top
+                    tableTop: Game.tableTop,
+
+                    // provide information about how many cards other players are holding
+                    players: Array.from(Game.players.entries())
+                        .filter(item => item[0] !== key)
+                        .map(item => ({[item[0]]: item[1].deck.length})),
                 });
             }));
 
