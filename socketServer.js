@@ -6,6 +6,11 @@ import Player from "./src/models/user";
 import * as lobbyUtils from "./src/utils/lobby";
 import {refreshTokens} from "./src/authentication";
 
+// TODO: use dynamo to save this information rather than a local copy
+// A map of active games mapping the pin of the game to the game object.
+const ActiveGames = {
+};
+
 
 export const makeSocketServer = (server) => {
     const io = new Server(server, {});
@@ -257,12 +262,16 @@ export const makeSocketServer = (server) => {
 
                 // send each player their cards, round metadata, etc...
                 io.of(lobby.pin.toString()).sockets.get(socketId).emit("begin_round", {
-                    cards: value,
+                    // TODO: rename 'defending', 'attacking' into 'isDefending' and 'isAttacking' to
+                    //       make this more convenient.
+                    cards: value.deck,
+                    isDefending: value.defending,
+                    isAttacking: value.attacking,
                     trumpSuit: Game.trumpSuit,
                     deckSize: Game.deck.length,
 
                     // provide information about the table top
-                    tableTop: Game.tableTop,
+                    // tableTop: Game.tableTop,
 
                     // provide information about how many cards other players are holding
                     players: Array.from(Game.players.entries())
