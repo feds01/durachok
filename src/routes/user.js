@@ -268,7 +268,7 @@ router.post("/login", async (req, res) => {
  *
  * */
 router.get("/", userAuth, async (req, res) => {
-    const id = req.token.id;
+    const id = req.token.data.id;
 
     // find all the games that are owned by the current player.
     const games = (await Lobby.find({owner: id})).map((game) => {
@@ -284,7 +284,7 @@ router.get("/", userAuth, async (req, res) => {
         status: true,
         data: {
             games: games,
-            name: req.token.name,
+            name: req.token.data.name,
         }
     })
 });
