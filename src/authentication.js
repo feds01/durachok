@@ -76,12 +76,7 @@ export const refreshTokens = async (refreshToken) => {
     const decodedToken = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET_KEY);
 
     // generate new token values to replace old token's with refreshed ones.
-    const {newToken, newRefreshToken} = await createTokens(decodedToken);
-
-    return {
-        token: newToken,
-        refreshToken: newRefreshToken,
-    };
+    return await createTokens(decodedToken.data);
 }
 
 /**
@@ -96,7 +91,7 @@ export const refreshTokens = async (refreshToken) => {
  * */
 export const createTokens = async (payload) => {
     const token = await jwt.sign(
-        {...payload},
+        {data: {...payload}},
         process.env.JWT_SECRET_KEY,
         {
             expiresIn: "1h"
@@ -105,7 +100,7 @@ export const createTokens = async (payload) => {
 
     // sign the refresh-token
     const refreshToken = await jwt.sign(
-        {...payload},
+        {data: {...payload}},
         process.env.JWT_REFRESH_SECRET_KEY,
         {
             expiresIn: "7d",
@@ -121,8 +116,8 @@ export const userAuth = async (req, res, next) => {
     await getTokensFromHeader(req, res); // unpack JWT token
 
     if (!res.headersSent) {
-        if (req.token.id) {
-            const existingUser = await User.find({_id: req.token.id});
+        if (req.token.data.id) {
+            const existingUser = await User.find({_id: req.token.data.id});
 
             if (existingUser.length === 0) {
                 return res.status(404).json({

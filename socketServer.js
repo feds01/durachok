@@ -42,6 +42,7 @@ export const makeSocketServer = (server) => {
                     // one, therefore we should just prevent the handshake from succeeding.
                     try {
                         const newTokens = await refreshTokens(socket.handshake.query.refreshToken);
+                        console.log(newTokens)
 
 
                         // @nocheckin
@@ -49,7 +50,10 @@ export const makeSocketServer = (server) => {
 
                         // emit a 'token' event so that the client can update their copy of the token, refreshTokens
                         // TODO: move 'token' event name into shared/events
-                        socket.emit("token", {...newTokens});
+                        const err = new Error("token");
+                        err.data = newTokens; // additional details
+
+                        return next(err);
                     } catch (e) {
                         return next(new Error(error.AUTHENTICATION_FAILED));
                     }
@@ -57,10 +61,10 @@ export const makeSocketServer = (server) => {
 
                 // check that the nsp matched the pin or the user of the Durachok
                 // service is the owner of this lobby.
-                const isAdmin = typeof decoded.id !== "undefined";
+                const isAdmin = typeof decoded?.data.id !== "undefined";
 
                 if (isAdmin) {
-                    const user = await Player.findOne({_id: decoded.id});
+                    const user = await Player.findOne({_id: decoded.data.id});
 
                     // This shouldn't happen unless the user was deleted and the token is stale.
                     if (!user) {
@@ -74,12 +78,12 @@ export const makeSocketServer = (server) => {
                     }
                 }
 
-                if (!isAdmin && socket.lobby.pin !== decoded.pin) {
+                if (!isAdmin && socket.lobby.pin !== decoded.data.pin) {
                     return next(new Error(error.AUTHENTICATION_FAILED));
                 }
 
                 socket.isAdmin = isAdmin;
-                socket.decoded = decoded;
+                socket.decoded = decoded.data;
                 next();
             });
         } else {

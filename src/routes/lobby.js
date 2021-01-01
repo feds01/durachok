@@ -104,7 +104,7 @@ router.post("/", userAuth, async (req, res) => {
         players: [
             // TODO: technically this connection should also be monitored for disconnects.
             //       If the connection severs, the lobby should be cleaned up.
-            {name: req.token.name, sockedId: null, confirmed: true}
+            {name: req.token.data.name, sockedId: null, confirmed: true}
         ],
         rngSeed: nanoid(),
         owner: id,
@@ -213,7 +213,7 @@ router.delete("/:pin", validatePin, userAuth, async (req, res) => {
 
     // The lobby owner parameter should be the same as the the user id in the token.
     // If it's not we return a Unauthorized error code.
-    if (!lobby.owner._id.equals(req.token.id)) {
+    if (!lobby.owner._id.equals(req.token.data.id)) {
         return res.status(401).json({
             status: false,
             message: "Unable to delete the game",
