@@ -47,11 +47,6 @@ export const makeSocketServer = (server) => {
                     // one, therefore we should just prevent the handshake from succeeding.
                     try {
                         const newTokens = await refreshTokens(socket.handshake.query.refreshToken);
-                        console.log(newTokens)
-
-
-                        // @nocheckin
-                        console.log("REFRESHING_TOKEN", socket.id);
 
                         // emit a 'token' event so that the client can update their copy of the token, refreshTokens
                         // TODO: move 'token' event name into shared/events
@@ -266,7 +261,9 @@ export const makeSocketServer = (server) => {
                     //       make this more convenient.
                     cards: value.deck,
                     isDefending: value.defending,
-                    isAttacking: value.attacking,
+
+                    //@@nocheckin
+                    isAttacking: true,
                     trumpSuit: Game.trumpSuit,
                     deckSize: Game.deck.length,
 
