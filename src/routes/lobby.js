@@ -50,7 +50,7 @@ function validatePin(req, res, next) {
  * @return sends a response to client if the document was created and added to the system.
  * */
 router.post("/", userAuth, async (req, res) => {
-    const {id} = req.token;
+    const {id} = req.token.data;
 
     // Perform some validation on the passed parameters
     let {maxPlayers, roundTimeout} = req.body;
@@ -98,7 +98,7 @@ router.post("/", userAuth, async (req, res) => {
         maxPlayers,
         roundTimeout,
         pin: gamePin,
-        passphrase: LobbyUtils.createGamePassphrase(),
+        passphrase: LobbyUtils.createGamePassphrase().join(""),
 
         // automatically put the user into the lobby
         players: [

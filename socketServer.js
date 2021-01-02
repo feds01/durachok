@@ -257,13 +257,9 @@ export const makeSocketServer = (server) => {
 
                 // send each player their cards, round metadata, etc...
                 io.of(lobby.pin.toString()).sockets.get(socketId).emit("begin_round", {
-                    // TODO: rename 'defending', 'attacking' into 'isDefending' and 'isAttacking' to
-                    //       make this more convenient.
                     cards: value.deck,
-                    isDefending: value.defending,
-
-                    //@@nocheckin
-                    isAttacking: true,
+                    isDefending: value.isDefending,
+                    turned: value.turned,
                     trumpSuit: Game.trumpSuit,
                     deckSize: Game.deck.length,
 
