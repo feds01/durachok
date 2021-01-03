@@ -17,6 +17,7 @@ const gameSchema = new mongoose.Schema({
     status: {type: String, required: true, default: game.GameState.WAITING},
     history: {type: Object, required: false},
     rngSeed: {type: String, required: true},
+    use2FA: {type: Boolean, required: true, default: false},
     roundTimeout: {type: Number, required: false, default: 120},
     owner: {type: mongoose.Schema.Types.ObjectId, ref: 'user'},
 });
