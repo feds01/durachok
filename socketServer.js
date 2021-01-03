@@ -8,8 +8,7 @@ import {refreshTokens} from "./src/authentication";
 
 // TODO: use dynamo to save this information rather than a local copy
 // A map of active games mapping the pin of the game to the game object.
-const ActiveGames = {
-};
+const ActiveGames = {};
 
 
 export const makeSocketServer = (server) => {
@@ -185,7 +184,10 @@ export const makeSocketServer = (server) => {
             socket.emit(events.JOINED_GAME, {
                 isHost: socket.isAdmin,
                 lobby: {
-                    ...(socket.isAdmin && {passphrase: lobby.passphrase}),
+                    ...(socket.isAdmin && {
+                        with2FA: lobby.with2FA,
+                        passphrase: lobby.passphrase,
+                    }),
                     status: lobby.status,
                     players: playerList,
                     owner: owner.name,
@@ -204,6 +206,8 @@ export const makeSocketServer = (server) => {
 
         // TODO: this should be ideally server side... Could be done with CRON
         //      jobs but im not sure if that is also a suitable solution.
+
+        // TODO: Should we prevent a client updating a passphrase if 2FA is disabled?
         socket.on(events.UPDATE_PASSPHRASE, async (message) => {
             if (!socket.isAdmin) socket.emit(events.ERROR, new Error(error.UNAUTHORIZED));
 

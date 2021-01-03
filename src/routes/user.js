@@ -275,6 +275,7 @@ router.get("/", userAuth, async (req, res) => {
        return {
            players: game.players.length,
            pin: game.pin,
+           with2FA: game.with2FA,
            roundTimeout: game.roundTimeout,
            maxPlayers: game.maxPlayers,
        }

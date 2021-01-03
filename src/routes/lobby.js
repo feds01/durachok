@@ -53,7 +53,15 @@ router.post("/", userAuth, async (req, res) => {
     const {id} = req.token.data;
 
     // Perform some validation on the passed parameters
-    let {maxPlayers, roundTimeout} = req.body;
+    let {maxPlayers, with2FA, roundTimeout} = req.body;
+
+    if (typeof with2FA !== "boolean") {
+        return res.status(400).json({
+           status: false,
+           message: error.BAD_REQUEST,
+           extra: "Missing required game option."
+        });
+    }
 
     // attempt to parse both maxPlayers and roundTimeout
     try {
@@ -61,6 +69,7 @@ router.post("/", userAuth, async (req, res) => {
         roundTimeout = parseInt(roundTimeout);
     } catch (e) {
         return res.status(400).json({
+            status: false,
             message: error.BAD_REQUEST,
             extra: "Maximum players must be a number."
         });
@@ -68,6 +77,7 @@ router.post("/", userAuth, async (req, res) => {
 
     if (maxPlayers < 2 || maxPlayers > 8) {
         return res.status(400).json({
+            status: false,
             message: error.BAD_REQUEST,
             extra: "Game must have between two to eight players."
         });
@@ -77,6 +87,7 @@ router.post("/", userAuth, async (req, res) => {
     // enforce that players make a move/decision within the 60seconds.
     if (roundTimeout !== -1 && roundTimeout < 60) {
         return res.status(400).json({
+            status: false,
             message: error.BAD_REQUEST,
             extra: "Round timeout must be at least one minute."
         });
@@ -98,7 +109,8 @@ router.post("/", userAuth, async (req, res) => {
         maxPlayers,
         roundTimeout,
         pin: gamePin,
-        passphrase: LobbyUtils.createGamePassphrase().join(""),
+        with2FA: with2FA,
+        ...(with2FA && {passphrase: LobbyUtils.createGamePassphrase().join("")}),
 
         // automatically put the user into the lobby
         players: [
@@ -172,6 +184,10 @@ router.get('/:pin', validatePin, async (req, res) => {
 
     return res.status(200).json({
         status: true,
+        data: {
+            pin: lobby.pin,
+            with2FA: lobby.with2FA,
+        },
         message: "Lobby exists.",
     });
 });
@@ -285,7 +301,7 @@ router.post("/:pin/join", validatePin, async (req, res) => {
     }
 
 
-    if (typeof name === "undefined" || typeof passphrase === "undefined") {
+    if (typeof name === "undefined" || (lobby.with2FA && typeof passphrase === "undefined")) {
         return res.status(400).json({
             status: false,
             err: "MISSING_INFO",
@@ -304,7 +320,7 @@ router.post("/:pin/join", validatePin, async (req, res) => {
     }
 
 
-    if (lobby.passphrase !== passphrase) {
+    if (lobby.with2FA && lobby.passphrase !== passphrase) {
         return res.status(401).json({
             status: false,
             err: "INVALID_PASSPHRASE",
@@ -312,12 +328,8 @@ router.post("/:pin/join", validatePin, async (req, res) => {
         });
     }
 
-    // get the IP for the current request
-    const forwarded = req.headers['x-forwarded-for'];
-    const ip = forwarded ? forwarded.split(/, /)[0] : req.connection.remoteAddress;
-
     // Generate JWT token for the current user connection with an encoded name and IP
-    const {token, refreshToken} = await createTokens({ip, name, pin});
+    const {token, refreshToken} = await createTokens({name, pin});
 
     // Add the player object to the players list in the game object and update
     // it in the collection
