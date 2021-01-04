@@ -83,33 +83,33 @@ async function handler(context, socket, io) {
                 });
             }
         }
-
-        // iterate over each socket id in the 'namespace' that is connected and send them
-        // the cards...
-        Game.players.forEach(((value, key) => {
-            const socketId = lobby.players.find(p => p.name === key).socketId;
-
-            // send each player their cards, round metadata, etc...
-            io.of(lobby.pin.toString()).sockets.get(socketId).emit(events.ACTION, {
-                cards: value.deck,
-                isDefending: value.isDefending,
-                canAttack: value.canAttack,
-                turned: value.turned,
-
-                // TODO: send over trumpCard too
-                trumpSuit: Game.trumpSuit,
-                deckSize: Game.deck.length,
-
-                // provide information about the table top
-                tableTop: Object.fromEntries(Game.tableTop),
-
-                // provide information about how many cards other players are holding
-                players: Array.from(Game.players.entries())
-                    .filter(item => item[0] !== key)
-                    .map(item => ({[item[0]]: item[1].deck.length})),
-            });
-        }));
     }
+
+    // iterate over each socket id in the 'namespace' that is connected and send them
+    // the cards...
+    Game.players.forEach(((value, key) => {
+        const socketId = lobby.players.find(p => p.name === key).socketId;
+
+        // send each player their cards, round metadata, etc...
+        io.of(lobby.pin.toString()).sockets.get(socketId).emit(events.ACTION, {
+            cards: value.deck,
+            isDefending: value.isDefending,
+            canAttack: value.canAttack,
+            turned: value.turned,
+
+            // TODO: send over trumpCard too
+            trumpSuit: Game.trumpSuit,
+            deckSize: Game.deck.length,
+
+            // provide information about the table top
+            tableTop: Object.fromEntries(Game.tableTop),
+
+            // provide information about how many cards other players are holding
+            players: Array.from(Game.players.entries())
+                .filter(item => item[0] !== key)
+                .map(item => ({[item[0]]: item[1].deck.length})),
+        });
+    }));
 }
 
 export default handler;
