@@ -97,6 +97,11 @@ export const makeSocketServer = (server) => {
             if (!socket.isAdmin) {
                 const lobby = await Lobby.findOne({pin: socket.lobby.pin});
 
+                // The lobby might of been deleted...
+                if (lobby === null) {
+                    return;
+                }
+
                 // TODO: what happens when the game is in progress and one of the players leave?
                 //       .
                 //       1). Potentially, the game has to be restarted and some condition is used to
@@ -237,7 +242,7 @@ export const makeSocketServer = (server) => {
             }
 
             // update the game state to 'STARTED' since the game has started
-            // await Lobby.updateOne({_id: socket.lobby._id}, {status: game.GameState.STARTED});
+            await Lobby.updateOne({_id: socket.lobby._id}, {status: game.GameState.STARTED});
 
             // fire countdown event
             io.of(lobby.pin.toString()).emit(events.COUNTDOWN);
@@ -254,21 +259,28 @@ export const makeSocketServer = (server) => {
 
             const Game = new game.Game(players);
 
+            // save the game into the local game array
+            // TODO: use mongo to save this object
+            ActiveGames[lobby.pin] = Game;
+
             // iterate over each socket id in the 'namespace' that is connected and send them
             // the cards...
             Game.players.forEach(((value, key) => {
                 const socketId = lobby.players.find(p => p.name === key).socketId;
 
                 // send each player their cards, round metadata, etc...
-                io.of(lobby.pin.toString()).sockets.get(socketId).emit("begin_round", {
+                io.of(lobby.pin.toString()).sockets.get(socketId).emit(events.BEGIN_ROUND, {
                     cards: value.deck,
                     isDefending: value.isDefending,
+                    canAttack: value.canAttack,
                     turned: value.turned,
+
+                    // TODO: send over trumpCard too
                     trumpSuit: Game.trumpSuit,
                     deckSize: Game.deck.length,
 
                     // provide information about the table top
-                    // tableTop: Game.tableTop,
+                    tableTop: Object.fromEntries(Game.tableTop),
 
                     // provide information about how many cards other players are holding
                     players: Array.from(Game.players.entries())
@@ -277,7 +289,7 @@ export const makeSocketServer = (server) => {
                 });
             }));
 
-            // await Lobby.updateOne({_id: socket.lobby._id}, {status: game.GameState.PLAYING});
+            await Lobby.updateOne({_id: socket.lobby._id}, {status: game.GameState.PLAYING});
         });
 
         socket.on(events.KICK_PLAYER, async (message) => {
@@ -290,7 +302,7 @@ export const makeSocketServer = (server) => {
             if (lobby.status !== game.GameState.WAITING) {
                 return socket.emit(events.ERROR, {
                     "status": false,
-                    "type": "bad_request",
+                    type: error.BAD_REQUEST,
                     message: "can't kick player when playing."
                 });
             }
@@ -325,14 +337,119 @@ export const makeSocketServer = (server) => {
                     }
                 });
             } else {
-                kickedPlayerSocket.emit("close", {"reason": "kicked", "extra": "sorry."});
+                kickedPlayerSocket.emit(events.CLOSE, {"reason": "kicked", "extra": "sorry."});
                 kickedPlayerSocket.disconnect();
             }
         });
 
 
-        // TODO: implement
-        socket.on(events.TURN, async (message) => {
+        // TODO: event should be atomic
+        socket.on(events.MOVE, async (context) => {
+            const lobby = await Lobby.findOne({pin: socket.lobby.pin});
+
+            // get the game object
+            const Game = ActiveGames[lobby.pin];
+
+            // find the player in the database record by the socket id...
+            const {name} = socket.decoded;
+            const player = Game.players.get(name);
+
+            if (!player) {
+                return socket.emit(events.ERROR, {
+                    status: false,
+                    type: error.BAD_REQUEST,
+                    message: error.SOCKET_INVALID_SESSION,
+                });
+            }
+
+            if (player.isDefending) {
+                // TODO: wrap switch in an error handler just in case the game complains about
+                //      some invalid action...
+                switch (context.type) {
+                    case game.Game.MoveTypes.COVER: {
+                        Game.coverCardOnTableTop(context.card, context.pos);
+                        break;
+                    }
+                    case game.Game.MoveTypes.PLACE: {
+                        Game.addCardToTableTop(name, context.card);
+                        break;
+                    }
+                    case game.Game.MoveTypes.FORFEIT: {
+                        Game.finaliseRound();
+                        break;
+                    }
+                    default: {
+                        return socket.emit(events.ERROR, {
+                            "status": false,
+                            "type": events.INVALID_MOVE,
+                            message: "Invalid move type."
+                        });
+                    }
+                }
+            } else {
+
+                // If the player is attempting to attack (MoveType of 'place) but they aren't allowed
+                // to attack at this time (for example at the start of the round) this is reported as
+                // being invalid
+                if (!player.canAttack) {
+                    return socket.emit(events.ERROR, {
+                        "status": false,
+                        "type": events.INVALID_MOVE,
+                        message: "Can't perform action at this time."
+                    });
+                }
+
+
+                // TODO: wrap switch in an error handler just in case the game complains about
+                //      some invalid action...
+                switch (context.type) {
+                    case game.Game.MoveTypes.PLACE: {
+                        Game.addCardToTableTop(name, context.card);
+                        break;
+                    }
+                    case game.Game.MoveTypes.FORFEIT: {
+                        // just set the players 'turned' status as true
+                        Game.finalisePlayerTurn(name);
+                        break;
+                    }
+
+                    // check for improper request combinations such as a 'attacking' player
+                    // trying to cover a card on the table...
+                    default: {
+                        return socket.emit(events.ERROR, {
+                            "status": false,
+                            "type": events.INVALID_MOVE,
+                            message: "Invalid move type."
+                        });
+                    }
+                }
+
+                // iterate over each socket id in the 'namespace' that is connected and send them
+                // the cards...
+                Game.players.forEach(((value, key) => {
+                    const socketId = lobby.players.find(p => p.name === key).socketId;
+
+                    // send each player their cards, round metadata, etc...
+                    io.of(lobby.pin.toString()).sockets.get(socketId).emit(events.ACTION, {
+                        cards: value.deck,
+                        isDefending: value.isDefending,
+                        canAttack: value.canAttack,
+                        turned: value.turned,
+
+                        // TODO: send over trumpCard too
+                        trumpSuit: Game.trumpSuit,
+                        deckSize: Game.deck.length,
+
+                        // provide information about the table top
+                        tableTop: Object.fromEntries(Game.tableTop),
+
+                        // provide information about how many cards other players are holding
+                        players: Array.from(Game.players.entries())
+                            .filter(item => item[0] !== key)
+                            .map(item => ({[item[0]]: item[1].deck.length})),
+                    });
+                }));
+            }
         });
 
 
