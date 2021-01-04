@@ -11,7 +11,7 @@ import {createServer} from 'http';
 
 import userRouter from './src/routes/user';
 import lobbyRouter from './src/routes/lobby';
-import {makeSocketServer} from "./socketServer";
+import {makeSocketServer} from "./src/socket";
 
 const app = express();
 app.set('view engine', 'ejs');
