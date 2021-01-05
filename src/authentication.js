@@ -116,7 +116,7 @@ export const userAuth = async (req, res, next) => {
     await getTokensFromHeader(req, res); // unpack JWT token
 
     if (!res.headersSent) {
-        if (req.token.data.id) {
+        if (req.token?.data.id) {
             const existingUser = await User.find({_id: req.token.data.id});
 
             if (existingUser.length === 0) {
