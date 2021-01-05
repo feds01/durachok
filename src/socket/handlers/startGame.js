@@ -41,6 +41,12 @@ async function handler(context, socket, io) {
     Game.players.forEach(((value, key) => {
         const socketId = lobby.players.find(p => p.name === key).socketId;
 
+        // panic, one of the clients disconnected...
+        if (typeof io.of(lobby.pin.toString()).sockets.get(socketId) === 'undefined') {
+            console.log("player disconnected pre-maturely, we should reset to waiting room.");
+            return;
+        }
+
         // send each player their cards, round metadata, etc...
         io.of(lobby.pin.toString()).sockets.get(socketId).emit(events.BEGIN_ROUND, {
             cards: value.deck,
