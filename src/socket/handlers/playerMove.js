@@ -36,6 +36,7 @@ async function handler(context, socket, io) {
                     break;
                 }
                 case game.Game.MoveTypes.FORFEIT: {
+                    Game.finalisePlayerTurn(name);
                     Game.finaliseRound();
                     break;
                 }
@@ -60,9 +61,6 @@ async function handler(context, socket, io) {
                 });
             }
 
-
-            // TODO: wrap switch in an error handler just in case the game complains about
-            //      some invalid action...
             switch (context.type) {
                 case game.Game.MoveTypes.PLACE: {
                     Game.addCardToTableTop(name, context.card);
@@ -86,26 +84,10 @@ async function handler(context, socket, io) {
             }
         }
     } catch (e) {
+        console.log(e);
 
         // Send the client the 'safe' state...
-        return socket.emit(events.INVALID_MOVE, {
-            cards: player.deck,
-            isDefending: player.isDefending,
-            canAttack: player.canAttack,
-            turned: player.turned,
-
-            // TODO: send over trumpCard too
-            trumpSuit: Game.trumpSuit,
-            deckSize: Game.deck.length,
-
-            // provide information about the table top
-            tableTop: Object.fromEntries(Game.tableTop),
-
-            // provide information about how many cards other players are holding
-            players: Array.from(Game.players.entries())
-                .filter(item => item[0] !== player.name)
-                .map(item => ({[item[0]]: item[1].deck.length})),
-        });
+        return socket.emit(events.INVALID_MOVE, Game.getStateForPlayer(name));
     }
 
     // iterate over each socket id in the 'namespace' that is connected and send them
@@ -114,28 +96,11 @@ async function handler(context, socket, io) {
         const socketId = lobby.players.find(p => p.name === key).socketId;
 
         // send each player their cards, round metadata, etc...
-        io.of(lobby.pin.toString()).sockets.get(socketId).emit(events.ACTION, {
-            // TODO: notify of the action that just occurred for all players.
-            //      For example, if the player 'alex' covers a card on pos 0
-            //      with "Jack of Spades', this information should be passed onto
-            //      the clients.
-            cards: value.deck,
-            isDefending: value.isDefending,
-            canAttack: value.canAttack,
-            turned: value.turned,
-
-            // TODO: send over trumpCard too
-            trumpSuit: Game.trumpSuit,
-            deckSize: Game.deck.length,
-
-            // provide information about the table top
-            tableTop: Object.fromEntries(Game.tableTop),
-
-            // provide information about how many cards other players are holding
-            players: Array.from(Game.players.entries())
-                .filter(item => item[0] !== key)
-                .map(item => ({[item[0]]: item[1].deck.length})),
-        });
+        // TODO: notify of the action that just occurred for all players.
+        //      For example, if the player 'alex' covers a card on pos 0
+        //      with "Jack of Spades', this information should be passed onto
+        //      the clients.
+        io.of(lobby.pin.toString()).sockets.get(socketId).emit(events.ACTION,  Game.getStateForPlayer(key));
     }));
 }
 
