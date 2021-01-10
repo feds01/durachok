@@ -1,9 +1,10 @@
 import express from 'express';
 import {nanoid} from "nanoid";
 import Lobby from './../models/game';
+import {emitLobbyEvent} from "../socket";
 import {createTokens, userAuth} from "../authentication";
 import {checkNameFree, createGamePin} from "../utils/lobby";
-import {error, game, lobby as LobbyUtils} from "shared";
+import {error, game, lobby as LobbyUtils, events} from "shared";
 
 const router = express.Router();
 
@@ -114,8 +115,6 @@ router.post("/", userAuth, async (req, res) => {
 
         // automatically put the user into the lobby
         players: [
-            // TODO: technically this connection should also be monitored for disconnects.
-            //       If the connection severs, the lobby should be cleaned up.
             {name: req.token.data.name, sockedId: null, confirmed: true}
         ],
         rngSeed: nanoid(),
@@ -246,7 +245,9 @@ router.delete("/:pin", validatePin, userAuth, async (req, res) => {
             });
         }
 
-        // TODO: kick everyone from the lobby if any connections are present.
+        // kick everyone from the lobby if any connections are present.
+        emitLobbyEvent(pin, events.CLOSE, {reason: "lobby_closed"});
+
         return res.status(200).json({
             status: true,
             message: "Successfully delete game lobby."
