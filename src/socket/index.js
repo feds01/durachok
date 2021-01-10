@@ -12,9 +12,31 @@ import playerMoveHandler from "./handlers/playerMove";
 import nextRoundActionHandler from "./handlers/nextRound";
 import disconnectionHandler from "./handlers/disconnection";
 import updatePassphraseHandler from "./handlers/updatePassphrase";
+import ServerError from "../errors/ServerError";
+
+let io = null;
+
+/**
+ * Method to emit an event to some lobby with any active connections on it.
+ *
+ * @param {string} pin - The pin of the lobby to emit the event to.
+ * @param {string} name - The name of the event.
+ * @param {Object} message - The event to emit.
+ */
+export function emitLobbyEvent(pin, name, message) {
+    if (io === null) {
+        throw new ServerError("Socket Server not initialised.");
+    }
+
+    if (!pin.match(/^\d{6}$/g)) {
+        throw new Error("Lobby pin doesn't match format.");
+    }
+
+    io.of(`/${pin}`).emit(name, message);
+}
 
 export const makeSocketServer = (server) => {
-    const io = new Server(server, {});
+    io = new Server(server, {});
     const lobbies = io.of(/^\/\d{6}$/);
 
     /**
