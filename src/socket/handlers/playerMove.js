@@ -1,14 +1,12 @@
 import Lobby from "../../models/game";
 import {error, events, game} from "shared";
 
-import {ActiveGames} from "./../index";
-
 // TODO: event should be atomic
 async function handler(context, socket, io) {
     const lobby = await Lobby.findOne({pin: socket.lobby.pin});
 
     // get the game object
-    const Game = ActiveGames[lobby.pin];
+    const Game = game.Game.fromState(lobby.game);
 
     // find the player in the database record by the socket id...
     const {name} = socket.decoded;
@@ -24,8 +22,6 @@ async function handler(context, socket, io) {
 
     try {
         if (player.isDefending) {
-            // TODO: wrap switch in an error handler just in case the game complains about
-            //      some invalid action...
             switch (context.type) {
                 case game.Game.MoveTypes.COVER: {
                     Game.coverCardOnTableTop(context.card, context.pos);
@@ -86,9 +82,12 @@ async function handler(context, socket, io) {
     } catch (e) {
         console.log(e);
 
-        // Send the client the 'safe' state...
+        // Send the client the 'safe' state and don't save the game.
         return socket.emit(events.INVALID_MOVE, Game.getStateForPlayer(name));
     }
+
+    // save the game into mongo
+    await Lobby.updateOne({_id: socket.lobby._id}, {game: Game.serialize()});
 
     // iterate over each socket id in the 'namespace' that is connected and send them
     // the cards...

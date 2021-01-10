@@ -13,8 +13,6 @@ import nextRoundActionHandler from "./handlers/nextRound";
 import disconnectionHandler from "./handlers/disconnection";
 import updatePassphraseHandler from "./handlers/updatePassphrase";
 
-export const ActiveGames = {};
-
 export const makeSocketServer = (server) => {
     const io = new Server(server, {});
     const lobbies = io.of(/^\/\d{6}$/);

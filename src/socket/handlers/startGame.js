@@ -1,8 +1,7 @@
-import {error, events, game} from "shared";
 import Lobby from "../../models/game";
+import {error, events, game} from "shared";
 import * as lobbyUtils from "../../utils/lobby";
 
-import {ActiveGames} from "./../index";
 
 async function handler(context, socket, io) {
     if (!socket.isAdmin) socket.emit(events.ERROR, new Error(error.UNAUTHORIZED));
@@ -32,9 +31,8 @@ async function handler(context, socket, io) {
 
     const Game = new game.Game(players);
 
-    // save the game into the local game array
-    // TODO: use mongo to save this object
-    ActiveGames[lobby.pin] = Game;
+    // save the game into mongo
+    await Lobby.updateOne({_id: socket.lobby._id}, {game: Game.serialize()});
 
     // iterate over each socket id in the 'namespace' that is connected and send them
     // the cards...
