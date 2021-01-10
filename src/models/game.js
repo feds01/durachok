@@ -33,6 +33,7 @@ const gameSchema = new mongoose.Schema({
             },
             deck: {type: [String]},
             history: {type: Object, required: false, default: {}},
+            hasVictory: {type: Boolean, default: false},
             trumpCard: {
                 type: {
                     value: {type: Number},
