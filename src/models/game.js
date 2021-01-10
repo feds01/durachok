@@ -20,6 +20,31 @@ const gameSchema = new mongoose.Schema({
     with2FA: {type: Boolean, required: true, default: false},
     roundTimeout: {type: Number, required: false, default: 120},
     owner: {type: mongoose.Schema.Types.ObjectId, ref: 'user'},
+    game: {
+        type: {
+            players: {
+                type: [{
+                    deck: {type: [String]},
+                    canAttack: {type: Boolean},
+                    beganRound: {type: Boolean},
+                    turned: {type: Boolean},
+                    isDefending: {type: Boolean}
+                }]
+            },
+            deck: {type: [String]},
+            history: {type: Object, required: false, default: {}},
+            trumpCard: {
+                type: {
+                    value: {type: Number},
+                    suit: {type: String},
+                    card: {type: String},
+                }
+            },
+            tableTop: {type: Map, of: String}
+        },
+        required: false,
+        default: {}
+    }
 });
 
 const GameModel = mongoose.model('game', gameSchema);
