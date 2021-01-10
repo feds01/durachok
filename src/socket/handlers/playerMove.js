@@ -33,7 +33,6 @@ async function handler(context, socket, io) {
                 }
                 case game.Game.MoveTypes.FORFEIT: {
                     Game.finalisePlayerTurn(name);
-                    Game.finaliseRound();
                     break;
                 }
                 default: {
