@@ -1,10 +1,10 @@
+import Joi from "joi";
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import User from './../models/user';
 import Lobby from './../models/game';
 
 import {error} from "shared";
-import * as credentials from "../credentials";
 import {createTokens, userAuth} from "../authentication";
 
 const router = express.Router();
@@ -48,29 +48,25 @@ const router = express.Router();
 router.post('/register', async (req, res, next) => {
     let {email, password, name} = req.body;
 
-    if (typeof email !== 'string' || typeof password !== 'string' || typeof name !== "string") {
+    const registerSchema = Joi.object().keys({
+        name: Joi.string()
+            .pattern(/^[A-Za-z0-9]+(?:[ _-][A-Za-z0-9]+)*$/)
+            .max(20, "Name too long")
+            .required(),
+        email: Joi.string().email().required(),
+        password: Joi.string().pattern(new RegExp('^[a-zA-Z0-9]{8,30}$')),
+    });
+
+    const result = Joi.validate(req.body, registerSchema);
+
+    if (result.error !== null) {
         return res.status(400).json({
             status: false,
             message: error.BAD_REQUEST,
-            extra: "Email and Password must be present when registering a new user."
-        })
-    }
-
-    if (!credentials.validateEmail(email)) {
-        return res.status(400).json({
-            message: error.BAD_REQUEST,
-            extra: error.INVALID_EMAIL
+            extra: "Invalid user registration parameters.",
         });
     }
 
-
-    if (password.length < 8) {
-        return res.status(400).json({
-            status: false,
-            message: error.BAD_REQUEST,
-            extra: "Password must at least be 8 characters or longer."
-        })
-    }
 
     try {
         const existingUser = await User.find({
@@ -83,7 +79,8 @@ router.post('/register', async (req, res, next) => {
         if (existingUser.length !== 0) {
             return res.status(400).json({
                 status: false,
-                message: error.MAIL_EXISTS
+                message: error.BAD_REQUEST,
+                extra: error.MAIL_EXISTS,
             });
         }
 
@@ -167,26 +164,28 @@ router.post('/register', async (req, res, next) => {
  * */
 router.post("/login", async (req, res) => {
     const {email, name, password} = req.body;
-    let searchQuery = {email: email};
 
-    // If the request contains the 'email' parameter in the query string and it's
-    // a valid email string, then use email to authenticate the user.
-    if (typeof name === "string") {
-        searchQuery = {name: name}
-    } else if (typeof email !== 'string' || !credentials.validateEmail(email)) {
-        return res.status(400).json({
-            status: false,
-            message: error.INVALID_EMAIL,
-            extra: "No username or email provided to login route."
-        });
-    }
+    const loginSchema = Joi.object().keys({
+        name: Joi.string(),
+        email: Joi.string().email(),
+        password: Joi.string().required(),
+    }).or("name", "email");
 
-    if (typeof password !== 'string') {
+    const result = Joi.validate(req.body, loginSchema);
+
+    if (result.error !== null) {
         return res.status(400).json({
             status: false,
             message: error.BAD_REQUEST,
-            extra: "No password provided to login route."
+            extra: "Invalid user registration parameters.",
         });
+    }
+
+    const searchQuery = {
+        $or: [
+            ...name && {name},
+            ...email && {email},
+        ]
     }
 
     await User.find(searchQuery, async (err, result) => {
@@ -221,7 +220,11 @@ router.post("/login", async (req, res) => {
                 // 'x-token' and 'x-refresh-token' JWT's . Also, update the 'last_login' timestamp and record
                 // an entry for the user logging in into the system.
                 if (response) {
-                    const {token, refreshToken} = await createTokens({email: result[0].email, name: result[0].name, id: result[0]._id});
+                    const {token, refreshToken} = await createTokens({
+                        email: result[0].email,
+                        name: result[0].name,
+                        id: result[0]._id
+                    });
 
                     // set the tokens in the response headers
                     res.set("Access-Control-Expose-Headers", "x-token, x-refresh-token");
@@ -280,13 +283,13 @@ router.get("/", userAuth, async (req, res) => {
 
     // find all the games that are owned by the current player.
     const games = (await Lobby.find({owner: id})).map((game) => {
-       return {
-           players: game.players.length,
-           pin: game.pin,
-           with2FA: game.with2FA,
-           roundTimeout: game.roundTimeout,
-           maxPlayers: game.maxPlayers,
-       }
+        return {
+            players: game.players.length,
+            pin: game.pin,
+            with2FA: game.with2FA,
+            roundTimeout: game.roundTimeout,
+            maxPlayers: game.maxPlayers,
+        }
     });
 
     return res.status(200).json({
@@ -299,4 +302,4 @@ router.get("/", userAuth, async (req, res) => {
 });
 
 
-    export default router;
+export default router;
