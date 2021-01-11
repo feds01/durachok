@@ -99,10 +99,18 @@ router.post('/register', async (req, res, next) => {
             try {
                 const savedUser = await newUser.save();
 
+                const {token, refreshToken} = await createTokens({email: email, name: name, id: savedUser._id});
+
+                // set the tokens in the response headers
+                res.set("Access-Control-Expose-Headers", "x-token, x-refresh-token");
+                res.set("x-token", token);
+                res.set("x-refresh-token", refreshToken);
+
                 return res.status(201).json({
                     status: true,
                     message: "Successfully created new user account.",
-                    extra: savedUser,
+                    token,
+                    refreshToken
                 })
             } catch (e) {
                 console.log(e);
