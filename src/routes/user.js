@@ -1,4 +1,4 @@
-import Joi from "joi";
+import * as Joi from "joi";
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import User from './../models/user';
@@ -57,7 +57,7 @@ router.post('/register', async (req, res, next) => {
         password: Joi.string().pattern(new RegExp('^[a-zA-Z0-9]{8,30}$')),
     });
 
-    const result = Joi.validate(req.body, registerSchema);
+    const result = registerSchema.validate(req.body);
 
     if (result.error !== null) {
         return res.status(400).json({
@@ -171,9 +171,9 @@ router.post("/login", async (req, res) => {
         password: Joi.string().required(),
     }).or("name", "email");
 
-    const result = Joi.validate(req.body, loginSchema);
+    const result = loginSchema.validate(req.body);
 
-    if (result.error !== null) {
+    if (result.error) {
         return res.status(400).json({
             status: false,
             message: error.BAD_REQUEST,
@@ -183,8 +183,8 @@ router.post("/login", async (req, res) => {
 
     const searchQuery = {
         $or: [
-            ...name && {name},
-            ...email && {email},
+            ...(name ? [{name}] : []),
+            ...(email ? [{email}] : []),
         ]
     }
 
