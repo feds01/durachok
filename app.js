@@ -1,11 +1,10 @@
 // Import our environment variables
-import jwt from "jsonwebtoken";
-
 require('dotenv').config();
 
 import cors from 'cors';
 import logger from 'morgan';
 import express from 'express';
+import helmet from "helmet";
 import mongoose from 'mongoose';
 import {createServer} from 'http';
 
@@ -14,9 +13,14 @@ import lobbyRouter from './src/routes/lobby';
 import {makeSocketServer} from "./src/socket";
 
 const app = express();
-app.set('view engine', 'ejs');
 
+// Use helmet
+app.use(helmet());
+
+// Logging
 app.use(logger(process.env.NODE_ENV || 'dev'));
+
+// Parse JSON body request
 app.use(express.json());
 app.use(cors());
 app.use(express.urlencoded({extended: false}));
@@ -31,19 +35,6 @@ app.use((req, res, next) => {
         status: false
     });
 });
-
-// error handler
-app.use((err, req, res, next) => {
-    // set locals, only providing error in development
-    res.locals.message = err.message;
-    res.locals.error = req.app.get('env') === 'development' ? err : {};
-
-    // render the error page
-    res.status(err.status || 500).json({
-        status: false
-    })
-});
-
 
 //initialize a simple http server
 const server = createServer(app);
