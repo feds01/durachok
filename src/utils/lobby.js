@@ -3,18 +3,30 @@ import Players from "../models/user";
 
 
 /**
+ * Method to check if a name is free within a lobby. This also includes 'registered' players
+ * as they take priority over anonymous players.
  *
+ * @param {Object} lobby - The lobby object.
+ * @param {string} name - The player name.
+ *
+ * @return {boolean} If the player name can be used or not.
  * */
-export async function checkNameFree(lobby, name) {
-    const playerList = await buildPlayerList(lobby);
+export async function checkIfNameFree(lobby, name) {
+    const playerList = buildPlayerList(lobby);
 
-    return !playerList.includes(name);
+    return !playerList.map(p => p.name).includes(name);
 }
 
 /**
+ * Utility method to build a player list with some parameters for a given lobby.
  *
+ * @param {Object} lobby - The lobby object
+ * @param {boolean} ignoreUnconfirmed - Whether or not to skip players that have not
+ *                 made a connection to the socket server.
+ *
+ * @returns {Array<{name: string, id: string, registered: boolean}>} The player list
 * */
-export async function buildPlayerList(lobby, ignoreUnconfirmed = true) {
+export function buildPlayerList(lobby, ignoreUnconfirmed = true) {
     const playerList = []
 
     for (const player of lobby.players) {
@@ -22,18 +34,7 @@ export async function buildPlayerList(lobby, ignoreUnconfirmed = true) {
             continue;
         }
 
-        // If this is an id to a player that is registered within the users
-        // cluster, then use their username as a name checker.
-        if (typeof player === "string") {
-            const playerObject = await Players.findOne({_id: player});
-
-            playerList.push(playerObject.name)
-        }
-
-        // If the player is a temporary player and has just been added into the lobby
-        if (typeof player === "object") {
-            playerList.push(player.name);
-        }
+        playerList.push({id: player._id, name: player.name, registered: player.registered});
     }
 
     return playerList;

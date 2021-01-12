@@ -26,7 +26,7 @@ async function handler(context, socket) {
         {new: true}
     );
 
-    const playerList = await lobbyUtils.buildPlayerList(updatedLobby, false);
+    const playerList = lobbyUtils.buildPlayerList(updatedLobby, false);
     const owner = await Player.findOne({_id: updatedLobby.owner});
 
     // oops, was the owner account deleted?

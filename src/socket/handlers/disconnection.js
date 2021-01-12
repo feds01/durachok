@@ -42,7 +42,7 @@ async function handler(context, socket) {
             // notify all other clients that a new player has joined the lobby...
             socket.broadcast.emit(events.NEW_PLAYER, {
                 lobby: {
-                    players: await lobbyUtils.buildPlayerList(updatedLobby, false),
+                    players: lobbyUtils.buildPlayerList(updatedLobby, false),
                     owner: socket.lobby.name,
                 }
             });

@@ -9,7 +9,8 @@ const gameSchema = new mongoose.Schema({
         type: [{
             name: {type: String, required: true},
             socketId: {type: String, required: false},
-            confirmed: {type: Boolean, required: true}
+            confirmed: {type: Boolean, required: true},
+            registered: {type: Boolean, required: true},
         }],
         required: true
     },
