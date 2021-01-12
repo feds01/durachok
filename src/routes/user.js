@@ -5,7 +5,7 @@ import User from './../models/user';
 import Lobby from './../models/game';
 
 import {error} from "shared";
-import {createTokens, userAuth} from "../authentication";
+import {createTokens, refreshTokens, userAuth} from "../authentication";
 
 const router = express.Router();
 
@@ -260,17 +260,9 @@ router.post("/login", async (req, res) => {
  * @version v1.0.0
  * @method GET
  * @url https://durachok.game/api/user
- * @example
- * https://durachok.game/api/user
  *
- * @description This route is used to login users into the Durachok game app, the route
- * will accept a username or email & password within the request body. The method will determine
- * which authentication strategy the request is using. If an email is provided, the user will
- * be authenticated using email, and vice versa for username. If a user is found with email/username,
- * the sent over password will be compared with stored hash. If hash and password match, the request
- * will create two request tokens 'x-token' and 'x-refresh-token' and apply them to response header.
- * Additionally, the 'last_login' column is updated, and a 'USER_LOGIN' event is added in user's timeline.
- *
+ * @description This route is used to fetch information about a user account, the route
+ * will accept a token in the header of the request to authenticate the request.
  *
  * @error {UNAUTHORIZED} if the request does not contain a token or refreshToken
  *
@@ -301,5 +293,45 @@ router.get("/", userAuth, async (req, res) => {
     })
 });
 
+/**
+ * @version v1.0.0
+ * @method POST
+ * @url https://durachok.game/api/token
+ * @description Route for client to refresh a JWT token. The request expect a refresh token within
+ * the request header to use to refresh the tokens.
+ *
+ * @error {BAD_REQUEST} if the request does not contain a refreshToken in the request header.
+ * */
+router.post("/token", async (req, res) => {
+    const refreshToken = req.headers['x-refresh-token'];
+
+    if (typeof refreshToken === 'undefined' || !refreshToken) {
+        return res.status(400).json({
+            status: false,
+            message: "Missing refresh token."
+        });
+    }
+
+    try {
+        const newTokens = await refreshTokens(refreshToken);
+
+        // set the tokens in the response headers
+        res.set("Access-Control-Expose-Headers", "x-token, x-refresh-token");
+        res.set("x-token", newTokens.token);
+        res.set("x-refresh-token", newTokens.refreshToken);
+
+        return res.status(302).json({...newTokens});
+    } catch (e) {
+        console.log(e);
+
+        // Likely that the token is stale or malformed. We could also
+        // re-direct the user to '/login' on this
+        return res.status(400).json({
+            status: false,
+            message: "Invalid refresh token."
+        });
+    }
+
+});
 
 export default router;
