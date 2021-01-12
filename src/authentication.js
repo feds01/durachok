@@ -30,11 +30,18 @@ export const getTokensFromHeader = async (req, res) => {
             // De-Code the sent over JWT key using our secret key stored in the process' runtime.
             // Then carry on, even if the data is incorrect for the given request, since this does
             // not interpret the validity of the request.
-            req.token = jwt.verify(token, process.env.JWT_SECRET_KEY);
+            return jwt.verify(token, process.env.JWT_SECRET_KEY);
         } catch (e) {
             const refreshToken = req.headers["x-refresh-token"];
+            if (!refreshToken) return null;
 
-            const newTokens = await refreshTokens(refreshToken);
+            let newTokens;
+
+            try {
+                newTokens = await refreshTokens(refreshToken);
+            } catch (e) {
+                return null;
+            }
 
             // if new tokens were provided, update the access and refresh tokens
             if (newTokens.token && newTokens.refreshToken) {
@@ -43,22 +50,15 @@ export const getTokensFromHeader = async (req, res) => {
                 res.set("x-refresh-token", newTokens.refreshToken);
 
                 // pass on the metadata which was decoded from the JWT
-                return newTokens.data;
-            } else {
-                return res.status(401).json({
-                    status: false,
-                    message: error.AUTHENTICATION_FAILED,
-                });
+                return jwt.verify(newTokens.token, process.env.JWT_SECRET_KEY);
             }
+
+            return null;
         }
-    } else {
-        // only send an un-authorized response if there was no provided token in the request
-        return res.status(401).json({
-            status: false,
-            message: error.AUTHENTICATION_FAILED,
-        });
     }
-};
+
+    return null;
+}
 
 /**
  * This method is used to refresh the tokens on a authentication request. It will use
@@ -112,37 +112,53 @@ export const createTokens = async (payload) => {
 }
 
 export async function withAuth(req, res, next) {
-    req.userToken = await getTokensFromHeader(req, res); // unpack JWT token
+    const userToken = await getTokensFromHeader(req, res); // unpack JWT token
 
-    // Don't progress onwards if the token was stale/invalid
-    if (!res.headersSent) {
-        next();
+    // ensure that the user token has a valid user id, if they do then set the
+    // request user token as the decoded token, otherwise don't bother.
+    if (userToken?.data?.id) {
+        const existingUser = await User.findOne({_id: userToken.data.id});
+
+        if (existingUser) req.userToken = userToken;
     }
+
+    next();
 }
 
 
 export const ownerAuth = async (req, res, next) => {
-    req.token = await getTokensFromHeader(req, res); // unpack JWT token
+    const token = await getTokensFromHeader(req, res); // unpack JWT token
 
-    if (!res.headersSent) {
-        if (req.token?.data.id) {
-            const existingUser = await User.find({_id: req.token.data.id});
+    // if the token is null, the token or refresh tokens aren't in the request
+    //  headers
+    if (!token) {
+        // only send an un-authorized response if there was no provided token in the request
+        return res.status(401).json({
+            status: false,
+            message: error.AUTHENTICATION_FAILED,
+            extra: "Missing request headers."
+        });
+    }
 
-            if (existingUser.length === 0) {
-                return res.status(404).json({
-                    status: false,
-                    message: error.NON_EXISTENT_USER,
-                    extra: "User doesn't exist."
-                });
-            } else {
-                next(); // the request was fine and is authenticated.
-            }
-        } else {
-            return res.status(401).json({
+    req.token = token;
+
+    if (req.token?.data.id) {
+        const existingUser = await User.findOne({_id: req.token.data.id});
+
+        if (!existingUser) {
+            return res.status(404).json({
                 status: false,
-                message: error.UNAUTHORIZED,
-                extra: "Missing required request headers."
+                message: error.NON_EXISTENT_USER,
+                extra: "User doesn't exist."
             });
+        } else {
+            next(); // the request was fine and is authenticated.
         }
+    } else {
+        return res.status(401).json({
+            status: false,
+            message: error.UNAUTHORIZED,
+            extra: "Invalid request headers."
+        });
     }
 };

@@ -96,7 +96,11 @@ export const makeSocketServer = (server) => {
                     }
 
                     // Verify that the user is allowed to enter the game
-                    if (!lobbyUtils.buildPlayerList(socket.lobby, false).includes(user.name)) {
+                    const registeredPlayers = lobbyUtils.buildPlayerList(socket.lobby)
+                                                .filter(p => p.registered)
+                                                .map(p => p.name);
+
+                    if (!registeredPlayers.includes(user.name)) {
                         return next(new Error(error.AUTHENTICATION_FAILED));
                     }
 
