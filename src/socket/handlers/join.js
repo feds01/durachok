@@ -18,7 +18,13 @@ async function handler(context, socket) {
     }
 
     // set socket id and set the player as 'confirmed' for the lobby.
-    players[idx] = {name: players[idx].name, _id: players[idx]._id, socketId: socket.id, confirmed: true};
+    players[idx] = {
+        name: players[idx].name,
+        _id: players[idx]._id,
+        registered: players[idx].registered,
+        socketId: socket.id,
+        confirmed: true
+    };
 
     const updatedLobby = await Lobby.findOneAndUpdate(
         {_id: lobby._id},

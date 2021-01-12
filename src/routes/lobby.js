@@ -72,7 +72,7 @@ router.post("/", ownerAuth, async (req, res) => {
 
     const result = GameSchema.validate(req.body);
 
-    if (result.error !== null) {
+    if (result.error) {
         return res.status(400).json({
             status: false,
             message: error.BAD_REQUEST,
@@ -282,14 +282,10 @@ router.post("/:pin/join", validatePin, withAuth, async (req, res) => {
         });
     }
 
-    const JoinSchema = Joi.object().keys({
-        passphrase: Joi.string().length(4),
-        name: Joi.string().min(1).max(20),
-    });
+    const passphraseValidator = Joi.string().length(4);
+    const result = passphraseValidator.validate(req.body.passphrase);
 
-    const result = JoinSchema.validate(req.body);
-
-    if (result.error !== null) {
+    if (result.error) {
         return res.status(400).json({
             status: false,
             message: error.BAD_REQUEST,
@@ -325,18 +321,29 @@ router.post("/:pin/join", validatePin, withAuth, async (req, res) => {
     // A player could join with a registered account, if so we can circumvent using
     // the 'name' parameter and just use the user's name as the name.
     if (req.userToken) {
+
         // check that the name is not registered within the users that are registered
-        if (lobby.players.filter(p => p.registered).find(p => p.name === req.userToken.name)) {
+        if (lobby.players.filter(p => p.registered).find(p => p.name === req.userToken.data.name)) {
             return res.status(400).json({
                 status: false,
-                err: "",
-                message: "Name already taken."
+                message: "Can't join the game twice."
             });
         }
 
         registered = true;
-        name = req.userToken.name;
+        name = req.userToken.data.name;
     } else {
+        const nameValidator = Joi.string().min(1).max(20).required();
+        const result = nameValidator.validate(req.body.name);
+
+        if (result.error) {
+            return res.status(400).json({
+                status: false,
+                message: error.BAD_REQUEST,
+                data: req.body,
+            });
+        }
+
         // check that the name is not taken within the lobby
         if (!(await checkIfNameFree(lobby, req.body.name))) {
             return res.status(400).json({
@@ -366,7 +373,7 @@ router.post("/:pin/join", validatePin, withAuth, async (req, res) => {
 
     // Add the player object to the players list in the game object and update
     // it in the collection
-    await Lobby.updateOne(
+    await Lobby.findOneAndUpdate(
         {_id: lobby._id},
         {$set: {'players': lobby.players}}
     );
@@ -374,8 +381,7 @@ router.post("/:pin/join", validatePin, withAuth, async (req, res) => {
     return res.status(200).json({
         status: true,
         message: "Pin Valid",
-        token,
-        refreshToken,
+        ...!registered && {token, refreshToken},
     });
 });
 

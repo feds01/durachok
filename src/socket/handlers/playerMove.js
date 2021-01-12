@@ -145,6 +145,7 @@ async function handler(context, socket, io) {
                         name: player.name,
                         socketId: "",
                         confirmed: false,
+                        registered: player.registered,
                     }
                 }
                 return player;

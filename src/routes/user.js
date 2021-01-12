@@ -51,7 +51,8 @@ router.post('/register', async (req, res) => {
     const registerSchema = Joi.object().keys({
         name: Joi.string()
             .pattern(/^[A-Za-z0-9]+(?:[ _-][A-Za-z0-9]+)*$/)
-            .max(20, "Name too long")
+            .min(1)
+            .max(20)
             .required(),
         email: Joi.string().email().required(),
         password: Joi.string().pattern(new RegExp('^[a-zA-Z0-9]{8,30}$')),
@@ -59,7 +60,7 @@ router.post('/register', async (req, res) => {
 
     const result = registerSchema.validate(req.body);
 
-    if (result.error !== null) {
+    if (result.error) {
         return res.status(400).json({
             status: false,
             message: error.BAD_REQUEST,
@@ -320,7 +321,7 @@ router.post("/token", async (req, res) => {
         res.set("x-token", newTokens.token);
         res.set("x-refresh-token", newTokens.refreshToken);
 
-        return res.status(302).json({status: true, ...newTokens});
+        return res.status(200).json({status: true, ...newTokens});
     } catch (e) {
         console.log(e);
 

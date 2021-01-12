@@ -1,11 +1,13 @@
 import {error, events, game} from "shared";
 import Lobby from "../../models/game";
 import * as lobbyUtils from "../../utils/lobby";
+import Player from "../../models/user";
 
 async function handler(context, socket, io) {
     if (!socket.isAdmin) socket.emit(events.ERROR, new Error(error.UNAUTHORIZED));
 
     const lobby = await Lobby.findOne({pin: socket.lobby.pin});
+    const owner = await Player.findOne({_id: lobby.owner});
 
     // check that we're currently waiting for players as the admin
     // cannot kick players once the game has started.
@@ -19,10 +21,11 @@ async function handler(context, socket, io) {
 
     // check that the player 'name' is present in the current lobby
     const players = lobby.players;
-    const index = players.findIndex((player) => player.name === context.name);
+    const index = players.findIndex((player) => player._id.toString() === context.id);
 
 
-    if (index < 0) {
+    // can't kick non-existent player or owner
+    if (index < 0 || players[index].name === owner.name) {
         return socket.emit(events.ERROR, {"status": false, "type": "bad_request", message: "Invalid player."});
     }
 
@@ -43,7 +46,7 @@ async function handler(context, socket, io) {
         return socket.broadcast.emit(events.NEW_PLAYER, {
             lobby: {
                 players: lobbyUtils.buildPlayerList(updatedLobby, false),
-                owner: lobby.name,
+                owner: owner.name,
             }
         });
     } else {

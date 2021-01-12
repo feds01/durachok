@@ -6,6 +6,8 @@ async function handler(context, socket) {
     // if the socket connection is not an admin, we need to remove it from
     // the player lobby and free up a space.
     if (!socket.isAdmin) {
+        console.log(socket.decoded.name);
+
         const lobby = await Lobby.findOne({pin: socket.lobby.pin});
 
         // The lobby might of been deleted...
