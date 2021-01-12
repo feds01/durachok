@@ -3,8 +3,12 @@
   "author": "Alexander. E. Fedotov",
   "version": "1.0.0",
   "private": true,
+  "engines": {
+    "node": "15.4.X"
+  },
   "scripts": {
-    "start": "nodemon  --ignore client --exec babel-node ./app.js"
+    "start": "babel-node ./app.js",
+    "dev": "nodemon  --ignore client --exec babel-node ./app.js"
   },
   "dependencies": {
     "bcryptjs": "2.4.3",
