@@ -1,5 +1,6 @@
 import Lobby from "../../models/game";
 import {error, events, game} from "shared";
+import Player from "../../models/user";
 
 // TODO: event should be atomic
 async function handler(context, socket, io) {
@@ -7,6 +8,15 @@ async function handler(context, socket, io) {
 
     // get the game object
     const Game = game.Game.fromState(lobby.game);
+
+    // If the game has already finished, any further requests are stale.
+    if (Game.hasVictory) {
+        return socket.emit(events.ERROR, {
+            "status": false,
+            "type": events.STALE_GAME,
+            message: "Game has finished."
+        });
+    }
 
     // find the player in the database record by the socket id...
     const {name} = socket.decoded;
@@ -98,8 +108,51 @@ async function handler(context, socket, io) {
         //      For example, if the player 'alex' covers a card on pos 0
         //      with "Jack of Spades', this information should be passed onto
         //      the clients.
-        io.of(lobby.pin.toString()).sockets.get(socketId).emit(events.ACTION,  Game.getStateForPlayer(key));
+        io.of(lobby.pin.toString()).sockets.get(socketId).emit(events.ACTION, Game.getStateForPlayer(key));
     }));
+
+    // Finally, check for a victory condition, if the game is finished, emit a 'victory' event
+    // and update the lobby state to 'waiting'
+    if (!Game.hasVictory) return;
+
+    const owner = await Player.findOne({_id: lobby.owner});
+
+    // list the players by exit order
+    // TODO: cleanup
+    io.of(lobby.pin.toString()).emit(events.VICTORY, {
+        players: Array.from(Game.players.keys())
+            .map(name => {
+                const player = Game.players.get(name);
+
+                return {
+                    name,
+                    ...player,
+                    //transform 'null' value into largest current timestamp
+                    ...(player.out === null && {out: Date.now()})
+                }
+            })
+            .sort((a, b) => (a.out > b.out) ? 1 : -1)
+    });
+
+    // TODO: maybe archive the games so they can be replayed
+    // reset all the player connections but the owner, reset game and game state.
+    await Lobby.findOneAndUpdate({_id: lobby._id}, {
+        "$set": {
+            "players": lobby.players.map((player) => {
+                if (player.name !== owner.name) {
+                    return {
+                        _id: player.id,
+                        name: player.name,
+                        socketId: "",
+                        confirmed: false,
+                    }
+                }
+                return player;
+            }),
+            status: game.GameState.WAITING,
+            game: {}
+        },
+    });
 }
 
 export default handler;

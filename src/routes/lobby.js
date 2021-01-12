@@ -173,8 +173,12 @@ router.get('/:pin', validatePin, async (req, res) => {
         })
     }
 
+    // we only care about confirmed players since they have registered connections,
+    // otherwise we can ignore unhonoured connections and overwrite them if need be.
+    const players = lobby.players.filter((player) => player.confirmed);
+
     // notify client if they can't even join the current lobby if it's full or in sessions
-    if (lobby.players.length === lobby.maxPlayers || lobby.status !== game.GameState.WAITING) {
+    if (players.length === lobby.maxPlayers || lobby.status !== game.GameState.WAITING) {
         return res.status(400).json({
             status: false,
             message: error.LOBBY_FULL,
@@ -292,15 +296,18 @@ router.post("/:pin/join", validatePin, async (req, res) => {
         });
     }
 
+    // we only care about confirmed players since they have registered connections,
+    // otherwise we can ignore unhonoured connections and overwrite them if need be.
+    let players = lobby.players.filter((player) => player.confirmed);
+
     // check that there are free slots within the lobby
-    if (lobby.players.length === lobby.maxPlayers || lobby.status !== game.GameState.WAITING) {
+    if (players.length === lobby.maxPlayers || lobby.status !== game.GameState.WAITING) {
         return res.status(400).json({
             status: false,
             err: "LOBBY_FULL",
             message: error.LOBBY_FULL,
         });
     }
-
 
     if (typeof name === "undefined" || (lobby.with2FA && typeof passphrase === "undefined")) {
         return res.status(400).json({
@@ -310,7 +317,6 @@ router.post("/:pin/join", validatePin, async (req, res) => {
         });
     }
 
-
     // check that the name is not taken within the lobby
     if (!(await checkNameFree(lobby, name))) {
         return res.status(400).json({
@@ -319,7 +325,6 @@ router.post("/:pin/join", validatePin, async (req, res) => {
             message: "Name already taken."
         })
     }
-
 
     if (lobby.with2FA && lobby.passphrase !== passphrase) {
         return res.status(401).json({
@@ -332,13 +337,19 @@ router.post("/:pin/join", validatePin, async (req, res) => {
     // Generate JWT token for the current user connection with an encoded name and IP
     const {token, refreshToken} = await createTokens({name, pin});
 
+    // find an un-honoured connection entry and overwrite it, otherwise we
+    // can just append the connection
+    if (lobby.players.length === lobby.maxPlayers.length) {
+        let overwriteConnectionIndex = lobby.players.findIndex(player => !player.confirmed);
+        lobby.players[overwriteConnectionIndex] = {name, socketId: null, confirmed: false};
+    } else {
+        lobby.players.push({
+            name, socketId: null, confirmed: false,
+        });
+    }
+
     // Add the player object to the players list in the game object and update
     // it in the collection
-    const players = lobby.players;
-
-    players.push({
-        name, socketId: null, confirmed: false,
-    });
 
     await Lobby.updateOne(
         {_id: lobby._id},
