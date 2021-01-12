@@ -20,27 +20,28 @@ async function handler(context, socket) {
     // set socket id and set the player as 'confirmed' for the lobby.
     players[idx] = {name: players[idx].name, _id: players[idx]._id, socketId: socket.id, confirmed: true};
 
-    await Lobby.updateOne(
+    const updatedLobby = await Lobby.findOneAndUpdate(
         {_id: lobby._id},
-        {$set: {'players': players}}
+        {$set: {'players': players}},
+        {new: true}
     );
 
-    // check that the status of the lobby is on status 'WAITING'. If the game has
-    // started, return a 'Lobby full' error code.
-    if (lobby.status !== game.GameState.WAITING) {
-        return socket.emit(events.ERROR, {status: false, type: "lobby_full", message: error.LOBBY_FULL});
-    }
+    const playerList = await lobbyUtils.buildPlayerList(updatedLobby, false);
+    const owner = await Player.findOne({_id: updatedLobby.owner});
 
-    const playerList = await lobbyUtils.buildPlayerList(lobby);
-    const owner = await Player.findOne({_id: lobby.owner});
-
-    // oops, was the owner account deleted
+    // oops, was the owner account deleted?
     if (!owner) {
         return socket.emit(events.ERROR, {
             status: false,
             type: "internal_server_error",
             message: error.INTERNAL_SERVER_ERROR
         });
+    }
+
+    let Game = null;
+
+    if (updatedLobby.game && updatedLobby.status === game.GameState.PLAYING) {
+        Game = game.Game.fromState(updatedLobby.game);
     }
 
     // send a private message to the socket with the required information
@@ -54,16 +55,20 @@ async function handler(context, socket) {
             status: lobby.status,
             players: playerList,
             owner: owner.name,
-        }
-    })
+            name: socket.decoded.name,
+        },
+        ...((Game !== null) && {game: Game.getStateForPlayer(players[idx].name)})
+    });
 
     // notify all other clients that a new player has joined the lobby...
-    socket.broadcast.emit(events.NEW_PLAYER, {
-        lobby: {
-            players: playerList,
-            owner: owner.name,
-        }
-    });
+    if (lobby.status === game.GameState.WAITING) {
+        socket.broadcast.emit(events.NEW_PLAYER, {
+            lobby: {
+                players: playerList,
+                owner: owner.name,
+            }
+        });
+    }
 }
 
 export default handler;

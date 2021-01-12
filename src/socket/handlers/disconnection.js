@@ -1,5 +1,5 @@
-import Lobby from "../../models/game";
 import {events, game} from "shared";
+import Lobby from "../../models/game";
 import * as lobbyUtils from "../../utils/lobby";
 
 async function handler(context, socket) {
@@ -9,9 +9,7 @@ async function handler(context, socket) {
         const lobby = await Lobby.findOne({pin: socket.lobby.pin});
 
         // The lobby might of been deleted...
-        if (lobby === null) {
-            return;
-        }
+        if (lobby === null) return;
 
         // TODO: what happens when the game is in progress and one of the players leave?
         //       .
@@ -30,9 +28,7 @@ async function handler(context, socket) {
             const playerIdx = players.findIndex((player) => player.socketId === socket.id);
 
             // Should not happen but if it does we shouldn't proceed...
-            if (playerIdx < 0) {
-                return;
-            }
+            if (playerIdx < 0) return;
 
             players.splice(playerIdx, 1);
 
@@ -46,7 +42,7 @@ async function handler(context, socket) {
             // notify all other clients that a new player has joined the lobby...
             socket.broadcast.emit(events.NEW_PLAYER, {
                 lobby: {
-                    players: await lobbyUtils.buildPlayerList(updatedLobby),
+                    players: await lobbyUtils.buildPlayerList(updatedLobby, false),
                     owner: socket.lobby.name,
                 }
             });

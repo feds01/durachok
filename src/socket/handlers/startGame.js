@@ -9,7 +9,7 @@ async function handler(context, socket, io) {
     const lobby = await Lobby.findOne({pin: socket.lobby.pin});
 
     // check that there are at least 2 players in the lobby
-    if (lobby.players.length < 2) {
+    if (lobby.players.filter(p => p.confirmed).length < 2) {
         socket.emit(events.ERROR, new Error(error.BAD_REQUEST));
     }
 

@@ -14,10 +14,14 @@ export async function checkNameFree(lobby, name) {
 /**
  *
 * */
-export async function buildPlayerList(lobby) {
+export async function buildPlayerList(lobby, ignoreUnconfirmed = true) {
     const playerList = []
 
     for (const player of lobby.players) {
+        if (!ignoreUnconfirmed && !player.confirmed) {
+            continue;
+        }
+
         // If this is an id to a player that is registered within the users
         // cluster, then use their username as a name checker.
         if (typeof player === "string") {
