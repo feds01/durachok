@@ -5,11 +5,11 @@
   "private": true,
   "engines": {
     "node": "15.x",
-    "yarn": "1.x"
+    "yarn": "1.22.10"
   },
   "scripts": {
     "start": "babel-node ./app.js",
-    "build": "rm yarn.lock && yarn",
+    "build": " USE_YARN_CACHE=false rm yarn.lock && yarn",
     "dev": "nodemon  --ignore client --exec babel-node ./app.js"
   },
   "dependencies": {
