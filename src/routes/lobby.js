@@ -1,9 +1,10 @@
+import * as Joi from "joi";
 import express from 'express';
 import {nanoid} from "nanoid";
 import Lobby from './../models/game';
 import {emitLobbyEvent} from "../socket";
-import {createTokens, userAuth} from "../authentication";
-import {checkNameFree, createGamePin} from "../utils/lobby";
+import {createTokens, getTokensFromHeader, ownerAuth, withAuth} from "../authentication";
+import {checkIfNameFree, createGamePin} from "../utils/lobby";
 import {error, game, lobby as LobbyUtils, events} from "shared";
 
 const router = express.Router();
@@ -50,47 +51,33 @@ function validatePin(req, res, next) {
  *
  * @return sends a response to client if the document was created and added to the system.
  * */
-router.post("/", userAuth, async (req, res) => {
+router.post("/", ownerAuth, async (req, res) => {
     const {id} = req.token.data;
 
     // Perform some validation on the passed parameters
     let {maxPlayers, with2FA, roundTimeout} = req.body;
 
-    if (typeof with2FA !== "boolean") {
-        return res.status(400).json({
-           status: false,
-           message: error.BAD_REQUEST,
-           extra: "Missing required game option."
-        });
-    }
+    const GameSchema = Joi.object().keys({
+        with2FA: Joi.bool().required(),
+        maxPlayers: Joi.number()
+            .min(2)
+            .max(8)
+            .required(),
+        roundTimeout: Joi.number()
+            .min(60)
+            .max(600)
+            .required(),
 
-    // attempt to parse both maxPlayers and roundTimeout
-    try {
-        maxPlayers = parseInt(maxPlayers);
-        roundTimeout = parseInt(roundTimeout);
-    } catch (e) {
+    });
+
+    const result = GameSchema.validate(req.body);
+
+    if (result.error !== null) {
         return res.status(400).json({
             status: false,
             message: error.BAD_REQUEST,
-            extra: "Maximum players must be a number."
-        });
-    }
-
-    if (maxPlayers < 2 || maxPlayers > 8) {
-        return res.status(400).json({
-            status: false,
-            message: error.BAD_REQUEST,
-            extra: "Game must have between two to eight players."
-        });
-    }
-
-    // if roundTimeout is set to '-1' this means that the game engine should not
-    // enforce that players make a move/decision within the 60seconds.
-    if (roundTimeout !== -1 && roundTimeout < 60) {
-        return res.status(400).json({
-            status: false,
-            message: error.BAD_REQUEST,
-            extra: "Round timeout must be at least one minute."
+            extra: "Invalid parameters for game creation",
+            data: req.body,
         });
     }
 
@@ -115,7 +102,7 @@ router.post("/", userAuth, async (req, res) => {
 
         // automatically put the user into the lobby
         players: [
-            {name: req.token.data.name, sockedId: null, confirmed: true}
+            {name: req.token.data.name, sockedId: null, registered: true, confirmed: true}
         ],
         rngSeed: nanoid(),
         owner: id,
@@ -217,7 +204,7 @@ router.get('/:pin', validatePin, async (req, res) => {
  *
  * @return sends an OK response to requester with some game data.
  * */
-router.delete("/:pin", validatePin, userAuth, async (req, res) => {
+router.delete("/:pin", validatePin, ownerAuth, async (req, res) => {
     const {pin} = req.params;
 
     // check that the requesting user is the owner/creator of the lobby
@@ -282,9 +269,8 @@ router.delete("/:pin", validatePin, userAuth, async (req, res) => {
  *
  * @return sends an OK response to requester with some game data.
  * */
-router.post("/:pin/join", validatePin, async (req, res) => {
+router.post("/:pin/join", validatePin, withAuth, async (req, res) => {
     const {pin} = req.params;
-    const {passphrase, name} = req.body;
 
     // check that the requesting user is the owner/creator of the lobby
     const lobby = await Lobby.findOne({pin});
@@ -293,6 +279,21 @@ router.post("/:pin/join", validatePin, async (req, res) => {
         return res.status(404).json({
             status: false,
             message: error.NON_EXISTENT_LOBBY,
+        });
+    }
+
+    const JoinSchema = Joi.object().keys({
+        passphrase: Joi.string().length(4),
+        name: Joi.string().min(1).max(20),
+    });
+
+    const result = JoinSchema.validate(req.body);
+
+    if (result.error !== null) {
+        return res.status(400).json({
+            status: false,
+            message: error.BAD_REQUEST,
+            data: req.body,
         });
     }
 
@@ -309,24 +310,9 @@ router.post("/:pin/join", validatePin, async (req, res) => {
         });
     }
 
-    if (typeof name === "undefined" || (lobby.with2FA && typeof passphrase === "undefined")) {
-        return res.status(400).json({
-            status: false,
-            err: "MISSING_INFO",
-            message: error.BAD_REQUEST
-        });
-    }
 
-    // check that the name is not taken within the lobby
-    if (!(await checkNameFree(lobby, name))) {
-        return res.status(400).json({
-            status: false,
-            err: "BAD_INFO",
-            message: "Name already taken."
-        })
-    }
-
-    if (lobby.with2FA && lobby.passphrase !== passphrase) {
+    // IF 2FA is enabled, ensure that the passphrase is valid
+    if (lobby.with2FA && lobby.passphrase !== req.body.passphrase) {
         return res.status(401).json({
             status: false,
             err: "INVALID_PASSPHRASE",
@@ -334,23 +320,52 @@ router.post("/:pin/join", validatePin, async (req, res) => {
         });
     }
 
+    let name, registered;
+
+    // A player could join with a registered account, if so we can circumvent using
+    // the 'name' parameter and just use the user's name as the name.
+    if (req.userToken) {
+        // check that the name is not registered within the users that are registered
+        if (lobby.players.filter(p => p.registered).find(p => p.name === req.userToken.name)) {
+            return res.status(400).json({
+                status: false,
+                err: "",
+                message: "Name already taken."
+            });
+        }
+
+        registered = true;
+        name = req.userToken.name;
+    } else {
+        // check that the name is not taken within the lobby
+        if (!(await checkIfNameFree(lobby, req.body.name))) {
+            return res.status(400).json({
+                status: false,
+                err: "BAD_INFO",
+                message: "Name already taken."
+            })
+        }
+
+        registered = false;
+        name = req.body.name;
+    }
+
+
     // Generate JWT token for the current user connection with an encoded name and IP
     const {token, refreshToken} = await createTokens({name, pin});
+    const player =  {name, socketId: null, confirmed: false, registered};
 
     // find an un-honoured connection entry and overwrite it, otherwise we
     // can just append the connection
     if (lobby.players.length === lobby.maxPlayers.length) {
         let overwriteConnectionIndex = lobby.players.findIndex(player => !player.confirmed);
-        lobby.players[overwriteConnectionIndex] = {name, socketId: null, confirmed: false};
+        lobby.players[overwriteConnectionIndex] = player;
     } else {
-        lobby.players.push({
-            name, socketId: null, confirmed: false,
-        });
+        lobby.players.push(player);
     }
 
     // Add the player object to the players list in the game object and update
     // it in the collection
-
     await Lobby.updateOne(
         {_id: lobby._id},
         {$set: {'players': lobby.players}}
@@ -386,7 +401,7 @@ router.post("/:pin/name", async (req, res) => {
         });
     }
 
-    if (!(await checkNameFree(lobby, name))) {
+    if (!(await checkIfNameFree(lobby, name))) {
         return res.status(400).json({
             status: false,
             message: "Name already taken."

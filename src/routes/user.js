@@ -5,7 +5,7 @@ import User from './../models/user';
 import Lobby from './../models/game';
 
 import {error} from "shared";
-import {createTokens, refreshTokens, userAuth} from "../authentication";
+import {createTokens, refreshTokens, ownerAuth} from "../authentication";
 
 const router = express.Router();
 
@@ -270,7 +270,7 @@ router.post("/login", async (req, res) => {
  * a list of the current games the user is hosting and the users name.
  *
  * */
-router.get("/", userAuth, async (req, res) => {
+router.get("/", ownerAuth, async (req, res) => {
     const id = req.token.data.id;
 
     // find all the games that are owned by the current player.

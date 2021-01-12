@@ -43,7 +43,7 @@ export const getTokensFromHeader = async (req, res) => {
                 res.set("x-refresh-token", newTokens.refreshToken);
 
                 // pass on the metadata which was decoded from the JWT
-                req.token = newTokens.data;
+                return newTokens.data;
             } else {
                 return res.status(401).json({
                     status: false,
@@ -111,9 +111,18 @@ export const createTokens = async (payload) => {
     return {token, refreshToken};
 }
 
+export async function withAuth(req, res, next) {
+    req.userToken = await getTokensFromHeader(req, res); // unpack JWT token
 
-export const userAuth = async (req, res, next) => {
-    await getTokensFromHeader(req, res); // unpack JWT token
+    // Don't progress onwards if the token was stale/invalid
+    if (!res.headersSent) {
+        next();
+    }
+}
+
+
+export const ownerAuth = async (req, res, next) => {
+    req.token = await getTokensFromHeader(req, res); // unpack JWT token
 
     if (!res.headersSent) {
         if (req.token?.data.id) {

@@ -1,15 +1,15 @@
+import jwt from "jsonwebtoken";
 import {Server} from "socket.io";
 import Lobby from "../models/game";
 import {error, events} from "shared";
-import jwt from "jsonwebtoken";
-import {refreshTokens} from "../authentication";
 import Player from "../models/user";
+import * as lobbyUtils from "../utils/lobby";
+import {refreshTokens} from "../authentication";
 
 import joinGameHandler from "./handlers/join";
 import startGameHandler from "./handlers/startGame";
 import kickPlayerHandler from "./handlers/kickPlayer";
 import playerMoveHandler from "./handlers/playerMove";
-import nextRoundActionHandler from "./handlers/nextRound";
 import disconnectionHandler from "./handlers/disconnection";
 import updatePassphraseHandler from "./handlers/updatePassphrase";
 import ServerError from "../errors/ServerError";
@@ -84,24 +84,27 @@ export const makeSocketServer = (server) => {
 
                 // check that the nsp matched the pin or the user of the Durachok
                 // service is the owner of this lobby.
-                const isAdmin = typeof decoded?.data.id !== "undefined";
+                const isUser = typeof decoded?.data.id !== "undefined";
+                let isAdmin = false;
 
-                if (isAdmin) {
+                if (isUser) {
                     const user = await Player.findOne({_id: decoded.data.id});
 
                     // This shouldn't happen unless the user was deleted and the token is stale.
                     if (!user) {
-                        console.log("couldn't find player");
                         return next(new Error(error.AUTHENTICATION_FAILED));
                     }
 
-                    // check that id of the owner is equal to the id in the JWT
-                    if (user._id.toString() !== socket.lobby.owner._id.toString()) {
+                    // Verify that the user is allowed to enter the game
+                    if (!lobbyUtils.buildPlayerList(socket.lobby, false).includes(user.name)) {
                         return next(new Error(error.AUTHENTICATION_FAILED));
                     }
-                }
 
-                if (!isAdmin && socket.lobby.pin !== decoded.data.pin) {
+                    // Check if this is the admin/owner user.
+                    if (user._id.toString() === socket.lobby.owner._id.toString()) {
+                        isAdmin = true;
+                    }
+                } else if (socket.lobby.pin !== decoded.data.pin) {
                     return next(new Error(error.AUTHENTICATION_FAILED));
                 }
 
@@ -122,6 +125,5 @@ export const makeSocketServer = (server) => {
         socket.on(events.START_GAME, async (context) => await startGameHandler(context, socket, io));
         socket.on(events.KICK_PLAYER, async (context) => await kickPlayerHandler(context, socket, io));
         socket.on(events.MOVE, async (context) => await playerMoveHandler(context, socket, io));
-        socket.on(events.NEXT_ROUND, async (context) => await nextRoundActionHandler(context, socket, io));
     });
 }
