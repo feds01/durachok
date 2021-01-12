@@ -45,7 +45,7 @@ const router = express.Router();
  *
  * @return response to client if user was created and added to the system.
  * */
-router.post('/register', async (req, res, next) => {
+router.post('/register', async (req, res) => {
     let {email, password, name} = req.body;
 
     const registerSchema = Joi.object().keys({
@@ -320,7 +320,7 @@ router.post("/token", async (req, res) => {
         res.set("x-token", newTokens.token);
         res.set("x-refresh-token", newTokens.refreshToken);
 
-        return res.status(302).json({...newTokens});
+        return res.status(302).json({status: true, ...newTokens});
     } catch (e) {
         console.log(e);
 
