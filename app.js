@@ -45,6 +45,7 @@ server.listen(process.env.PORT || 5000, () => {
 
     console.log('Attempting connection with MongoDB cluster...')
     mongoose.connect(process.env.MONGODB_CONNECTION_URI, {
+        connectTimeoutMS: 30000,
         useNewUrlParser: true,
         useCreateIndex: true,
         useFindAndModify: false,
