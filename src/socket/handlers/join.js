@@ -1,7 +1,7 @@
 import Lobby from "../../models/game";
 import Player from "../../models/user";
 import * as lobbyUtils from "../../utils/lobby";
-import {ClientEvents, error, Game, GameStatus, ServerEvents} from "shared";
+import {ClientEvents, error, Game, GameStatus} from "shared";
 
 async function handler(context, socket) {
     const lobby = await Lobby.findOne({pin: socket.lobby.pin});
@@ -13,7 +13,14 @@ async function handler(context, socket) {
 
     // Couldn't find the player by name...
     if (idx < 0) {
-        socket.emit("close", {"reason": "Invalid session."});
+        socket.emit(ClientEvents.CLOSE, {
+            "reason": "Invalid session.",
+
+            // tell the client that their token is stale if they aren't
+            // a user. We don't want to clear a users token since it can
+            // be used to join the game by just using the token.
+            ...!socket.isUser && {token: "stale"}
+        });
         return socket.disconnect();
     }
 
@@ -52,7 +59,7 @@ async function handler(context, socket) {
     }
 
     // send a private message to the socket with the required information
-    socket.emit(ServerEvents.JOINED_GAME, {
+    socket.emit(ClientEvents.JOINED_GAME, {
         isHost: socket.isAdmin,
         lobby: {
             ...(socket.isAdmin && {
@@ -69,7 +76,7 @@ async function handler(context, socket) {
 
     // notify all other clients that a new player has joined the lobby...
     if (lobby.status === GameStatus.WAITING) {
-        socket.broadcast.emit(ServerEvents.NEW_PLAYER, {
+        socket.broadcast.emit(ClientEvents.NEW_PLAYER, {
             lobby: {
                 players: playerList,
                 owner: owner.name,
