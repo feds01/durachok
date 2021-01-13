@@ -1,5 +1,5 @@
 import {customAlphabet} from "nanoid";
-import Players from "../models/user";
+import {utils, game} from "shared";
 
 
 /**
@@ -25,7 +25,7 @@ export async function checkIfNameFree(lobby, name) {
  *                 made a connection to the socket server.
  *
  * @returns {Array<{name: string, id: string, registered: boolean}>} The player list
-* */
+ * */
 export function buildPlayerList(lobby, ignoreUnconfirmed = true) {
     const playerList = []
 
@@ -49,4 +49,17 @@ export function createGamePin() {
     const generator = customAlphabet("1234567890", 6);
 
     return generator();
+}
+
+/**
+ * Method to generate a security phrase for a lobby using the card suit
+ * characters.
+ *
+ * @returns {string} the generated phrase.
+ * */
+export function createGamePassphrase() {
+    const cardSuites = Object.values(game.CardSuits);
+    utils.shuffleArray(cardSuites);
+
+    return cardSuites.join("");
 }

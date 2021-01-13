@@ -3323,7 +3323,7 @@ setprototypeof@1.1.1:
 
 "shared@git+https://github.com/feds01/durak-cards-shared#master":
   version "1.0.0"
-  resolved "git+https://github.com/feds01/durak-cards-shared#6145e524ac66471ab3929b3bcc45df1ac0fe1a42"
+  resolved "git+https://github.com/feds01/durak-cards-shared#fb7f2bb147f92f91c2f9bafb7d2d8271fac70742"
 
 sift@7.0.1:
   version "7.0.1"
