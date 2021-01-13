@@ -1,6 +1,6 @@
 import Lobby from "../../models/game";
-import {error, Game, ClientEvents, MoveTypes, GameStatus} from "shared";
 import Player from "../../models/user";
+import {error, Game, ClientEvents, MoveTypes, GameStatus, ServerEvents} from "shared";
 
 // TODO: event should be atomic
 async function handler(context, socket, io) {
@@ -23,7 +23,7 @@ async function handler(context, socket, io) {
     const player = game.players.get(name);
 
     if (!player) {
-        return socket.emit(events.ERROR, {
+        return socket.emit(ClientEvents.ERROR, {
             status: false,
             type: error.BAD_REQUEST,
             message: error.SOCKET_INVALID_SESSION,
@@ -113,7 +113,7 @@ async function handler(context, socket, io) {
 
     // Finally, check for a victory condition, if the game is finished, emit a 'victory' event
     // and update the lobby state to 'waiting'
-    if (!game.hasVictory) return;
+    if (!game.victory) return;
 
     const owner = await Player.findOne({_id: lobby.owner});
 

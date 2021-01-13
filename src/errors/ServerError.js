@@ -1,5 +1,5 @@
 class ServerError extends Error {
-    constructor(message = 'Internal Server Error.', ...params) {
+    constructor(message = 'Internal Server ErrorPage.', ...params) {
         // Pass remaining arguments (including vendor specific ones) to parent constructor
         super(...params)
 

@@ -109,15 +109,21 @@ export const makeSocketServer = (server) => {
                         isAdmin = true;
                     }
                 } else if (socket.lobby.pin !== decoded.data.pin) {
-                    return next(new Error(error.AUTHENTICATION_FAILED));
+                    // inform that the user should discard this token
+                    const err = new Error(error.AUTHENTICATION_FAILED);
+                    err.data = {"token": "stale"};
+
+                    return next(err);
                 }
 
+                socket.isUser = isUser;
                 socket.isAdmin = isAdmin;
                 socket.decoded = decoded.data;
-                next();
+                return next();
             });
         } else {
-            next(new Error(error.AUTHENTICATION_FAILED));
+            const err = new Error(error.AUTHENTICATION_FAILED);
+            return next(err);
         }
     });
 
@@ -129,5 +135,9 @@ export const makeSocketServer = (server) => {
         socket.on(ServerEvents.START_GAME, async (context) => await startGameHandler(context, socket, io));
         socket.on(ServerEvents.KICK_PLAYER, async (context) => await kickPlayerHandler(context, socket, io));
         socket.on(ServerEvents.MOVE, async (context) => await playerMoveHandler(context, socket, io));
+
+        socket.on("error", (context) => {
+            console.log(context);
+        });
     });
 }

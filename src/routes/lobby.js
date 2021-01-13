@@ -298,7 +298,7 @@ router.post("/:pin/join", validatePin, withAuth, async (req, res) => {
     let players = lobby.players.filter((player) => player.confirmed);
 
     // check that there are free slots within the lobby
-    if (players.length === lobby.maxPlayers || lobby.status !== game.GameState.WAITING) {
+    if (players.length === lobby.maxPlayers || lobby.status !== GameStatus.WAITING) {
         return res.status(400).json({
             status: false,
             err: "LOBBY_FULL",

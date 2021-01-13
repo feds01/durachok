@@ -1,4 +1,6 @@
 // Import our environment variables
+import {Game, ServerEvents} from "shared";
+
 require('dotenv').config();
 
 import cors from 'cors';
