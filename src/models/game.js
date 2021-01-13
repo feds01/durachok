@@ -1,5 +1,5 @@
+import {GameStatus} from "shared";
 import mongoose from 'mongoose';
-import {game} from "shared";
 
 const gameSchema = new mongoose.Schema({
     pin: {type: String, required: true, unique: true},
@@ -15,7 +15,7 @@ const gameSchema = new mongoose.Schema({
         required: true
     },
     state: {type: Object, required: false},
-    status: {type: String, required: true, default: game.GameState.WAITING},
+    status: {type: String, required: true, default: GameStatus.WAITING},
     history: {type: Object, required: false},
     rngSeed: {type: String, required: true},
     with2FA: {type: Boolean, required: true, default: false},

@@ -1,6 +1,6 @@
-import {events, game} from "shared";
 import Lobby from "../../models/game";
 import * as lobbyUtils from "../../utils/lobby";
+import {GameStatus, ServerEvents} from "shared";
 
 async function handler(context, socket) {
     // if the socket connection is not an admin, we need to remove it from
@@ -20,12 +20,12 @@ async function handler(context, socket) {
         //       .
         //       2). A secondary solution is to use a bot service that plays for the other
         //           player when the original player leaves...
-        if (lobby.status === game.GameState.PLAYING) {
+        if (lobby.status === GameStatus.PLAYING) {
             console.log("Removing player from game whilst in session...");
         }
 
         // Remove the player from the list
-        if (lobby.status === game.GameState.WAITING) {
+        if (lobby.status === GameStatus.WAITING) {
             const players = lobby.players;
             const playerIdx = players.findIndex((player) => player.socketId === socket.id);
 
@@ -42,7 +42,7 @@ async function handler(context, socket) {
             );
 
             // notify all other clients that a new player has joined the lobby...
-            socket.broadcast.emit(events.NEW_PLAYER, {
+            socket.broadcast.emit(ServerEvents.NEW_PLAYER, {
                 lobby: {
                     players: lobbyUtils.buildPlayerList(updatedLobby, false),
                     owner: socket.lobby.name,

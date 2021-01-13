@@ -1,5 +1,5 @@
 import Lobby from "../../models/game";
-import {error, events, game} from "shared";
+import {error, Game, ClientEvents, MoveTypes, GameStatus} from "shared";
 import Player from "../../models/user";
 
 // TODO: event should be atomic
@@ -7,20 +7,20 @@ async function handler(context, socket, io) {
     const lobby = await Lobby.findOne({pin: socket.lobby.pin});
 
     // get the game object
-    const Game = game.Game.fromState(lobby.game);
+    const game = Game.fromState(lobby.game);
 
     // If the game has already finished, any further requests are stale.
-    if (Game.hasVictory) {
-        return socket.emit(events.ERROR, {
+    if (game.hasVictory) {
+        return socket.emit(ClientEvents.ERROR, {
             "status": false,
-            "type": events.STALE_GAME,
+            "type": ClientEvents.STALE_GAME,
             message: "Game has finished."
         });
     }
 
     // find the player in the database record by the socket id...
     const {name} = socket.decoded;
-    const player = Game.players.get(name);
+    const player = game.players.get(name);
 
     if (!player) {
         return socket.emit(events.ERROR, {
@@ -33,22 +33,22 @@ async function handler(context, socket, io) {
     try {
         if (player.isDefending) {
             switch (context.type) {
-                case game.Game.MoveTypes.COVER: {
-                    Game.coverCardOnTableTop(context.card, context.pos);
+                case MoveTypes.COVER: {
+                    game.coverCardOnTableTop(context.card, context.pos);
                     break;
                 }
-                case game.Game.MoveTypes.PLACE: {
-                    Game.addCardToTableTop(name, context.card);
+                case MoveTypes.PLACE: {
+                    game.addCardToTableTop(name, context.card);
                     break;
                 }
-                case game.Game.MoveTypes.FORFEIT: {
-                    Game.finalisePlayerTurn(name);
+                case MoveTypes.FORFEIT: {
+                    game.finalisePlayerTurn(name);
                     break;
                 }
                 default: {
-                    return socket.emit(events.ERROR, {
+                    return socket.emit(ClientEvents.ERROR, {
                         "status": false,
-                        "type": events.INVALID_MOVE,
+                        "type": ClientEvents.INVALID_MOVE,
                         message: "Invalid move type."
                     });
                 }
@@ -59,30 +59,30 @@ async function handler(context, socket, io) {
             // to attack at this time (for example at the start of the round) this is reported as
             // being invalid
             if (!player.canAttack) {
-                return socket.emit(events.ERROR, {
+                return socket.emit(ClientEvents.ERROR, {
                     "status": false,
-                    "type": events.INVALID_MOVE,
+                    "type": ClientEvents.INVALID_MOVE,
                     message: "Can't perform action at this time."
                 });
             }
 
             switch (context.type) {
-                case game.Game.MoveTypes.PLACE: {
-                    Game.addCardToTableTop(name, context.card);
+                case MoveTypes.PLACE: {
+                    game.addCardToTableTop(name, context.card);
                     break;
                 }
-                case game.Game.MoveTypes.FORFEIT: {
+                case MoveTypes.FORFEIT: {
                     // just set the players 'turned' status as true
-                    Game.finalisePlayerTurn(name);
+                    game.finalisePlayerTurn(name);
                     break;
                 }
 
                 // check for improper request combinations such as a 'attacking' player
                 // trying to cover a card on the table...
                 default: {
-                    return socket.emit(events.ERROR, {
+                    return socket.emit(ClientEvents.ERROR, {
                         "status": false,
-                        "type": events.INVALID_MOVE,
+                        "type": ClientEvents.INVALID_MOVE,
                         message: "Invalid move type."
                     });
                 }
@@ -92,15 +92,15 @@ async function handler(context, socket, io) {
         console.log(e);
 
         // Send the client the 'safe' state and don't save the game.
-        return socket.emit(events.INVALID_MOVE, Game.getStateForPlayer(name));
+        return socket.emit(ClientEvents.INVALID_MOVE, game.getStateForPlayer(name));
     }
 
     // save the game into mongo
-    await Lobby.updateOne({_id: socket.lobby._id}, {game: Game.serialize()});
+    await Lobby.updateOne({_id: socket.lobby._id}, {game: game.serialize()});
 
     // iterate over each socket id in the 'namespace' that is connected and send them
     // the cards...
-    Game.players.forEach(((value, key) => {
+    game.players.forEach(((value, key) => {
         const socketId = lobby.players.find(p => p.name === key).socketId;
 
         // send each player their cards, round metadata, etc...
@@ -108,21 +108,21 @@ async function handler(context, socket, io) {
         //      For example, if the player 'alex' covers a card on pos 0
         //      with "Jack of Spades', this information should be passed onto
         //      the clients.
-        io.of(lobby.pin.toString()).sockets.get(socketId).emit(events.ACTION, Game.getStateForPlayer(key));
+        io.of(lobby.pin.toString()).sockets.get(socketId).emit(ClientEvents.ACTION, game.getStateForPlayer(key));
     }));
 
     // Finally, check for a victory condition, if the game is finished, emit a 'victory' event
     // and update the lobby state to 'waiting'
-    if (!Game.hasVictory) return;
+    if (!game.hasVictory) return;
 
     const owner = await Player.findOne({_id: lobby.owner});
 
     // list the players by exit order
     // TODO: cleanup
-    io.of(lobby.pin.toString()).emit(events.VICTORY, {
-        players: Array.from(Game.players.keys())
+    io.of(lobby.pin.toString()).emit(ClientEvents.VICTORY, {
+        players: Array.from(game.players.keys())
             .map(name => {
-                const player = Game.players.get(name);
+                const player = game.players.get(name);
 
                 return {
                     name,
@@ -150,7 +150,7 @@ async function handler(context, socket, io) {
                 }
                 return player;
             }),
-            status: game.GameState.WAITING,
+            status: GameStatus.WAITING,
             game: {}
         },
     });

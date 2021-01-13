@@ -1,5 +1,5 @@
 import Lobby from "../../models/game";
-import {error, events, game} from "shared";
+import {Game, ClientEvents, GameStatus} from "shared";
 import * as lobbyUtils from "../../utils/lobby";
 
 
@@ -29,7 +29,7 @@ async function handler(context, socket, io) {
     // fire game_started event and update the game state to 'PLAYING'
     io.of(lobby.pin.toString()).emit(events.GAME_STARTED);
 
-    const Game = new game.Game(players);
+    const Game = new Game(players, null);
 
     // save the game into mongo
     await Lobby.updateOne({_id: socket.lobby._id}, {game: Game.serialize()});
@@ -46,10 +46,10 @@ async function handler(context, socket, io) {
         }
 
         // send each player their cards, round metadata, etc...
-        io.of(lobby.pin.toString()).sockets.get(socketId).emit(events.BEGIN_ROUND, Game.getStateForPlayer(key));
+        io.of(lobby.pin.toString()).sockets.get(socketId).emit(ClientEvents.BEGIN_ROUND, Game.getStateForPlayer(key));
     }));
 
-    await Lobby.updateOne({_id: socket.lobby._id}, {status: game.GameState.PLAYING});
+    await Lobby.updateOne({_id: socket.lobby._id}, {status: GameStatus.PLAYING});
 }
 
 export default handler;

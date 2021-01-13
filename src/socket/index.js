@@ -1,8 +1,8 @@
 import jwt from "jsonwebtoken";
 import {Server} from "socket.io";
 import Lobby from "../models/game";
-import {error, events} from "shared";
 import Player from "../models/user";
+import {error, ServerEvents} from "shared";
 import * as lobbyUtils from "../utils/lobby";
 import {refreshTokens} from "../authentication";
 
@@ -124,10 +124,10 @@ export const makeSocketServer = (server) => {
     lobbies.on('connect', (socket) => {
         socket.on("disconnecting", async (context) => await disconnectionHandler(context, socket, io));
 
-        socket.on(events.JOIN_GAME, async (context) => await joinGameHandler(context, socket, io));
-        socket.on(events.UPDATE_PASSPHRASE, async (context) => await updatePassphraseHandler(context, socket, io));
-        socket.on(events.START_GAME, async (context) => await startGameHandler(context, socket, io));
-        socket.on(events.KICK_PLAYER, async (context) => await kickPlayerHandler(context, socket, io));
-        socket.on(events.MOVE, async (context) => await playerMoveHandler(context, socket, io));
+        socket.on(ServerEvents.JOIN_GAME, async (context) => await joinGameHandler(context, socket, io));
+        socket.on(ServerEvents.UPDATE_PASSPHRASE, async (context) => await updatePassphraseHandler(context, socket, io));
+        socket.on(ServerEvents.START_GAME, async (context) => await startGameHandler(context, socket, io));
+        socket.on(ServerEvents.KICK_PLAYER, async (context) => await kickPlayerHandler(context, socket, io));
+        socket.on(ServerEvents.MOVE, async (context) => await playerMoveHandler(context, socket, io));
     });
 }

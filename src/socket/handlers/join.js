@@ -1,7 +1,7 @@
 import Lobby from "../../models/game";
-import {error, events, game} from "shared";
-import * as lobbyUtils from "../../utils/lobby";
 import Player from "../../models/user";
+import * as lobbyUtils from "../../utils/lobby";
+import {ClientEvents, error, Game, GameStatus, ServerEvents} from "shared";
 
 async function handler(context, socket) {
     const lobby = await Lobby.findOne({pin: socket.lobby.pin});
@@ -37,21 +37,22 @@ async function handler(context, socket) {
 
     // oops, was the owner account deleted?
     if (!owner) {
-        return socket.emit(events.ERROR, {
+        return socket.emit(ClientEvents.ERROR, {
             status: false,
             type: "internal_server_error",
             message: error.INTERNAL_SERVER_ERROR
         });
     }
 
-    let Game = null;
+    let state = null;
 
-    if (updatedLobby.game && updatedLobby.status === game.GameState.PLAYING) {
-        Game = game.Game.fromState(updatedLobby.game);
+    if (updatedLobby.game && updatedLobby.status === GameStatus.PLAYING) {
+        const game = Game.fromState(updatedLobby.game);
+        state = game.getStateForPlayer(players[idx].name);
     }
 
     // send a private message to the socket with the required information
-    socket.emit(events.JOINED_GAME, {
+    socket.emit(ServerEvents.JOINED_GAME, {
         isHost: socket.isAdmin,
         lobby: {
             ...(socket.isAdmin && {
@@ -63,12 +64,12 @@ async function handler(context, socket) {
             owner: owner.name,
             name: socket.decoded.name,
         },
-        ...((Game !== null) && {game: Game.getStateForPlayer(players[idx].name)})
+        ...((state !== null) && {game: state})
     });
 
     // notify all other clients that a new player has joined the lobby...
-    if (lobby.status === game.GameState.WAITING) {
-        socket.broadcast.emit(events.NEW_PLAYER, {
+    if (lobby.status === GameStatus.WAITING) {
+        socket.broadcast.emit(ServerEvents.NEW_PLAYER, {
             lobby: {
                 players: playerList,
                 owner: owner.name,
