@@ -8,6 +8,11 @@ async function handler(context, socket, io) {
 
     const lobby = await Lobby.findOne({pin: socket.lobby.pin});
 
+    // don't start the game if the game has already been started, just silently fail.
+    if (lobby.status !== GameStatus.WAITING) {
+        return;
+    }
+
     // check that there are at least 2 players in the lobby
     if (lobby.players.filter(p => p.confirmed).length < 2) {
         socket.emit(ClientEvents.ERROR, new Error(error.BAD_REQUEST));
@@ -15,6 +20,7 @@ async function handler(context, socket, io) {
 
     // update the game state to 'STARTED' since the game has started
     await Lobby.updateOne({_id: socket.lobby._id}, {status: GameStatus.STARTED});
+    io.of(lobby.pin.toString()).emit(ClientEvents.COUNTDOWN);
 
     // TODO: add mechanism to wait for all clients to confirm that they have finished
     //       counting down and are ready to begin the game...
