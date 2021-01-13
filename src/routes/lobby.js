@@ -2,10 +2,10 @@ import * as Joi from "joi";
 import express from 'express';
 import {nanoid} from "nanoid";
 import Lobby from './../models/game';
+import {error, game, events} from "shared";
 import {emitLobbyEvent} from "../socket";
-import {createTokens, getTokensFromHeader, ownerAuth, withAuth} from "../authentication";
-import {checkIfNameFree, createGamePin} from "../utils/lobby";
-import {error, game, lobby as LobbyUtils, events} from "shared";
+import {createTokens, ownerAuth, withAuth} from "../authentication";
+import {checkIfNameFree, createGamePassphrase, createGamePin} from "../utils/lobby";
 
 const router = express.Router();
 
@@ -98,7 +98,7 @@ router.post("/", ownerAuth, async (req, res) => {
         roundTimeout,
         pin: gamePin,
         with2FA: with2FA,
-        ...(with2FA && {passphrase: LobbyUtils.createGamePassphrase().join("")}),
+        ...(with2FA && {passphrase: createGamePassphrase()}),
 
         // automatically put the user into the lobby
         players: [
