@@ -9,7 +9,6 @@
   },
   "scripts": {
     "start": "babel-node ./app.js",
-    "build": " USE_YARN_CACHE=false rm yarn.lock && yarn",
     "dev": "nodemon  --ignore client --exec babel-node ./app.js"
   },
   "dependencies": {
