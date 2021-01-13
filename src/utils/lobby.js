@@ -1,5 +1,5 @@
 import {customAlphabet} from "nanoid";
-import {utils, game} from "shared";
+import {shuffleArray, CardSuits} from "shared";
 
 
 /**
@@ -58,8 +58,8 @@ export function createGamePin() {
  * @returns {string} the generated phrase.
  * */
 export function createGamePassphrase() {
-    const cardSuites = Object.values(game.CardSuits);
-    utils.shuffleArray(cardSuites);
+    const cardSuites = Object.values(CardSuits);
+    shuffleArray(cardSuites);
 
     return cardSuites.join("");
 }

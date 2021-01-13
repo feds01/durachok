@@ -2,7 +2,7 @@ import * as Joi from "joi";
 import express from 'express';
 import {nanoid} from "nanoid";
 import Lobby from './../models/game';
-import {error, game, events} from "shared";
+import {ClientEvents, error, GameStatus} from "shared";
 import {emitLobbyEvent} from "../socket";
 import {createTokens, ownerAuth, withAuth} from "../authentication";
 import {checkIfNameFree, createGamePassphrase, createGamePin} from "../utils/lobby";
@@ -165,7 +165,7 @@ router.get('/:pin', validatePin, async (req, res) => {
     const players = lobby.players.filter((player) => player.confirmed);
 
     // notify client if they can't even join the current lobby if it's full or in sessions
-    if (players.length === lobby.maxPlayers || lobby.status !== game.GameState.WAITING) {
+    if (players.length === lobby.maxPlayers || lobby.status !== GameStatus.WAITING) {
         return res.status(400).json({
             status: false,
             message: error.LOBBY_FULL,
@@ -237,7 +237,7 @@ router.delete("/:pin", validatePin, ownerAuth, async (req, res) => {
         }
 
         // kick everyone from the lobby if any connections are present.
-        emitLobbyEvent(pin, events.CLOSE, {reason: "lobby_closed"});
+        emitLobbyEvent(pin, ClientEvents.CLOSE, {reason: "lobby_closed"});
 
         return res.status(200).json({
             status: true,
