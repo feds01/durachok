@@ -1,6 +1,6 @@
 import Lobby from "../../models/game";
 import Player from "../../models/user";
-import {error, Game, ClientEvents, MoveTypes, GameStatus, ServerEvents} from "shared";
+import {error, Game, ClientEvents, MoveTypes, GameStatus} from "shared";
 
 // TODO: event should be atomic
 async function handler(context, socket, io) {
@@ -108,7 +108,11 @@ async function handler(context, socket, io) {
         //      For example, if the player 'alex' covers a card on pos 0
         //      with "Jack of Spades', this information should be passed onto
         //      the clients.
-        io.of(lobby.pin.toString()).sockets.get(socketId).emit(ClientEvents.ACTION, game.getStateForPlayer(key));
+        try {
+            io.of(lobby.pin.toString()).sockets.get(socketId).emit(ClientEvents.ACTION, game.getStateForPlayer(key));
+        } catch (e) {
+            console.log(`Stale connection on ${lobby.pin}: socketId=${socketId}, player=${p.name}`)
+        }
     }));
 
     // Finally, check for a victory condition, if the game is finished, emit a 'victory' event
