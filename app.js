@@ -43,7 +43,7 @@ const server = createServer(app);
 
 //start our server
 server.listen(process.env.PORT || 5000, () => {
-    console.log(`Server started on port ${server.address().port}!`);
+    console.log(`Server started on port ${server.address().port}! Mode=${process.env.NODE_ENV || "dev"}`);
 
     console.log('Attempting connection with MongoDB cluster...')
     mongoose.connect(process.env.MONGODB_CONNECTION_URI, {

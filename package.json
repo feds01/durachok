@@ -8,7 +8,7 @@
     "yarn": "1.22.10"
   },
   "scripts": {
-    "start": "babel-node ./app.js",
+    "start": "NODE_ENV=production babel-node ./app.js",
     "dev": "nodemon  --ignore client --exec babel-node ./app.js"
   },
   "dependencies": {
@@ -24,6 +24,7 @@
     "mongoose": "5.11.8",
     "morgan": "1.10.0",
     "nanoid": "3.1.20",
+    "node-fetch": "^2.6.1",
     "prop-types": "^15.7.2",
     "shared": "git+https://github.com/feds01/durak-cards-shared#master",
     "socket.io": "3.0.4"

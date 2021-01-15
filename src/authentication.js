@@ -120,6 +120,15 @@ export async function withAuth(req, res, next) {
         const existingUser = await User.findOne({_id: userToken.data.id});
 
         if (existingUser) req.userToken = userToken;
+    } else if (userToken) {
+
+        // Looks like this could be a stale token, probably from a previous
+        // anonymous game, therefore we should notify the client to discard it.
+        return res.status(400).json({
+            status: false,
+            error: { token: "stale" }
+        });
+
     }
 
     next();
