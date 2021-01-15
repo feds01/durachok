@@ -100,7 +100,6 @@ async function handler(context, socket, io) {
 
     // iterate over each socket id in the 'namespace' that is connected and send them
     // the cards...
-    console.log(game.players);
     game.players.forEach(((value, key) => {
         const socketId = lobby.players.find(p => p.name === key).socketId;
 
