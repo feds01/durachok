@@ -1,4 +1,5 @@
 import * as Joi from "joi";
+import fetch from 'node-fetch';
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import User from './../models/user';
@@ -48,40 +49,94 @@ const router = express.Router();
 router.post('/register', async (req, res) => {
     let {email, password, name} = req.body;
 
+    const RE_CAPTCHA_VERIFY_URL = `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RE_CAPTCHA}&response=`;
     const registerSchema = Joi.object().keys({
         name: Joi.string()
             .pattern(/^[A-Za-z0-9]+(?:[ _-][A-Za-z0-9]+)*$/)
             .min(1)
             .max(20)
-            .required(),
-        email: Joi.string().email().required(),
-        password: Joi.string().pattern(new RegExp('^[a-zA-Z0-9]{8,30}$')),
+            .required()
+            .messages({
+                'any.required': 'Name is required',
+                'string.empty': 'Name cannot be empty.',
+                'string.pattern.base': 'Name must be alphanumeric',
+                'string.min': 'Name must be be at least 8 characters long.',
+                'string.max': 'Name cannot be longer than 20 characters.',
+            }),
+        email: Joi.string()
+            .email()
+            .required()
+            .messages({
+                'any.required': 'Email is required',
+                'string.empty': 'Email cannot be empty.',
+                'string.email': 'Must be a valid email',
+            }),
+        password: Joi.string()
+            .required()
+            .min(8)
+            .max(30)
+            .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[#$@!%&*?])[A-Za-z\d#$@!%&*?]{8,30}$/)
+            .messages({
+                'any.required': 'Password is required',
+                'string.empty': 'Password cannot be empty.',
+                'string.min': 'Password must be be at least 8 characters long.',
+                'string.max': 'Password cannot be longer than 30 characters.',
+                'string.pattern.base': 'Password must include a special character and a number.',
+            }),
+
+        // Only use token in production to validate registration requests.
+        ...process.env.NODE_ENV === 'production' && {
+            token:  Joi.string()
+                .required()
+                .messages({
+                    'any.required': 'ReCaptcha token is required.'
+                })
+        },
     });
 
-    const result = registerSchema.validate(req.body);
+    const result = registerSchema.validate(req.body, {abortEarly: false});
 
     if (result.error) {
         return res.status(400).json({
             status: false,
             message: error.BAD_REQUEST,
+            errors: Object.fromEntries(result.error.details.map((error) => {
+                return [error.path[0], error.message]
+            })),
             extra: "Invalid user registration parameters.",
         });
     }
 
+    // Validate ReCaptcha token if we're in production
+    if (process.env.NODE_ENV === "production") {
+        const captchaResponse = await fetch(RE_CAPTCHA_VERIFY_URL + req.body.token).then(res => res.json())
+
+        if (!captchaResponse.success) {
+            return res.status(400).json({
+                status: false,
+                errors: {
+                    token: "Failed verification"
+                }
+            });
+        }
+    }
 
     try {
-        const existingUser = await User.find({
+        const existingUser = await User.findOne({
             $or: [
                 {name: name},
                 {email: email}
             ]
         });
 
-        if (existingUser.length !== 0) {
+        if (existingUser) {
             return res.status(400).json({
                 status: false,
                 message: error.BAD_REQUEST,
-                extra: error.MAIL_EXISTS,
+                errors: {
+                    ...email === existingUser.email && {email: error.MAIL_EXISTS},
+                    ...name === existingUser.name && {name: "Name already taken."},
+                },
             });
         }
 
