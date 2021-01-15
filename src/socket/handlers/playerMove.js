@@ -58,7 +58,7 @@ async function handler(context, socket, io) {
             // If the player is attempting to attack (MoveType of 'place) but they aren't allowed
             // to attack at this time (for example at the start of the round) this is reported as
             // being invalid
-            if (!player.canAttack) {
+            if (!player.canAttack && context.type !== MoveTypes.FORFEIT) {
                 return socket.emit(ClientEvents.ERROR, {
                     "status": false,
                     "type": ClientEvents.INVALID_MOVE,
@@ -100,6 +100,7 @@ async function handler(context, socket, io) {
 
     // iterate over each socket id in the 'namespace' that is connected and send them
     // the cards...
+    console.log(game.players);
     game.players.forEach(((value, key) => {
         const socketId = lobby.players.find(p => p.name === key).socketId;
 

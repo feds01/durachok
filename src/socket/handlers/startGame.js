@@ -33,6 +33,7 @@ async function handler(context, socket, io) {
     io.of(lobby.pin.toString()).emit(ClientEvents.GAME_STARTED);
 
     const game = new Game(players, null);
+    game.deck = []; // @@Nocheckin: testing purposes.
 
     // save the game into mongo
     await Lobby.updateOne({_id: socket.lobby._id}, {game: game.serialize()});
