@@ -86,13 +86,13 @@ router.post('/register', async (req, res) => {
 
         // Only use token in production to validate registration requests.
         ...process.env.NODE_ENV === 'production' && {
-            token:  Joi.string()
+            token: Joi.string()
                 .required()
                 .messages({
                     'any.required': 'ReCaptcha token is required.'
                 })
         },
-    });
+    }).unknown(true);
 
     const result = registerSchema.validate(req.body, {abortEarly: false});
 
@@ -109,7 +109,7 @@ router.post('/register', async (req, res) => {
 
     // Validate ReCaptcha token if we're in production
     if (process.env.NODE_ENV === "production") {
-        const captchaResponse = await fetch(RE_CAPTCHA_VERIFY_URL + req.body.token).then(res => res.json())
+        const captchaResponse = await fetch(RE_CAPTCHA_VERIFY_URL + req.body.token, {method: "POST"}).then(res => res.json());
 
         if (!captchaResponse.success) {
             return res.status(400).json({
