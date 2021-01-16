@@ -111,7 +111,7 @@ async function handler(context, socket, io) {
         try {
             io.of(lobby.pin.toString()).sockets.get(socketId).emit(ClientEvents.ACTION, game.getStateForPlayer(key));
         } catch (e) {
-            console.log(`Stale connection on ${lobby.pin}: socketId=${socketId}, player=${p.name}`)
+            console.log(`Stale connection on ${lobby.pin}: socketId=${socketId}, player=${player.name}`)
         }
     }));
 
