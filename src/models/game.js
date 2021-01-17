@@ -17,12 +17,13 @@ const gameSchema = new mongoose.Schema({
     state: {type: Object, required: false},
     status: {type: String, required: true, default: GameStatus.WAITING},
     history: {type: Object, required: false},
-    rngSeed: {type: String, required: true},
     with2FA: {type: Boolean, required: true, default: false},
+    randomPlayerOrder: {type: Boolean, required: true, default: false},
     roundTimeout: {type: Number, required: false, default: 120},
     owner: {type: mongoose.Schema.Types.ObjectId, ref: 'user'},
     game: {
         type: {
+            rngSeed: {type: String, required: false, default: ""},
             players: {
                 type: [{
                     deck: {type: [String]},
