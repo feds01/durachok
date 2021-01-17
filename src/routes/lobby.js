@@ -1,6 +1,5 @@
 import * as Joi from "joi";
 import express from 'express';
-import {nanoid} from "nanoid";
 import Lobby from './../models/game';
 import {ClientEvents, error, GameStatus} from "shared";
 import {emitLobbyEvent} from "../socket";
@@ -54,11 +53,9 @@ function validatePin(req, res, next) {
 router.post("/", ownerAuth, async (req, res) => {
     const {id} = req.token.data;
 
-    // Perform some validation on the passed parameters
-    let {maxPlayers, with2FA, roundTimeout} = req.body;
-
     const GameSchema = Joi.object().keys({
-        with2FA: Joi.bool().required(),
+        with2FA: Joi.bool().default(false),
+        randomPlayerOrder: Joi.bool().default(false),
         maxPlayers: Joi.number()
             .min(2)
             .max(8)
@@ -81,6 +78,9 @@ router.post("/", ownerAuth, async (req, res) => {
         });
     }
 
+    // After the values have been validated, we can use them to determine the game settings.
+    let {maxPlayers, with2FA, roundTimeout, randomPlayerOrder} = result.value;
+
     let gamePin, existingGame;
 
     // Generate a unique game pin, and check that it's unique by ensuring no
@@ -98,13 +98,13 @@ router.post("/", ownerAuth, async (req, res) => {
         roundTimeout,
         pin: gamePin,
         with2FA: with2FA,
+        randomPlayerOrder,
         ...(with2FA && {passphrase: createGamePassphrase()}),
 
         // automatically put the user into the lobby
         players: [
             {name: req.token.data.name, sockedId: null, registered: true, confirmed: true}
         ],
-        rngSeed: nanoid(),
         owner: id,
     });
 
