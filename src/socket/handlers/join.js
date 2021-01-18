@@ -66,6 +66,7 @@ async function handler(context, socket) {
                 with2FA: lobby.with2FA,
                 passphrase: lobby.passphrase,
             }),
+            roundTimeout: lobby.roundTimeout,
             status: lobby.status,
             players: playerList,
             owner: owner.name,
