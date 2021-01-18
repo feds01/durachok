@@ -25,13 +25,14 @@ const gameSchema = new mongoose.Schema({
         type: {
             rngSeed: {type: String, required: false, default: ""},
             players: {
-                type: [{
+                type: Map,
+                of: {
                     deck: {type: [String]},
                     canAttack: {type: Boolean},
                     beganRound: {type: Boolean},
                     turned: {type: Boolean},
                     isDefending: {type: Boolean}
-                }]
+                }
             },
             deck: {type: [String]},
             history: {type: Object, required: false, default: {}},
