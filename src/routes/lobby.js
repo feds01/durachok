@@ -333,7 +333,7 @@ router.post("/:pin/join", validatePin, withAuth, async (req, res) => {
         registered = true;
         name = req.userToken.data.name;
     } else {
-        const nameValidator = Joi.string().min(1).max(20).required();
+        const nameValidator = Joi.string().regex(/^[^\s]{1,20}$/).min(1).max(20).required();
         const result = nameValidator.validate(req.body.name);
 
         if (result.error) {
