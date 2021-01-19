@@ -5,7 +5,10 @@ import bcrypt from 'bcryptjs';
 import User from './../models/user';
 import Lobby from './../models/game';
 
-import {error} from "shared";
+import {ClientEvents, error} from "shared";
+import {emitLobbyEvent} from "../socket";
+import SchemaError from "../errors/SchemaError";
+import {validateAccountCreateOrUpdate} from "../common/user";
 import {createTokens, refreshTokens, ownerAuth} from "../authentication";
 
 const router = express.Router();
@@ -50,61 +53,22 @@ router.post('/register', async (req, res) => {
     let {email, password, name} = req.body;
 
     const RE_CAPTCHA_VERIFY_URL = `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RE_CAPTCHA}&response=`;
-    const registerSchema = Joi.object().keys({
-        name: Joi.string()
-            .pattern(/^[A-Za-z0-9]+(?:[ _-][A-Za-z0-9]+)*$/)
-            .min(1)
-            .max(20)
-            .required()
-            .messages({
-                'any.required': 'Name is required',
-                'string.empty': 'Name cannot be empty.',
-                'string.pattern.base': 'Name must be alphanumeric',
-                'string.min': 'Name must be be at least 8 characters long.',
-                'string.max': 'Name cannot be longer than 20 characters.',
-            }),
-        email: Joi.string()
-            .email()
-            .required()
-            .messages({
-                'any.required': 'Email is required',
-                'string.empty': 'Email cannot be empty.',
-                'string.email': 'Must be a valid email',
-            }),
-        password: Joi.string()
-            .required()
-            .min(8)
-            .max(30)
-            .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[#$@!%&*?])[A-Za-z\d#$@!%&*?]{8,30}$/)
-            .messages({
-                'any.required': 'Password is required',
-                'string.empty': 'Password cannot be empty.',
-                'string.min': 'Password must be be at least 8 characters long.',
-                'string.max': 'Password cannot be longer than 30 characters.',
-                'string.pattern.base': 'Password must include a special character and a number.',
-            }),
 
-        // Only use token in production to validate registration requests.
-        ...process.env.NODE_ENV === 'production' && {
-            token: Joi.string()
-                .required()
-                .messages({
-                    'any.required': 'ReCaptcha token is required.'
-                })
-        },
-    }).unknown(true);
-
-    const result = registerSchema.validate(req.body, {abortEarly: false});
-
-    if (result.error) {
-        return res.status(400).json({
-            status: false,
-            message: error.BAD_REQUEST,
-            errors: Object.fromEntries(result.error.details.map((error) => {
-                return [error.path[0], error.message]
-            })),
-            extra: "Invalid user registration parameters.",
-        });
+    try {
+        await validateAccountCreateOrUpdate(true, {email, password, name});
+    } catch (e) {
+        if (e instanceof SchemaError) {
+            return res.status(400).json({
+                status: false,
+                message: error.BAD_REQUEST,
+                errors: e.errors,
+            });
+        } else {
+            return res.status(500).json({
+                status: false,
+                message: error.INTERNAL_SERVER_ERROR,
+            });
+        }
     }
 
     // Validate ReCaptcha token if we're in production
@@ -121,69 +85,40 @@ router.post('/register', async (req, res) => {
         }
     }
 
-    try {
-        const existingUser = await User.findOne({
-            $or: [
-                {name: name},
-                {email: email}
-            ]
-        });
+    // generate the salt for the new user account;
+    const salt = await bcrypt.genSalt();
 
-        if (existingUser) {
-            return res.status(400).json({
+    return await bcrypt.hash(password, salt, async (err, hash) => {
+        if (err) throw (err);
+
+        // create the user object and save it to the table
+        const newUser = new User({email, password: hash, name});
+
+        try {
+            const savedUser = await newUser.save();
+
+            const {token, refreshToken} = await createTokens({email, name, id: savedUser._id});
+
+            // set the tokens in the response headers
+            res.set("Access-Control-Expose-Headers", "x-token, x-refresh-token");
+            res.set("x-token", token);
+            res.set("x-refresh-token", refreshToken);
+
+            return res.status(201).json({
+                status: true,
+                message: "Successfully created new user account.",
+                token,
+                refreshToken
+            })
+        } catch (e) {
+            console.log(e);
+
+            return res.status(500).json({
                 status: false,
-                message: error.BAD_REQUEST,
-                errors: {
-                    ...email === existingUser.email && {email: error.MAIL_EXISTS},
-                    ...name === existingUser.name && {name: "Name already taken."},
-                },
-            });
+                message: error.INTERNAL_SERVER_ERROR
+            })
         }
-
-        // generate the salt for the new user account;
-        const salt = await bcrypt.genSalt();
-
-        return await bcrypt.hash(password, salt, async (err, hash) => {
-            if (err) throw (err);
-
-            // create the user object and save it to the table
-            const newUser = new User({email, password: hash, name});
-
-            try {
-                const savedUser = await newUser.save();
-
-                const {token, refreshToken} = await createTokens({email: email, name: name, id: savedUser._id});
-
-                // set the tokens in the response headers
-                res.set("Access-Control-Expose-Headers", "x-token, x-refresh-token");
-                res.set("x-token", token);
-                res.set("x-refresh-token", refreshToken);
-
-                return res.status(201).json({
-                    status: true,
-                    message: "Successfully created new user account.",
-                    token,
-                    refreshToken
-                })
-            } catch (e) {
-                console.log(e);
-
-                return res.status(500).json({
-                    status: false,
-                    message: error.INTERNAL_SERVER_ERROR
-                })
-            }
-        });
-
-
-    } catch (err) {
-        console.log(err);
-
-        return res.status(500).json({
-            status: false,
-            message: error.INTERNAL_SERVER_ERROR
-        });
-    }
+    });
 });
 
 /**
@@ -347,6 +282,139 @@ router.get("/", ownerAuth, async (req, res) => {
             name: req.token.data.name,
         }
     })
+});
+
+/**
+ * @version v1.0.0
+ * @method POST
+ * @url https://durachok.game/api/user
+ *
+ * @description This route is used to update any user account information, the route
+ * will accept a token in the header of the request to authenticate the request.
+ *
+ *
+ *
+ * @error {UNAUTHORIZED} if the request does not contain a token or refreshToken
+ *
+ * @return sends a response to client if user successfully (or not) logged in. The response contains
+ * a list of the current games the user is hosting and the users name.
+ *
+ * */
+router.post("/", ownerAuth, async (req, res) => {
+    const id = req.token.data.id;
+
+    let params, hash;
+
+    try {
+        params = validateAccountCreateOrUpdate(false, {
+            ...req.body.name && {name: req.body.name},
+            ...req.body.email && {name: req.body.email},
+            ...req.body.password && {name: req.body.password}
+        });
+    } catch (e) {
+        if (e instanceof SchemaError) {
+            return res.status(400).json({
+                status: false,
+                message: error.BAD_REQUEST,
+                errors: e.errors,
+            });
+        } else {
+            return res.status(500).json({
+                status: false,
+                message: error.INTERNAL_SERVER_ERROR,
+            });
+        }
+    }
+
+    // if the password parameter was provided, we need to create a hash of it so it
+    // is written to the db in that form.
+    // generate the salt for the new user account;
+    if (params.password) {
+        const salt = await bcrypt.genSalt();
+        hash = await bcrypt.hash(params.password, salt);
+
+        if (!hash) {
+            return res.status(500).json({
+                status: false,
+                message: error.INTERNAL_SERVER_ERROR,
+            });
+        }
+    }
+
+    await User.updateOne({_id: id}, {
+        "$set": {
+            ...params.name && {name: params.name},
+            ...params.email && {email: params.email},
+            ...hash && {password: hash},
+        }
+    });
+
+    return res.status(200).json({
+        status: true,
+        message: "Successfully updated user details."
+    });
+
+    // Image uploading step, (if it exists of-course).
+});
+
+/**
+ * @version v1.0.0
+ * @method DELETE
+ * @url https://durachok.game/api/user
+ *
+ * @description This route is used to delete  a user account, the route
+ * will accept a token in the header of the request to authenticate the request.
+ * The route will delete any lobbies that the player has initiated, and likely in
+ * the future any archived games.
+ *
+ * @error {UNAUTHORIZED} if the request does not contain a token or refreshToken
+ *
+ * @return sends a response to client if user successfully (or not) logged in. The response contains
+ * a list of the current games the user is hosting and the users name.
+ *
+ * */
+router.delete("/", ownerAuth, async (req, res) => {
+    const id = req.token.data.id;
+
+    // This is quite silly that we have to query the database first and the delete it, can't
+    // the database just return the deleted id's or documents?
+    const lobbies = await Lobby.find({owner: id}).select({"pin": 1, "_id": 0});
+
+    // Delete all of the users lobbies if any, and send a message to any lobby
+    // participant that the lobby was removed/closed.
+    await Lobby.deleteMany({owner: id}, (err) => {
+        if (err) {
+            console.log(err);
+
+            return res.status(500).json({
+                status: true,
+                message: "Couldn't delete user account at this time."
+            });
+        }
+
+        // iter of lobbies and emit close_lobby event.
+        lobbies.map((lobby) => {
+            emitLobbyEvent(lobby.pin, ClientEvents.CLOSE, {reason: "lobby_closed"});
+        });
+    });
+
+    // find all the games that are owned by the current player.
+    return User.findOneAndDelete({_id: id}, (err) => {
+        if (err) {
+            console.log(err);
+
+            return res.status(500).json({
+                status: true,
+                message: "Couldn't delete user account at this time."
+            });
+        }
+
+
+        return res.status(200).json({
+            status: true,
+            message: "Successfully deleted user account."
+        });
+    });
 });
 
 /**
