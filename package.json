@@ -12,6 +12,7 @@
     "dev": "nodemon  --ignore client --exec babel-node ./app.js"
   },
   "dependencies": {
+    "aws-sdk": "^2.829.0",
     "bcryptjs": "2.4.3",
     "cookie-parser": "1.4.5",
     "cors": "2.8.5",
