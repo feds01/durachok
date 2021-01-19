@@ -54,7 +54,7 @@ async function handler(context, socket) {
     let state = null;
 
     if (updatedLobby.game && updatedLobby.status === GameStatus.PLAYING) {
-        const game = Game.fromState(updatedLobby.game);
+        const game = Game.fromState(updatedLobby.game.state, updatedLobby.game.history);
         state = game.getStateForPlayer(players[idx].name);
     }
 

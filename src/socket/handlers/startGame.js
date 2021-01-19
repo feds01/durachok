@@ -22,8 +22,6 @@ async function handler(context, socket, io) {
     await Lobby.updateOne({_id: socket.lobby._id}, {status: GameStatus.STARTED});
     io.of(lobby.pin.toString()).emit(ClientEvents.COUNTDOWN);
 
-    // TODO: add mechanism to wait for all clients to confirm that they have finished
-    //       counting down and are ready to begin the game...
     await new Promise(resolve => setTimeout(resolve, 5000)); // 5 sec wait
 
     // Instantiate the game with the players and distribute the player cards to each player
@@ -32,7 +30,9 @@ async function handler(context, socket, io) {
     // fire game_started event and update the game state to 'PLAYING'
     io.of(lobby.pin.toString()).emit(ClientEvents.GAME_STARTED);
 
-    const game = new Game(players, null);
+    const game = new Game(players, null, {
+        randomisePlayerOrder: socket.lobby.randomPlayerOrder
+    });
 
     // save the game into mongo
     await Lobby.updateOne({_id: socket.lobby._id}, {game: game.serialize()});
