@@ -7,7 +7,7 @@ async function handler(context, socket, io) {
     const lobby = await Lobby.findOne({pin: socket.lobby.pin});
 
     // get the game object
-    const game = Game.fromState(lobby.game);
+    const game = Game.fromState(lobby.game.state, lobby.game.history);
 
     // If the game has already finished, any further requests are stale.
     if (game.hasVictory) {
@@ -126,7 +126,7 @@ async function handler(context, socket, io) {
     io.of(lobby.pin.toString()).emit(ClientEvents.VICTORY, {
         players: Array.from(game.players.keys())
             .map(name => {
-                const player = game.players.get(name);
+                const player = game.getPlayer(name);
 
                 return {
                     name,
@@ -155,7 +155,7 @@ async function handler(context, socket, io) {
                 return player;
             }),
             status: GameStatus.WAITING,
-            game: {}
+            // game: {}
         },
     });
 }

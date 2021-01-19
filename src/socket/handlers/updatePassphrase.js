@@ -1,12 +1,11 @@
 import Lobby from "../../models/game";
 import {error, ClientEvents} from "shared";
 
-// TODO: this should be ideally server side... Could be done with CRON
-//      jobs but im not sure if that is also a suitable solution.
-
-// TODO: Should we prevent a client updating a passphrase if 2FA is disabled?
 async function handler(context, socket) {
     if (!socket.isAdmin) socket.emit(ClientEvents.ERROR, new Error(error.UNAUTHORIZED));
+
+    // Don't do anything if 2fa isn't enabled on the lobby.
+    if (!socket.lobby.with2FA) return;
 
     // update the passphrase in the MongoDB with the one the client said
     try {

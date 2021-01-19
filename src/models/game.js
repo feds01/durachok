@@ -23,28 +23,32 @@ const gameSchema = new mongoose.Schema({
     owner: {type: mongoose.Schema.Types.ObjectId, ref: 'user'},
     game: {
         type: {
-            rngSeed: {type: String, required: false, default: ""},
-            players: {
-                type: Map,
-                of: {
-                    deck: {type: [String]},
-                    canAttack: {type: Boolean},
-                    beganRound: {type: Boolean},
-                    turned: {type: Boolean},
-                    isDefending: {type: Boolean}
-                }
-            },
-            deck: {type: [String]},
             history: {type: Object, required: false, default: {}},
-            hasVictory: {type: Boolean, default: false},
-            trumpCard: {
+            state: {
                 type: {
-                    value: {type: Number},
-                    suit: {type: String},
-                    card: {type: String},
+                    rngSeed: {type: String, required: false, default: ""},
+                    players: {
+                        type: Map,
+                        of: {
+                            deck: {type: [String]},
+                            canAttack: {type: Boolean},
+                            beganRound: {type: Boolean},
+                            turned: {type: Boolean},
+                            isDefending: {type: Boolean}
+                        }
+                    },
+                    deck: {type: [String]},
+                    hasVictory: {type: Boolean, default: false},
+                    trumpCard: {
+                        type: {
+                            value: {type: Number},
+                            suit: {type: String},
+                            card: {type: String},
+                        }
+                    },
+                    tableTop: {type: Map, of: String}
                 }
-            },
-            tableTop: {type: Map, of: String}
+            }
         },
         required: false,
         default: {}
