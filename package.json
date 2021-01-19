@@ -8,6 +8,7 @@
     "yarn": "1.22.10"
   },
   "scripts": {
+    "build": "yarn install --network-concurrency 1",
     "start": "NODE_ENV=production babel-node ./app.js",
     "dev": "nodemon  --ignore client --exec babel-node ./app.js"
   },
