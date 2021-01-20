@@ -45,12 +45,16 @@ export async function validateAccountCreateOrUpdate(isCreating, request) {
             })
     });
 
-    const result = UserSchema.validate({name, email, password}, {presence: isCreating ? "required" : "optional", abortEarly: false});
+    const result = UserSchema.validate(request, {presence: isCreating ? "required" : "optional", abortEarly: false});
 
     if (result.error) {
-        throw new SchemaError("Invalid Parameters", result.error);
+        // Provide error information.
+        throw new SchemaError("Invalid Parameters", Object.fromEntries(result.error.details.map((error) => {
+            return [error.path[0], error.message]
+        })));
     }
 
+    const {name, email, password} = request;
 
     const existingUser = await User.findOne({
         $or: [
