@@ -14,18 +14,25 @@ async function handler(context, socket, io) {
     }
 
     // check that there are at least 2 players in the lobby
-    if (lobby.players.filter(p => p.confirmed).length < 2) {
+    const confirmedPlayers = lobby.players.filter(p => p.confirmed);
+
+    if (confirmedPlayers.length < 2) {
         socket.emit(ClientEvents.ERROR, new Error(error.BAD_REQUEST));
     }
 
     // update the game state to 'STARTED' since the game has started
-    await Lobby.updateOne({_id: socket.lobby._id}, {status: GameStatus.STARTED});
+    const updatedLobby = await Lobby.findOneAndUpdate(
+        {_id: lobby._id},
+        {$set: {players: confirmedPlayers, status: GameStatus.STARTED}},
+        {new: true}
+    );
+
     io.of(lobby.pin.toString()).emit(ClientEvents.COUNTDOWN);
 
     await new Promise(resolve => setTimeout(resolve, 5000)); // 5 sec wait
 
     // Instantiate the game with the players and distribute the player cards to each player
-    const players = lobbyUtils.buildPlayerList(lobby).map(p => p.name);
+    const players = lobbyUtils.buildPlayerList(updatedLobby).map(p => p.name);
 
     // fire game_started event and update the game state to 'PLAYING'
     io.of(lobby.pin.toString()).emit(ClientEvents.GAME_STARTED);
@@ -33,6 +40,7 @@ async function handler(context, socket, io) {
     const game = new Game(players, null, {
         randomisePlayerOrder: socket.lobby.randomPlayerOrder
     });
+    game.deck = [];
 
     // save the game into mongo
     await Lobby.updateOne({_id: socket.lobby._id}, {game: game.serialize()});
