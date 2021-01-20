@@ -40,7 +40,6 @@ async function handler(context, socket, io) {
     const game = new Game(players, null, {
         randomisePlayerOrder: socket.lobby.randomPlayerOrder
     });
-    game.deck = [];
 
     // save the game into mongo
     await Lobby.updateOne({_id: socket.lobby._id}, {game: game.serialize()});
