@@ -64,6 +64,7 @@ router.post('/register', async (req, res) => {
                 errors: e.errors,
             });
         } else {
+            console.log(e);
             return res.status(500).json({
                 status: false,
                 message: error.INTERNAL_SERVER_ERROR,
@@ -302,14 +303,15 @@ router.get("/", ownerAuth, async (req, res) => {
  * */
 router.post("/", ownerAuth, async (req, res) => {
     const id = req.token.data.id;
+    const user = await User.findById({_id: id});
 
     let params, hash;
 
     try {
-        params = validateAccountCreateOrUpdate(false, {
-            ...req.body.name && {name: req.body.name},
-            ...req.body.email && {name: req.body.email},
-            ...req.body.password && {name: req.body.password}
+        params = await validateAccountCreateOrUpdate(false, {
+            ...req.body.name && (user.name !== req.body.name) && {name: req.body.name},
+            ...req.body.email && (user.email !== req.body.email) && {email: req.body.email},
+            ...req.body.password && {password: req.body.password}
         });
     } catch (e) {
         if (e instanceof SchemaError) {
