@@ -21,6 +21,8 @@ async function handler(context, socket, io) {
     // find the player in the database record by the socket id...
     const {name} = socket.decoded;
     const player = game.players.get(name);
+    const node = game.history.getLastNode();
+    const size = node.getSize();
 
     if (!player) {
         return socket.emit(ClientEvents.ERROR, {
@@ -92,26 +94,33 @@ async function handler(context, socket, io) {
         console.log(e);
 
         // Send the client the 'safe' state and don't save the game.
-        return socket.emit(ClientEvents.INVALID_MOVE, game.getStateForPlayer(name));
+        return socket.emit(ClientEvents.INVALID_MOVE, {update: game.getStateForPlayer(name)});
     }
 
     // save the game into mongo
     await Lobby.updateOne({_id: socket.lobby._id}, {game: game.serialize()});
 
-    // iterate over each socket id in the 'namespace' that is connected and send them
-    // the cards...
+    // Compute any history changes we need to propagate to the client... We use the
+    // size the here
+    const meta = node.actions.slice(size);
+
+    // we'll need to add the 'new_round' event to the action list if the
+    // round ended
+    if (node.finalised) {
+        meta.push(...game.history.getLastNode().actions);
+    }
+
+    // iterate over each socket id in the 'namespace' that is connected and send them the cards...
     game.players.forEach(((value, key) => {
         const socketId = lobby.players.find(p => p.name === key).socketId;
 
         // send each player their cards, round metadata, etc...
-        // TODO: notify of the action that just occurred for all players.
-        //      For example, if the player 'alex' covers a card on pos 0
-        //      with "Jack of Spades', this information should be passed onto
-        //      the clients.
         try {
-            io.of(lobby.pin.toString()).sockets.get(socketId).emit(ClientEvents.ACTION, game.getStateForPlayer(key));
+            io.of(lobby.pin.toString()).sockets.get(socketId).emit(ClientEvents.ACTION, {
+                meta, update: game.getStateForPlayer(key)
+            });
         } catch (e) {
-            console.log(`Stale connection on ${lobby.pin}: socketId=${socketId}, player=${player.name}`)
+            console.log(`Stale connection on ${lobby.pin}: socketId=${socketId}, player=${value.name}`)
         }
     }));
 
@@ -122,7 +131,6 @@ async function handler(context, socket, io) {
     const owner = await Player.findOne({_id: lobby.owner});
 
     // list the players by exit order
-    // TODO: cleanup
     io.of(lobby.pin.toString()).emit(ClientEvents.VICTORY, {
         players: Array.from(game.players.keys())
             .map(name => {
