@@ -56,7 +56,10 @@ async function handler(context, socket, io) {
         }
 
         // send each player their cards, round metadata, etc...
-        io.of(lobby.pin.toString()).sockets.get(socketId).emit(ClientEvents.BEGIN_ROUND, game.getStateForPlayer(key));
+        io.of(lobby.pin.toString()).sockets.get(socketId).emit(ClientEvents.BEGIN_ROUND, {
+            meta: game.history.getLastNode().actions,
+            state: game.getStateForPlayer(key)
+        });
     }));
 
     await Lobby.updateOne({_id: socket.lobby._id}, {status: GameStatus.PLAYING});
