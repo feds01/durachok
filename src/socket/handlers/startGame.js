@@ -58,7 +58,7 @@ async function handler(context, socket, io) {
         // send each player their cards, round metadata, etc...
         io.of(lobby.pin.toString()).sockets.get(socketId).emit(ClientEvents.BEGIN_ROUND, {
             meta: game.history.getLastNode().actions,
-            state: game.getStateForPlayer(key)
+            update: game.getStateForPlayer(key)
         });
     }));
 
