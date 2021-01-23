@@ -5,14 +5,15 @@ import Player from "../models/user";
 import {error, ServerEvents} from "shared";
 import * as lobbyUtils from "../utils/lobby";
 import {refreshTokens} from "../authentication";
+import ServerError from "../errors/ServerError";
 
 import joinGameHandler from "./handlers/join";
 import startGameHandler from "./handlers/startGame";
+import resignPlayerHandler from "./handlers/resign";
 import kickPlayerHandler from "./handlers/kickPlayer";
 import playerMoveHandler from "./handlers/playerMove";
 import disconnectionHandler from "./handlers/disconnection";
 import updatePassphraseHandler from "./handlers/updatePassphrase";
-import ServerError from "../errors/ServerError";
 
 let io = null;
 
@@ -133,6 +134,7 @@ export const makeSocketServer = (server) => {
         socket.on(ServerEvents.JOIN_GAME, async (context) => await joinGameHandler(context, socket, io));
         socket.on(ServerEvents.UPDATE_PASSPHRASE, async (context) => await updatePassphraseHandler(context, socket, io));
         socket.on(ServerEvents.START_GAME, async (context) => await startGameHandler(context, socket, io));
+        socket.on(ServerEvents.SURRENDER, async (context) => await resignPlayerHandler(context, socket, io));
         socket.on(ServerEvents.KICK_PLAYER, async (context) => await kickPlayerHandler(context, socket, io));
         socket.on(ServerEvents.MOVE, async (context) => await playerMoveHandler(context, socket, io));
 
