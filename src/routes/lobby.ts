@@ -3,25 +3,10 @@ import express from 'express';
 import Lobby from './../models/game';
 import {ClientEvents, error, GameStatus} from "shared";
 import {emitLobbyEvent} from "../socket";
-import {createTokens, ownerAuth, withAuth} from "../authentication";
+import {createTokens, ownerAuth, validatePin, withAuth} from "../authentication";
 import {checkIfNameFree, createGamePassphrase, createGamePin} from "../utils/lobby";
 
 const router = express.Router();
-
-function validatePin(req, res, next) {
-    const {pin} = req.params;
-
-    // Check if 'pin' parameter follows the pin format we except - as in 6 digits long and only numerical characters
-    if (pin.length !== 6 || isNaN(pin)) {
-        return res.status(400).json({
-            status: false,
-            message: error.BAD_REQUEST,
-            extra: "Game PIN must be 6 digits."
-        });
-    } else {
-        next();
-    }
-}
 
 /**
  * @version src-v0.0.1
@@ -50,8 +35,8 @@ function validatePin(req, res, next) {
  *
  * @return sends a response to client if the document was created and added to the system.
  * */
-router.post("/", ownerAuth, async (req, res) => {
-    const {id} = req.token.data;
+router.post("/", ownerAuth, async (req: express.Request, res: express.Response) => {
+    const {id} = req.token!.data;
 
     const GameSchema = Joi.object().keys({
         with2FA: Joi.bool().default(false),
@@ -103,7 +88,7 @@ router.post("/", ownerAuth, async (req, res) => {
 
         // automatically put the user into the lobby
         players: [
-            {name: req.token.data.name, sockedId: null, registered: true, confirmed: true}
+            {name: req.token?.data.name, sockedId: null, registered: true, confirmed: true}
         ],
         owner: id,
     });
@@ -219,7 +204,7 @@ router.delete("/:pin", validatePin, ownerAuth, async (req, res) => {
 
     // The lobby owner parameter should be the same as the the user id in the token.
     // If it's not we return a Unauthorized error code.
-    if (!lobby.owner._id.equals(req.token.data.id)) {
+    if (!lobby.owner._id.equals(req.token?.data.id)) {
         return res.status(401).json({
             status: false,
             message: "Unable to delete the game",
@@ -227,7 +212,7 @@ router.delete("/:pin", validatePin, ownerAuth, async (req, res) => {
         })
     }
 
-    return Lobby.deleteOne({pin}, (err) => {
+    return Lobby.deleteOne({pin}, {}, (err) => {
         if (err) {
             return res.status(500).json({
                 status: false,
@@ -320,10 +305,10 @@ router.post("/:pin/join", validatePin, withAuth, async (req, res) => {
 
     // A player could join with a registered account, if so we can circumvent using
     // the 'name' parameter and just use the user's name as the name.
-    if (req.userToken) {
+    if (req.token) {
 
         // check that the name is not registered within the users that are registered
-        if (lobby.players.filter(p => p.registered).find(p => p.name === req.userToken.data.name)) {
+        if (lobby.players.filter(p => p.registered).find(p => p.name === req.token!.data.name)) {
             return res.status(400).json({
                 status: false,
                 message: "Can't join the game twice."
@@ -331,7 +316,7 @@ router.post("/:pin/join", validatePin, withAuth, async (req, res) => {
         }
 
         registered = true;
-        name = req.userToken.data.name;
+        name = req.token!.data.name;
     } else {
         const nameValidator = Joi.string().regex(/^[^\s]{1,20}$/).min(1).max(20).required();
         const result = nameValidator.validate(req.body.name);
@@ -354,7 +339,7 @@ router.post("/:pin/join", validatePin, withAuth, async (req, res) => {
         }
 
         registered = false;
-        name = req.body.name;
+        name = <string>req.body.name;
     }
 
 
@@ -364,7 +349,7 @@ router.post("/:pin/join", validatePin, withAuth, async (req, res) => {
 
     // find an un-honoured connection entry and overwrite it, otherwise we
     // can just append the connection
-    if (lobby.players.length === lobby.maxPlayers.length) {
+    if (lobby.players.length === lobby.maxPlayers) {
         let overwriteConnectionIndex = lobby.players.findIndex(player => !player.confirmed);
         lobby.players[overwriteConnectionIndex] = player;
     } else {

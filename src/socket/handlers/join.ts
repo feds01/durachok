@@ -1,10 +1,12 @@
 import Lobby from "../../models/game";
 import Player from "../../models/user";
+import {getLobby} from "../getLobby";
+import {Server, Socket} from "socket.io";
 import * as lobbyUtils from "../../utils/lobby";
 import {ClientEvents, error, Game, GameStatus} from "shared";
 
-async function handler(context, socket) {
-    const lobby = await Lobby.findOne({pin: socket.lobby.pin});
+async function handler(context: any, socket: Socket, io?: Server | null) {
+    const lobby = await getLobby(socket.lobby.pin);
     socket.lobby = lobby;
 
     // update the players object for the game with the socket id
@@ -26,8 +28,8 @@ async function handler(context, socket) {
 
     // set socket id and set the player as 'confirmed' for the lobby.
     players[idx] = {
+        // _id: players[idx]._id,
         name: players[idx].name,
-        _id: players[idx]._id,
         registered: players[idx].registered,
         socketId: socket.id,
         confirmed: true
@@ -38,6 +40,11 @@ async function handler(context, socket) {
         {$set: {'players': players}},
         {new: true}
     );
+
+    // If the lobby was deleted, we shouldn't continue
+    if (!updatedLobby) {
+        return socket.emit(ClientEvents.ERROR, {error: error.INTERNAL_SERVER_ERROR});
+    }
 
     const playerList = lobbyUtils.buildPlayerList(updatedLobby, false);
     const owner = await Player.findOne({_id: updatedLobby.owner});

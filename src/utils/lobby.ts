@@ -1,5 +1,6 @@
 import {customAlphabet} from "nanoid";
 import {shuffleArray, CardSuits} from "shared";
+import {IGame, IPlayer} from "../models/game";
 
 
 /**
@@ -11,7 +12,7 @@ import {shuffleArray, CardSuits} from "shared";
  *
  * @return {boolean} If the player name can be used or not.
  * */
-export async function checkIfNameFree(lobby, name) {
+export async function checkIfNameFree(lobby: IGame, name: string) {
     const playerList = buildPlayerList(lobby);
 
     return !playerList.map(p => p.name).includes(name);
@@ -26,26 +27,17 @@ export async function checkIfNameFree(lobby, name) {
  *
  * @returns {Array<{name: string, id: string, registered: boolean}>} The player list
  * */
-export function buildPlayerList(lobby, ignoreUnconfirmed = true) {
-    const playerList = []
-
-    for (const player of lobby.players) {
-        if (!ignoreUnconfirmed && !player.confirmed) {
-            continue;
-        }
-
-        playerList.push({id: player._id, name: player.name, registered: player.registered});
-    }
-
-    return playerList;
+export function buildPlayerList(lobby: IGame, ignoreUnconfirmed: boolean = true): IPlayer[] {
+    return lobby.players.filter(player => {
+       return ignoreUnconfirmed ? !player.confirmed : true;
+    });
 }
 
 
 /**
- *
- *
+ * Method to generate a game pin
  * */
-export function createGamePin() {
+export function createGamePin(): string {
     const generator = customAlphabet("1234567890", 6);
 
     return generator();
@@ -57,7 +49,7 @@ export function createGamePin() {
  *
  * @returns {string} the generated phrase.
  * */
-export function createGamePassphrase() {
+export function createGamePassphrase(): string {
     const cardSuites = Object.values(CardSuits);
     shuffleArray(cardSuites);
 

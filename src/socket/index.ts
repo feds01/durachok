@@ -1,11 +1,13 @@
 import jwt from "jsonwebtoken";
-import {Server} from "socket.io";
+import * as http from "http";
+import {AnonymousUserData, Token, RegisteredUserData} from "../auth";
 import Lobby from "../models/game";
 import Player from "../models/user";
 import {error, ServerEvents} from "shared";
 import * as lobbyUtils from "../utils/lobby";
 import {refreshTokens} from "../authentication";
 import ServerError from "../errors/ServerError";
+import SocketIO, {Server, Socket} from "socket.io";
 
 import joinGameHandler from "./handlers/join";
 import startGameHandler from "./handlers/startGame";
@@ -14,8 +16,9 @@ import kickPlayerHandler from "./handlers/kickPlayer";
 import playerMoveHandler from "./handlers/playerMove";
 import disconnectionHandler from "./handlers/disconnection";
 import updatePassphraseHandler from "./handlers/updatePassphrase";
+import "./gameSocket";
 
-let io = null;
+let io: Server | null = null;
 
 /**
  * Method to emit an event to some lobby with any active connections on it.
@@ -24,7 +27,7 @@ let io = null;
  * @param {string} name - The name of the event.
  * @param {Object} message - The event to emit.
  */
-export function emitLobbyEvent(pin, name, message) {
+export function emitLobbyEvent(pin: string, name: string, message: any) {
     if (io === null) {
         throw new ServerError("Socket Server not initialised.");
     }
@@ -36,14 +39,14 @@ export function emitLobbyEvent(pin, name, message) {
     io.of(`/${pin}`).emit(name, message);
 }
 
-export const makeSocketServer = (server) => {
+export const makeSocketServer = (server: http.Server) => {
     io = new Server(server, {});
-    const lobbies = io.of(/^\/\d{6}$/);
+    const lobbies: SocketIO.Namespace = io.of(/^\/\d{6}$/);
 
     /**
      * Middleware function to check that the attempted lobby join exists.
      * */
-    lobbies.use(async (socket, next) => {
+    lobbies.use(async (socket: Socket, next: (err?: any) => any) => {
         const lobbyPin = socket.nsp.name.split("/")[1];
 
         // check that a game exists with the provided pin
@@ -57,9 +60,11 @@ export const makeSocketServer = (server) => {
         next();
     });
 
-    lobbies.use((socket, next) => {
+    lobbies.use((socket: Socket, next) => {
         if (socket.handshake.query && socket.handshake.query.token) {
-            jwt.verify(socket.handshake.query.token, process.env.JWT_SECRET_KEY, async (err, decoded) => {
+            socket.handshake.query
+
+            jwt.verify(socket.handshake.query.token, process.env.JWT_SECRET_KEY!, async (err, decoded) => {
 
                 // Attempt to verify if the user sent a refreshToken
                 if (err) {
@@ -75,6 +80,7 @@ export const makeSocketServer = (server) => {
                         // emit a 'token' event so that the client can update their copy of the token, refreshTokens
                         // TODO: move 'token' event name into shared/events
                         const err = new Error("token");
+                        // @ts-ignore
                         err.data = newTokens; // additional details
 
                         return next(err);
@@ -85,11 +91,11 @@ export const makeSocketServer = (server) => {
 
                 // check that the nsp matched the pin or the user of the Durachok
                 // service is the owner of this lobby.
-                const isUser = typeof decoded?.data.id !== "undefined";
+                const isUser = typeof (decoded as Token<RegisteredUserData>)?.data.id !== "undefined";
                 let isAdmin = false;
 
                 if (isUser) {
-                    const user = await Player.findOne({_id: decoded.data.id});
+                    const user = await Player.findOne({_id: (decoded as Token<RegisteredUserData>).data.id});
 
                     // This shouldn't happen unless the user was deleted and the token is stale.
                     if (!user) {
@@ -98,8 +104,8 @@ export const makeSocketServer = (server) => {
 
                     // Verify that the user is allowed to enter the game
                     const registeredPlayers = lobbyUtils.buildPlayerList(socket.lobby)
-                                                .filter(p => p.registered)
-                                                .map(p => p.name);
+                        .filter(p => p.registered)
+                        .map(p => p.name);
 
                     if (!registeredPlayers.includes(user.name)) {
                         return next(new Error(error.AUTHENTICATION_FAILED));
@@ -109,9 +115,11 @@ export const makeSocketServer = (server) => {
                     if (user._id.toString() === socket.lobby.owner._id.toString()) {
                         isAdmin = true;
                     }
-                } else if (socket.lobby.pin !== decoded.data.pin) {
+                } else if (socket.lobby.pin !== (decoded as Token<AnonymousUserData>).data.pin) {
                     // inform that the user should discard this token
                     const err = new Error(error.AUTHENTICATION_FAILED);
+
+                    // @ts-ignore
                     err.data = {"token": "stale"};
 
                     return next(err);
@@ -119,7 +127,14 @@ export const makeSocketServer = (server) => {
 
                 socket.isUser = isUser;
                 socket.isAdmin = isAdmin;
-                socket.decoded = decoded.data;
+
+                // Improve this!
+                if (isUser) {
+                    socket.decoded = (decoded as Token<RegisteredUserData>).data;
+                } else {
+                    socket.decoded = (decoded as Token<AnonymousUserData>).data;
+                }
+
                 return next();
             });
         } else {
@@ -128,17 +143,17 @@ export const makeSocketServer = (server) => {
         }
     });
 
-    lobbies.on('connect', (socket) => {
-        socket.on("disconnecting", async (context) => await disconnectionHandler(context, socket, io));
+    lobbies.on('connect', (socket: Socket) => {
+        socket.on("disconnecting", async (context: any) => await disconnectionHandler(context, socket, io));
 
-        socket.on(ServerEvents.JOIN_GAME, async (context) => await joinGameHandler(context, socket, io));
-        socket.on(ServerEvents.UPDATE_PASSPHRASE, async (context) => await updatePassphraseHandler(context, socket, io));
-        socket.on(ServerEvents.START_GAME, async (context) => await startGameHandler(context, socket, io));
-        socket.on(ServerEvents.SURRENDER, async (context) => await resignPlayerHandler(context, socket, io));
-        socket.on(ServerEvents.KICK_PLAYER, async (context) => await kickPlayerHandler(context, socket, io));
-        socket.on(ServerEvents.MOVE, async (context) => await playerMoveHandler(context, socket, io));
+        socket.on(ServerEvents.JOIN_GAME, async (context: any) => await joinGameHandler(context, socket, io));
+        socket.on(ServerEvents.UPDATE_PASSPHRASE, async (context: any) => await updatePassphraseHandler(context, socket, io));
+        socket.on(ServerEvents.START_GAME, async (context: any) => await startGameHandler(context, socket, io));
+        socket.on(ServerEvents.SURRENDER, async (context: any) => await resignPlayerHandler(context, socket, io));
+        socket.on(ServerEvents.KICK_PLAYER, async (context: any) => await kickPlayerHandler(context, socket, io));
+        socket.on(ServerEvents.MOVE, async (context: any) => await playerMoveHandler(context, socket, io));
 
-        socket.on("error", (context) => {
+        socket.on("error", (context: any) => {
             console.log(context);
         });
     });

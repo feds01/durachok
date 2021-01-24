@@ -1,14 +1,15 @@
-import Lobby from "../../models/game";
+import {Server, Socket} from "socket.io";
+import {getLobby} from "../getLobby";
 import {error, Game, ClientEvents} from "shared";
 
-async function handler(context, socket, io) {
-    const lobby = await Lobby.findOne({pin: socket.lobby.pin});
+async function handler(context: any, socket: Socket, io?: Server | null) {
+    const lobby = await getLobby(socket.lobby.pin);
 
     // get the game object
     const game = Game.fromState(lobby.game.state, lobby.game.history);
 
     // If the game has already finished, any further requests are stale.
-    if (game.hasVictory) {
+    if (game.victory) {
         return socket.emit(ClientEvents.ERROR, {
             "status": false,
             "type": ClientEvents.STALE_GAME,
