@@ -12,7 +12,7 @@ import User from "../models/user";
  *
  * @throws {SchemaError} if any of the parameters do not match the defined schema.
  * */
-export async function validateAccountCreateOrUpdate(isCreating, request) {
+export async function validateAccountCreateOrUpdate(isCreating: boolean, request: { name?: string, email?: string, password?: string }): Promise<{ password?: string; name?: string; email?: string }> {
     const UserSchema = Joi.object().keys({
         name: Joi.string()
             .pattern(/^[^\s]{1,20}$/)
@@ -56,12 +56,7 @@ export async function validateAccountCreateOrUpdate(isCreating, request) {
 
     const {name, email, password} = request;
 
-    const existingUser = await User.findOne({
-        $or: [
-            {name: name},
-            {email: email}
-        ]
-    });
+    const existingUser = await User.findOne({ $or: [{name}, {email}] });
 
     if (existingUser) {
         throw new SchemaError("Invalid parameters", {

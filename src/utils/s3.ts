@@ -1,4 +1,5 @@
-import AWS from 'aws-sdk';
+import AWS, {AWSError, S3} from 'aws-sdk';
+import {PromiseResult} from "aws-sdk/lib/request";
 
 // Update aws sdk configuration
 AWS.config.update({
@@ -19,7 +20,7 @@ const MAX_FILE_SIZE = 1048576; // 1 megabyte
  * @param {String} filename - The name of the resource that is to be saved
  * @param {Buffer} fileData - The base64 encoded version of the resource
  * */
-export async function uploadImage(filename, fileData) {
+export async function uploadImage(filename: string, fileData: Buffer): Promise<PromiseResult<S3.PutObjectOutput, AWSError>> {
 
     // Check that this buffer is a jpg file
     if (!fileData || fileData.length < 3) {
@@ -45,5 +46,6 @@ export async function uploadImage(filename, fileData) {
     };
 
     // Uploading files to the bucket
+    // @ts-ignore
     return s3.putObject(params).promise();
 }

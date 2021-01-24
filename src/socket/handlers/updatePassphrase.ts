@@ -1,7 +1,8 @@
 import Lobby from "../../models/game";
 import {error, ClientEvents} from "shared";
+import {Server, Socket} from "socket.io";
 
-async function handler(context, socket) {
+async function handler(context: any, socket: Socket, io?: Server | null) {
     if (!socket.isAdmin) socket.emit(ClientEvents.ERROR, new Error(error.UNAUTHORIZED));
 
     // Don't do anything if 2fa isn't enabled on the lobby.

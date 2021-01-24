@@ -1,13 +1,21 @@
-import {ClientEvents, error, GameStatus, ServerEvents} from "shared";
+import {getLobby} from "../getLobby";
 import Lobby from "../../models/game";
-import * as lobbyUtils from "../../utils/lobby";
 import Player from "../../models/user";
+import {Server, Socket} from "socket.io";
+import * as lobbyUtils from "../../utils/lobby";
+import {ClientEvents, error, GameStatus} from "shared";
 
-async function handler(context, socket, io) {
+async function handler(context: any, socket: Socket, io?: Server | null) {
     if (!socket.isAdmin) socket.emit(ClientEvents.ERROR, new Error(error.UNAUTHORIZED));
 
-    const lobby = await Lobby.findOne({pin: socket.lobby.pin});
+    const lobby = await getLobby(socket.lobby.pin);
+
     const owner = await Player.findOne({_id: lobby.owner});
+
+    // If the lobby was deleted, we shouldn't continue
+    if (!owner) {
+        return socket.emit(ClientEvents.ERROR, {error: error.INTERNAL_SERVER_ERROR});
+    }
 
     // check that we're currently waiting for players as the admin
     // cannot kick players once the game has started.
@@ -29,10 +37,8 @@ async function handler(context, socket, io) {
         return socket.emit(ClientEvents.ERROR, {"status": false, "type": "bad_request", message: "Invalid player."});
     }
 
-    // otherwise disconnect the socket from the current namespace.
-    const kickedPlayerSocket = io.of(lobby.pin).sockets.get(players[index].socketId);
-
-    if (typeof kickedPlayerSocket === 'undefined') {
+    // Maybe the user never connected or disconnected from the namespace.
+    if (!players[index].socketId) {
         players.splice(index, 1);
 
         // update mongo with new player list and send out update about players
@@ -45,13 +51,18 @@ async function handler(context, socket, io) {
         // notify all other clients that a new player has joined the lobby...
         return socket.broadcast.emit(ClientEvents.NEW_PLAYER, {
             lobby: {
-                players: lobbyUtils.buildPlayerList(updatedLobby, false),
+                players: lobbyUtils.buildPlayerList(updatedLobby!, false),
                 owner: owner.name,
             }
         });
     } else {
-        kickedPlayerSocket.emit(ClientEvents.CLOSE, {"reason": "kicked", "extra": "sorry."});
-        kickedPlayerSocket.disconnect();
+        const kickedPlayerSocket = io!.of(lobby.pin).sockets.get(players[index].socketId!);
+
+        // otherwise disconnect the socket from the current namespace.
+        if (kickedPlayerSocket) {
+            kickedPlayerSocket.emit(ClientEvents.CLOSE, {"reason": "kicked", "extra": "sorry."});
+            kickedPlayerSocket.disconnect();
+        }
     }
 }
 

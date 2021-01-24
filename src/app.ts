@@ -10,9 +10,9 @@ import helmet from "helmet";
 import mongoose from 'mongoose';
 import {createServer} from 'http';
 
-import userRouter from './src/routes/user';
-import lobbyRouter from './src/routes/lobby';
-import {makeSocketServer} from "./src/socket";
+import userRouter from './routes/user';
+import lobbyRouter from './routes/lobby';
+import {makeSocketServer} from "./socket";
 
 const app = express();
 
@@ -43,10 +43,10 @@ const server = createServer(app);
 
 //start our server
 server.listen(process.env.PORT || 5000, () => {
-    console.log(`Server started on port ${server.address().port}! Mode=${process.env.NODE_ENV || "dev"}`);
+    console.log(`Server started on ${server.address()}! Mode=${process.env.NODE_ENV || "dev"}`);
 
     console.log('Attempting connection with MongoDB cluster...')
-    mongoose.connect(process.env.MONGODB_CONNECTION_URI, {
+    mongoose.connect(process.env.MONGODB_CONNECTION_URI!, {
         connectTimeoutMS: 30000,
         useNewUrlParser: true,
         useCreateIndex: true,

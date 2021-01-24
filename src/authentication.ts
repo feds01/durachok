@@ -14,6 +14,29 @@
 import jwt from "jsonwebtoken";
 import {error} from "shared";
 import User from "./models/user";
+import express from "express";
+import {Token} from "./auth";
+
+type TokenPayload = {
+    token: string,
+    refreshToken: string,
+}
+
+
+export function validatePin(req: express.Request, res: express.Response, next: express.NextFunction) {
+    const pin: string = req.params.pin;
+
+    // Check if 'pin' parameter follows the pin format we except - as in 6 digits long and only numerical characters
+    if (pin.length !== 6 || !pin.match(/^\d{6}$/g)) {
+        return res.status(400).json({
+            status: false,
+            message: error.BAD_REQUEST,
+            extra: "Game PIN must be 6 digits."
+        });
+    } else {
+        next();
+    }
+}
 
 
 /**
@@ -22,42 +45,38 @@ import User from "./models/user";
  * to unpack the contents into an object under the namespace 'user_data'. So, the data from
  * the token is accessible by using 'req.token'.
  */
-export const getTokensFromHeader = async (req, res) => {
-    const token = req.headers["x-token"];
+export async function getTokensFromHeader(req: express.Request, res: express.Response): Promise<Token<any> | null> {
+    const token: string | string[] | undefined = req.headers["x-token"];
 
-    if (token) {
+    try {
+        // Decode the sent over JWT key using our secret key stored in the process' runtime.
+        // Then carry on, even if the data is incorrect for the given request, since this does
+        // not interpret the validity of the request.
+        return jwt.verify(<string>token, process.env.JWT_SECRET_KEY!) as Token<any>;
+    } catch (e) {
+        const refreshToken = req.headers["x-refresh-token"];
+        if (!refreshToken) return null;
+
+        let newTokens;
+
         try {
-            // De-Code the sent over JWT key using our secret key stored in the process' runtime.
-            // Then carry on, even if the data is incorrect for the given request, since this does
-            // not interpret the validity of the request.
-            return jwt.verify(token, process.env.JWT_SECRET_KEY);
+            newTokens = await refreshTokens(<string>refreshToken);
         } catch (e) {
-            const refreshToken = req.headers["x-refresh-token"];
-            if (!refreshToken) return null;
-
-            let newTokens;
-
-            try {
-                newTokens = await refreshTokens(refreshToken);
-            } catch (e) {
-                return null;
-            }
-
-            // if new tokens were provided, update the access and refresh tokens
-            if (newTokens.token && newTokens.refreshToken) {
-                res.set("Access-Control-Expose-Headers", "x-token, x-refresh-token");
-                res.set("x-token", newTokens.token);
-                res.set("x-refresh-token", newTokens.refreshToken);
-
-                // pass on the metadata which was decoded from the JWT
-                return jwt.verify(newTokens.token, process.env.JWT_SECRET_KEY);
-            }
-
             return null;
         }
-    }
 
-    return null;
+        // if new tokens were provided, update the access and refresh tokens
+        if (newTokens.token && newTokens.refreshToken) {
+            res.set("Access-Control-Expose-Headers", "x-token, x-refresh-token");
+            res.set("x-token", newTokens.token);
+            res.set("x-refresh-token", newTokens.refreshToken);
+
+            // pass on the metadata which was decoded from the JWT
+            return jwt.verify(newTokens.token, process.env.JWT_SECRET_KEY!) as Token<any>;
+        }
+
+        return null;
+    }
 }
 
 /**
@@ -72,8 +91,8 @@ export const getTokensFromHeader = async (req, res) => {
  * @returns {Object} The object contains the new token, new refresh token and the decoded user data
  * @error if the refreshToken is stale, the method will return an empty object.
  * */
-export const refreshTokens = async (refreshToken) => {
-    const decodedToken = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET_KEY);
+export async function refreshTokens (refreshToken: string): Promise<TokenPayload> {
+    const decodedToken = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET_KEY!) as Token<any>;
 
     // generate new token values to replace old token's with refreshed ones.
     return await createTokens(decodedToken.data);
@@ -89,10 +108,10 @@ export const refreshTokens = async (refreshToken) => {
  * @param {Object} payload: string representing the user's email
  * @returns an object comprised of the token and refresh token.
  * */
-export const createTokens = async (payload) => {
+export const createTokens = async (payload: {}): Promise<TokenPayload> => {
     const token = await jwt.sign(
         {data: {...payload}},
-        process.env.JWT_SECRET_KEY,
+        process.env.JWT_SECRET_KEY!,
         {
             expiresIn: "1h"
         },
@@ -101,7 +120,7 @@ export const createTokens = async (payload) => {
     // sign the refresh-token
     const refreshToken = await jwt.sign(
         {data: {...payload}},
-        process.env.JWT_REFRESH_SECRET_KEY,
+        process.env.JWT_REFRESH_SECRET_KEY!,
         {
             expiresIn: "7d",
         },
@@ -111,7 +130,7 @@ export const createTokens = async (payload) => {
     return {token, refreshToken};
 }
 
-export async function withAuth(req, res, next) {
+export async function withAuth(req: express.Request, res: express.Response, next: express.NextFunction) {
     const userToken = await getTokensFromHeader(req, res); // unpack JWT token
 
     // ensure that the user token has a valid user id, if they do then set the
@@ -119,14 +138,14 @@ export async function withAuth(req, res, next) {
     if (userToken?.data?.id) {
         const existingUser = await User.findOne({_id: userToken.data.id});
 
-        if (existingUser) req.userToken = userToken;
+        if (existingUser) req.token = userToken;
     } else if (userToken) {
 
         // Looks like this could be a stale token, probably from a previous
         // anonymous game, therefore we should notify the client to discard it.
         return res.status(400).json({
             status: false,
-            error: { token: "stale" }
+            error: {token: "stale"}
         });
 
     }
@@ -135,7 +154,7 @@ export async function withAuth(req, res, next) {
 }
 
 
-export const ownerAuth = async (req, res, next) => {
+export async function ownerAuth(req: express.Request, res: express.Response, next: express.NextFunction) {
     const token = await getTokensFromHeader(req, res); // unpack JWT token
 
     // if the token is null, the token or refresh tokens aren't in the request
@@ -149,10 +168,8 @@ export const ownerAuth = async (req, res, next) => {
         });
     }
 
-    req.token = token;
-
-    if (req.token?.data.id) {
-        const existingUser = await User.findOne({_id: req.token.data.id});
+    if (token?.data.id) {
+        const existingUser = await User.findOne({_id: token.data.id});
 
         if (!existingUser) {
             return res.status(404).json({
@@ -161,6 +178,7 @@ export const ownerAuth = async (req, res, next) => {
                 extra: "User doesn't exist."
             });
         } else {
+            req.token =  token;
             next(); // the request was fine and is authenticated.
         }
     } else {
@@ -170,4 +188,4 @@ export const ownerAuth = async (req, res, next) => {
             extra: "Invalid request headers."
         });
     }
-};
+}
