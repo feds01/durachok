@@ -39,7 +39,6 @@
     "@babel/node": "^7.12.6",
     "@babel/plugin-proposal-class-properties": "^7.12.1",
     "@babel/preset-env": "7.12.7",
-    "@types/dotenv": "^8.2.0",
     "@types/express": "^4.17.11",
     "@types/jsonwebtoken": "^8.5.0",
     "@types/mongoose": "^5.10.3",
