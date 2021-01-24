@@ -79,7 +79,7 @@
   },
   "include": [
     "src/**/*",
-    "./src/auth.d.ts",
-    "./src/socket/gameSocket.ts"
+    "./src/types/auth.d.ts",
+    "./src/types/gameSocket.ts"
   ]
 }

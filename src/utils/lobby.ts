@@ -1,6 +1,6 @@
 import {customAlphabet} from "nanoid";
 import {shuffleArray, CardSuits} from "shared";
-import {IGame, IPlayer} from "../models/game";
+import {IGame, Player} from "../models/game";
 
 
 /**
@@ -27,7 +27,7 @@ export async function checkIfNameFree(lobby: IGame, name: string) {
  *
  * @returns {Array<{name: string, id: string, registered: boolean}>} The player list
  * */
-export function buildPlayerList(lobby: IGame, ignoreUnconfirmed: boolean = true): IPlayer[] {
+export function buildPlayerList(lobby: IGame, ignoreUnconfirmed: boolean = true): Player[] {
     return lobby.players.filter(player => {
        return ignoreUnconfirmed ? !player.confirmed : true;
     });

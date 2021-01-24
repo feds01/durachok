@@ -1,6 +1,6 @@
 import * as Joi from "joi";
 import express from 'express';
-import Lobby from './../models/game';
+import Lobby, {Player} from './../models/game';
 import {ClientEvents, error, GameStatus} from "shared";
 import {emitLobbyEvent} from "../socket";
 import {createTokens, ownerAuth, validatePin, withAuth} from "../authentication";
@@ -345,7 +345,7 @@ router.post("/:pin/join", validatePin, withAuth, async (req, res) => {
 
     // Generate JWT token for the current user connection with an encoded name and IP
     const {token, refreshToken} = await createTokens({name, pin});
-    const player =  {name, socketId: null, confirmed: false, registered};
+    const player =  {name, socketId: null, confirmed: false, registered} as Player;
 
     // find an un-honoured connection entry and overwrite it, otherwise we
     // can just append the connection

@@ -962,13 +962,6 @@
   dependencies:
     dotenv "*"
 
-"@types/engine.io@*":
-  version "3.1.5"
-  resolved "https://registry.yarnpkg.com/@types/engine.io/-/engine.io-3.1.5.tgz"
-  integrity sha512-DLVpLEGTEZGBXOYoYoagHSxXkDHONc0fZouF2ayw7Q18aRu1Afwci+1CFKvPpouCUOVWP+dmCaAWpQjswe7kpg==
-  dependencies:
-    "@types/node" "*"
-
 "@types/express-serve-static-core@^4.17.18":
   version "4.17.18"
   resolved "https://registry.yarnpkg.com/@types/express-serve-static-core/-/express-serve-static-core-4.17.18.tgz"
@@ -1058,22 +1051,6 @@
   dependencies:
     "@types/mime" "^1"
     "@types/node" "*"
-
-"@types/socket.io-parser@*":
-  version "2.2.1"
-  resolved "https://registry.yarnpkg.com/@types/socket.io-parser/-/socket.io-parser-2.2.1.tgz"
-  integrity sha512-+JNb+7N7tSINyXPxAJb62+NcpC1x/fPn7z818W4xeNCdPTp6VsO/X8fCsg6+ug4a56m1v9sEiTIIUKVupcHOFQ==
-  dependencies:
-    "@types/node" "*"
-
-"@types/socket.io@^2.1.12":
-  version "2.1.12"
-  resolved "https://registry.yarnpkg.com/@types/socket.io/-/socket.io-2.1.12.tgz"
-  integrity sha512-oStc5VFkpb0AsjOxQUj9ztX5Iziatyla/rjZTYbFGoVrrKwd+JU2mtxk7iSl5RGYx9WunLo6UXW1fBzQok/ZyA==
-  dependencies:
-    "@types/engine.io" "*"
-    "@types/node" "*"
-    "@types/socket.io-parser" "*"
 
 abbrev@1:
   version "1.1.1"
