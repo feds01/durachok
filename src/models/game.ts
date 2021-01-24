@@ -2,7 +2,7 @@ import {IUser} from "./user";
 import mongoose, {Document, Schema} from 'mongoose';
 import {GameState, GameStatus, HistoryState} from "shared";
 
-export interface IPlayer {
+export interface Player extends Document{
     name: string,
     socketId: string | null,
     confirmed: boolean,
@@ -13,7 +13,7 @@ export interface IGame extends Document {
     pin: string,
     passphrase: string,
     maxPlayers: number,
-    players: Array<IPlayer>,
+    players: Player[],
     status: GameStatus,
     with2FA: boolean,
     randomPlayerOrder: boolean,

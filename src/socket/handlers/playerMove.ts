@@ -1,6 +1,6 @@
 import {getLobby} from "../getLobby";
-import Lobby from "../../models/game";
-import Player from "../../models/user";
+import Lobby, {Player} from "../../models/game";
+import User from "../../models/user";
 import {Server, Socket} from "socket.io";
 import {error, Game, ClientEvents, MoveTypes, GameStatus} from "shared";
 
@@ -135,7 +135,7 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
     // and update the lobby state to 'waiting'
     if (!game.victory) return;
 
-    const owner = await Player.findOne({_id: lobby.owner});
+    const owner = await User.findOne({_id: lobby.owner});
 
     // If the lobby was deleted, we shouldn't continue
     if (!owner) {
@@ -159,15 +159,14 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
     // reset all the player connections but the owner, reset game and game state.
     await Lobby.findOneAndUpdate({_id: lobby._id}, {
         "$set": {
-            "players": lobby.players.map((player) => {
+            "players": lobby.players.map((player: Player): Player => {
                 if (player.name !== owner.name) {
                     return {
-                        _id: player._id, // TODO: do we even need to do this?
                         name: player.name,
                         socketId: "",
                         confirmed: false,
                         registered: player.registered,
-                    }
+                    } as Player;
                 }
                 return player;
             }),

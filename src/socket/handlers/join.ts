@@ -1,5 +1,5 @@
-import Lobby from "../../models/game";
-import Player from "../../models/user";
+import Lobby, {Player} from "../../models/game";
+import User from "../../models/user";
 import {getLobby} from "../getLobby";
 import {Server, Socket} from "socket.io";
 import * as lobbyUtils from "../../utils/lobby";
@@ -28,12 +28,11 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
 
     // set socket id and set the player as 'confirmed' for the lobby.
     players[idx] = {
-        // _id: players[idx]._id,
         name: players[idx].name,
         registered: players[idx].registered,
         socketId: socket.id,
         confirmed: true
-    };
+    } as Player;
 
     const updatedLobby = await Lobby.findOneAndUpdate(
         {_id: lobby._id},
@@ -47,7 +46,7 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
     }
 
     const playerList = lobbyUtils.buildPlayerList(updatedLobby, false);
-    const owner = await Player.findOne({_id: updatedLobby.owner});
+    const owner = await User.findOne({_id: updatedLobby.owner});
 
     // oops, was the owner account deleted?
     if (!owner) {

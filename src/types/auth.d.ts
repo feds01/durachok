@@ -1,16 +1,16 @@
-export type RegisteredUserData = {
+export type RegisteredUserTokenPayload = {
     id: string,
     name: string,
     email: string,
 }
 
-export type AnonymousUserData = {
+export type AnonymousUserTokenPayload = {
     id?: string,
     name: string,
     pin: string,
 }
 
-export type Token<T extends RegisteredUserData | AnonymousUserData> = {
+export type Token<T extends RegisteredUserTokenPayload | AnonymousUserTokenPayload> = {
     data: T
     exp: number,
     alg: string,

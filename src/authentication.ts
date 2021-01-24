@@ -15,7 +15,7 @@ import jwt from "jsonwebtoken";
 import {error} from "shared";
 import User from "./models/user";
 import express from "express";
-import {Token} from "./auth";
+import {Token} from "./types/auth";
 
 type TokenPayload = {
     token: string,
