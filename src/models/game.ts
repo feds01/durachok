@@ -1,7 +1,31 @@
-import {GameStatus} from "shared";
-import mongoose from 'mongoose';
+import {IUser} from "./user";
+import mongoose, {Document, Schema} from 'mongoose';
+import {GameState, GameStatus, HistoryState} from "shared";
 
-const gameSchema = new mongoose.Schema({
+export interface Player extends Document{
+    name: string,
+    socketId: string | null,
+    confirmed: boolean,
+    registered: boolean,
+}
+
+export interface IGame extends Document {
+    pin: string,
+    passphrase: string,
+    maxPlayers: number,
+    players: Player[],
+    status: GameStatus,
+    with2FA: boolean,
+    randomPlayerOrder: boolean,
+    roundTimeout: number,
+    owner: IUser['_id'],
+    game: {
+        history: HistoryState,
+        state: GameState,
+    }
+};
+
+const GameSchema = new Schema({
     pin: {type: String, required: true, unique: true},
     passphrase: {type: String, required: false},
     maxPlayers: {type: Number, required: true},
@@ -14,9 +38,7 @@ const gameSchema = new mongoose.Schema({
         }],
         required: true
     },
-    state: {type: Object, required: false},
     status: {type: String, required: true, default: GameStatus.WAITING},
-    history: {type: Object, required: false},
     with2FA: {type: Boolean, required: true, default: false},
     randomPlayerOrder: {type: Boolean, required: true, default: false},
     roundTimeout: {type: Number, required: false, default: 120},
@@ -26,7 +48,6 @@ const gameSchema = new mongoose.Schema({
             history: {type: Object, required: false, default: {}},
             state: {
                 type: {
-                    rngSeed: {type: String, required: false, default: ""},
                     players: {
                         type: Map,
                         of: {
@@ -55,6 +76,4 @@ const gameSchema = new mongoose.Schema({
     }
 });
 
-const GameModel = mongoose.model('game', gameSchema);
-
-export default GameModel;
+export default mongoose.model<IGame>('game', GameSchema);

@@ -89,7 +89,7 @@ router.post('/register', async (req, res) => {
     // generate the salt for the new user account;
     const salt = await bcrypt.genSalt();
 
-    return await bcrypt.hash(password, salt, async (err, hash) => {
+    return bcrypt.hash(password, salt, async (err, hash) => {
         if (err) throw (err);
 
         // create the user object and save it to the table
@@ -263,7 +263,7 @@ router.post("/login", async (req, res) => {
  *
  * */
 router.get("/", ownerAuth, async (req, res) => {
-    const id = req.token.data.id;
+    const id = req.token!.data.id;
 
     // find all the games that are owned by the current player.
     const games = (await Lobby.find({owner: id})).map((game) => {
@@ -280,7 +280,7 @@ router.get("/", ownerAuth, async (req, res) => {
         status: true,
         data: {
             games: games,
-            name: req.token.data.name,
+            name: req.token!.data.name,
         }
     })
 });
@@ -302,8 +302,15 @@ router.get("/", ownerAuth, async (req, res) => {
  *
  * */
 router.post("/", ownerAuth, async (req, res) => {
-    const id = req.token.data.id;
+    const id = req.token!.data.id;
+
     const user = await User.findById({_id: id});
+
+    // This shouldn't happen because we prevent this from happening in ownerAuth middleware, however
+    // it's possible that the user could of been deleted between? (This is incredibly unlikely!)
+    if (!user) {
+        return res.status(404).json({ status: false, message: error.NON_EXISTENT_USER});
+    }
 
     let params, hash;
 
@@ -376,7 +383,7 @@ router.post("/", ownerAuth, async (req, res) => {
  *
  * */
 router.delete("/", ownerAuth, async (req, res) => {
-    const id = req.token.data.id;
+    const id = req.token!.data.id;
 
     // This is quite silly that we have to query the database first and the delete it, can't
     // the database just return the deleted id's or documents?
@@ -384,7 +391,7 @@ router.delete("/", ownerAuth, async (req, res) => {
 
     // Delete all of the users lobbies if any, and send a message to any lobby
     // participant that the lobby was removed/closed.
-    await Lobby.deleteMany({owner: id}, (err) => {
+    await Lobby.deleteMany({owner: id}, {},(err) => {
         if (err) {
             console.log(err);
 
@@ -401,7 +408,7 @@ router.delete("/", ownerAuth, async (req, res) => {
     });
 
     // find all the games that are owned by the current player.
-    return User.findOneAndDelete({_id: id}, (err) => {
+    return User.findOneAndDelete({_id: id}, {}, (err) => {
         if (err) {
             console.log(err);
 
@@ -439,7 +446,7 @@ router.post("/token", async (req, res) => {
     }
 
     try {
-        const newTokens = await refreshTokens(refreshToken);
+        const newTokens = await refreshTokens(<string>refreshToken);
 
         // set the tokens in the response headers
         res.set("Access-Control-Expose-Headers", "x-token, x-refresh-token");

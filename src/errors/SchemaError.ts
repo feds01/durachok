@@ -1,5 +1,7 @@
 class SchemaError extends Error {
-    constructor(message = 'Invalid parameters', schemaErrors, ...params) {
+    public errors?: Object;
+
+    constructor(message: string = 'Invalid parameters', schemaErrors: {}, ...params: any) {
         // Pass remaining arguments (including vendor specific ones) to parent constructor
         super(...params)
 
@@ -12,6 +14,8 @@ class SchemaError extends Error {
 
         // Custom debugging information
         this.message = message;
+
+        // @ts-ignore
         this.errors = schemaErrors;
     }
 }

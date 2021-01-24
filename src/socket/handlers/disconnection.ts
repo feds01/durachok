@@ -1,8 +1,9 @@
 import Lobby from "../../models/game";
 import * as lobbyUtils from "../../utils/lobby";
 import {ClientEvents, GameStatus} from "shared";
+import SocketIO, {Server, Socket} from "socket.io";
 
-async function handler(context, socket) {
+async function handler(context: any, socket: Socket, io?: Server | null) {
     // if the socket connection is not an admin, we need to remove it from
     // the player lobby and free up a space.
     if (!socket.isAdmin) {
@@ -31,8 +32,8 @@ async function handler(context, socket) {
             // notify all other clients that a new player has joined the lobby...
             socket.broadcast.emit(ClientEvents.NEW_PLAYER, {
                 lobby: {
-                    players: lobbyUtils.buildPlayerList(updatedLobby, false),
-                    owner: socket.lobby.name,
+                    players: lobbyUtils.buildPlayerList(updatedLobby!, false),
+                    owner: socket.lobby.owner.name,
                 }
             });
         }
