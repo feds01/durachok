@@ -22,8 +22,8 @@ export interface IGame extends Document {
     game: {
         history: HistoryState,
         state: GameState,
-    }
-};
+    } | null,
+}
 
 const GameSchema = new Schema({
     pin: {type: String, required: true, unique: true},
