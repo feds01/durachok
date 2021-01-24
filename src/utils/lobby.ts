@@ -29,7 +29,7 @@ export async function checkIfNameFree(lobby: IGame, name: string) {
  * */
 export function buildPlayerList(lobby: IGame, ignoreUnconfirmed: boolean = true): Player[] {
     return lobby.players.filter(player => {
-       return ignoreUnconfirmed ? !player.confirmed : true;
+       return ignoreUnconfirmed ? player.confirmed : true;
     });
 }
 

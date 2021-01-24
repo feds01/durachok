@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken";
 import * as http from "http";
 import {AnonymousUserTokenPayload, Token, RegisteredUserTokenPayload} from "../types/auth";
 import Lobby from "../models/game";
-import Player from "../models/user";
+import User from "../models/user";
 import {error, ServerEvents} from "shared";
 import * as lobbyUtils from "../utils/lobby";
 import {refreshTokens} from "../authentication";
@@ -64,9 +64,7 @@ export const makeSocketServer = (server: http.Server) => {
     lobbies.use((socket: Socket, next) => {
         const query = socket.handshake.query as SocketQuery;
 
-        if (query && query.token) {
-            socket.handshake.query
-
+        if (query?.token) {
             jwt.verify(query.token, process.env.JWT_SECRET_KEY!, async (err, decoded) => {
 
                 // Attempt to verify if the user sent a refreshToken
@@ -98,7 +96,7 @@ export const makeSocketServer = (server: http.Server) => {
                 let isAdmin = false;
 
                 if (isUser) {
-                    const user = await Player.findOne({_id: (decoded as Token<RegisteredUserTokenPayload>).data.id});
+                    const user = await User.findOne({_id: (decoded as Token<RegisteredUserTokenPayload>).data.id});
 
                     // This shouldn't happen unless the user was deleted and the token is stale.
                     if (!user) {
