@@ -1,14 +1,12 @@
 import {getLobby} from "../getLobby";
-import Lobby, {Player} from "../../models/game";
 import User from "../../models/user";
 import {Server, Socket} from "socket.io";
+import Lobby, {Player} from "../../models/game";
+import {acquireLock, releaseLock} from "../lock";
 import {error, Game, ClientEvents, MoveTypes, GameStatus} from "shared";
 
-// TODO: event should be atomic
 async function handler(context: any, socket: Socket, io?: Server | null) {
     const lobby = await getLobby(socket.lobby.pin);
-
-    // get the game object
     const game = Game.fromState(lobby.game!.state, lobby.game!.history);
 
     // If the game has already finished, any further requests are stale.
@@ -20,9 +18,22 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
         });
     }
 
-    // find the player in the database record by the socket id...
+    // find the player in the database record by the name in the socket token..
     const {name} = socket.decoded;
     const player = game.players.get(name);
+
+    let lock;
+
+    try {
+        lock = acquireLock(socket.lobby.pin);
+    } catch (e) {
+        console.log("playerMove:" + e.message);
+        // failed to acquire lock, this shouldn't matter since a new state
+        // will be propagated to all clients from events that have acquired the
+        // lock
+        return socket.emit(ClientEvents.INVALID_MOVE, {update: game.getStateForPlayer(name)});
+
+    }
 
     const node = game.history.getLastNode();
     const size = node!.getSize();
@@ -96,6 +107,9 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
     } catch (e) {
         console.log(e);
 
+        // Re-create the game object to avoid any state mutation from a failed move
+        const game = Game.fromState(lobby.game!.state, lobby.game!.history);
+
         // Send the client the 'safe' state and don't save the game.
         return socket.emit(ClientEvents.INVALID_MOVE, {update: game.getStateForPlayer(name)});
     }
@@ -103,12 +117,10 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
     // save the game into mongo
     await Lobby.updateOne({_id: socket.lobby._id}, {game: game.serialize()});
 
-    // Compute any history changes we need to propagate to the client... We use the
-    // size the here
+    // Compute any history changes we need to propagate to the client... We use the size the here
     const meta = node!.actions.slice(size);
 
-    // we'll need to add the 'new_round' event to the action list if the
-    // round ended
+    // we'll need to add the 'new_round' event to the action list if the round ended
     if (node!.finalised) {
         meta.push(...game.history.getLastNode()!.actions);
     }
@@ -133,7 +145,10 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
 
     // Finally, check for a victory condition, if the game is finished, emit a 'victory' event
     // and update the lobby state to 'waiting'
-    if (!game.victory) return;
+    if (!game.victory) {
+        // Release the lock
+        return releaseLock(lock);
+    }
 
     const owner = await User.findOne({_id: lobby.owner});
 
@@ -149,7 +164,7 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
                 const player = game.getPlayer(name);
 
                 return {
-                    name, ...player, ...(player.out === null && {out: Date.now()}) //transform 'null' value into largest current timestamp
+                    name, ...player, ...(player.out === null && {out: Date.now()}) // transform 'null' value into largest current timestamp
                 }
             })
             .sort((a, b) => (a.out! > b.out!) ? 1 : -1)
@@ -174,6 +189,9 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
             game: null,
         },
     });
+
+    // the lock wasn't released since this is a victory condition
+    return releaseLock(lock);
 }
 
 export default handler;
