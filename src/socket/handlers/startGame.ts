@@ -1,11 +1,24 @@
-import {Server, Socket} from "socket.io";
 import {getLobby} from "../getLobby";
 import Lobby from "../../models/game";
+import {Server, Socket} from "socket.io";
 import * as lobbyUtils from "../../utils/lobby";
+import {acquireLock, releaseLock} from "../lock";
 import {Game, error, ClientEvents, GameStatus} from "shared";
 
 
 async function handler(context: any, socket: Socket, io?: Server | null) {
+    let lock;
+
+    try {
+        lock = acquireLock(socket.lobby.pin);
+    } catch (e) {
+        console.log("startGame:" + e.message);
+        // failed to acquire lock, this shouldn't matter since a new state
+        // will be propagated to all clients from events that have acquired the
+        // lock
+        return;
+    }
+
     if (!socket.isAdmin) socket.emit(ClientEvents.ERROR, new Error(error.UNAUTHORIZED));
 
     const lobby = await getLobby(socket.lobby.pin);
@@ -69,6 +82,9 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
     }));
 
     await Lobby.updateOne({_id: socket.lobby._id}, {status: GameStatus.PLAYING});
+
+    // Release the lock
+    releaseLock(lock);
 }
 
 export default handler;
