@@ -104,7 +104,7 @@ export const makeSocketServer = (server: http.Server) => {
                     }
 
                     // Verify that the user is allowed to enter the game
-                    const registeredPlayers = lobbyUtils.buildPlayerList(socket.lobby)
+                    const registeredPlayers = lobbyUtils.buildPlayerList(socket.lobby, false)
                         .filter(p => p.registered)
                         .map(p => p.name);
 
