@@ -5,7 +5,6 @@ export type RegisteredUserTokenPayload = {
 }
 
 export type AnonymousUserTokenPayload = {
-    id?: string,
     name: string,
     pin: string,
 }
