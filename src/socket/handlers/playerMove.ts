@@ -39,6 +39,8 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
     const size = node!.getSize();
 
     if (!player) {
+        releaseLock(lock);
+
         return socket.emit(ClientEvents.ERROR, {
             status: false,
             type: error.BAD_REQUEST,
@@ -62,6 +64,8 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
                     break;
                 }
                 default: {
+                    releaseLock(lock);
+
                     return socket.emit(ClientEvents.ERROR, {
                         "status": false,
                         "type": ClientEvents.INVALID_MOVE,
@@ -75,6 +79,8 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
             // to attack at this time (for example at the start of the round) this is reported as
             // being invalid
             if (!player.canAttack && context.type !== MoveTypes.FORFEIT) {
+                releaseLock(lock);
+
                 return socket.emit(ClientEvents.ERROR, {
                     "status": false,
                     "type": ClientEvents.INVALID_MOVE,
@@ -96,6 +102,8 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
                 // check for improper request combinations such as a 'attacking' player
                 // trying to cover a card on the table...
                 default: {
+                    releaseLock(lock);
+
                     return socket.emit(ClientEvents.ERROR, {
                         "status": false,
                         "type": ClientEvents.INVALID_MOVE,
@@ -106,6 +114,8 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
         }
     } catch (e) {
         console.log(e);
+
+        releaseLock(lock);
 
         // Re-create the game object to avoid any state mutation from a failed move
         const game = Game.fromState(lobby.game!.state, lobby.game!.history);
@@ -154,6 +164,8 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
 
     // If the lobby was deleted, we shouldn't continue
     if (!owner) {
+        releaseLock(lock);
+
         return socket.emit(ClientEvents.ERROR, {error: error.INTERNAL_SERVER_ERROR});
     }
 
