@@ -47,7 +47,7 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
     await new Promise(resolve => setTimeout(resolve, 5000)); // 5 sec wait
 
     // Instantiate the game with the players and distribute the player cards to each player
-    const players = lobbyUtils.buildPlayerList(updatedLobby!).map(p => p.name);
+    const players = lobbyUtils.buildPlayerList(updatedLobby!).map(p => p.name!);
 
     // fire game_started event and update the game state to 'PLAYING'
     io!.of(lobby.pin.toString()).emit(ClientEvents.GAME_STARTED);
