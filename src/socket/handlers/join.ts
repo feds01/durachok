@@ -1,7 +1,7 @@
-import Lobby, {Player} from "../../models/game";
 import User from "../../models/user";
 import {getLobby} from "../getLobby";
 import {Server, Socket} from "socket.io";
+import Lobby, {Player} from "../../models/game";
 import * as lobbyUtils from "../../utils/lobby";
 import {ClientEvents, error, Game, GameStatus} from "shared";
 
@@ -45,7 +45,7 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
         return socket.emit(ClientEvents.ERROR, {error: error.INTERNAL_SERVER_ERROR});
     }
 
-    const playerList = lobbyUtils.buildPlayerList(updatedLobby, false);
+    const playerList = lobbyUtils.buildPlayerList(updatedLobby);
     const owner = await User.findOne({_id: updatedLobby.owner});
 
     // oops, was the owner account deleted?

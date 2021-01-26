@@ -27,10 +27,10 @@ export async function checkIfNameFree(lobby: IGame, name: string) {
  *
  * @returns {Array<{name: string, id: string, registered: boolean}>} The player list
  * */
-export function buildPlayerList(lobby: IGame, ignoreUnconfirmed: boolean = true): Player[] {
+export function buildPlayerList(lobby: IGame, ignoreUnconfirmed: boolean = true): Partial<Player>[] {
     return lobby.players.filter(player => {
        return ignoreUnconfirmed ? player.confirmed : true;
-    });
+    }).map((player) => ({name: player.name, _id: player._id}));
 }
 
 
