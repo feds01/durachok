@@ -35,25 +35,7 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
         return socket.emit(ClientEvents.ERROR, {"status": false, "type": "bad_request", message: "Invalid player."});
     }
 
-    // Maybe the user never connected or disconnected from the namespace.
-    if (!players[index].socketId) {
-        players.splice(index, 1);
-
-        // update mongo with new player list and send out update about players
-        const updatedLobby = await Lobby.findOneAndUpdate(
-            {_id: lobby._id},
-            {$set: {players}},
-            {new: true}
-        );
-
-        // notify all other clients that a new player has joined the lobby...
-        return socket.broadcast.emit(ClientEvents.NEW_PLAYER, {
-            lobby: {
-                players: lobbyUtils.buildPlayerList(updatedLobby!, false),
-                owner: owner.name,
-            }
-        });
-    } else {
+    if (players[index].socketId) {
         const kickedPlayerSocket = io!.of(lobby.pin).sockets.get(players[index].socketId!);
 
         // otherwise disconnect the socket from the current namespace.
@@ -62,6 +44,24 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
             kickedPlayerSocket.disconnect();
         }
     }
+
+    // Maybe the user never connected or disconnected from the namespace.
+    players.splice(index, 1);
+
+    // update mongo with new player list and send out update about players
+    const updatedLobby = await Lobby.findOneAndUpdate(
+        {_id: lobby._id},
+        {$set: {players}},
+        {new: true}
+    );
+
+    // notify all other clients that a new player has joined the lobby...
+    return socket.broadcast.emit(ClientEvents.NEW_PLAYER, {
+        lobby: {
+            players: lobbyUtils.buildPlayerList(updatedLobby!, false),
+            owner: owner.name,
+        }
+    });
 }
 
 export default handler;
