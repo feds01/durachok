@@ -180,7 +180,7 @@ router.post("/login", async (req, res) => {
         ]
     }
 
-    await User.find(searchQuery, async (err, result) => {
+    await User.findOne(searchQuery, {}, {},async (err, result) => {
         if (err) {
             // Log the error in the server console & respond to the client with an
             // INTERNAL_SERVER_ERROR, since this was an unexpected exception.
@@ -195,8 +195,8 @@ router.post("/login", async (req, res) => {
         // Important to send an authentication failure request, rather than a
         // username not found. This could lead to a brute force attack to retrieve
         // all existent user names.
-        if (result.length === 1) {
-            bcrypt.compare(password, result[0].password, async (err, response) => {
+        if (result) {
+            bcrypt.compare(password, result.password, async (err, response) => {
                 if (err) {
                     // Log the error in the server console & respond to the client with an
                     // INTERNAL_SERVER_ERROR, since this was an unexpected exception.
@@ -213,9 +213,9 @@ router.post("/login", async (req, res) => {
                 // an entry for the user logging in into the system.
                 if (response) {
                     const {token, refreshToken} = await createTokens({
-                        email: result[0].email,
-                        name: result[0].name,
-                        id: result[0]._id
+                        email: result.email,
+                        name: result.name,
+                        id: result._id
                     });
 
                     // set the tokens in the response headers
@@ -226,6 +226,8 @@ router.post("/login", async (req, res) => {
                     return res.status(302).json({
                         status: true,
                         message: "Authentication successful",
+                        name: result.name,
+                        email: result.email,
                         token,
                         refreshToken
                     });
