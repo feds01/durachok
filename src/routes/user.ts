@@ -6,6 +6,7 @@ import User from './../models/user';
 import Lobby from './../models/game';
 
 import {ClientEvents, error} from "shared";
+import {checkImage, uploadImage} from "../utils/image";
 import {emitLobbyEvent} from "../socket";
 import SchemaError from "../errors/SchemaError";
 import {validateAccountCreateOrUpdate} from "../common/user";
@@ -180,7 +181,7 @@ router.post("/login", async (req, res) => {
         ]
     }
 
-    await User.findOne(searchQuery, {}, {},async (err, result) => {
+    await User.findOne(searchQuery, {}, {}, async (err, result) => {
         if (err) {
             // Log the error in the server console & respond to the client with an
             // INTERNAL_SERVER_ERROR, since this was an unexpected exception.
@@ -276,11 +277,16 @@ router.get("/", ownerAuth, async (req, res) => {
         }
     });
 
+
+    const profileImage = await checkImage(`${id}.jpg`);
+
+
     return res.status(200).json({
         status: true,
         data: {
             games: games,
             name: req.token!.data.name,
+            ...profileImage && {image: process.env.AWS_CLOUDFRONT_URI + `${id}.jpg`},
         }
     })
 });
@@ -309,7 +315,7 @@ router.post("/", ownerAuth, async (req, res) => {
     // This shouldn't happen because we prevent this from happening in ownerAuth middleware, however
     // it's possible that the user could of been deleted between? (This is incredibly unlikely!)
     if (!user) {
-        return res.status(404).json({ status: false, message: error.NON_EXISTENT_USER});
+        return res.status(404).json({status: false, message: error.NON_EXISTENT_USER});
     }
 
     let params, hash;
@@ -358,12 +364,27 @@ router.post("/", ownerAuth, async (req, res) => {
         }
     });
 
+    // Image uploading step, (if it exists of-course).
+    if (req.body.image) {
+        try {
+
+            await uploadImage(`${id}.jpg`, req.body.image);
+        } catch (e) {
+            console.log(e);
+
+            return res.status(400).json({
+                status: false,
+                message: error.BAD_REQUEST,
+                extra: "Failed to upload profile image",
+            });
+        }
+    }
+
+
     return res.status(200).json({
         status: true,
         message: "Successfully updated user details."
     });
-
-    // Image uploading step, (if it exists of-course).
 });
 
 /**
@@ -391,7 +412,7 @@ router.delete("/", ownerAuth, async (req, res) => {
 
     // Delete all of the users lobbies if any, and send a message to any lobby
     // participant that the lobby was removed/closed.
-    await Lobby.deleteMany({owner: id}, {},(err) => {
+    await Lobby.deleteMany({owner: id}, {}, (err) => {
         if (err) {
             console.log(err);
 
@@ -418,6 +439,7 @@ router.delete("/", ownerAuth, async (req, res) => {
             });
         }
 
+        //TODO: delete the user profile image!
 
         return res.status(200).json({
             status: true,
