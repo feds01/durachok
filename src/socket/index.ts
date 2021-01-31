@@ -1,13 +1,14 @@
 import jwt from "jsonwebtoken";
 import * as http from "http";
-import {AnonymousUserTokenPayload, Token, RegisteredUserTokenPayload} from "../types/auth";
+import "../types/gameSocket";
 import Lobby from "../models/game";
 import User from "../models/user";
 import {error, ServerEvents} from "shared";
-import * as lobbyUtils from "../utils/lobby";
 import {refreshTokens} from "../authentication";
 import ServerError from "../errors/ServerError";
+import {SocketQuery} from "../types/gameSocket";
 import SocketIO, {Server, Socket} from "socket.io";
+import {AnonymousUserTokenPayload, Token, RegisteredUserTokenPayload} from "../types/auth";
 
 import joinGameHandler from "./handlers/join";
 import startGameHandler from "./handlers/startGame";
@@ -16,8 +17,6 @@ import kickPlayerHandler from "./handlers/kickPlayer";
 import playerMoveHandler from "./handlers/playerMove";
 import disconnectionHandler from "./handlers/disconnection";
 import updatePassphraseHandler from "./handlers/updatePassphrase";
-import "../types/gameSocket";
-import {SocketQuery} from "../types/gameSocket";
 
 let io: Server | null = null;
 
@@ -62,7 +61,7 @@ export const makeSocketServer = (server: http.Server) => {
     });
 
     lobbies.use((socket: Socket, next) => {
-        const query = socket.handshake.query as SocketQuery;
+        const query = socket.handshake.auth as SocketQuery;
 
         if (query?.token) {
             jwt.verify(query.token, process.env.JWT_SECRET_KEY!, async (err, decoded) => {
