@@ -108,9 +108,9 @@ router.post('/register', async (req, res) => {
             return res.status(201).json({
                 status: true,
                 message: "Successfully created new user account.",
-                token,
-                refreshToken
-            })
+                name, email,
+                token, refreshToken
+            });
         } catch (e) {
             console.log(e);
 
@@ -226,10 +226,8 @@ router.post("/login", async (req, res) => {
                     return res.status(302).json({
                         status: true,
                         message: "Authentication successful",
-                        name: result.name,
-                        email: result.email,
-                        token,
-                        refreshToken
+                        name: result.name, email: result.email,
+                        token, refreshToken
                     });
                 } else {
                     // password did not match the stored hashed password within the database
