@@ -50,9 +50,13 @@ export async function checkImage(uri: string): Promise<boolean> {
     let objectExists = false;
 
     // Using callbacks
-    await s3.headObject(params as S3.Types.HeadObjectRequest, (err, metadata) => {
-        objectExists = !(err && err.code === 'NotFound');
-    }).promise();
+    try {
+        await s3.headObject(params as S3.Types.HeadObjectRequest, (err, metadata) => {
+            objectExists = !(err && err.code === 'NotFound');
+        }).promise();
+    } catch (e) {
+        objectExists = false;
+    }
 
     return objectExists;
 }
