@@ -45,7 +45,24 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
         return socket.emit(ClientEvents.ERROR, {error: error.INTERNAL_SERVER_ERROR});
     }
 
-    const playerList = lobbyUtils.buildPlayerList(updatedLobby);
+    let playerList = [];
+    let i = 0;
+
+    for (let player of lobbyUtils.buildPlayerList(updatedLobby)) {
+        let user;
+
+        // check if the player is registered, and has an image profile...
+        if (lobby.players.find((p) => p.name === player.name)?.registered) {
+            user = await User.findOne({name: player.name});
+        }
+
+        playerList[i] = {
+            ...player,
+            image: user?.image ? process.env.AWS_CLOUDFRONT_URI + user._id + ".jpg" : null,
+        };
+        i++;
+    }
+
     const owner = await User.findOne({_id: updatedLobby.owner});
 
     // oops, was the owner account deleted?

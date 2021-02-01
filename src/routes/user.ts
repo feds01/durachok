@@ -367,8 +367,11 @@ router.post("/", ownerAuth, async (req, res) => {
     // Image uploading step, (if it exists of-course).
     if (req.body.image) {
         try {
-
             await uploadImage(`${id}.jpg`, req.body.image);
+
+            // update mongo to reflect that a user has a profile image
+            await User.updateOne({_id: id}, {image: true});
+
         } catch (e) {
             console.log(e);
 

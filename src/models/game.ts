@@ -6,6 +6,7 @@ export interface Player extends Document{
     name: string,
     socketId: string | null,
     confirmed: boolean,
+    image: boolean,
     registered: boolean,
 }
 

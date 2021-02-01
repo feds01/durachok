@@ -68,6 +68,7 @@ export const makeSocketServer = (server: http.Server) => {
 
                 // Attempt to verify if the user sent a refreshToken
                 if (err) {
+                    console.log(err);
                     if (!query.refreshToken) {
                         return next(new Error(error.AUTHENTICATION_FAILED));
                     }
