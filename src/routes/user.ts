@@ -6,7 +6,7 @@ import User from './../models/user';
 import Lobby from './../models/game';
 
 import {ClientEvents, error} from "shared";
-import {checkImage, uploadImage} from "../utils/image";
+import {uploadImage} from "../utils/image";
 import {emitLobbyEvent} from "../socket";
 import SchemaError from "../errors/SchemaError";
 import {validateAccountCreateOrUpdate} from "../common/user";
@@ -277,16 +277,23 @@ router.get("/", ownerAuth, async (req, res) => {
         }
     });
 
+    const user = await User.findById({_id: req.token!.data.id});
 
-    const profileImage = await checkImage(`${id}.jpg`);
+    // This should never happen since we validate prior, but check just in case
+    if (!user) {
+        return res.status(404).json({
+            status: false,
+            message: error.NON_EXISTENT_USER,
+        });
+    }
 
 
     return res.status(200).json({
         status: true,
         data: {
             games: games,
-            name: req.token!.data.name,
-            ...profileImage && {image: process.env.AWS_CLOUDFRONT_URI + `${id}.jpg`},
+            name: user.name,
+            ...user.image && {image: process.env.AWS_CLOUDFRONT_URI + `${id}.jpg`},
         }
     })
 });
@@ -356,13 +363,13 @@ router.post("/", ownerAuth, async (req, res) => {
         }
     }
 
-    await User.updateOne({_id: id}, {
+    const updatedUser = await User.findOneAndUpdate({_id: id}, {
         "$set": {
             ...params.name && {name: params.name},
             ...params.email && {email: params.email},
             ...hash && {password: hash},
-        }
-    });
+        },
+    }, {new: true});
 
     // Image uploading step, (if it exists of-course).
     if (req.body.image) {
@@ -383,10 +390,17 @@ router.post("/", ownerAuth, async (req, res) => {
         }
     }
 
+    // generate new tokens for the client to use...
+    const newTokens = await createTokens({email: updatedUser!.email, name: updatedUser!.name, id: updatedUser!._id});
 
     return res.status(200).json({
         status: true,
-        message: "Successfully updated user details."
+        message: "Successfully updated user details.",
+        credentials: {
+            name: updatedUser!.name,
+            email: updatedUser!.email,
+            ...newTokens,
+        }
     });
 });
 
