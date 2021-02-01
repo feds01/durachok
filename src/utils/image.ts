@@ -1,6 +1,5 @@
-import AWS, {AWSError, S3} from 'aws-sdk';
 import {PromiseResult} from "aws-sdk/lib/request";
-import {AwsS3ObjectDetails} from "aws-sdk/clients/securityhub";
+import AWS, {AWSError, CloudFront, S3} from 'aws-sdk';
 
 /**
  * This function will simply convert a raw image which is base64 format into
@@ -32,6 +31,7 @@ AWS.config.update({
 
 // Initiate the S3 API
 const s3 = new AWS.S3({region: process.env.AWS_REGION, apiVersion: '2006-03-01'});
+const cloudfront = new AWS.CloudFront();
 
 const MAX_FILE_SIZE = 1048576; // 1 megabyte
 
@@ -87,14 +87,31 @@ export async function uploadImage(filename: string, fileData: string): Promise<P
     }
 
     // Setting up S3 upload parameters
-    const params = {
-        Bucket: process.env.AWS_BUCKET_NAME,
+    const params: S3.Types.PutObjectRequest = {
+        Bucket: process.env.AWS_BUCKET_NAME!,
         Key: filename, // File name you want to save as in S3
         Body: imageBuffer,
         ContentType: 'image/jpeg',
     };
 
+
+    const invalidationRequest: CloudFront.Types.CreateInvalidationRequest = {
+        DistributionId: process.env.AWS_CLOUDFRONT_ID!,
+        InvalidationBatch: {
+            CallerReference: Date.now().toString(),
+            Paths: {
+                Quantity: 1,
+                Items: [filename]
+            }
+        }
+    };
+
+    cloudfront.createInvalidation(invalidationRequest, function (err, data) {
+        if (err) console.log(err, err.stack); // an error occurred
+        else console.log(data);           // successful response
+    });
+
+
     // Uploading files to the bucket
-    // @ts-ignore
     return s3.putObject(params).promise();
 }
