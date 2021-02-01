@@ -21,7 +21,7 @@ app.use(helmet());
 app.use(logger(process.env.NODE_ENV || 'dev'));
 
 // Parse JSON body request
-app.use(express.json());
+app.use(express.json({limit: "2mb"}));
 app.use(cors());
 app.use(express.urlencoded({extended: false}));
 
