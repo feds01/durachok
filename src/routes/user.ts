@@ -11,6 +11,7 @@ import {emitLobbyEvent} from "../socket";
 import SchemaError from "../errors/SchemaError";
 import {validateAccountCreateOrUpdate} from "../common/user";
 import {createTokens, refreshTokens, ownerAuth} from "../authentication";
+import {defaultStatistics} from "../common/statistics";
 
 const router = express.Router();
 
@@ -293,6 +294,7 @@ router.get("/", ownerAuth, async (req, res) => {
         data: {
             games: games,
             name: user.name,
+            statistics: user.statistics || defaultStatistics,
             ...user.image && {image: process.env.AWS_CLOUDFRONT_URI + `${id}.jpg`},
         }
     })
