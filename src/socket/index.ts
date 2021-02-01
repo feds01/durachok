@@ -3,12 +3,12 @@ import * as http from "http";
 import "../types/gameSocket";
 import Lobby from "../models/game";
 import User from "../models/user";
-import {error, ServerEvents} from "shared";
+import {error, GameStatus, ServerEvents} from "shared";
 import {refreshTokens} from "../authentication";
 import ServerError from "../errors/ServerError";
 import {SocketQuery} from "../types/gameSocket";
 import SocketIO, {Server, Socket} from "socket.io";
-import {AnonymousUserTokenPayload, Token, RegisteredUserTokenPayload} from "../types/auth";
+import {AnonymousUserTokenPayload, RegisteredUserTokenPayload, Token} from "../types/auth";
 
 import joinGameHandler from "./handlers/join";
 import startGameHandler from "./handlers/startGame";
@@ -132,6 +132,23 @@ export const makeSocketServer = (server: http.Server) => {
                     socket.decoded = (decoded as Token<RegisteredUserTokenPayload>).data;
                 } else {
                     socket.decoded = (decoded as Token<AnonymousUserTokenPayload>).data;
+                }
+
+                // check here if the user is already within the game that they are trying to access, if so we'll
+                // auto update their socket id to avoid connectivity problems...
+                if (socket.lobby.status === GameStatus.PLAYING) {
+                    const entry = socket.lobby.players.findIndex((player) => player.name === socket.decoded.name);
+
+                    if (entry > -1 && socket.lobby.players[entry]!.socketId !== socket.id) {
+
+                        console.log("fixing stale socket connection!");
+                        const players = socket.lobby.players;
+                        players[entry].socketId = socket.id;
+
+                        await Lobby.updateOne({_id: socket.lobby._id},
+                            {$set: {players}}
+                        );
+                    }
                 }
 
                 return next();
