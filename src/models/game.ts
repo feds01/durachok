@@ -2,7 +2,7 @@ import {IUser} from "./user";
 import mongoose, {Document, Schema} from 'mongoose';
 import {GameState, GameStatus, HistoryState} from "shared";
 
-export interface Player extends Document{
+export interface Player extends Document {
     name: string,
     socketId: string | null,
     confirmed: boolean,
@@ -60,7 +60,7 @@ const GameSchema = new Schema({
                         }
                     },
                     deck: {type: [String]},
-                    hasVictory: {type: Boolean, default: false},
+                    victory: {type: Boolean, default: false},
                     trumpCard: {
                         type: {
                             value: {type: Number},

@@ -1,5 +1,4 @@
-// Import our environment variables
-require('dotenv').config();
+require('dotenv').config(); // Import our environment variables
 
 import cors from 'cors';
 import morgan from 'morgan';
@@ -19,8 +18,7 @@ const app = express();
 app.use(helmet());
 
 if (process.env.NODE_ENV !== 'production') {
-    // Logging for network requests
-    app.use(morgan('dev'));
+    app.use(morgan('dev'));  // Logging for network requests
 }
 
 // Parse JSON body request
@@ -47,7 +45,7 @@ server.listen(process.env.PORT || 5000, () => {
     const port = (server.address() as AddressInfo).port;
 
     logger.info(`Server started on ${port}! Mode=${process.env.NODE_ENV || "dev"}`);
-    logger.info("Attempting connection with MongoDB cluster...");
+    logger.info("Attempting connection with MongoDB service");
 
     mongoose.connect(process.env.MONGODB_CONNECTION_URI!, {
         connectTimeoutMS: 30000,
@@ -64,6 +62,5 @@ server.listen(process.env.PORT || 5000, () => {
         logger.info('Established connection with MongoDB service');
     });
 
-    //initialize the WebSocket server instance
-    makeSocketServer(server);
+    makeSocketServer(server);   // initialize the WebSocket server instance
 });

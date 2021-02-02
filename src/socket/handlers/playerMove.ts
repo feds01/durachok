@@ -1,6 +1,7 @@
 import {getLobby} from "../getLobby";
 import User from "../../models/user";
 import {Server, Socket} from "socket.io";
+import Archive from "../../models/archive";
 import Lobby, {Player} from "../../models/game";
 import {acquireLock, releaseLock} from "../lock";
 import {error, Game, ClientEvents, MoveTypes, GameStatus, ServerEvents} from "shared";
@@ -45,8 +46,7 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
     } catch (e) {
         socket.logger.warn("Failed to acquire lock", {...meta, name: socket.decoded.name});
         // failed to acquire lock, this shouldn't matter since a new state
-        // will be propagated to all clients from events that have acquired the
-        // lock
+        // will be propagated to all clients from events that have acquired the lock
         return socket.emit(ClientEvents.INVALID_MOVE, {update: game.getStateForPlayer(name)});
 
     }
@@ -106,9 +106,6 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
                     game.finalisePlayerTurn(name);
                     break;
                 }
-
-                // check for improper request combinations such as a 'attacking' player
-                // trying to cover a card on the table...
                 default: {
                     socket.logger.warn("Can't process invalid event", {...meta, name: socket.decoded.name});
                     releaseLock(lock);
@@ -125,10 +122,9 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
         socket.logger.error(`Failed to process move event: ${e.message}`, {...meta, err: e, name: socket.decoded.name});
         releaseLock(lock);
 
-        // Re-create the game object to avoid any state mutation from a failed move
+        // Re-create the game object to avoid any state mutation from a failed move and
+        // send the safe state back to the client
         const game = Game.fromState(lobby.game!.state, lobby.game!.history);
-
-        // Send the client the 'safe' state and don't save the game.
         return socket.emit(ClientEvents.INVALID_MOVE, {update: game.getStateForPlayer(name)});
     }
 
@@ -149,13 +145,9 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
     game.players.forEach(((value, key) => {
         const socketId = lobby.players.find(p => p.name === key)!.socketId;
 
-        // This shouldn't happen, but if it does we should prevent trying to send a
-        // message to a null client.
-        if (!socketId) return;
-
         // send each player their cards, round metadata, etc...
         try {
-            io!.of(lobby.pin.toString()).sockets.get(socketId)!.emit(ClientEvents.ACTION, {
+            io!.of(lobby.pin.toString()).sockets.get(socketId!)!.emit(ClientEvents.ACTION, {
                 actions, update: game.getStateForPlayer(key)
             });
         } catch (e) {
@@ -165,10 +157,7 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
 
     // Finally, check for a victory condition, if the game is finished, emit a 'victory' event
     // and update the lobby state to 'waiting'
-    if (!game.victory) {
-        // Release the lock
-        return releaseLock(lock);
-    }
+    if (!game.victory) return releaseLock(lock);
 
     const owner = await User.findOne({_id: lobby.owner});
 
@@ -193,28 +182,27 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
             .sort((a, b) => (a.out! > b.out!) ? 1 : -1)
     });
 
-    // TODO: maybe archive the games so they can be replayed
+    socket.logger.info("Archiving the played game and saving it", meta);
+    const archive = new Archive({
+        maxPlayers: lobby.maxPlayers,
+        randomPlayerOrder: lobby.randomPlayerOrder,
+        owner: lobby.owner,
+        game: game.serialize()
+    });
+
+    await archive.save();
+
     // reset all the player connections but the owner, reset game and game state.
+    socket.logger.info("Resetting game lobby into waiting room status");
     await Lobby.findOneAndUpdate({_id: lobby._id}, {
         "$set": {
-            "players": lobby.players.map((player: Player): Player => {
-                if (player.name !== owner.name) {
-                    return {
-                        name: player.name,
-                        socketId: "",
-                        confirmed: false,
-                        registered: player.registered,
-                    } as Player;
-                }
-                return player;
-            }),
+            "players": [{name: owner.name, socketId: "", registered: true, confirmed: false} as Player],
             status: GameStatus.WAITING,
             game: null,
         },
     });
 
-    // the lock wasn't released since this is a victory condition
-    return releaseLock(lock);
+    releaseLock(lock);
 }
 
 export default handler;
