@@ -3,18 +3,21 @@ import * as http from "http";
 import "../types/gameSocket";
 import Lobby from "../models/game";
 import User from "../models/user";
-import {error, GameStatus, ServerEvents} from "shared";
+import logger from "../logFormatter";
 import {refreshTokens} from "../authentication";
 import ServerError from "../errors/ServerError";
 import {SocketQuery} from "../types/gameSocket";
 import SocketIO, {Server, Socket} from "socket.io";
+import {error, GameStatus, ServerEvents} from "shared";
 import {AnonymousUserTokenPayload, RegisteredUserTokenPayload, Token} from "../types/auth";
+
 
 import joinGameHandler from "./handlers/join";
 import startGameHandler from "./handlers/startGame";
 import resignPlayerHandler from "./handlers/resign";
 import kickPlayerHandler from "./handlers/kickPlayer";
 import playerMoveHandler from "./handlers/playerMove";
+import playerMessageHandler from "./handlers/message";
 import disconnectionHandler from "./handlers/disconnection";
 import updatePassphraseHandler from "./handlers/updatePassphrase";
 
@@ -57,10 +60,12 @@ export const makeSocketServer = (server: http.Server) => {
         }
 
         socket.lobby = lobby;
+        socket.logger = logger;
         next();
     });
 
     lobbies.use((socket: Socket, next) => {
+        const meta = {pin: socket.lobby.pin, event: "init"};
         const query = socket.handshake.auth as SocketQuery;
 
         if (query?.token) {
@@ -68,7 +73,8 @@ export const makeSocketServer = (server: http.Server) => {
 
                 // Attempt to verify if the user sent a refreshToken
                 if (err) {
-                    console.log(err);
+                    logger.warn("User token expired, attempting to refresh it...", meta);
+
                     if (!query.refreshToken) {
                         return next(new Error(error.AUTHENTICATION_FAILED));
                     }
@@ -79,13 +85,14 @@ export const makeSocketServer = (server: http.Server) => {
                         const newTokens = await refreshTokens(query.refreshToken);
 
                         // emit a 'token' event so that the client can update their copy of the token, refreshTokens
-                        // TODO: move 'token' event name into shared/events
                         const err = new Error("token");
                         // @ts-ignore
                         err.data = newTokens; // additional details
 
+                        logger.info("Sending refreshed user tokens", meta);
                         return next(err);
                     } catch (e) {
+                        logger.warn("Couldn't refresh user token expired", meta);
                         return next(new Error(error.AUTHENTICATION_FAILED));
                     }
                 }
@@ -117,10 +124,6 @@ export const makeSocketServer = (server: http.Server) => {
                 } else if (socket.lobby.pin !== (decoded as Token<AnonymousUserTokenPayload>).data.pin) {
                     // inform that the user should discard this token
                     const err = new Error(error.AUTHENTICATION_FAILED);
-
-                    // @ts-ignore
-                    err.data = {"token": "stale"};
-
                     return next(err);
                 }
 
@@ -141,7 +144,7 @@ export const makeSocketServer = (server: http.Server) => {
 
                     if (entry > -1 && socket.lobby.players[entry]!.socketId !== socket.id) {
 
-                        console.log("fixing stale socket connection!");
+                        logger.warn("fixing stale socket connection", meta);
                         const players = socket.lobby.players;
                         players[entry].socketId = socket.id;
 
@@ -165,12 +168,14 @@ export const makeSocketServer = (server: http.Server) => {
         socket.on(ServerEvents.JOIN_GAME, async (context: any) => await joinGameHandler(context, socket, io));
         socket.on(ServerEvents.UPDATE_PASSPHRASE, async (context: any) => await updatePassphraseHandler(context, socket, io));
         socket.on(ServerEvents.START_GAME, async (context: any) => await startGameHandler(context, socket, io));
+        socket.on(ServerEvents.MESSAGE, async (context: any) => await playerMessageHandler(context, socket, io));
         socket.on(ServerEvents.SURRENDER, async (context: any) => await resignPlayerHandler(context, socket, io));
         socket.on(ServerEvents.KICK_PLAYER, async (context: any) => await kickPlayerHandler(context, socket, io));
         socket.on(ServerEvents.MOVE, async (context: any) => await playerMoveHandler(context, socket, io));
 
+        // Do we even need this?
         socket.on("error", (context: any) => {
-            console.log(context);
+            logger.error(`Error occurred when handling an event: ${context}`, {pin: socket.lobby.pin, event: "init"});
         });
     });
 }

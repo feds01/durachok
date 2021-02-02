@@ -2,12 +2,13 @@
 require('dotenv').config();
 
 import cors from 'cors';
-import logger from 'morgan';
+import morgan from 'morgan';
 import helmet from "helmet";
 import express from 'express';
 import mongoose from 'mongoose';
 import {AddressInfo} from "net";
 import {createServer} from 'http';
+import logger from "./logFormatter";
 import userRouter from './routes/user';
 import lobbyRouter from './routes/lobby';
 import {makeSocketServer} from "./socket";
@@ -17,8 +18,10 @@ const app = express();
 // Use helmet
 app.use(helmet());
 
-// Logging
-app.use(logger(process.env.NODE_ENV || 'dev'));
+if (process.env.NODE_ENV !== 'production') {
+    // Logging for network requests
+    app.use(morgan('dev'));
+}
 
 // Parse JSON body request
 app.use(express.json({limit: "2mb"}));
@@ -42,9 +45,10 @@ const server = createServer(app);
 //start our server
 server.listen(process.env.PORT || 5000, () => {
     const port = (server.address() as AddressInfo).port;
-    console.log(`Server started on ${port}! Mode=${process.env.NODE_ENV || "dev"}`);
 
-    console.log('Attempting connection with MongoDB cluster...')
+    logger.info(`Server started on ${port}! Mode=${process.env.NODE_ENV || "dev"}`);
+    logger.info("Attempting connection with MongoDB cluster...");
+
     mongoose.connect(process.env.MONGODB_CONNECTION_URI!, {
         connectTimeoutMS: 30000,
         useNewUrlParser: true,
@@ -52,9 +56,12 @@ server.listen(process.env.PORT || 5000, () => {
         useFindAndModify: false,
         useUnifiedTopology: true
     }, (err) => {
-        if (err) throw err;
+        if (err) {
+            logger.error(`Failed to connect to MongoDB: ${err.message}`);
+            process.exit(1);
+        }
 
-        console.log('Established connection with MongoDB service.')
+        logger.info('Established connection with MongoDB service');
     });
 
     //initialize the WebSocket server instance
