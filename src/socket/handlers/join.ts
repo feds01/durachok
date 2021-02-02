@@ -3,11 +3,14 @@ import {getLobby} from "../getLobby";
 import {Server, Socket} from "socket.io";
 import Lobby, {Player} from "../../models/game";
 import * as lobbyUtils from "../../utils/lobby";
-import {ClientEvents, error, Game, GameStatus} from "shared";
+import {ClientEvents, error, Game, GameStatus, ServerEvents} from "shared";
 
 async function handler(context: any, socket: Socket, io?: Server | null) {
+    const meta = {pin: socket.lobby.pin, event: ServerEvents.JOIN_GAME};
     const lobby = await getLobby(socket.lobby.pin);
     socket.lobby = lobby;
+
+    socket.logger.info("Processing join event", {...meta, name: socket.decoded.name});
 
     // update the players object for the game with the socket id
     const players = lobby.players;
@@ -15,6 +18,7 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
 
     // Couldn't find the player by name...
     if (idx < 0) {
+        socket.logger.warn("User tried to connect to lobby, but their entry couldn't be found.", meta);
         socket.emit(ClientEvents.CLOSE, {
             "reason": "Invalid session.",
 
@@ -42,6 +46,7 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
 
     // If the lobby was deleted, we shouldn't continue
     if (!updatedLobby) {
+        socket.logger.warn("Couldn't join player to non existent game.", meta);
         return socket.emit(ClientEvents.ERROR, {error: error.INTERNAL_SERVER_ERROR});
     }
 
@@ -67,6 +72,8 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
 
     // oops, was the owner account deleted?
     if (!owner) {
+        socket.logger.error("Couldn't find lobby owner", meta);
+
         return socket.emit(ClientEvents.ERROR, {
             status: false,
             type: "internal_server_error",
@@ -82,6 +89,7 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
     }
 
     // send a private message to the socket with the required information
+    socket.logger.info("Emitting player join event", meta);
     socket.emit(ClientEvents.JOINED_GAME, {
         isHost: socket.isAdmin,
         lobby: {

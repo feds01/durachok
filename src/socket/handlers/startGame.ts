@@ -3,28 +3,29 @@ import Lobby from "../../models/game";
 import {Server, Socket} from "socket.io";
 import * as lobbyUtils from "../../utils/lobby";
 import {acquireLock, releaseLock} from "../lock";
-import {Game, error, ClientEvents, GameStatus} from "shared";
+import {Game, error, ClientEvents, GameStatus, ServerEvents} from "shared";
 
 
 async function handler(context: any, socket: Socket, io?: Server | null) {
+    const meta = {pin: socket.lobby.pin, event: ServerEvents.START_GAME};
+    const lobby = await getLobby(socket.lobby.pin);
+
+    socket.logger.info("Attempting to start a game", {...meta, name: socket.decoded.name});
+
     let lock;
 
     try {
         lock = acquireLock(socket.lobby.pin);
     } catch (e) {
-        console.log("startGame:" + e.message);
-        // failed to acquire lock, this shouldn't matter since a new state
-        // will be propagated to all clients from events that have acquired the
-        // lock
+        socket.logger.warn("Failed to acquire lock", meta);
         return;
     }
 
     if (!socket.isAdmin) socket.emit(ClientEvents.ERROR, new Error(error.UNAUTHORIZED));
 
-    const lobby = await getLobby(socket.lobby.pin);
-
     // don't start the game if the game has already been started, just silently fail.
     if (lobby.status !== GameStatus.WAITING) {
+        socket.logger.warn("Cannot start game when game in progress", meta);
         return;
     }
 
@@ -32,6 +33,7 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
     const confirmedPlayers = lobby.players.filter(p => p.confirmed);
 
     if (confirmedPlayers.length < 2) {
+        socket.logger.warn("Cannot start game with less than 2 players", meta);
         socket.emit(ClientEvents.ERROR, new Error(error.BAD_REQUEST));
     }
 
@@ -42,6 +44,7 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
         {new: true}
     );
 
+    socket.logger.info("Initiating countdown stage", meta);
     io!.of(lobby.pin.toString()).emit(ClientEvents.COUNTDOWN);
 
     await new Promise(resolve => setTimeout(resolve, 5000)); // 5 sec wait
@@ -70,7 +73,7 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
 
         // panic, one of the clients disconnected...
         if (typeof io!.of(lobby.pin.toString()).sockets.get(socketId) === 'undefined') {
-            console.log("player disconnected pre-maturely, we should reset to waiting room.");
+            socket.logger.warn("player disconnected pre-maturely!", {...meta, name: key});
             return;
         }
 
@@ -81,6 +84,7 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
         });
     }));
 
+    socket.logger.info("Transferring lobby into playing state...", meta);
     await Lobby.updateOne({_id: socket.lobby._id}, {status: GameStatus.PLAYING});
 
     // Release the lock

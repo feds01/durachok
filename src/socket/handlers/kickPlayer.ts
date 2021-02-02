@@ -3,22 +3,26 @@ import Lobby from "../../models/game";
 import Player from "../../models/user";
 import {Server, Socket} from "socket.io";
 import * as lobbyUtils from "../../utils/lobby";
-import {ClientEvents, error, GameStatus} from "shared";
+import {ClientEvents, error, GameStatus, ServerEvents} from "shared";
 
 async function handler(context: any, socket: Socket, io?: Server | null) {
+    const meta = {pin: socket.lobby.pin, event: ServerEvents.KICK_PLAYER};
+
     if (!socket.isAdmin) socket.emit(ClientEvents.ERROR, new Error(error.UNAUTHORIZED));
 
     const lobby = await getLobby(socket.lobby.pin);
-
     const owner = await Player.findOne({_id: lobby.owner});
 
     if (!owner) {
         return socket.emit(ClientEvents.ERROR, {error: error.INTERNAL_SERVER_ERROR});
     }
 
+    socket.logger.info("Attempting to kick user from a lobby", meta);
+
     // check that we're currently waiting for players as the admin
     // cannot kick players once the game has started.
     if (lobby.status !== GameStatus.WAITING) {
+        socket.logger.info("Couldn't kick player from lobby since it's currently in game", meta);
         return socket.emit(ClientEvents.ERROR, {
             "status": false,
             type: error.BAD_REQUEST,
@@ -32,6 +36,8 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
 
     // can't kick non-existent player or owner
     if (index < 0 || players[index].name === owner.name) {
+        socket.logger.warn("Failed to kick player from lobby because the don't exist", meta);
+
         return socket.emit(ClientEvents.ERROR, {"status": false, "type": "bad_request", message: "Invalid player."});
     }
 
@@ -40,12 +46,15 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
 
         // otherwise disconnect the socket from the current namespace.
         if (kickedPlayerSocket) {
+            socket.logger.info("Kicked player from lobby", {...meta, name: kickedPlayerSocket.decoded.name});
+
             kickedPlayerSocket.emit(ClientEvents.CLOSE, {"reason": "kicked", "extra": "sorry."});
             kickedPlayerSocket.disconnect();
         }
     }
 
     // Maybe the user never connected or disconnected from the namespace.
+    socket.logger.info("Removing player entry from namespace", meta);
     players.splice(index, 1);
 
     // update mongo with new player list and send out update about players

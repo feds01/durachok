@@ -31,7 +31,8 @@
     "node-fetch": "^2.6.1",
     "prop-types": "^15.7.2",
     "shared": "git+https://github.com/feds01/durak-cards-shared#master",
-    "socket.io": "3.0.4"
+    "socket.io": "3.0.4",
+    "winston": "^3.3.3"
   },
   "devDependencies": {
     "@babel/cli": "^7.12.8",
