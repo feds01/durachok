@@ -1,18 +1,51 @@
-import {Server, Socket} from "socket.io";
+import Joi from "joi";
 import {getLobby} from "../getLobby";
-import {ServerEvents} from "shared";
+import {ClientEvents, ServerEvents} from "shared";
+import {Server, Socket} from "socket.io";
+import Lobby, {Message} from "../../models/game";
+import {RegisteredUserTokenPayload} from "../../types/auth";
 
-async function handler(context: any, socket: Socket, io?: Server | null) {
+const MessageSchema = Joi.object({
+    message: Joi.string().min(1).max(200).required(),
+});
+
+async function handler(context: any, socket: Socket, io: Server | null) {
     const meta = {pin: socket.lobby.pin, event: ServerEvents.MESSAGE};
     const lobby = await getLobby(socket.lobby.pin);
 
-    // find the player in the database record by the socket id...
-    const {name} = socket.decoded;
-    const player = lobby.players.find((p) => p.name === name);
+    // check if this is an anonymous message...
+    if (!socket.decoded) {
+        socket.logger.warn("Cannot process spectator user messages yet.", meta)
+    } else {
+        socket.logger.info(`${socket.decoded.name} sent a message: "${context.message}"`, meta);
+    }
 
-    if (!player) return;
+    // ensure that the message passes the schema
+    const result = MessageSchema.validate(context);
 
-    socket.logger.info(`${player.name} sent a message: ${context.message}`, meta);
+    // Oops the message was invalid and didn't pass the schema test
+    if (result.error) {
+        socket.logger.warn("Received invalid message, aborting processing message", meta);
+        return;
+    }
+
+    const decoded = socket.decoded as RegisteredUserTokenPayload;
+
+    const messagePayload = {
+        name: decoded.name,
+        time: Date.now() - lobby.createdAt,
+        message: context.message,
+        ...decoded.id && {owner: decoded.id},
+    } as Message;
+
+    // save the message into mongo and then broadcast the message to everyone...
+    socket.logger.info("Emitting message event to all clients and saving message to db", meta);
+
+    await Lobby.updateOne({_id: socket.lobby._id}, {
+        chat: [...lobby.chat, messagePayload],
+    });
+
+    io!.of(socket.lobby.pin.toString()).emit(ClientEvents.MESSAGE, messagePayload);
 }
 
 export default handler;
