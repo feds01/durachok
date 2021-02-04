@@ -97,6 +97,7 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
                 with2FA: lobby.with2FA,
                 passphrase: lobby.passphrase,
             }),
+            chat: lobby.chat,
             roundTimeout: lobby.roundTimeout,
             status: lobby.status,
             players: playerList,

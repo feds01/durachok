@@ -199,6 +199,7 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
             "players": [{name: owner.name, socketId: "", registered: true, confirmed: false} as Player],
             status: GameStatus.WAITING,
             game: null,
+            chat: [],
         },
     });
 

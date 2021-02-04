@@ -10,15 +10,28 @@ export interface Player extends Document {
     registered: boolean,
 }
 
+export interface Message extends Document {
+    name: string,
+    time: number,
+    owner?: IUser['_id'],
+    message: string,
+}
+
 export interface IGame extends Document {
     pin: string,
     passphrase: string,
-    maxPlayers: number,
     players: Player[],
     status: GameStatus,
+    createdAt: number,
+
+    /* Settings */
+    maxPlayers: number,
+    disableChat: boolean,
     with2FA: boolean,
     randomPlayerOrder: boolean,
     roundTimeout: number,
+
+    chat: Message[],
     owner: IUser['_id'],
     game: {
         history: HistoryState,
@@ -29,7 +42,6 @@ export interface IGame extends Document {
 const GameSchema = new Schema({
     pin: {type: String, required: true, unique: true},
     passphrase: {type: String, required: false},
-    maxPlayers: {type: Number, required: true},
     players: {
         type: [{
             name: {type: String, required: true},
@@ -39,11 +51,24 @@ const GameSchema = new Schema({
         }],
         required: true
     },
+    createdAt: {type: Date, required: true, default: Date.now},
     status: {type: String, required: true, default: GameStatus.WAITING},
+
+    maxPlayers: {type: Number, required: true},
+    disableChat: {type: Boolean, required: true, default: false},
     with2FA: {type: Boolean, required: true, default: false},
     randomPlayerOrder: {type: Boolean, required: true, default: false},
     roundTimeout: {type: Number, required: false, default: 120},
-    owner: {type: mongoose.Schema.Types.ObjectId, ref: 'user'},
+
+    owner: {type: mongoose.Schema.Types.ObjectId, ref: 'user', required: true},
+    chat: {
+        type: [{
+            name: {type: String, required: true, default: "Anonymous"},
+            time: {type: Number, required: true, default: Date.now},
+            message: {type: String, required: true},
+            owner: {type: mongoose.Schema.Types.ObjectId, required: false, ref: 'user'},
+        }]
+    },
     game: {
         type: {
             history: {type: Object, required: false, default: {}},
