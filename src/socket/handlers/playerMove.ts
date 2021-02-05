@@ -9,8 +9,14 @@ import {error, Game, ClientEvents, MoveTypes, GameStatus, ServerEvents} from "sh
 async function handler(context: any, socket: Socket, io?: Server | null) {
     const meta = {pin: socket.lobby.pin, event: ServerEvents.MOVE};
 
+    if (!socket.decoded) {
+        socket.logger.warn("Received move event from spectator.");
+        return;
+    }
+
     const lobby = await getLobby(socket.lobby.pin);
     const game = Game.fromState(lobby.game!.state, lobby.game!.history);
+
 
     socket.logger.info("Processing player move", {...meta, context, name: socket.decoded.name});
 
@@ -140,6 +146,9 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
     }
 
     socket.logger.info("Processed move event", {...meta, name: socket.decoded.name});
+
+    // emit a spectator action to everyone, clients can just ignore this one
+    io!.of(socket.lobby.pin.toString()).emit(ClientEvents.SPECTATOR_STATE, {update: game.getStateForSpectator()});
 
     // iterate over each socket id in the 'namespace' that is connected and send them the cards...
     game.players.forEach(((value, key) => {

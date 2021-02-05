@@ -10,8 +10,9 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
     const meta = {pin: socket.lobby.pin, event: ServerEvents.START_GAME};
     const lobby = await getLobby(socket.lobby.pin);
 
-    socket.logger.info("Attempting to start a game", {...meta, name: socket.decoded.name});
+    if (!socket.decoded) return; // ignore messages from spectator
 
+    socket.logger.info("Attempting to start a game", {...meta, name: socket.decoded.name});
     let lock;
 
     try {

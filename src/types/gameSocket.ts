@@ -12,7 +12,7 @@ declare module "socket.io" {
     export interface Socket {
         logger: Logger,
         lobby: IGame;
-        decoded: RegisteredUserTokenPayload | AnonymousUserTokenPayload,
+        decoded: RegisteredUserTokenPayload | AnonymousUserTokenPayload | undefined,
         isAdmin: boolean,
         isUser: boolean,
     }

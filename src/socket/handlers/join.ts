@@ -3,6 +3,7 @@ import {getLobby} from "../getLobby";
 import {Server, Socket} from "socket.io";
 import Lobby, {Player} from "../../models/game";
 import * as lobbyUtils from "../../utils/lobby";
+import {buildPlayerList} from "../../utils/lobby";
 import {ClientEvents, error, Game, GameStatus, ServerEvents} from "shared";
 
 async function handler(context: any, socket: Socket, io?: Server | null) {
@@ -10,11 +11,52 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
     const lobby = await getLobby(socket.lobby.pin);
     socket.lobby = lobby;
 
-    socket.logger.info("Processing join event", {...meta, name: socket.decoded.name});
+    const owner = await User.findOne({_id: lobby.owner});
+
+    // oops, was the owner account deleted?
+    if (!owner) {
+        socket.logger.error("Couldn't find lobby owner", meta);
+
+        return socket.emit(ClientEvents.ERROR, {
+            status: false,
+            type: "internal_server_error",
+            message: error.INTERNAL_SERVER_ERROR
+        });
+    }
+
+    if (socket.decoded) {
+        socket.logger.info("Processing join event", {...meta, name: socket.decoded.name});
+    } else {
+
+        // Don't do anything if the game hasn't started yet
+        if (lobby.status === GameStatus.WAITING) return;
+
+        let game = Game.fromState(lobby.game!.state, lobby.game!.history);
+
+        socket.logger.info("Emitting spectator join event", meta);
+        socket.emit(ClientEvents.JOINED_GAME, {
+            isHost: socket.isAdmin,
+            isSpectator: true,
+            lobby: {
+                ...(socket.isAdmin && {
+                    with2FA: lobby.with2FA,
+                    passphrase: lobby.passphrase,
+                }),
+                chat: lobby.chat,
+                roundTimeout: lobby.roundTimeout,
+                status: lobby.status,
+                players: buildPlayerList(lobby),
+                owner: owner.name,
+            },
+            game: game.getStateForSpectator(),
+        });
+
+        return;
+    }
 
     // update the players object for the game with the socket id
     const players = lobby.players;
-    const idx = players.findIndex((player) => player.name === socket.decoded.name);
+    const idx = players.findIndex((player) => player.name === socket.decoded!.name);
 
     // Couldn't find the player by name...
     if (idx < 0) {
@@ -68,19 +110,6 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
         i++;
     }
 
-    const owner = await User.findOne({_id: updatedLobby.owner});
-
-    // oops, was the owner account deleted?
-    if (!owner) {
-        socket.logger.error("Couldn't find lobby owner", meta);
-
-        return socket.emit(ClientEvents.ERROR, {
-            status: false,
-            type: "internal_server_error",
-            message: error.INTERNAL_SERVER_ERROR
-        });
-    }
-
     let state = null;
 
     if (updatedLobby.game && updatedLobby.status === GameStatus.PLAYING) {
@@ -92,6 +121,7 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
     socket.logger.info("Emitting player join event", meta);
     socket.emit(ClientEvents.JOINED_GAME, {
         isHost: socket.isAdmin,
+        isSpectator: false,
         lobby: {
             ...(socket.isAdmin && {
                 with2FA: lobby.with2FA,
@@ -102,7 +132,7 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
             status: lobby.status,
             players: playerList,
             owner: owner.name,
-            name: socket.decoded.name,
+            name: socket.decoded!.name,
         },
         ...((state !== null) && {game: state})
     });

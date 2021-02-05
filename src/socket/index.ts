@@ -68,6 +68,10 @@ export const makeSocketServer = (server: http.Server) => {
         const meta = {pin: socket.lobby.pin, event: "init"};
         const query = socket.handshake.auth as SocketQuery;
 
+        // apply default parameters to the connection just in case we don;t get the chance to set them
+        socket.isAdmin = false;
+        socket.isUser = false;
+
         if (query?.token) {
             jwt.verify(query.token, process.env.JWT_SECRET_KEY!, async (err, decoded) => {
 
@@ -114,7 +118,11 @@ export const makeSocketServer = (server: http.Server) => {
                     const registeredPlayers = socket.lobby.players.filter(p => p.registered).map(p => p.name);
 
                     if (!registeredPlayers.includes(user.name)) {
-                        return next(new Error(error.AUTHENTICATION_FAILED));
+                        if (socket.lobby.status === GameStatus.WAITING) {
+                            return next(new Error(error.AUTHENTICATION_FAILED));
+                        }
+
+                        return;
                     }
 
                     // Check if this is the admin/owner user.
@@ -122,9 +130,15 @@ export const makeSocketServer = (server: http.Server) => {
                         isAdmin = true;
                     }
                 } else if (socket.lobby.pin !== (decoded as Token<AnonymousUserTokenPayload>).data.pin) {
-                    // inform that the user should discard this token
-                    const err = new Error(error.AUTHENTICATION_FAILED);
-                    return next(err);
+
+                    // if we're currently waiting for a game to start, we shouldn't allow anonymous connections or
+                    // as we consider it to be spectators.
+                    if (socket.lobby.status === GameStatus.WAITING) {
+                        const err = new Error(error.AUTHENTICATION_FAILED);
+                        return next(err);
+                    }
+
+                    return;
                 }
 
                 socket.isUser = isUser;
@@ -140,7 +154,7 @@ export const makeSocketServer = (server: http.Server) => {
                 // check here if the user is already within the game that they are trying to access, if so we'll
                 // auto update their socket id to avoid connectivity problems...
                 if (socket.lobby.status === GameStatus.PLAYING) {
-                    const entry = socket.lobby.players.findIndex((player) => player.name === socket.decoded.name);
+                    const entry = socket.lobby.players.findIndex((player) => player.name === socket.decoded!.name);
 
                     if (entry > -1 && socket.lobby.players[entry]!.socketId !== socket.id) {
 
@@ -156,7 +170,7 @@ export const makeSocketServer = (server: http.Server) => {
 
                 return next();
             });
-        } else {
+        } else if (socket.lobby.status === GameStatus.WAITING) {
             const err = new Error(error.AUTHENTICATION_FAILED);
             return next(err);
         }

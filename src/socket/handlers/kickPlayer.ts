@@ -46,7 +46,7 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
 
         // otherwise disconnect the socket from the current namespace.
         if (kickedPlayerSocket) {
-            socket.logger.info("Kicked player from lobby", {...meta, name: kickedPlayerSocket.decoded.name});
+            socket.logger.info("Kicked player from lobby", {...meta, name: kickedPlayerSocket.decoded!.name});
 
             kickedPlayerSocket.emit(ClientEvents.CLOSE, {"reason": "kicked", "extra": "sorry."});
             kickedPlayerSocket.disconnect();

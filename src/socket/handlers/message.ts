@@ -14,10 +14,10 @@ async function handler(context: any, socket: Socket, io: Server | null) {
     const lobby = await getLobby(socket.lobby.pin);
 
     // check if this is an anonymous message...
-    if (!socket.decoded) {
-        socket.logger.warn("Cannot process spectator user messages yet.", meta)
-    } else {
+    if (socket.decoded && context.message) {
         socket.logger.info(`${socket.decoded.name} sent a message: "${context.message}"`, meta);
+    } else {
+        socket.logger.info("A spectator user sent a message.", meta)
     }
 
     // ensure that the message passes the schema
@@ -32,10 +32,10 @@ async function handler(context: any, socket: Socket, io: Server | null) {
     const decoded = socket.decoded as RegisteredUserTokenPayload;
 
     const messagePayload = {
-        name: decoded.name,
+        name: socket.decoded?.name || "Anonymous",
         time: Date.now() - lobby.createdAt,
         message: context.message,
-        ...decoded.id && {owner: decoded.id},
+        ...decoded?.id && {owner: decoded.id},
     } as Message;
 
     // save the message into mongo and then broadcast the message to everyone...
