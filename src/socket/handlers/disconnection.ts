@@ -36,7 +36,7 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
                 {new: true}
             );
 
-            socket.logger.info("Removed user from lobby", {...meta, name: socket.decoded.name});
+            socket.logger.info("Removed user from lobby", {...meta, name: socket.decoded!.name});
 
             // notify all other clients that a new player has joined the lobby...
             socket.broadcast.emit(ClientEvents.NEW_PLAYER, {

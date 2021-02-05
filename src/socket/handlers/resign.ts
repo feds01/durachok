@@ -5,6 +5,8 @@ import {error, Game, ClientEvents, ServerEvents} from "shared";
 async function handler(context: any, socket: Socket, io?: Server | null) {
     const meta = {pin: socket.lobby.pin, event: ServerEvents.SURRENDER};
 
+    if (!socket.decoded) return; // ignore messages from spectators
+
     const lobby = await getLobby(socket.lobby.pin);
 
     socket.logger.info("Processing player resign", {...meta, context, name: socket.decoded.name});
