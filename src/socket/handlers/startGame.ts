@@ -56,10 +56,13 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
     // fire game_started event and update the game state to 'PLAYING'
     io!.of(lobby.pin.toString()).emit(ClientEvents.GAME_STARTED);
 
+    const {randomPlayerOrder, shortGameDeck, freeForAll} = socket.lobby;
+    socket.logger.info(`Creating game with ${JSON.stringify({randomPlayerOrder, shortGameDeck, freeForAll})}`, meta);
+
     const game = new Game(players, null, {
         randomisePlayerOrder: socket.lobby.randomPlayerOrder,
-        shortGameDeck: socket.lobby.shortGameDeck,
-        freeForAll: socket.lobby.freeForAll,
+        shortGameDeck,
+        freeForAll,
     });
 
     // save the game into mongo

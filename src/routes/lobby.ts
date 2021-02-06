@@ -68,7 +68,7 @@ router.post("/", ownerAuth, async (req: express.Request, res: express.Response) 
     }
 
     // After the values have been validated, we can use them to determine the game settings.
-    let {maxPlayers, with2FA, roundTimeout, randomPlayerOrder} = result.value;
+    let {maxPlayers, with2FA, roundTimeout, shortGameDeck, freeForAll, randomPlayerOrder} = result.value;
 
     let gamePin, existingGame;
 
@@ -85,6 +85,8 @@ router.post("/", ownerAuth, async (req: express.Request, res: express.Response) 
     const newGame = new Lobby({
         maxPlayers,
         roundTimeout,
+        shortGameDeck,
+        freeForAll,
         pin: gamePin,
         with2FA: with2FA,
         randomPlayerOrder,
