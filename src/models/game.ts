@@ -26,6 +26,8 @@ export interface IGame extends Document {
 
     /* Settings */
     maxPlayers: number,
+    shortGameDeck: boolean,
+    freeForAll: boolean,
     disableChat: boolean,
     with2FA: boolean,
     randomPlayerOrder: boolean,
@@ -58,6 +60,8 @@ const GameSchema = new Schema({
     disableChat: {type: Boolean, required: true, default: false},
     with2FA: {type: Boolean, required: true, default: false},
     randomPlayerOrder: {type: Boolean, required: true, default: false},
+    shortGameDeck: {type: Boolean, required: true, default: false},
+    freeForAll: {type: Boolean, required: true, default: true},
     roundTimeout: {type: Number, required: false, default: 120},
 
     owner: {type: mongoose.Schema.Types.ObjectId, ref: 'user', required: true},

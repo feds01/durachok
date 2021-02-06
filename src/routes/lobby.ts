@@ -41,10 +41,14 @@ router.post("/", ownerAuth, async (req: express.Request, res: express.Response) 
     const GameSchema = Joi.object().keys({
         with2FA: Joi.bool().default(false),
         randomPlayerOrder: Joi.bool().default(false),
-        maxPlayers: Joi.number()
-            .min(2)
-            .max(8)
-            .required(),
+        shortGameDeck: Joi.bool().default(false),
+        freeForAll: Joi.bool().default(true),
+        disableChat: Joi.bool().default(false),
+        maxPlayers: Joi.number().when('shortGameDeck', {
+            is: true,
+            then: Joi.number().min(2).max(6).required(),
+            otherwise: Joi.number().min(2).max(8).required(),
+        }),
         roundTimeout: Joi.number()
             .min(60)
             .max(600)
@@ -345,7 +349,7 @@ router.post("/:pin/join", validatePin, withAuth, async (req, res) => {
 
     // Generate JWT token for the current user connection with an encoded name and IP
     const {token, refreshToken} = await createTokens({name, pin});
-    const player =  {name, socketId: null, confirmed: false, registered} as Player;
+    const player = {name, socketId: null, confirmed: false, registered} as Player;
 
     // find an un-honoured connection entry and overwrite it, otherwise we
     // can just append the connection

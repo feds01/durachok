@@ -13,7 +13,6 @@ export function decodeImage(rawImage: string, imageType = 'jpeg') {
     const headerPattern = new RegExp(`^data:image\/${imageType};base64,`);
     rawImage = rawImage.replace(headerPattern, '');
 
-    console.log(rawImage.substring(0, 20));
     try {
         return Buffer.from(rawImage, 'base64');
     } catch (e) {

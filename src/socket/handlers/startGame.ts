@@ -57,7 +57,9 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
     io!.of(lobby.pin.toString()).emit(ClientEvents.GAME_STARTED);
 
     const game = new Game(players, null, {
-        randomisePlayerOrder: socket.lobby.randomPlayerOrder
+        randomisePlayerOrder: socket.lobby.randomPlayerOrder,
+        shortGameDeck: socket.lobby.shortGameDeck,
+        freeForAll: socket.lobby.freeForAll,
     });
 
     // save the game into mongo
