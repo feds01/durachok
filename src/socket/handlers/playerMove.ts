@@ -202,10 +202,12 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
     await archive.save();
 
     // reset all the player connections but the owner, reset game and game state.
-    socket.logger.info("Resetting game lobby into waiting room status");
+    socket.logger.info("Resetting game lobby into waiting room status", meta);
+    lobby.players.forEach(p => p.confirmed = p.name === owner.name);
+
     await Lobby.findOneAndUpdate({_id: lobby._id}, {
         "$set": {
-            "players": [{name: owner.name, socketId: "", registered: true, confirmed: false} as Player],
+            players: lobby.players,
             status: GameStatus.WAITING,
             game: null,
             chat: [],
