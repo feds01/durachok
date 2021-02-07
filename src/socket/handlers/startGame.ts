@@ -64,9 +64,10 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
         shortGameDeck,
         freeForAll,
     });
+    game.deck = [];
 
     // save the game into mongo
-    await Lobby.updateOne({_id: socket.lobby._id}, {game: game.serialize()});
+    await Lobby.updateOne({_id: socket.lobby._id}, {game: game.serialize(), createdAt: Date.now()});
 
     // iterate over each socket id in the 'namespace' that is connected and send them
     // the cards...
