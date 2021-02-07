@@ -134,6 +134,14 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
         return socket.emit(ClientEvents.INVALID_MOVE, {update: game.getStateForPlayer(name)});
     }
 
+    // Sanity check, revert game state if the sanity check fails -  https://youtu.be/vBhyT5BJJaU&t=51
+    // if (!Game.performSanityCheck(game)) {
+    //     releaseLock(lock);
+    //     const game = Game.fromState(lobby.game!.state, lobby.game!.history);
+    //
+    //     return socket.emit(ClientEvents.INVALID_MOVE, {update: game.getStateForPlayer(name)});
+    // }
+
     // save the game into mongo
     await Lobby.updateOne({_id: socket.lobby._id}, {game: game.serialize()});
 
