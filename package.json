@@ -30,7 +30,7 @@
     "nanoid": "3.1.20",
     "node-fetch": "^2.6.1",
     "prop-types": "^15.7.2",
-    "shared": "git+https://github.com/feds01/durak-cards-shared#master",
+    "shared": "git+https://github.com/feds01/Durak-Engine#main",
     "socket.io": "3.0.4",
     "winston": "^3.3.3"
   },
