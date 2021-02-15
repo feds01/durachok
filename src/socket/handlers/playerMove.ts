@@ -77,13 +77,13 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
                 }
                 default: {
                     socket.logger.warn("Can't process invalid event", {...meta, name: socket.decoded.name});
-                    releaseLock(lock);
-
-                    return socket.emit(ClientEvents.ERROR, {
+                    socket.emit(ClientEvents.ERROR, {
                         "status": false,
                         "type": ClientEvents.INVALID_MOVE,
                         message: "Invalid move type."
                     });
+
+                    return releaseLock(lock);
                 }
             }
         } else {
@@ -93,13 +93,14 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
             // being invalid
             if (!player.canAttack && context.type !== MoveTypes.FORFEIT) {
                 socket.logger.warn("Can't process invalid event", {...meta, name: socket.decoded.name});
-                releaseLock(lock);
-
-                return socket.emit(ClientEvents.ERROR, {
+                socket.emit(ClientEvents.ERROR, {
                     "status": false,
                     "type": ClientEvents.INVALID_MOVE,
                     message: "Can't perform action at this time."
                 });
+
+
+                return releaseLock(lock);
             }
 
             switch (context.type) {
@@ -126,21 +127,24 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
         }
     } catch (e) {
         socket.logger.error(`Failed to process move event: ${e.message}`, {...meta, err: e, name: socket.decoded.name});
-        releaseLock(lock);
 
         // Re-create the game object to avoid any state mutation from a failed move and
         // send the safe state back to the client
         const game = Game.fromState(lobby.game!.state, lobby.game!.history);
-        return socket.emit(ClientEvents.INVALID_MOVE, {update: game.getStateForPlayer(name)});
+        socket.emit(ClientEvents.INVALID_MOVE, {update: game.getStateForPlayer(name)});
+
+        return releaseLock(lock);
     }
 
     // Sanity check, revert game state if the sanity check fails -  https://youtu.be/vBhyT5BJJaU&t=51
-    // if (!Game.performSanityCheck(game)) {
-    //     releaseLock(lock);
-    //     const game = Game.fromState(lobby.game!.state, lobby.game!.history);
-    //
-    //     return socket.emit(ClientEvents.INVALID_MOVE, {update: game.getStateForPlayer(name)});
-    // }
+    if (!Game.performSanityCheck(game)) {
+        socket.logger.error(`Sanity check failed, reverting game state`, {...meta});
+
+        const game = Game.fromState(lobby.game!.state, lobby.game!.history);
+        socket.emit(ClientEvents.INVALID_MOVE, {update: game.getStateForPlayer(name)});
+
+        return releaseLock(lock);
+    }
 
     // save the game into mongo
     await Lobby.updateOne({_id: socket.lobby._id}, {game: game.serialize()});
@@ -148,12 +152,15 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
     // Compute any history changes we need to propagate to the client... We use the size the here
     const actions = node!.actions.slice(size);
 
+    socket.logger.info("Processed move event", {...meta, name: socket.decoded.name});
+
     // we'll need to add the 'new_round' event to the action list if the round ended
     if (node!.finalised) {
         actions.push(...game.history.getLastNode()!.actions);
+
+        socket.logger.info("Beginning new round!", {...meta});
     }
 
-    socket.logger.info("Processed move event", {...meta, name: socket.decoded.name});
 
     // emit a spectator action to everyone, clients can just ignore this one
     io!.of(socket.lobby.pin.toString()).emit(ClientEvents.SPECTATOR_STATE, {update: game.getStateForSpectator()});
@@ -181,9 +188,9 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
     // If the lobby was deleted, we shouldn't continue
     if (!owner) {
         socket.logger.error("Couldn't find lobby owner", meta);
-        releaseLock(lock);
+        socket.emit(ClientEvents.ERROR, {error: error.INTERNAL_SERVER_ERROR});
 
-        return socket.emit(ClientEvents.ERROR, {error: error.INTERNAL_SERVER_ERROR});
+        return releaseLock(lock);
     }
 
     // list the players by exit order
