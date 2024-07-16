@@ -1,0 +1,33 @@
+{
+  "1": {
+    "players-top": 1
+  },
+  "2": {
+    "players-top": 2
+  },
+  "3": {
+    "players-top": 1,
+    "players-left": 1,
+    "players-right": 1
+  },
+  "4": {
+    "players-top": 2,
+    "players-left": 1,
+    "players-right": 1
+  },
+  "5": {
+    "players-top": 3,
+    "players-left": 1,
+    "players-right": 1
+  },
+  "6": {
+    "players-top": 2,
+    "players-left": 2,
+    "players-right": 2
+  },
+  "7": {
+    "players-top": 3,
+    "players-left": 2,
+    "players-right": 2
+  }
+}
