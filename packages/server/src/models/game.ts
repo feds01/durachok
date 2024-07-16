@@ -41,6 +41,10 @@ export interface IGame extends Document {
     } | null,
 }
 
+export interface PopulatedGame extends IGame {
+    owner: IUser
+}
+
 const GameSchema = new Schema({
     pin: {type: String, required: true, unique: true},
     passphrase: {type: String, required: false},

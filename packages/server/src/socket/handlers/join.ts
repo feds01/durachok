@@ -106,7 +106,7 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
 
         playerList[i] = {
             ...player,
-            image: user?.image ? process.env.AWS_CLOUDFRONT_URI + user._id + ".jpg" : null,
+            image: user?.image ? process.env.AWS_CLOUDFRONT_URI! + user._id + ".jpg" : null,
         };
         i++;
     }

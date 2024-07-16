@@ -1,4 +1,4 @@
-import {IGame} from "../models/game";
+import {IGame, PopulatedGame} from "../models/game";
 import {AnonymousUserTokenPayload, RegisteredUserTokenPayload} from "./auth";
 import {Logger} from "winston";
 
@@ -11,7 +11,7 @@ export type SocketQuery = {
 declare module "socket.io" {
     export interface Socket {
         logger: Logger,
-        lobby: IGame;
+        lobby: PopulatedGame;
         decoded: RegisteredUserTokenPayload | AnonymousUserTokenPayload | undefined,
         isAdmin: boolean,
         isUser: boolean,

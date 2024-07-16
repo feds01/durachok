@@ -2,7 +2,7 @@ import * as Joi from "joi";
 import fetch from 'node-fetch';
 import express from 'express';
 import bcrypt from 'bcryptjs';
-import User from './../models/user';
+import User, { IUser } from './../models/user';
 import Lobby from './../models/game';
 
 import {ClientEvents, error} from "shared";
@@ -12,6 +12,10 @@ import SchemaError from "../errors/SchemaError";
 import {validateAccountCreateOrUpdate} from "../common/user";
 import {createTokens, refreshTokens, ownerAuth} from "../authentication";
 import {defaultStatistics} from "../common/statistics";
+
+type CaptchaResponse = {
+    success: boolean
+}
 
 const router = express.Router();
 
@@ -76,7 +80,7 @@ router.post('/register', async (req, res) => {
 
     // Validate ReCaptcha token if we're in production
     if (process.env.NODE_ENV === "production") {
-        const captchaResponse = await fetch(RE_CAPTCHA_VERIFY_URL + req.body.token, {method: "POST"}).then(res => res.json());
+        const captchaResponse = await fetch(RE_CAPTCHA_VERIFY_URL + req.body.token, {method: "POST"}).then(res => res.json()) as CaptchaResponse;
 
         if (!captchaResponse.success) {
             return res.status(400).json({
@@ -182,7 +186,7 @@ router.post("/login", async (req, res) => {
         ]
     }
 
-    await User.findOne(searchQuery, {}, {}, async (err, result) => {
+    await User.findOne(searchQuery, {}, async (err: unknown, result: IUser) => {
         if (err) {
             // Log the error in the server console & respond to the client with an
             // INTERNAL_SERVER_ERROR, since this was an unexpected exception.
@@ -431,7 +435,7 @@ router.delete("/", ownerAuth, async (req, res) => {
 
     // Delete all of the users lobbies if any, and send a message to any lobby
     // participant that the lobby was removed/closed.
-    await Lobby.deleteMany({owner: id}, {}, (err) => {
+    await Lobby.deleteMany({owner: id}, (err: unknown) => {
         if (err) {
             console.log(err);
 
@@ -448,7 +452,7 @@ router.delete("/", ownerAuth, async (req, res) => {
     });
 
     // find all the games that are owned by the current player.
-    return User.findOneAndDelete({_id: id}, {}, (err) => {
+    return User.findOneAndDelete({_id: id}, (err: unknown) => {
         if (err) {
             console.log(err);
 
