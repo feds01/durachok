@@ -125,8 +125,11 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
                 }
             }
         }
-    } catch (e) {
-        socket.logger.error(`Failed to process move event: ${e.message}`, {...meta, err: e, name: socket.decoded.name});
+    } catch (e: unknown) {
+        if (e instanceof Error) {
+            socket.logger.error(`Failed to process move event: ${e.message}`, {...meta, err: e, name: socket.decoded.name});
+        }
+
 
         // Re-create the game object to avoid any state mutation from a failed move and
         // send the safe state back to the client

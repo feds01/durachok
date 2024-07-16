@@ -1,6 +1,6 @@
 import * as Joi from "joi";
 import express from 'express';
-import Lobby, {Player} from './../models/game';
+import Lobby, {IGame, Player, PopulatedGame} from './../models/game';
 import {ClientEvents, error, GameStatus} from "shared";
 import {emitLobbyEvent} from "../socket";
 import {createTokens, ownerAuth, validatePin, withAuth} from "../authentication";
@@ -199,7 +199,7 @@ router.delete("/:pin", validatePin, ownerAuth, async (req, res) => {
     const {pin} = req.params;
 
     // check that the requesting user is the owner/creator of the lobby
-    const lobby = await Lobby.findOne({pin});
+    const lobby = await Lobby.findOne({pin}).populate<Pick<PopulatedGame, 'owner'>>('owner') as unknown as PopulatedGame  | null;
 
     if (!lobby) {
         return res.status(404).json({
@@ -210,7 +210,7 @@ router.delete("/:pin", validatePin, ownerAuth, async (req, res) => {
 
     // The lobby owner parameter should be the same as the the user id in the token.
     // If it's not we return a Unauthorized error code.
-    if (!lobby.owner._id.equals(req.token?.data.id)) {
+    if (!lobby.owner.id.equals(req.token?.data.id)) {
         return res.status(401).json({
             status: false,
             message: "Unable to delete the game",
@@ -218,7 +218,7 @@ router.delete("/:pin", validatePin, ownerAuth, async (req, res) => {
         })
     }
 
-    return Lobby.deleteOne({pin}, {}, (err) => {
+    return Lobby.deleteOne({pin}, (err: unknown) => {
         if (err) {
             return res.status(500).json({
                 status: false,
@@ -285,7 +285,7 @@ router.post("/:pin/join", validatePin, withAuth, async (req, res) => {
     }
 
     // we only care about confirmed players since they have registered connections,
-    // otherwise we can ignore unhonoured connections and overwrite them if need be.
+    // otherwise we can ignore un-honoured connections and overwrite them if need be.
     let players = lobby.players.filter((player) => player.confirmed);
 
     // check that there are free slots within the lobby

@@ -4,12 +4,12 @@ import "../types/gameSocket";
 import Lobby from "../models/game";
 import User from "../models/user";
 import logger from "../logFormatter";
-import {refreshTokens} from "../authentication";
+import { refreshTokens } from "../authentication";
 import ServerError from "../errors/ServerError";
-import {SocketQuery} from "../types/gameSocket";
-import SocketIO, {Server, Socket} from "socket.io";
-import {error, GameStatus, ServerEvents} from "shared";
-import {AnonymousUserTokenPayload, RegisteredUserTokenPayload, Token} from "../types/auth";
+import { SocketQuery } from "../types/gameSocket";
+import SocketIO, { Server, Socket } from "socket.io";
+import { error, GameStatus, ServerEvents } from "shared";
+import { AnonymousUserTokenPayload, RegisteredUserTokenPayload, Token } from "../types/auth";
 
 
 import joinGameHandler from "./handlers/join";
@@ -20,6 +20,7 @@ import playerMoveHandler from "./handlers/playerMove";
 import playerMessageHandler from "./handlers/message";
 import disconnectionHandler from "./handlers/disconnection";
 import updatePassphraseHandler from "./handlers/updatePassphrase";
+import { getLobby } from "./getLobby";
 
 let io: Server | null = null;
 
@@ -53,19 +54,19 @@ export const makeSocketServer = (server: http.Server) => {
         const lobbyPin = socket.nsp.name.split("/")[1];
 
         // check that a game exists with the provided pin
-        const lobby = await Lobby.findOne({pin: lobbyPin});
-
-        if (!lobby) {
+        try {
+            const lobby = await getLobby(lobbyPin);
+            socket.lobby = lobby;
+            socket.logger = logger;
+        } catch (e: unknown) {
             return next(new Error(error.NON_EXISTENT_LOBBY));
         }
 
-        socket.lobby = lobby;
-        socket.logger = logger;
         next();
     });
 
     lobbies.use((socket: Socket, next) => {
-        const meta = {pin: socket.lobby.pin, event: "init"};
+        const meta = { pin: socket.lobby.pin, event: "init" };
         const query = socket.handshake.auth as SocketQuery;
 
         // apply default parameters to the connection just in case we don;t get the chance to set them
@@ -107,7 +108,7 @@ export const makeSocketServer = (server: http.Server) => {
                 let isAdmin = false;
 
                 if (isUser) {
-                    const user = await User.findOne({_id: (decoded as Token<RegisteredUserTokenPayload>).data.id});
+                    const user = await User.findOne({ _id: (decoded as Token<RegisteredUserTokenPayload>).data.id });
 
                     // This shouldn't happen unless the user was deleted and the token is stale.
                     if (!user) {
@@ -126,7 +127,7 @@ export const makeSocketServer = (server: http.Server) => {
                     }
 
                     // Check if this is the admin/owner user.
-                    if (user._id.toString() === socket.lobby.owner._id.toString()) {
+                    if (user.id.toString() === socket.lobby.owner.id.toString()) {
                         isAdmin = true;
                     }
                 } else if (socket.lobby.pin !== (decoded as Token<AnonymousUserTokenPayload>).data.pin) {
@@ -162,8 +163,8 @@ export const makeSocketServer = (server: http.Server) => {
                         const players = socket.lobby.players;
                         players[entry].socketId = socket.id;
 
-                        await Lobby.updateOne({_id: socket.lobby._id},
-                            {$set: {players}}
+                        await Lobby.updateOne({ _id: socket.lobby._id },
+                            { $set: { players } }
                         );
                     }
                 }
@@ -189,7 +190,7 @@ export const makeSocketServer = (server: http.Server) => {
 
         // Do we even need this?
         socket.on("error", (context: any) => {
-            logger.error(`Error occurred when handling an event: ${context}`, {pin: socket.lobby.pin, event: "init"});
+            logger.error(`Error occurred when handling an event: ${context}`, { pin: socket.lobby.pin, event: "init" });
         });
     });
 }

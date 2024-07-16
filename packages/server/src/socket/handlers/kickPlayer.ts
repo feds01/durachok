@@ -32,7 +32,7 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
 
     // check that the player 'name' is present in the current lobby
     const players = lobby.players;
-    const index = players.findIndex((player) => player._id.toString() === context.id);
+    const index = players.findIndex((player) => player.id.toString() === context.id);
 
     // can't kick non-existent player or owner
     if (index < 0 || players[index].name === owner.name) {

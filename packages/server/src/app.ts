@@ -49,11 +49,7 @@ server.listen(process.env.PORT || 5000, () => {
 
     mongoose.connect(process.env.MONGODB_CONNECTION_URI!, {
         connectTimeoutMS: 30000,
-        useNewUrlParser: true,
-        useCreateIndex: true,
-        useFindAndModify: false,
-        useUnifiedTopology: true
-    }, (err) => {
+    }).catch((err) => {
         if (err) {
             logger.error(`Failed to connect to MongoDB: ${err.message}`);
             process.exit(1);

@@ -20,8 +20,11 @@ async function handler(context: any, socket: Socket, io?: Server | null) {
         // manage to update the passphrase.
         socket.emit(ClientEvents.UPDATED_PASSPHRASE, {passphrase: context.passphrase});
         socket.logger.info(`Updated passphrase`, meta);
-    } catch (e) {
-        socket.logger.error(`Failed to update passphrase: ${e.message}`, meta);
+    } catch (e: unknown) {
+        if (e instanceof Error) {
+            socket.logger.error(`Failed to update passphrase: ${e.message}`, meta);
+        }
+
         socket.emit(ClientEvents.ERROR, new Error(error.INTERNAL_SERVER_ERROR));
     }
 }
