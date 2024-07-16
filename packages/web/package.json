@@ -49,12 +49,8 @@
     "analyze": "source-map-explorer 'build/static/js/*.js'",
     "serve": "serve -s build/",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
-  },
-  "husky": {
-    "hooks": {
-      "pre-push": "ts-node scripts/versioning.ts & heroku config:set $(cat .env.local | sed '/^$/d; /#[[:print:]]*$/d')"
-    }
+    "eject": "react-scripts eject",
+    "add-version": "ts-node scripts/versioning.ts & heroku config:set $(cat .env.local | sed '/^$/d; /#[[:print:]]*$/d')"
   },
   "eslintConfig": {
     "extends": [
@@ -75,7 +71,6 @@
     ]
   },
   "devDependencies": {
-    "husky": "^9.0.11",
     "prop-types": "^15.8.1",
     "serve": "^14.2.3",
     "ts-node": "^10.9.2"
