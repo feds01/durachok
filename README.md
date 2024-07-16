@@ -13,4 +13,4 @@ The repository is structured as follows:
   
 - `packages/server` - The server for the game, A Node.js application that serves as the server for the game.
 
-- `packages/shared` - The shared library for the game, A TypeScript library that contains the shared code between the client and the server.
+- `packages/engine` - The shared library for the game, A TypeScript library that contains the shared code between the client and the server.
