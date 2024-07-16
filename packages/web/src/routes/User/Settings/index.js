@@ -1,5 +1,5 @@
 import {Link} from "react-router-dom";
-import {useHistory} from "react-router";
+import {useNavigate} from "react-router";
 import styles from "./../index.module.scss";
 import settingStyles from "./index.module.scss";
 import Button from "@material-ui/core/Button";
@@ -15,7 +15,7 @@ import {logout, useAuthDispatch, useAuthState} from "../../../contexts/auth";
 import {RefreshDashboardContext} from "../../../contexts/RefreshDashboard";
 
 const UserSettingsRoute = () => {
-    const history = useHistory();
+    const navigate = useNavigate();
     const {name} = useAuthState();
     const dispatch = useAuthDispatch(); // read dispatch method from context
 
@@ -29,13 +29,13 @@ const UserSettingsRoute = () => {
                 setUserData(res.data);
             }
         });
-    }, [refreshData, dispatch, history]);
+    }, [refreshData, dispatch]);
 
 
     const handleLogout = () => {
         logout(dispatch).then(r => {
-            history.push('/'); //navigate to logout page on logout
-        }); //call the logout action
+            navigate('/');
+        });
     }
 
     return (

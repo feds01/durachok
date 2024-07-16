@@ -10,9 +10,9 @@ import React from "react";
 import {Form, Formik} from "formik";
 import styles from './index.module.scss';
 import {Link} from "react-router-dom";
-import {useHistory} from "react-router";
+import {useNavigate} from "react-router";
 import {motion} from "framer-motion";
-import Loader from "react-loader-spinner";
+import { ThreeDots } from "react-loader-spinner";
 import Button from "@material-ui/core/Button";
 import ReCaptcha from "react-google-recaptcha";
 
@@ -23,7 +23,7 @@ import {useAuthDispatch} from "../../contexts/auth";
 import {registerUser} from "../../contexts/auth/actions";
 
 const RegisterRoute = () => {
-    const history = useHistory();
+    const navigate = useNavigate();
     const dispatch = useAuthDispatch();
 
     async function onSubmit(values, {setSubmitting, setErrors}) {
@@ -37,7 +37,7 @@ const RegisterRoute = () => {
             setSubmitting(false);
         } else {
             // set the tokens for this client from the login response object
-            history.push("/user")
+            navigate("/user")
         }
     }
 
@@ -135,7 +135,7 @@ const RegisterForm = (props) => {
                             color={'primary'}
                         >
                             {isSubmitting ?
-                                <Loader type="ThreeDots" color="#FFFFFF" height={20}
+                                <ThreeDots color="#FFFFFF" height={20}
                                         width={40}/> : "Register"}
                         </Button>
                         <p className={styles.Alternative}>

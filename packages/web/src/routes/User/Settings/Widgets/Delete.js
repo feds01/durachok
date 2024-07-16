@@ -1,5 +1,5 @@
 import React from 'react';
-import {useHistory} from "react-router";
+import {useNavigate} from "react-router";
 import Button from "@material-ui/core/Button";
 import Divider from "@material-ui/core/Divider";
 import settingStyles from "../index.module.scss";
@@ -7,7 +7,7 @@ import {useAuthDispatch} from "../../../../contexts/auth";
 import {deleteUser} from "../../../../utils/networking/user";
 
 const DeleteUser = props => {
-    const history = useHistory();
+    const navigate = useNavigate();
     const dispatch = useAuthDispatch();
 
     const handleDelete = () => {
@@ -15,7 +15,7 @@ const DeleteUser = props => {
             if (res.status) {
 
                dispatch({type: "LOGOUT"});
-               history.push("/");
+               navigate("/");
             } else {
                 // Dispatch notification that deletion failed
             }

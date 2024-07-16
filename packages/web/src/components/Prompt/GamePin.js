@@ -2,7 +2,7 @@ import React from 'react';
 import * as Yup from "yup";
 import PropTypes from "prop-types";
 import {Form, Formik} from "formik";
-import Loader from 'react-loader-spinner';
+import { ThreeDots } from 'react-loader-spinner';
 import Button from "@material-ui/core/Button";
 
 import Input from "../Input";
@@ -68,7 +68,7 @@ const GamePin = (props) => {
                                 color={'primary'}
                             >
                                 {isSubmitting ?
-                                    <Loader type="ThreeDots" color="#FFFFFF" height={20} width={40}/> : "Enter"}
+                                    <ThreeDots color="#FFFFFF" height={20} width={40}/> : "Enter"}
                             </Button>
                         </div>
                     </Form>

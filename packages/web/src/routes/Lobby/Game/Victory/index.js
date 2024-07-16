@@ -2,7 +2,7 @@ import PropTypes from 'prop-types';
 import styles from './index.module.scss';
 import useSound from "use-sound";
 import {ServerEvents} from "shared";
-import {useHistory} from "react-router";
+import {useNavigate} from "react-router";
 import React, {useEffect, useState} from 'react';
 import Zoom from '@material-ui/core/Zoom';
 import Dialog from '@material-ui/core/Dialog';
@@ -22,7 +22,7 @@ const Transition = React.forwardRef(function Transition(props, ref) {
 const encouragements = ["Better luck next time!", "Better than defeat.", "The cards weren't in your favour"]
 
 const VictoryDialog = props => {
-    const history = useHistory();
+    const navigate = useNavigate();
     const [open, setOpen] = useState(true);
     const [playVictory] = useSound(victorySound, {volume: 0.25});
     const [playDefeat] = useSound(defeatSound, {volume: 0.25});
@@ -35,12 +35,12 @@ const VictoryDialog = props => {
     }
 
     function onExit() {
-        history.push("/");
+        navigate("/");
     }
 
     useEffect(() => {
         if (props.players[0].name !== props.name) {
-            // check if this player is the 'durak'
+            // check if this player is the 'Durak'
             if (props.players[props.players.length - 1].name === props.name) {
                 setTitle("Defeat!");
                 setEncouragement("Durak!");

@@ -8,8 +8,6 @@
 
 import React from "react";
 import {io} from "socket.io-client";
-import {Prompt, withRouter} from "react-router";
-
 
 import Game from "./Game";
 import CountDown from "./CountDown";
@@ -20,6 +18,7 @@ import {ChatProvider} from "../../contexts/chat";
 import LoadingScreen from "../../components/LoadingScreen";
 import {ClientEvents, error, GameStatus, ServerEvents} from "shared";
 import {logout, useAuthDispatch, useAuthState} from "../../contexts/auth";
+import { unstable_usePrompt, useMatch, useNavigate } from "react-router-dom";
 
 class LobbyRoute extends React.Component {
     constructor(props) {
@@ -42,7 +41,7 @@ class LobbyRoute extends React.Component {
 
         // if the id does not match hello a 6 digit pin, then re-direct the user to home page..
         if (!this.props.match.params.pin.match(/^\d{6}$/g)) {
-            this.props.history.push("/");
+            this.props.navigate("/");
         } else {
             this.setState({shouldBlockNavigation: true});
         }
@@ -120,7 +119,7 @@ class LobbyRoute extends React.Component {
                         await logout(this.props.authDispatch);
                     }
 
-                    this.props.history.push({
+                    this.props.navigate({
                         pathname: "/",
                         state: {pin}
                     });
@@ -203,13 +202,16 @@ class LobbyRoute extends React.Component {
 
     render() {
         const {loaded, stage, shouldBlockNavigation} = this.state;
+        const { prompt } = this.props;
+
+        
+        prompt({
+            message: `You can't rejoin the game if you leave, are you sure you want to leave?`,
+            when: () => shouldBlockNavigation               
+        });
 
         return (
             <>
-                <Prompt
-                    when={shouldBlockNavigation}
-                    message={`You can't rejoin the game if you leave, are you sure you want to leave?`}
-                />
                 {loaded ? (
                     <>
                         {stage === GameStatus.WAITING && <WaitingRoom {...this.state} />}
@@ -230,9 +232,16 @@ class LobbyRoute extends React.Component {
     }
 }
 
-export default withRouter(React.forwardRef((props, ref) => {
+const Lobby = ({
+    props
+}) => {
     const auth = useAuthState();
     const authDispatch = useAuthDispatch();
+    const prompt = unstable_usePrompt();
+    const match = useMatch();
+    const navigate = useNavigate();
 
-    return (<LobbyRoute innerRef={ref} auth={auth} authDispatch={authDispatch} {...props}/>);
-}));
+    return <LobbyRoute auth={auth} authDispatch={authDispatch} match={match} navigate={navigate} prompt={prompt} />;
+}
+
+export default Lobby;

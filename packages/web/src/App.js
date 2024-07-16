@@ -1,7 +1,7 @@
 import "./routes/Home/index.module.scss";
 import React from 'react';
 import {AnimatePresence} from "framer-motion";
-import {Redirect, useLocation, Route, Switch} from 'react-router-dom';
+import {Navigate, useLocation, Route, Routes} from 'react-router-dom';
 
 import HomeRoute from "./routes/Home";
 import LobbyRoute from "./routes/Lobby";
@@ -17,21 +17,21 @@ function App() {
 
     return (
         <AuthProvider>
-            <Switch>
+            <Routes>
                 <Route exact path={'/'} component={HomeRoute}/>
                 <ProtectedRoute exact path={'/user'} component={UserRoute}/>
                 <ProtectedRoute exact path={'/user/settings'} component={UserSettingsRoute}/>
                 <Route exact path={'/lobby/:pin'} component={LobbyRoute}/>
                 <Route render={() => (
-                    <AnimatePresence exitBeforeEnter initial={false}>
-                        <Switch location={location} key={location.pathname}>
+                    <AnimatePresence mode="wait" initial={false}>
+                        <Routes location={location} key={location.pathname}>
                             <Route exact path={'/login'} component={LoginRoute}/>
                             <Route exact path={'/register'} component={RegisterRoute}/>
-                            <Route render={() => <Redirect to="/"/>}/>
-                        </Switch>
+                            <Route render={() => <Navigate to="/"/>}/>
+                        </Routes>
                     </AnimatePresence>
                 )}/>
-            </Switch>
+            </Routes>
         </AuthProvider>
     );
 }

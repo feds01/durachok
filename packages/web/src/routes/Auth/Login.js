@@ -11,9 +11,9 @@ import * as Yup from "yup";
 import {Formik} from "formik";
 import styles from './index.module.scss';
 import {Link} from "react-router-dom";
-import {useHistory} from "react-router";
+import {useNavigate} from "react-router";
 import {motion} from "framer-motion";
-import Loader from "react-loader-spinner";
+import { ThreeDots } from "react-loader-spinner";
 import Button from "@material-ui/core/Button";
 
 import Logo from "../../components/Logo";
@@ -31,7 +31,7 @@ const LoginSchema = Yup.object().shape({
 });
 
 const LoginRoute = () => {
-    const history = useHistory();
+    const navigate = useNavigate();
     const dispatch = useAuthDispatch();
 
     async function onSubmit(values, {setSubmitting, setErrors}) {
@@ -45,7 +45,7 @@ const LoginRoute = () => {
             setSubmitting(false);
 
             // TODO: re-direct user to where they were from
-            history.push("/user");
+            navigate("/user");
         }
     }
 
@@ -113,7 +113,7 @@ const LoginRoute = () => {
                                     color={'primary'}
                                 >
                                     {isSubmitting ?
-                                        <Loader type="ThreeDots" color="#FFFFFF" height={20} width={40}/> : "Login"}
+                                        <ThreeDots color="#FFFFFF" height={20} width={40}/> : "Login"}
                                 </Button>
                                 <p className={styles.Alternative}>
                                     New User? Create account <Link to={"/register"}>here</Link>

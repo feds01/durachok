@@ -1,5 +1,5 @@
 import React from 'react';
-import Loader from "react-loader-spinner";
+import { Bars } from "react-loader-spinner";
 import styles from "./index.module.scss";
 
 const LoadingScreen = (props) => {
@@ -14,7 +14,7 @@ const LoadingScreen = (props) => {
             }}
         >
             <div>
-                <Loader className={styles.lobbyLoader} type="Bars" color="#FFFFFF" height={80} width={80}/>
+                <Bars wrapperClass={styles.lobbyLoader} color="#FFFFFF" height={80} width={80}/>
                 {props.children}
             </div>
         </div>

@@ -10,12 +10,12 @@ import React, {useEffect, useState} from "react";
 import styles from "./index.module.scss";
 import Logo from "../../components/Logo";
 import Prompt from "../../components/Prompt";
-import {Link, useHistory, useLocation} from "react-router-dom";
+import {Link, useNavigate, useLocation} from "react-router-dom";
 import {ReactComponent as PlayingCardIcon} from './../../assets/image/playing-card.svg';
 
 const HomeRoute = () => {
     const location = useLocation();
-    const history = useHistory();
+    const navigate = useNavigate();
     const [pin, setPin] = useState(null);
 
     // Only fire this on mount
@@ -26,7 +26,7 @@ const HomeRoute = () => {
 
        if (location?.state?.pin) {
            setPin(location.state.pin);
-           history.replace('', null);
+           navigate('', { replace: true, state: null });
        }
 
        return () => {
