@@ -1,0 +1,59 @@
+.Loader {
+  & svg {
+    margin: 0 auto;
+    width: 100%;
+  }
+}
+
+.Header {
+  font-size: 36px;
+  font-family: 'Cabin', sans-serif;
+  font-weight: bold;
+  text-align: center;
+  background: #1a1d3d;
+  padding: 0.5em;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+
+  h1 {
+    font-size: 72px;
+    margin: 0;
+  }
+}
+
+.HostHeader {
+  display: flex;
+  flex-direction: row;
+  font-family: 'Cabin', sans-serif;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5em;
+  background: #1a1d3d;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+
+  h1 {
+    margin: 0;
+    font-size: 72px;
+    font-weight: bold;
+  }
+}
+
+.SubHeader {
+  justify-items: center;
+  max-height: 100px;
+  padding: 1em 0.5em;
+  display: grid;
+  grid-template-columns: 3fr 6fr 3fr;
+}
+
+
+.Players {
+  padding-top: 2px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(2, minmax(120px, 1fr));
+
+  @media (max-width: 600px) {
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(4, minmax(120px, 1fr));
+  }
+}

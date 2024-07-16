@@ -1,0 +1,33 @@
+.Settings {
+  margin: 0 auto;
+  max-width: 700px;
+  display: flex;
+  flex-direction: column;
+
+  & section {
+    margin-bottom: 2em;
+  }
+
+  & h2 {
+    font-size: 24px;
+    text-align: left;
+    margin: 1em 0 0.3em 0;
+  }
+
+  & p {
+    margin: .3em 0 0.3em;
+  }
+}
+
+.Details {
+  flex: 1;
+  align-items: flex-start;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  width: inherit;
+
+  & .Input {
+    margin: 0.6em 0;
+  }
+}

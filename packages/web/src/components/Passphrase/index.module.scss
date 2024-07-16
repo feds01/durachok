@@ -1,0 +1,13 @@
+.Passphrase {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  flex-wrap: nowrap;
+  user-select: none;
+
+  p {
+    padding-right: 8px;
+    font-size: 28px;
+    font-family: 'Cabin', sans-serif;
+  }
+}

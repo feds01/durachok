@@ -1,0 +1,25 @@
+.Announcement {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation: fade 2s ease-in 0s;
+
+  & h1 {
+    color: white;
+    font: bold 60px "Cabin", sans-serif;
+    margin: 0;
+  }
+}
+
+@keyframes fade {
+  0% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}

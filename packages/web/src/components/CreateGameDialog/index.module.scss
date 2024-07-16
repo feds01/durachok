@@ -1,0 +1,23 @@
+.Dialog {
+  padding: 1em 2em;
+  background: #3b3d54;
+
+  & h2 {
+    font-size: 28px;
+    color: #dad8ec;
+    margin: 0;
+  }
+
+  & .Inputs {
+    color: #dad8ec;
+    min-width: 300px;
+    max-width: 500px;
+  }
+
+  & .Submit {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+  }
+
+}

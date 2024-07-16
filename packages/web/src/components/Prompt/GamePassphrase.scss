@@ -1,0 +1,66 @@
+.App-Security-enter {
+  opacity: 0;
+  transform: scale(0.9);
+}
+.App-Security-enter-active {
+  opacity: 1;
+  transform: translateX(0);
+  transition: opacity 300ms, transform 300ms;
+}
+.App-Security-exit {
+  opacity: 1;
+}
+.App-Security-exit-active {
+  opacity: 0;
+  transform: scale(0.9);
+  transition: opacity 300ms, transform 300ms;
+}
+
+.App-Security {
+  .label {
+    font-family: 'Noto Sans', sans-serif;
+    font-size: 32px;
+
+    code {
+      letter-spacing: 1px;
+    }
+  }
+
+  .checking {
+    font-family: 'Noto Sans', sans-serif;
+    padding-top: 12px;
+  }
+
+  &-selector {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    flex-wrap: nowrap;
+
+    &.incorrect {
+      animation: shake 0.82s cubic-bezier(.36,.07,.19,.97) both;
+      transform: translate3d(0, 0, 0);
+      backface-visibility: hidden;
+      perspective: 1000px;
+    }
+  }
+}
+
+
+@keyframes shake {
+  10%, 90% {
+    transform: translate3d(-1px, 0, 0);
+  }
+
+  20%, 80% {
+    transform: translate3d(2px, 0, 0);
+  }
+
+  30%, 50%, 70% {
+    transform: translate3d(-4px, 0, 0);
+  }
+
+  40%, 60% {
+    transform: translate3d(4px, 0, 0);
+  }
+}

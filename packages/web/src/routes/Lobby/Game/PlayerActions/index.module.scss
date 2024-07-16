@@ -1,0 +1,30 @@
+.Container {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'Cabin', sans-serif;
+
+  line-height: 24px;
+  font-size: 100%;
+  padding: 0.3em;
+
+  & .Status, .Count {
+    user-select: none;
+    margin-left: 8px;
+    display: inline-flex;
+    border-radius: 4px;
+    background: #e0e0e0;
+    color: rgba(0, 0, 0, 0.87);
+    padding: 6px 16px;
+
+    & svg {
+      fill: rgba(0, 0, 0, 0.87);
+      margin-left: -4px;
+      margin-right: 8px;
+      width: 24px;
+      height: 24px;
+    }
+  }
+}
