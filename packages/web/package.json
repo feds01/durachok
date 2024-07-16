@@ -35,7 +35,7 @@
     "react-scripts": "5.0.1",
     "react-transition-group": "^4.4.5",
     "react-virtuoso": "^4.7.12",
-    "shared": "../engine",
+    "shared": "file:./../engine/",
     "socket.io-client": "4.7.5",
     "source-map-explorer": "^2.5.3",
     "typescript": "^5.5.3",
