@@ -1,5 +1,5 @@
 import React from 'react'
-import { Redirect, Route } from 'react-router'
+import { Navigate, Route } from 'react-router'
 import {useAuthState} from "../../contexts/auth";
 
 const ProtectedRoute = ({ component: Component, appProps, ...rest }) => {
@@ -14,7 +14,7 @@ const ProtectedRoute = ({ component: Component, appProps, ...rest }) => {
                 name ? (
                     <Component {...props} {...appProps} />
                 ) : (
-                    <Redirect to={{ pathname: '/login', state: { from: props.location } }} />
+                    <Navigate to={{ pathname: '/login', state: { from: props.location } }} />
                 )
             }
         />

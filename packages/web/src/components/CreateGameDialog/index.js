@@ -1,8 +1,8 @@
 import React from 'react';
 import {Formik} from "formik";
-import {useHistory} from "react-router";
+import {useNavigate} from "react-router";
 import styles from './index.module.scss';
-import Loader from "react-loader-spinner";
+import { ThreeDots } from "react-loader-spinner";
 import Button from "@material-ui/core/Button";
 import Dialog from "@material-ui/core/Dialog";
 import Divider from "@material-ui/core/Divider";
@@ -33,7 +33,7 @@ const useStyles = makeStyles((theme) => ({
 }))
 
 const GameDialog = (props) => {
-    const history = useHistory();
+    const navigate = useNavigate();
 
     async function submit(values, {setSubmitting}) {
         await createGame(values).then((res) => {
@@ -44,7 +44,7 @@ const GameDialog = (props) => {
                 setSubmitting(false);
 
                 // re-direct the user of the lobby to the game lobby
-                history.push(`/lobby/${res.game.pin}`)
+                navigate(`/lobby/${res.game.pin}`)
             }
         })
     }
@@ -183,7 +183,7 @@ const GameDialogForm = (props) => {
                     color={'primary'}
                 >
                     {isSubmitting ?
-                        <Loader type="ThreeDots" color="#FFFFFF" height={20} width={40}/> : "Create"}
+                        <ThreeDots color="#FFFFFF" height={20} width={40}/> : "Create"}
                 </Button>
             </div>
         </div>

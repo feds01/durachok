@@ -7,7 +7,7 @@
  */
 
 import styles from "./index.module.scss";
-import {useHistory} from "react-router";
+import {useNavigate} from "react-router";
 import React, {useCallback, useEffect, useState} from "react";
 import Divider from "@material-ui/core/Divider";
 
@@ -35,7 +35,7 @@ const useStyles = makeStyles((theme) => ({
 
 const UserRoute = () => {
     const classes = useStyles();
-    const history = useHistory();
+    const navigate = useNavigate();
     const {name} = useAuthState();
     const dispatch = useAuthDispatch();
 
@@ -45,9 +45,9 @@ const UserRoute = () => {
 
     const handleLogout = useCallback(() => {
         logout(dispatch).then(r => {
-            history.push('/'); //navigate to logout page on logout
+            navigate('/'); 
         }); //call the logout action
-    }, [history, dispatch]);
+    }, [navigate, dispatch]);
 
     useEffect(() => {
         // if either the token or refreshToken is null, re-direct the user to the login page.

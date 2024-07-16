@@ -1,6 +1,5 @@
 import clsx from "clsx";
 import React from 'react';
-import {withRouter} from "react-router";
 import {CSSTransition} from 'react-transition-group';
 
 import './index.scss';
@@ -11,7 +10,7 @@ import {getLobby, joinLobby} from "../../utils/networking/lobby";
 import {useAuthDispatch, useAuthState} from "../../contexts/auth";
 
 
-class Prompt extends React.Component {
+class PromptInner extends React.Component {
     constructor(props) {
         super(props);
 
@@ -178,9 +177,11 @@ class Prompt extends React.Component {
 }
 
 
-export default withRouter(React.forwardRef((props, ref) => {
+const Prompt = ({ props }) => {
     const auth = useAuthState();
     const authDispatch = useAuthDispatch();
 
-    return (<Prompt innerRef={ref} auth={auth} authDispatch={authDispatch} {...props}/>);
-}));
+    return (<PromptInner auth={auth} authDispatch={authDispatch} {...props}/>);
+}
+
+export default Prompt;

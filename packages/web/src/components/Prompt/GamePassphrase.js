@@ -1,5 +1,5 @@
 import './GamePassphrase.scss';
-import Loader from "react-loader-spinner";
+import { ThreeDots } from "react-loader-spinner";
 import React, {useEffect, useState} from 'react';
 import GameSecurityCard from "../SecurityCard";
 
@@ -96,7 +96,7 @@ const GamePassphrase = React.memo(function GameSecurity({pin, onError, onSubmit}
             </div>
             <div className="checking">
                 {checking && (
-                    <Loader type="ThreeDots" color="#ACAABE" height={20} width={40}/>
+                    <ThreeDots color="#ACAABE" height={20} width={40}/>
                 )}
                 {(message !== "" && !checking && order.length === 4) && (
                     <p>{errorMessages[message]}</p>

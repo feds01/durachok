@@ -1,12 +1,12 @@
 import React, {useContext} from 'react';
 import styles from "./index.module.scss";
-import {useHistory} from "react-router";
+import {useNavigate} from "react-router";
 import Button from "@material-ui/core/Button";
 import {deleteGame} from "../../utils/networking/lobby";
 import {RefreshDashboardContext} from "../../contexts/RefreshDashboard";
 
 const GameCard = (props) => {
-    const history = useHistory();
+    const navigate = useNavigate();
     const refresher = useContext(RefreshDashboardContext);
 
     // function to invoke a deletion of the current game...
@@ -20,7 +20,7 @@ const GameCard = (props) => {
     }
 
     return (
-        <div className={styles.GameCard} onClick={() => history.push(`/lobby/${props.pin}`)}>
+        <div className={styles.GameCard} onClick={() => navigate(`/lobby/${props.pin}`)}>
             <div className={styles.Info}>
                 <div className={styles.Title}>
                     <h2>{props.pin}</h2>
