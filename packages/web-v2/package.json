@@ -1,0 +1,50 @@
+{
+  "name": "web-v2",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "preview": "vite preview",
+    "fmt": "prettier --write src"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.11.4",
+    "@emotion/styled": "^11.11.5",
+    "@mars/heroku-js-runtime-env": "^3.0.2",
+    "@mui/material": "^5.16.4",
+    "@tanstack/react-router": "^1.45.4",
+    "@tanstack/router-devtools": "^1.45.4",
+    "framer-motion": "^11.3.4",
+    "react": "^18.3.1",
+    "react-beautiful-dnd": "^13.1.1",
+    "react-dom": "^18.3.1",
+    "react-google-recaptcha": "^3.1.0",
+    "react-loader-spinner": "6.1.6",
+    "react-transition-group": "^4.4.5",
+    "react-virtuoso": "^4.7.12",
+    "shared": "file:./../engine/",
+    "socket.io-client": "4.7.5",
+    "use-sound": "^4.0.3",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@tanstack/router-plugin": "^1.45.3",
+    "@types/node": "^20.14.11",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@typescript-eslint/eslint-plugin": "^7.15.0",
+    "@typescript-eslint/parser": "^7.15.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "@vitejs/plugin-react-swc": "^3.5.0",
+    "dotenv": "^16.4.5",
+    "eslint": "^8.57.0",
+    "eslint-plugin-react-hooks": "^4.6.2",
+    "eslint-plugin-react-refresh": "^0.4.7",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.2.2",
+    "vite": "^5.3.4"
+  }
+}
