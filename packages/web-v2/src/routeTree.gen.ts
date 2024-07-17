@@ -10,119 +10,119 @@
 
 // Import Routes
 
-import { Route as rootRoute } from "./routes/__root";
-import { Route as RegisterImport } from "./routes/register";
-import { Route as LoginImport } from "./routes/login";
-import { Route as IndexImport } from "./routes/index";
-import { Route as UserIndexImport } from "./routes/user/index";
-import { Route as LobbyIndexImport } from "./routes/lobby/index";
-import { Route as UserSettingsImport } from "./routes/user/settings";
-import { Route as LobbyIdImport } from "./routes/lobby/$id";
+import { Route as rootRoute } from './routes/__root'
+import { Route as RegisterImport } from './routes/register'
+import { Route as LoginImport } from './routes/login'
+import { Route as IndexImport } from './routes/index'
+import { Route as UserIndexImport } from './routes/user/index'
+import { Route as LobbyIndexImport } from './routes/lobby/index'
+import { Route as UserSettingsImport } from './routes/user/settings'
+import { Route as LobbyIdImport } from './routes/lobby/$id'
 
 // Create/Update Routes
 
 const RegisterRoute = RegisterImport.update({
-    path: "/register",
-    getParentRoute: () => rootRoute,
-} as any);
+  path: '/register',
+  getParentRoute: () => rootRoute,
+} as any)
 
 const LoginRoute = LoginImport.update({
-    path: "/login",
-    getParentRoute: () => rootRoute,
-} as any);
+  path: '/login',
+  getParentRoute: () => rootRoute,
+} as any)
 
 const IndexRoute = IndexImport.update({
-    path: "/",
-    getParentRoute: () => rootRoute,
-} as any);
+  path: '/',
+  getParentRoute: () => rootRoute,
+} as any)
 
 const UserIndexRoute = UserIndexImport.update({
-    path: "/user/",
-    getParentRoute: () => rootRoute,
-} as any);
+  path: '/user/',
+  getParentRoute: () => rootRoute,
+} as any)
 
 const LobbyIndexRoute = LobbyIndexImport.update({
-    path: "/lobby/",
-    getParentRoute: () => rootRoute,
-} as any);
+  path: '/lobby/',
+  getParentRoute: () => rootRoute,
+} as any)
 
 const UserSettingsRoute = UserSettingsImport.update({
-    path: "/user/settings",
-    getParentRoute: () => rootRoute,
-} as any);
+  path: '/user/settings',
+  getParentRoute: () => rootRoute,
+} as any)
 
 const LobbyIdRoute = LobbyIdImport.update({
-    path: "/lobby/$id",
-    getParentRoute: () => rootRoute,
-} as any);
+  path: '/lobby/$id',
+  getParentRoute: () => rootRoute,
+} as any)
 
 // Populate the FileRoutesByPath interface
 
-declare module "@tanstack/react-router" {
-    interface FileRoutesByPath {
-        "/": {
-            id: "/";
-            path: "/";
-            fullPath: "/";
-            preLoaderRoute: typeof IndexImport;
-            parentRoute: typeof rootRoute;
-        };
-        "/login": {
-            id: "/login";
-            path: "/login";
-            fullPath: "/login";
-            preLoaderRoute: typeof LoginImport;
-            parentRoute: typeof rootRoute;
-        };
-        "/register": {
-            id: "/register";
-            path: "/register";
-            fullPath: "/register";
-            preLoaderRoute: typeof RegisterImport;
-            parentRoute: typeof rootRoute;
-        };
-        "/lobby/$id": {
-            id: "/lobby/$id";
-            path: "/lobby/$id";
-            fullPath: "/lobby/$id";
-            preLoaderRoute: typeof LobbyIdImport;
-            parentRoute: typeof rootRoute;
-        };
-        "/user/settings": {
-            id: "/user/settings";
-            path: "/user/settings";
-            fullPath: "/user/settings";
-            preLoaderRoute: typeof UserSettingsImport;
-            parentRoute: typeof rootRoute;
-        };
-        "/lobby/": {
-            id: "/lobby/";
-            path: "/lobby";
-            fullPath: "/lobby";
-            preLoaderRoute: typeof LobbyIndexImport;
-            parentRoute: typeof rootRoute;
-        };
-        "/user/": {
-            id: "/user/";
-            path: "/user";
-            fullPath: "/user";
-            preLoaderRoute: typeof UserIndexImport;
-            parentRoute: typeof rootRoute;
-        };
+declare module '@tanstack/react-router' {
+  interface FileRoutesByPath {
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexImport
+      parentRoute: typeof rootRoute
     }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginImport
+      parentRoute: typeof rootRoute
+    }
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterImport
+      parentRoute: typeof rootRoute
+    }
+    '/lobby/$id': {
+      id: '/lobby/$id'
+      path: '/lobby/$id'
+      fullPath: '/lobby/$id'
+      preLoaderRoute: typeof LobbyIdImport
+      parentRoute: typeof rootRoute
+    }
+    '/user/settings': {
+      id: '/user/settings'
+      path: '/user/settings'
+      fullPath: '/user/settings'
+      preLoaderRoute: typeof UserSettingsImport
+      parentRoute: typeof rootRoute
+    }
+    '/lobby/': {
+      id: '/lobby/'
+      path: '/lobby'
+      fullPath: '/lobby'
+      preLoaderRoute: typeof LobbyIndexImport
+      parentRoute: typeof rootRoute
+    }
+    '/user/': {
+      id: '/user/'
+      path: '/user'
+      fullPath: '/user'
+      preLoaderRoute: typeof UserIndexImport
+      parentRoute: typeof rootRoute
+    }
+  }
 }
 
 // Create and export the route tree
 
 export const routeTree = rootRoute.addChildren({
-    IndexRoute,
-    LoginRoute,
-    RegisterRoute,
-    LobbyIdRoute,
-    UserSettingsRoute,
-    LobbyIndexRoute,
-    UserIndexRoute,
-});
+  IndexRoute,
+  LoginRoute,
+  RegisterRoute,
+  LobbyIdRoute,
+  UserSettingsRoute,
+  LobbyIndexRoute,
+  UserIndexRoute,
+})
 
 /* prettier-ignore-end */
 
