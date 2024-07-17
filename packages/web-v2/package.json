@@ -11,8 +11,10 @@
     "fmt": "prettier --write src"
   },
   "dependencies": {
+    "@emotion/css": "^11.11.2",
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.11.5",
+    "@hookform/resolvers": "^3.9.0",
     "@mars/heroku-js-runtime-env": "^3.0.2",
     "@mui/material": "^5.16.4",
     "@tanstack/react-router": "^1.45.4",
@@ -22,6 +24,7 @@
     "react-beautiful-dnd": "^13.1.1",
     "react-dom": "^18.3.1",
     "react-google-recaptcha": "^3.1.0",
+    "react-hook-form": "^7.52.1",
     "react-loader-spinner": "6.1.6",
     "react-transition-group": "^4.4.5",
     "react-virtuoso": "^4.7.12",
