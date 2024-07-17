@@ -1,21 +1,21 @@
 /**
  * A function that returns the result of a callback.
- * 
+ *
  * Useful for writing scoped expressions.
- * 
+ *
  * Example:
- * 
+ *
  * ```ts
  * const result = expr(() => {
  *    if ( ... ) {
  *      return ...;
  *    }
- * 
+ *
  *    return ...;
  * });
- * 
- * @param cb 
- * @returns 
+ *
+ * @param cb
+ * @returns
  */
 export const expr = <T>(cb: () => T): T => cb();
 
@@ -31,7 +31,7 @@ export function isDef<T>(o: T | null | undefined): o is T {
 
 /**
  * Assert a condition.
- * 
+ *
  * @param condition - The condition to check.
  * @param message  - The message to throw if the condition is false.
  */
