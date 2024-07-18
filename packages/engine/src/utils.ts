@@ -7,7 +7,9 @@
  * @return The shuffled array.
  * */
 export function shuffleArray(array: Array<any>): Array<any> {
-    let currentIndex = array.length, temporaryValue, randomIndex;
+    let currentIndex = array.length,
+        temporaryValue,
+        randomIndex;
 
     while (0 !== currentIndex) {
         randomIndex = Math.floor(Math.random() * currentIndex);
@@ -20,7 +22,6 @@ export function shuffleArray(array: Array<any>): Array<any> {
 
     return array;
 }
-
 
 // returns random key from Set or Map
 export function getRandomKey(collection: Map<string, Object>): string {

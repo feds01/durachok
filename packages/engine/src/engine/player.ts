@@ -6,12 +6,13 @@ export class Player {
     isDefending: boolean;
     beganRound: boolean;
 
-
-    constructor(deck: string[] = [], canAttack: boolean = false,
-                beganRound: boolean = false,
-                turned: boolean = false,
-                out: number | null = null,
-                isDefending: boolean = false,
+    constructor(
+        deck: string[] = [],
+        canAttack: boolean = false,
+        beganRound: boolean = false,
+        turned: boolean = false,
+        out: number | null = null,
+        isDefending: boolean = false,
     ) {
         this.deck = deck;
         this.beganRound = beganRound;
@@ -19,11 +20,9 @@ export class Player {
         this.turned = turned;
         this.out = out;
         this.isDefending = isDefending;
-
     }
 
     addCard(card: string): void {
         this.deck.push(card);
     }
-
 }

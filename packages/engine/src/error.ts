@@ -12,14 +12,17 @@
  * @email <alexander.fedotov.uk@gmail.com>
  */
 
-export const MISMATCHING_LOGIN = "password or email fields incorrect/don't match.";
+export const MISMATCHING_LOGIN =
+    "password or email fields incorrect/don't match.";
 export const BAD_REQUEST = "The API request is malformed or invalid";
-export const UNAUTHORIZED = "User doesn't have permissions to perform this action.";
+export const UNAUTHORIZED =
+    "User doesn't have permissions to perform this action.";
 export const AUTHENTICATION_FAILED = "Authentication failed";
 export const INTERNAL_SERVER_ERROR = "Durachok Internal Server Error.";
 
 // Lobby socket request errors
-export const SOCKET_INVALID_SESSION = "Invalid session. Player not allowed to join lobby.";
+export const SOCKET_INVALID_SESSION =
+    "Invalid session. Player not allowed to join lobby.";
 
 // Lobby API request errors
 export const NON_EXISTENT_LOBBY = "No lobby exists with the given PIN.";

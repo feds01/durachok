@@ -1,5 +1,5 @@
 export class InvalidHistoryState implements Error {
-    constructor(message = '') {
+    constructor(message = "") {
         // Pass remaining arguments (including vendor specific ones) to parent constructor
 
         // Maintains proper stack trace for where our error was thrown (only available on V8)
@@ -8,7 +8,7 @@ export class InvalidHistoryState implements Error {
         }
 
         // Custom debugging information
-        this.message = message
+        this.message = message;
     }
 
     message: string;

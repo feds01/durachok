@@ -7,7 +7,6 @@ export enum MoveTypes {
     FORFEIT = "forfeit",
 }
 
-
 export enum GameStatus {
     WAITING = "waiting",
     STARTED = "started",
@@ -31,7 +30,7 @@ export enum ClientEvents {
     COUNTDOWN = "countdown",
     GAME_STARTED = "game_started",
     BEGIN_ROUND = "begin_round",
-    SPECTATOR_STATE="spectator_state",
+    SPECTATOR_STATE = "spectator_state",
     ACTION = "action",
     VICTORY = "victory",
 

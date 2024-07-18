@@ -1,9 +1,9 @@
-import {CardNumerics, CardSuits} from "./consts";
+import { CardNumerics, CardSuits } from "./consts";
 
 export interface CardType {
-    value: number,
-    suit: string
-    card: string,
+    value: number;
+    suit: string;
+    card: string;
 }
 
 /**
@@ -14,7 +14,6 @@ export interface CardType {
  * @return {CardType} The numerical and suit component of the card.
  * */
 export function parseCard(card: string): CardType {
-
     // ensure the numeric and suit are valid
     const suit = card.substring(card.length - 1);
     const rawNumeric = card.substring(0, card.length - 1);
@@ -24,13 +23,11 @@ export function parseCard(card: string): CardType {
     }
 
     if (!CardNumerics.includes(rawNumeric)) {
-        throw new Error("Invalid card numeric.")
+        throw new Error("Invalid card numeric.");
     }
 
-    return {value: CardNumerics.indexOf(rawNumeric) + 2, suit, card};
+    return { value: CardNumerics.indexOf(rawNumeric) + 2, suit, card };
 }
-
-
 
 /**
  * Generates a whole card deck for use in the format of a list. Each
@@ -39,9 +36,11 @@ export function parseCard(card: string): CardType {
  * @param {boolean} short - Whether the deck is short or not
  * */
 export function generateCardDeck(short: boolean = false): string[] {
-    return CardNumerics.slice(short ? 4 : 0, CardNumerics.length).map((label) => {
-        return Object.keys(CardSuits).map((suit) => {
-            return `${label}${suit}`;
+    return CardNumerics.slice(short ? 4 : 0, CardNumerics.length)
+        .map((label) => {
+            return Object.keys(CardSuits).map((suit) => {
+                return `${label}${suit}`;
+            });
         })
-    }).flat();
+        .flat();
 }

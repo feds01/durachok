@@ -1,5 +1,5 @@
-import {GameState} from "./state";
 import InvalidHistoryState from "./errors/InvalidHistoryState";
+import { GameState } from "./state";
 
 export type PlayerActionType = "place" | "cover" | "forfeit" | "pickup";
 export type AutoActionType = "exit" | "victory" | "new_round" | "start";
@@ -7,19 +7,19 @@ export type AutoActionType = "exit" | "victory" | "new_round" | "start";
 export type PlayerAction = {
     readonly type: PlayerActionType;
     readonly data?: string[];
-    readonly player?: string,
+    readonly player?: string;
     readonly on?: number;
-}
+};
 
 export type AutonomousAction = {
     readonly type: AutoActionType;
     readonly at?: number | string;
-    readonly player?: string,
+    readonly player?: string;
     readonly actors?: {
-        defender: string,
-        attacker: string,
-    }
-}
+        defender: string;
+        attacker: string;
+    };
+};
 
 export type Action = PlayerAction | AutonomousAction;
 
@@ -51,8 +51,8 @@ export class HistoryNode {
     }
 
     /**
-    * Setter method for the node's actions parameter.
-    * */
+     * Setter method for the node's actions parameter.
+     * */
     set actions(value: Action[]) {
         this._actions = value;
     }
@@ -88,7 +88,10 @@ export class HistoryNode {
      * @param {Action} action - The action to be added to the HistoryNode.
      * */
     addAction(action: Action): void {
-        if (this.finalised) throw new InvalidHistoryState("Can't add Action to HistoryNode that's been finalised.");
+        if (this.finalised)
+            throw new InvalidHistoryState(
+                "Can't add Action to HistoryNode that's been finalised.",
+            );
 
         this._actions.push(action);
     }
@@ -96,8 +99,12 @@ export class HistoryNode {
     /**
      * Setter method for the node's actions parameter.
      * */
-    findAction<T extends AutoActionType | PlayerActionType>(type: T): (Action & {type: T})[] {
-        return this._actions.filter((action) => action.type === type) as (Action & {type: T})[];
+    findAction<T extends AutoActionType | PlayerActionType>(
+        type: T,
+    ): (Action & { type: T })[] {
+        return this._actions.filter(
+            (action) => action.type === type,
+        ) as (Action & { type: T })[];
     }
 
     /**
@@ -125,7 +132,7 @@ export class HistoryNode {
      *
      * @return {Action[]} the serialized version of the history.
      * */
-    serialize(): {actions: Action[], finalised: boolean} {
+    serialize(): { actions: Action[]; finalised: boolean } {
         return {
             actions: this._actions,
             finalised: this.finalised,
@@ -134,10 +141,9 @@ export class HistoryNode {
 }
 
 export type HistoryState = {
-    initialState: GameState | null,
-    nodes: {actions: Action[], finalised: boolean}[]
-}
-
+    initialState: GameState | null;
+    nodes: { actions: Action[]; finalised: boolean }[];
+};
 
 /**
  * @version 1.0.0
@@ -157,9 +163,14 @@ export class History {
      *                    the game can be re-created from the initial state.
      * @param {?HistoryNode[]} nodes - The history nodes of the previous history
      * */
-    constructor(initialState: GameState, nodes: {actions: Action[], finalised: boolean}[] | null) {
+    constructor(
+        initialState: GameState,
+        nodes: { actions: Action[]; finalised: boolean }[] | null,
+    ) {
         this.initialState = initialState;
-        this.nodes = Array.isArray(nodes) ? nodes.map((node) => new HistoryNode(node.actions, node.finalised)) : [];
+        this.nodes = Array.isArray(nodes)
+            ? nodes.map((node) => new HistoryNode(node.actions, node.finalised))
+            : [];
     }
 
     /**
@@ -182,7 +193,6 @@ export class History {
         this.nodes.push(new HistoryNode(nodes));
     }
 
-
     /**
      * Method to an entry to the most recent history node. If no node currently
      * exists in the history object, the method will throw an exception as it expects
@@ -193,7 +203,9 @@ export class History {
      * */
     addEntry(action: Action): void {
         if (this.nodes.length === 0) {
-            throw new InvalidHistoryState("Cannot add entry when no nodes exist.");
+            throw new InvalidHistoryState(
+                "Cannot add entry when no nodes exist.",
+            );
         }
 
         const node = this.getLastNode()!;
@@ -228,8 +240,7 @@ export class History {
     serialize(): HistoryState {
         return {
             initialState: this.initialState,
-            nodes: this.nodes.map(node => node.serialize()),
-        }
+            nodes: this.nodes.map((node) => node.serialize()),
+        };
     }
-
 }
