@@ -4,9 +4,15 @@ import { ThreeDots } from "react-loader-spinner";
 
 type Props = {
     isSubmitting: boolean;
+    disabled?: boolean;
+    onClick: () => void;
 };
 
-export default function SubmitButton({ isSubmitting }: Props) {
+export default function SubmitButton({
+    disabled,
+    isSubmitting,
+    onClick,
+}: Props) {
     return (
         <Button
             variant={"contained"}
@@ -24,8 +30,9 @@ export default function SubmitButton({ isSubmitting }: Props) {
                 marginTop: 19,
             }}
             disableRipple
-            type={"submit"}
-            disabled={isSubmitting}
+            type={"button"}
+            onClick={onClick}
+            disabled={disabled || isSubmitting}
             color={"primary"}
         >
             {isSubmitting ? (
