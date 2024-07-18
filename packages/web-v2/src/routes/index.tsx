@@ -109,7 +109,6 @@ function Index() {
                     height: 100%;
                     border-radius: 3px;
                     text-align: center;
-                    font-size: 1.4vw;
 
                     @media (max-width: 600px) {
                         padding-top: 4em;
@@ -121,7 +120,15 @@ function Index() {
                 <GamePrompt startPin={pin} />
                 {/* TODO: don't show this if we're already logged in */}
                 <p>
-                    Got an account? Login <Link className={css`color: #3f51b5;`} to={"/login"}>here</Link>
+                    Got an account? Login{" "}
+                    <Link
+                        className={css`
+                            color: #3f51b5;
+                        `}
+                        to={"/login"}
+                    >
+                        here
+                    </Link>
                 </p>
             </div>
         </div>
