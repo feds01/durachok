@@ -1,19 +1,18 @@
-import { outlinedInputClasses } from '@mui/material/OutlinedInput';
-import { createTheme } from '@mui/material/styles';
+import { outlinedInputClasses } from "@mui/material/OutlinedInput";
+import { createTheme } from "@mui/material/styles";
 
 const theme = () =>
     createTheme({
-        palette: {
-        },
+        palette: {},
         components: {
             MuiTextField: {
                 styleOverrides: {
                     root: {
-                        '--TextField-brandBorderColor': '#E0E3E7',
-                        '--TextField-brandBorderHoverColor': '#B2BAC2',
-                        '--TextField-brandBorderFocusedColor': 'white',
-                        '& label.Mui-focused': {
-                            color: 'var(--TextField-brandBorderFocusedColor)',
+                        "--TextField-brandBorderColor": "#E0E3E7",
+                        "--TextField-brandBorderHoverColor": "#B2BAC2",
+                        "--TextField-brandBorderFocusedColor": "white",
+                        "& label.Mui-focused": {
+                            color: "var(--TextField-brandBorderFocusedColor)",
                         },
                     },
                 },
@@ -21,38 +20,43 @@ const theme = () =>
             MuiOutlinedInput: {
                 styleOverrides: {
                     input: {
-                        color: 'white'
+                        color: "white",
                     },
                     notchedOutline: {
-                        borderColor: 'var(--TextField-brandBorderColor)',
+                        borderColor: "var(--TextField-brandBorderColor)",
                     },
                     root: {
                         [`&:hover .${outlinedInputClasses.notchedOutline}`]: {
-                            borderColor: 'var(--TextField-brandBorderHoverColor)',
+                            borderColor:
+                                "var(--TextField-brandBorderHoverColor)",
                         },
-                        [`&.Mui-focused .${outlinedInputClasses.notchedOutline}`]: {
-                            borderColor: 'var(--TextField-brandBorderFocusedColor)',
-                        },
+                        [`&.Mui-focused .${outlinedInputClasses.notchedOutline}`]:
+                            {
+                                borderColor:
+                                    "var(--TextField-brandBorderFocusedColor)",
+                            },
                     },
                 },
             },
             MuiFilledInput: {
                 styleOverrides: {
                     root: {
-                        '&::before, &::after': {
-                            borderBottom: '2px solid var(--TextField-brandBorderColor)',
+                        "&::before, &::after": {
+                            borderBottom:
+                                "2px solid var(--TextField-brandBorderColor)",
                         },
-                        '&:hover:not(.Mui-disabled, .Mui-error):before': {
-                            borderBottom: '2px solid var(--TextField-brandBorderHoverColor)',
+                        "&:hover:not(.Mui-disabled, .Mui-error):before": {
+                            borderBottom:
+                                "2px solid var(--TextField-brandBorderHoverColor)",
                         },
-                        '&.Mui-focused:after': {
-                            borderBottom: '2px solid var(--TextField-brandBorderFocusedColor)',
+                        "&.Mui-focused:after": {
+                            borderBottom:
+                                "2px solid var(--TextField-brandBorderFocusedColor)",
                         },
                     },
                 },
             },
         },
     });
-
 
 export default theme;
