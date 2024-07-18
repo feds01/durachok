@@ -1,9 +1,9 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
 import { css, keyframes } from "@emotion/css";
+import { Link, createFileRoute } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 
 import PlayingCard from "../assets/image/playing-card.svg?react";
 import PlayingCards from "../assets/image/playing-cards.svg";
-import { useEffect, useState } from "react";
 import GamePrompt from "../forms/GamePrompt";
 
 export const Route = createFileRoute("/")({
