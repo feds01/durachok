@@ -1,23 +1,22 @@
-// Context/context.js
 import React, { createContext, useReducer } from "react";
 
-import { assert, isDef } from "../../utils";
+import { isDef } from "../../utils";
 import { AuthAction, AuthState, init, reducer } from "./reducer";
 
 type AuthStateContextType = {
-    state: AuthState | null;
+    state: AuthState;
     update: (action: AuthAction) => void;
 };
 
 export const AuthStateContext = createContext<AuthStateContextType>({
-    state: null,
-    update: (_) => {},
+    state: { kind: "logged-out" },
+    update: () => {},
 });
 
 export function useAuthState() {
     const context = React.useContext(AuthStateContext);
 
-    if (typeof context === undefined) {
+    if (!isDef(context)) {
         throw new Error("useAuthState must be used within a Context");
     }
 
@@ -27,7 +26,7 @@ export function useAuthState() {
 export function useAuthDispatch() {
     const context = React.useContext(AuthStateContext);
 
-    if (typeof context === undefined) {
+    if (!isDef(context)) {
         throw new Error("useAuthDispatch must be used within a Context");
     }
 
