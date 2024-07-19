@@ -1,5 +1,6 @@
 import { TRPCError, initTRPC } from "@trpc/server";
 import * as trpcExpress from "@trpc/server/adapters/express";
+import { ZodError } from "zod";
 
 import { AuthService } from "../controllers/auth";
 import { CommonService } from "../controllers/common";
@@ -7,6 +8,7 @@ import { ImageService } from "../controllers/image";
 import { LobbyService } from "../controllers/lobby";
 import { UserService } from "../controllers/user";
 import { expr } from "../utils";
+import { transformZodErrorIntoResponseError } from "../utils/error";
 import { getTokenFromHeaders } from "./authentication";
 import logger from "./logger";
 
@@ -57,7 +59,21 @@ export type Context = Awaited<ReturnType<typeof createContext>>;
  * Initialization of tRPC backend
  * Should be done only once per backend!
  */
-const t = initTRPC.context<Context>().create();
+const t = initTRPC.context<Context>().create({
+    errorFormatter: ({ error, shape }) => {
+        return {
+            ...shape,
+            data: {
+                ...shape.data,
+                zodError:
+                    error.code === "BAD_REQUEST" &&
+                    error.cause instanceof ZodError
+                        ? transformZodErrorIntoResponseError(error.cause)
+                        : null,
+            },
+        };
+    },
+});
 
 /**
  * Export reusable router and procedure helpers
