@@ -2,14 +2,20 @@ import { css } from "@emotion/css";
 import Button from "@mui/material/Button";
 import { ThreeDots } from "react-loader-spinner";
 
+import { isDef } from "../utils";
+
 type Props = {
     isSubmitting: boolean;
     disabled?: boolean;
-    onClick: () => void;
+    onClick?: () => void;
+    label?: string;
+    type?: "button" | "submit" | "reset";
 };
 
 export default function SubmitButton({
     disabled,
+    type,
+    label,
     isSubmitting,
     onClick,
 }: Props) {
@@ -30,15 +36,15 @@ export default function SubmitButton({
                 marginTop: 19,
             }}
             disableRipple
-            type={"button"}
-            onClick={onClick}
+            type={type ?? "button"}
+            {...(isDef(onClick) && { onClick })}
             disabled={disabled || isSubmitting}
             color={"primary"}
         >
             {isSubmitting ? (
                 <ThreeDots color="#FFFFFF" height={20} width={40} />
             ) : (
-                "Enter"
+                (label ?? "Enter")
             )}
         </Button>
     );
