@@ -20,7 +20,7 @@ const LogLevels = {
 /**
  * Custom winston format for logging information
  * */
-const lobbyFormat = printf(({level, message, timestamp, ...metadata}) => {
+const lobbyFormat = printf(({level, message, timestamp, ...metadata}: winston.Logform.TransformableInfo) => {
     let msg = `${timestamp} [${level}]: ${message} `
 
     if (metadata && metadata.pin && metadata.event) {
