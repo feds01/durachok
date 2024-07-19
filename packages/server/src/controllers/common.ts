@@ -1,5 +1,6 @@
 import { isDef } from '../utils';
 import User, { IUser } from './../models/user.model';
+import Lobbies, { PopulatedGame } from "../models/game.model";
 
 /**
  * A service used to access common functionality and information
@@ -18,5 +19,16 @@ export class CommonService {
         }
 
         return user;
+    }
+
+    /** Find a lobby by `PIN` and return the underling DB object. */
+    public async getLobbyDbObject(pin: string): Promise<PopulatedGame> {
+        const game = await Lobbies.findOne({ pin }).populate<Pick<PopulatedGame, 'owner'>>('owner');
+
+        if (!isDef(game)) {
+            throw new Error("Game not found");
+        }
+
+        return game;
     }
 }
