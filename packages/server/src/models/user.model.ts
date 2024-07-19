@@ -6,12 +6,12 @@ export interface IUser extends Document {
     name: string,
     password: string,
     image: boolean,
-    createdAt: number,
+    createdAt: Date,
     statistics?: UserStatisticsType,
 }
 
 
-const UserSchema = new Schema({
+const UserSchema = new Schema<IUser>({
     image: {type: Boolean, required: false, default: false},
     email: { type: String, required: true, unique: true},
     name: {type: String, required: false, unique: true},
