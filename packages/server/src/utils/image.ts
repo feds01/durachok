@@ -1,5 +1,5 @@
-import {PromiseResult} from "aws-sdk/lib/request";
-import AWS, {AWSError, CloudFront, S3} from 'aws-sdk';
+import AWS, { AWSError, CloudFront, S3 } from "aws-sdk";
+import { PromiseResult } from "aws-sdk/lib/request";
 
 /**
  * This function will simply convert a raw image which is base64 format into
@@ -9,27 +9,29 @@ import AWS, {AWSError, CloudFront, S3} from 'aws-sdk';
  * @param {String} imageType - The mime type of image (jpeg or png)
  * @return {Buffer} The resulting buffer from the the raw image string.
  * */
-export function decodeImage(rawImage: string, imageType = 'jpeg') {
+export function decodeImage(rawImage: string, imageType = "jpeg") {
     const headerPattern = new RegExp(`^data:image\/${imageType};base64,`);
-    rawImage = rawImage.replace(headerPattern, '');
+    rawImage = rawImage.replace(headerPattern, "");
 
     try {
-        return Buffer.from(rawImage, 'base64');
+        return Buffer.from(rawImage, "base64");
     } catch (e) {
         throw e;
     }
 }
 
-
 // Update aws sdk configuration
 AWS.config.update({
     accessKeyId: process.env.AWS_ACCESS_KEY, // Access key ID
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY, // Secret access key
-    region: process.env.AWS_REGION
+    region: process.env.AWS_REGION,
 });
 
 // Initiate the S3 API
-const s3 = new AWS.S3({region: process.env.AWS_REGION, apiVersion: '2006-03-01'});
+const s3 = new AWS.S3({
+    region: process.env.AWS_REGION,
+    apiVersion: "2006-03-01",
+});
 const cloudfront = new AWS.CloudFront();
 
 const MAX_FILE_SIZE = 1048576; // 1 megabyte
@@ -44,15 +46,20 @@ export async function checkImage(uri: string): Promise<boolean> {
     const params = {
         Bucket: process.env.AWS_BUCKET_NAME,
         Key: uri,
-    }
+    };
 
     let objectExists = false;
 
     // Using callbacks
     try {
-        await s3.headObject(params as S3.Types.HeadObjectRequest, (err, metadata) => {
-            objectExists = !(err && err.code === 'NotFound');
-        }).promise();
+        await s3
+            .headObject(
+                params as S3.Types.HeadObjectRequest,
+                (err, metadata) => {
+                    objectExists = !(err && err.code === "NotFound");
+                },
+            )
+            .promise();
     } catch (e) {
         objectExists = false;
     }
@@ -67,8 +74,11 @@ export async function checkImage(uri: string): Promise<boolean> {
  * @param {String} filename - The name of the resource that is to be saved
  * @param {Buffer} fileData - The base64 encoded version of the resource
  * */
-export async function uploadImage(filename: string, fileData: string): Promise<PromiseResult<S3.PutObjectOutput, AWSError>> {
-    const imageBuffer = decodeImage(fileData)
+export async function uploadImage(
+    filename: string,
+    fileData: string,
+): Promise<PromiseResult<S3.PutObjectOutput, AWSError>> {
+    const imageBuffer = decodeImage(fileData);
 
     // Check that this buffer is a jpg file
     if (!imageBuffer || imageBuffer.length < 3) {
@@ -76,7 +86,11 @@ export async function uploadImage(filename: string, fileData: string): Promise<P
     }
 
     // Check the first 3 bytes of the image to ensure it is JPG
-    if (imageBuffer[0] !== 255 || imageBuffer[1] !== 216 || imageBuffer[2] !== 255) {
+    if (
+        imageBuffer[0] !== 255 ||
+        imageBuffer[1] !== 216 ||
+        imageBuffer[2] !== 255
+    ) {
         throw new Error("Invalid image buffer.");
     }
 
@@ -90,9 +104,8 @@ export async function uploadImage(filename: string, fileData: string): Promise<P
         Bucket: process.env.AWS_BUCKET_NAME!,
         Key: filename, // File name you want to save as in S3
         Body: imageBuffer,
-        ContentType: 'image/jpeg',
+        ContentType: "image/jpeg",
     };
-
 
     const invalidationRequest: CloudFront.Types.CreateInvalidationRequest = {
         DistributionId: process.env.AWS_CLOUDFRONT_ID!,
@@ -100,16 +113,16 @@ export async function uploadImage(filename: string, fileData: string): Promise<P
             CallerReference: Date.now().toString(),
             Paths: {
                 Quantity: 1,
-                Items: [filename]
-            }
-        }
+                Items: [filename],
+            },
+        },
     };
 
     cloudfront.createInvalidation(invalidationRequest, function (err, data) {
-        if (err) console.log(err, err.stack); // an error occurred
-        else console.log(data);           // successful response
+        if (err)
+            console.log(err, err.stack); // an error occurred
+        else console.log(data); // successful response
     });
-
 
     // Uploading files to the bucket
     return s3.putObject(params).promise();

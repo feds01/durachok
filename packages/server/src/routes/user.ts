@@ -1,6 +1,5 @@
-import { UserUpdateSchema } from "../schemas/user";
 import { router, userProcedure } from "../lib/trpc";
-
+import { UserUpdateSchema } from "../schemas/user";
 
 export const userRouter = router({
     get: userProcedure.query(async (req) => {

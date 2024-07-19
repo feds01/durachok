@@ -1,31 +1,34 @@
-
+import type * as express from "express";
 import jwt from "jsonwebtoken";
-import type * as express from 'express';
 
 import { JWT_REFRESH_SECRET, JWT_SECRET } from "../config";
-import { assert, expr, isDef } from "../utils";
-import { RawTokenPayload, TokenPayload } from "../schemas/auth";
 import { AuthService } from "../controllers/auth";
+import { RawTokenPayload, TokenPayload } from "../schemas/auth";
+import { assert, expr, isDef } from "../utils";
 
 type Tokens = {
-    payload: TokenPayload,
+    payload: TokenPayload;
     /** The basic token. */
-    token: string,
+    token: string;
     /** The refresh token. */
-    refreshToken: string | null,
-}
+    refreshToken: string | null;
+};
 
 /**
  * This function will attempt to extract the token from the request headers. If the token
  * is not present, it will return null. If the token is present, it will attempt to verify
  * the token. If the token is invalid, it will attempt to refresh the token using the
  * refresh token. If the refresh token is invalid, it will return null.
- * 
+ *
  * @param req - The request object.
  * @param res - The response object.
  * @returns - The token payload if the token is valid, otherwise null.
  */
-export async function getTokenFromHeaders(authService: AuthService, req: express.Request, res: express.Response): Promise<Tokens | null> {
+export async function getTokenFromHeaders(
+    authService: AuthService,
+    req: express.Request,
+    res: express.Response,
+): Promise<Tokens | null> {
     const token = req.headers["x-token"];
     const refreshToken = expr(() => {
         const raw = req.headers["x-refresh-token"];
@@ -44,7 +47,7 @@ export async function getTokenFromHeaders(authService: AuthService, req: express
         return { payload: verifiedToken, token, refreshToken };
     }
 
-    // Since we don't have a refresh token, we can't try to 
+    // Since we don't have a refresh token, we can't try to
     // refresh the token.
     if (!refreshToken) {
         return null;

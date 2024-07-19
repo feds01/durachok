@@ -5,10 +5,9 @@ import { userRouter } from "./user";
 
 /** Define the root router, and export all sub-routers through it */
 export const appRouter = router({
-  auth: authRouter,
-  users: userRouter,
-  lobbies: lobbyRouter
+    auth: authRouter,
+    users: userRouter,
+    lobbies: lobbyRouter,
 });
-
 
 export type AppRouter = typeof appRouter;

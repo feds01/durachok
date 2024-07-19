@@ -3,7 +3,6 @@
 // import { ClientEvents, GameStatus } from "shared";
 // import { Server, Socket } from "socket.io";
 
-
 // async function handler(context: any, socket: Socket, io?: Server | null) {
 //     const meta = { pin: socket.lobby.pin, event: "disconnect" }
 

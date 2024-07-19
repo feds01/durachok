@@ -1,6 +1,6 @@
-import { ZodError } from 'zod';
+import { ZodError } from "zod";
 
-import { expr } from '.';
+import { expr } from ".";
 
 export interface ResponseError {
     message: string | string[];
@@ -22,12 +22,12 @@ export function transformZodErrorIntoResponseError<T>(
     const errorMap = new Map();
 
     error.errors.forEach((errorItem) => {
-        const path = errorItem.path.join('.');
+        const path = errorItem.path.join(".");
 
         // Perform some transformation on the ZodError to get into a more readable format
         const responseError = expr(() => {
             switch (errorItem.code) {
-                case 'invalid_type':
+                case "invalid_type":
                     return {
                         message: `Expected to receive a '${errorItem.expected}', but got '${errorItem.received}'`,
                     };
@@ -54,14 +54,14 @@ export function transformZodErrorIntoResponseError<T>(
  * with errors, and to possibly execute some logic based on the error.
  */
 export enum InternalApiErrorCode {
-    NotFound = 'not_found',
-    InvalidItem = 'invalid_item',
-    AccessDenied = 'access_denied',
+    NotFound = "not_found",
+    InvalidItem = "invalid_item",
+    AccessDenied = "access_denied",
 
     /**
      * No error code was specified, this is the default error code.
      */
-    None = 'none',
+    None = "none",
 }
 
 /**

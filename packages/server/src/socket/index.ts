@@ -11,7 +11,6 @@
 // import { error, GameStatus, ServerEvents } from "shared";
 // import { AnonymousUserTokenPayload, RegisteredUserTokenPayload, Token } from "../types/auth";
 
-
 // import joinGameHandler from "./handlers/join";
 // import startGameHandler from "./handlers/startGame";
 // import resignPlayerHandler from "./handlers/resign";

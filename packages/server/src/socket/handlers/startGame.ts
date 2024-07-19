@@ -5,7 +5,6 @@
 // import { acquireLock, releaseLock } from "../lock";
 // import { Game, error, ClientEvents, GameStatus, ServerEvents } from "shared";
 
-
 // async function handler(context: any, socket: Socket, io?: Server | null) {
 //     const meta = { pin: socket.lobby.pin, event: ServerEvents.START_GAME };
 //     const lobby = await getLobby(socket.lobby.pin);

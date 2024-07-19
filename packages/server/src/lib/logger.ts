@@ -1,56 +1,58 @@
-import winston, {createLogger, format, transports} from "winston";
+import winston, { createLogger, format, transports } from "winston";
 
-const {combine, splat, timestamp, printf} = format;
+const { combine, splat, timestamp, printf } = format;
 
 const LogLevels = {
     levels: {
         error: 0,
         warn: 1,
         info: 2,
-        debug: 3
+        debug: 3,
     },
     colors: {
-        error: 'bold red',
-        warn: 'yellow',
-        info: 'blue',
-        debug: 'green',
-    }
+        error: "bold red",
+        warn: "yellow",
+        info: "blue",
+        debug: "green",
+    },
 };
 
 /**
  * Custom winston format for logging information
  * */
-const lobbyFormat = printf(({level, message, timestamp, ...metadata}: winston.Logform.TransformableInfo) => {
-    let msg = `${timestamp} [${level}]: ${message} `
+const lobbyFormat = printf(
+    ({
+        level,
+        message,
+        timestamp,
+        ...metadata
+    }: winston.Logform.TransformableInfo) => {
+        let msg = `${timestamp} [${level}]: ${message} `;
 
-    if (metadata && metadata.pin && metadata.event) {
-        const {pin, event, ...rest} = metadata;
+        if (metadata && metadata.pin && metadata.event) {
+            const { pin, event, ...rest } = metadata;
 
-        // Format the message to display timestamp, log level, lobby pin and event handler with message
-        msg = `${timestamp} [${level}] [${metadata.pin}/${metadata.event}]: ${message}`;
+            // Format the message to display timestamp, log level, lobby pin and event handler with message
+            msg = `${timestamp} [${level}] [${metadata.pin}/${metadata.event}]: ${message}`;
 
-        // Append any additional metadata that was passed to the formatter
-        if (Object.keys(rest).length > 0) {
-            msg += ` meta=${JSON.stringify(rest)}`;
+            // Append any additional metadata that was passed to the formatter
+            if (Object.keys(rest).length > 0) {
+                msg += ` meta=${JSON.stringify(rest)}`;
+            }
+        } else if (Object.keys(metadata).length > 0) {
+            msg += JSON.stringify(metadata);
         }
-    } else if (Object.keys(metadata).length > 0) {
-        msg += JSON.stringify(metadata);
-    }
 
-    return msg
-});
+        return msg;
+    },
+);
 
 const logger = createLogger({
-    level: 'info',
+    level: "info",
     levels: LogLevels.levels,
-    format: combine(
-        format.colorize(),
-        splat(),
-        timestamp(),
-        lobbyFormat
-    ),
+    format: combine(format.colorize(), splat(), timestamp(), lobbyFormat),
     transports: [
-        new transports.Console({ level: 'info' }),
+        new transports.Console({ level: "info" }),
 
         //
         // - Write all logs with level `error` and below to `error.log`
@@ -58,7 +60,7 @@ const logger = createLogger({
         //
         // new winston.transports.File({filename: 'error.log', level: 'error'}),
         // new winston.transports.File({filename: 'combined.log'}),
-    ]
+    ],
 });
 
 winston.addColors(LogLevels.colors);
