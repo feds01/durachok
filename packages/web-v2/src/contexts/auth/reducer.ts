@@ -1,97 +1,51 @@
-export type AuthState = {
-    name: string;
-    email: string;
+type LoggedInAuthState = {
+    kind: "logged-in";
     token: string;
     refreshToken: string;
-    loading: boolean;
 };
 
+type LoggedOutAuthState = {
+    kind: "logged-out";
+};
+
+/** The authentication state, either "logged-in" or "logged-out" */
+export type AuthState = LoggedInAuthState | LoggedOutAuthState;
+
+/** An action that indicates what happened to the auth-state. */
 export type AuthAction =
     | {
-          type: "REQUEST_LOGIN" | "REQUEST_REGISTER";
-      }
-    | {
-          type: "LOGIN_SUCCESS" | "REGISTER_SUCCESS";
-          payload: Omit<AuthState, "loading">;
-      }
-    | {
-          type: "UPDATE_CREDENTIALS";
-          payload: Omit<AuthState, "loading">;
-      }
-    | {
-          type: "UPDATE_TOKEN";
-          token: string;
-          refreshToken: string;
+          type: "LOGIN";
+          payload: Omit<LoggedInAuthState, "kind">;
       }
     | {
           type: "LOGOUT";
-      }
-    | {
-          type: "LOGIN_ERROR";
-          error: string;
       };
 
 export function init(): AuthState {
     // @@Cleanup: use zod to validate this.
-    const name = localStorage.getItem("name");
-    const email = localStorage.getItem("email");
     const token = localStorage.getItem("token");
     const refreshToken = localStorage.getItem("refreshToken");
 
+    if (!token || !refreshToken) {
+        return { kind: "logged-out" };
+    }
+
     return {
-        name: name ?? "",
-        email: email ?? "",
         token: token ?? "",
         refreshToken: refreshToken ?? "",
-        loading: false,
+        kind: "logged-in",
     };
 }
 
-export const reducer = (state: AuthState, action: AuthAction) => {
+export const reducer = (state: AuthState, action: AuthAction): AuthState => {
     switch (action.type) {
-        case "REQUEST_LOGIN":
-        case "REQUEST_REGISTER":
-            return {
-                ...state,
-                loading: true,
-            };
-        case "LOGIN_SUCCESS":
-        case "REGISTER_SUCCESS":
-            return {
-                ...state,
-                ...action.payload,
-                loading: false,
-            };
-        case "UPDATE_CREDENTIALS": {
-            return {
-                ...state,
-                ...action.payload,
-                loading: false,
-            };
-        }
-        case "UPDATE_TOKEN": {
+        case "LOGIN":
             // update the local storage with them...
-            localStorage.setItem("token", action.token);
-            localStorage.setItem("refreshToken", action.refreshToken);
+            localStorage.setItem("token", action.payload.token);
+            localStorage.setItem("refreshToken", action.payload.refreshToken);
 
-            return {
-                ...state,
-                token: action.token,
-                refreshToken: action.refreshToken,
-            };
-        }
+            return { "kind": "logged-in", ...action.payload };
         case "LOGOUT":
-            return {
-                ...state,
-                user: "",
-                token: "",
-                refreshToken: "",
-            };
-
-        case "LOGIN_ERROR":
-            return {
-                ...state,
-                loading: false,
-            };
+            return { kind: "logged-out" };
     }
 };
