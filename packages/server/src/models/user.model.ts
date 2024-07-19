@@ -1,6 +1,5 @@
 import mongoose, { Document, Schema } from "mongoose";
-
-import { UserStatisticsType } from "../common/statistics";
+import { UserStatistics } from "../schemas/user";
 
 export interface IUser extends Document {
     email: string;
@@ -8,7 +7,7 @@ export interface IUser extends Document {
     password: string;
     image: boolean;
     createdAt: Date;
-    statistics?: UserStatisticsType;
+    statistics?: UserStatistics;
 }
 
 const UserSchema = new Schema<IUser>({
