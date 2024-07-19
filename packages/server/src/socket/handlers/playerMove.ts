@@ -17,7 +17,6 @@
 //     const lobby = await getLobby(socket.lobby.pin);
 //     const game = Game.fromState(lobby.game!.state, lobby.game!.history);
 
-
 //     socket.logger.info("Processing player move", { ...meta, context, name: socket.decoded.name });
 
 //     // If the game has already finished, any further requests are stale.
@@ -99,7 +98,6 @@
 //                     message: "Can't perform action at this time."
 //                 });
 
-
 //                 return releaseLock(lock);
 //             }
 
@@ -129,7 +127,6 @@
 //         if (e instanceof Error) {
 //             socket.logger.error(`Failed to process move event: ${e.message}`, { ...meta, err: e, name: socket.decoded.name });
 //         }
-
 
 //         // Re-create the game object to avoid any state mutation from a failed move and
 //         // send the safe state back to the client
@@ -163,7 +160,6 @@
 
 //         socket.logger.info("Beginning new round!", { ...meta });
 //     }
-
 
 //     // emit a spectator action to everyone, clients can just ignore this one
 //     io!.of(socket.lobby.pin.toString()).emit(ClientEvents.SPECTATOR_STATE, { update: game.getStateForSpectator() });

@@ -1,13 +1,13 @@
-import { z } from "zod";
 import { ObjectId } from "mongodb";
+import { z } from "zod";
 
-/** 
+/**
  * A Username, must follow the rules:
- * 
+ *
  * - 1..=39 characters long
  * - alphanumeric with dashes.
  * - first character cannot be a dash.
-  */
+ */
 export const UserNameSchema = z
     .string()
     .regex(
@@ -23,23 +23,25 @@ export const UserEmailSchema = z.string().email().trim();
 export type UserEmail = z.infer<typeof UserEmailSchema>;
 
 /** A raw DB user object */
-export const DBUserSchema = z.object({
-    /** Associated user id, only exists after user is created. */
-    _id: z.instanceof(ObjectId),
-    /** User name. */
-    name: UserNameSchema,
-    /** User email. */
-    email: z.string().email(),
-    /** Optionally encoded base64 user profile image. */
-    image: z.boolean()
-}).transform((data) => {
-    return {
-        id: data._id.toString(),
-        name: data.name,
-        email: data.email,
-        image: data.image,
-    };
-});
+export const DBUserSchema = z
+    .object({
+        /** Associated user id, only exists after user is created. */
+        _id: z.instanceof(ObjectId),
+        /** User name. */
+        name: UserNameSchema,
+        /** User email. */
+        email: z.string().email(),
+        /** Optionally encoded base64 user profile image. */
+        image: z.boolean(),
+    })
+    .transform((data) => {
+        return {
+            id: data._id.toString(),
+            name: data.name,
+            email: data.email,
+            image: data.image,
+        };
+    });
 
 export type DBUser = z.infer<typeof DBUserSchema>;
 
@@ -68,20 +70,20 @@ export const UserRegistrationSchema = UserSchema.omit({ id: true }).extend({
 export type UserRegistration = z.infer<typeof UserRegistrationSchema>;
 
 /** The name can either be an email or a username */
-export const UserLoginSchema = z.object({
-    /** The user's username */
-    name: UserNameSchema.optional(),
-    /** The user's email */
-    email: UserEmailSchema.optional(),
-    /** The user's password */
-    password: z.string().min(8),
-}).refine((data) => {
-    return data.name || data.email;
-})
-
+export const UserLoginSchema = z
+    .object({
+        /** The user's username */
+        name: UserNameSchema.optional(),
+        /** The user's email */
+        email: UserEmailSchema.optional(),
+        /** The user's password */
+        password: z.string().min(8),
+    })
+    .refine((data) => {
+        return data.name || data.email;
+    });
 
 export type UserLogin = z.infer<typeof UserLoginSchema>;
-
 
 /** Updating a user's account, this allows us to update the username, email, and add an image. */
 export const UserUpdateSchema = UserSchema.partial().extend({
@@ -101,10 +103,10 @@ export const UserStatisticsSchema = z.object({
 
 export type UserStatistics = z.infer<typeof UserStatisticsSchema>;
 
-/** 
+/**
  * A simplified Lobby object containing only information
- * that is necessary for the client to know. I.E. This can 
- * be used to indicate to the client what conditions the 
+ * that is necessary for the client to know. I.E. This can
+ * be used to indicate to the client what conditions the
  * lobby is in.
  * */
 export const SimplifiedLobbySchema = z.object({

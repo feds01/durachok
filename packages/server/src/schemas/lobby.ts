@@ -1,4 +1,5 @@
 import { z } from "zod";
+
 import { DBUserSchema, UserNameSchema } from "./user";
 
 /** A player that is currently within the lobby. */
@@ -31,9 +32,9 @@ export type Message = z.infer<typeof MessageSchema>;
 
 /** What state the game is currently in. */
 export const GameStatusSchema = z.union([
-    z.literal('waiting'),
-    z.literal('playing'),
-    z.literal('finished'),
+    z.literal("waiting"),
+    z.literal("playing"),
+    z.literal("finished"),
 ]);
 
 export type GameStatus = z.infer<typeof GameStatusSchema>;
@@ -42,7 +43,6 @@ export type GameStatus = z.infer<typeof GameStatusSchema>;
 export const GamePinSchema = z
     .string()
     .regex(/^\d{6}$/, "Game PIN is 6 digits long.");
-
 
 export type GamePin = z.infer<typeof GamePinSchema>;
 
@@ -53,15 +53,15 @@ export const GamePassPhraseSchema = z
 
 export type GamePassPhrase = z.infer<typeof GamePassPhraseSchema>;
 
-/** 
+/**
  * A lobby, containing information, including settings, chats and currently
- * active players. 
+ * active players.
  * */
 export const LobbySchema = z.object({
     /** The unique identifier for the game. */
     pin: GamePinSchema,
     createdAt: z.date(),
-    
+
     /* === Settings === */
 
     /** Maximum number of players in the lobby. */
@@ -91,32 +91,36 @@ export const LobbySchema = z.object({
     owner: DBUserSchema,
 });
 
-
 export type Lobby = z.infer<typeof LobbySchema>;
 
 /** Settings for a game. */
-export const GameSettingsSchema = z.object({
-    /** The maximum number of players that can join the game. */
-    maxPlayers: z.number().min(2).max(8),
-    /** Whether to use a short deck in the game. */
-    shortGameDeck: z.boolean().default(false),
-    /** Whether users can play in any order after first turn. */
-    freeForAll: z.boolean().default(true),
-    /** Whether to disable the chat in the game. */
-    disableChat: z.boolean().default(false),
-    /** Whether to use `passphrase` when joining a game. */
-    passphrase: z.boolean().default(false),
-    /** Whether to randomise the player starting order. */
-    randomPlayerOrder: z.boolean().default(false),
-    /** Timeout in seconds. */
-    roundTimeout: z.number().min(60).max(600),
-}).refine(data => {
-    if (data.shortGameDeck) {
-        return data.maxPlayers <= 6;
-    }
+export const GameSettingsSchema = z
+    .object({
+        /** The maximum number of players that can join the game. */
+        maxPlayers: z.number().min(2).max(8),
+        /** Whether to use a short deck in the game. */
+        shortGameDeck: z.boolean().default(false),
+        /** Whether users can play in any order after first turn. */
+        freeForAll: z.boolean().default(true),
+        /** Whether to disable the chat in the game. */
+        disableChat: z.boolean().default(false),
+        /** Whether to use `passphrase` when joining a game. */
+        passphrase: z.boolean().default(false),
+        /** Whether to randomise the player starting order. */
+        randomPlayerOrder: z.boolean().default(false),
+        /** Timeout in seconds. */
+        roundTimeout: z.number().min(60).max(600),
+    })
+    .refine(
+        (data) => {
+            if (data.shortGameDeck) {
+                return data.maxPlayers <= 6;
+            }
 
-    return true;
-}, { message: "Short game deck can only be used with 6 players or less." });
+            return true;
+        },
+        { message: "Short game deck can only be used with 6 players or less." },
+    );
 
 export type GameSettings = z.infer<typeof GameSettingsSchema>;
 
@@ -130,8 +134,8 @@ export const GameCreateRequestSchema = z.object({
 
 export type GameCreateRequest = z.infer<typeof GameCreateRequestSchema>;
 
-/** 
- * The information that must be provided in order to 
+/**
+ * The information that must be provided in order to
  * join a game.
  */
 export const GameJoinRequestSchema = z.object({
@@ -141,7 +145,6 @@ export const GameJoinRequestSchema = z.object({
 });
 
 export type GameJoinRequest = z.infer<typeof GameJoinRequestSchema>;
-
 
 /** Query some kind of information by a game `pin`. */
 export const ByPinRequestSchema = z.object({

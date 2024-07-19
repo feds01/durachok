@@ -1,16 +1,20 @@
 import { z } from "zod";
+
 import { UserSchema } from "./user";
 
-
 export const RawTokenPayload = z.object({
-    data: z.object({
-        name: z.string(),
-        email: z.string(),
-        id: z.string(),
-    }).or(z.object({
-        name: z.string(),
-        pin: z.string(),
-    })),
+    data: z
+        .object({
+            name: z.string(),
+            email: z.string(),
+            id: z.string(),
+        })
+        .or(
+            z.object({
+                name: z.string(),
+                pin: z.string(),
+            }),
+        ),
     iat: z.number(),
     exp: z.number(),
     iss: z.string().optional(),
@@ -28,6 +32,6 @@ const TokenPayloadSchema = z.union([
         name: z.string(),
         pin: z.string(),
     }),
-])
+]);
 
 export type TokenPayload = z.infer<typeof TokenPayloadSchema>;

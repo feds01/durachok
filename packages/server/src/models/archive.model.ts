@@ -1,15 +1,16 @@
-import { IUser } from "./user.model";
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Document, Schema } from "mongoose";
 import { GameState, HistoryState } from "shared";
 
+import { IUser } from "./user.model";
+
 export interface IArchivedGame extends Document {
-    maxPlayers: number,
-    randomPlayerOrder: boolean,
-    owner: IUser['_id'],
+    maxPlayers: number;
+    randomPlayerOrder: boolean;
+    owner: IUser["_id"];
     game: {
-        history: HistoryState,
-        state: GameState,
-    },
+        history: HistoryState;
+        state: GameState;
+    };
 }
 
 const ArchivedGameSchema = new Schema<IArchivedGame>({
@@ -18,7 +19,7 @@ const ArchivedGameSchema = new Schema<IArchivedGame>({
     randomPlayerOrder: { type: Boolean, required: true },
 
     // owner details need to be preserved
-    owner: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
+    owner: { type: mongoose.Schema.Types.ObjectId, ref: "user" },
 
     // the actual game needs to be preserved
     game: {
@@ -33,8 +34,8 @@ const ArchivedGameSchema = new Schema<IArchivedGame>({
                             canAttack: { type: Boolean },
                             beganRound: { type: Boolean },
                             turned: { type: Boolean },
-                            isDefending: { type: Boolean }
-                        }
+                            isDefending: { type: Boolean },
+                        },
                     },
                     deck: { type: [String] },
                     victory: { type: Boolean },
@@ -43,14 +44,14 @@ const ArchivedGameSchema = new Schema<IArchivedGame>({
                             value: { type: Number },
                             suit: { type: String },
                             card: { type: String },
-                        }
+                        },
                     },
-                    tableTop: { type: Map, of: String }
-                }
-            }
+                    tableTop: { type: Map, of: String },
+                },
+            },
         },
         required: true,
-    }
+    },
 });
 
-export default mongoose.model<IArchivedGame>('archive', ArchivedGameSchema);
+export default mongoose.model<IArchivedGame>("archive", ArchivedGameSchema);

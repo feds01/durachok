@@ -5,8 +5,8 @@
 const lockMap: Map<string, boolean> = new Map();
 
 type Lock = {
-    release(): void,
-}
+    release(): void;
+};
 
 export function acquireLock(pin: string): Lock {
     const lock = lockMap.get(pin);
@@ -20,7 +20,7 @@ export function acquireLock(pin: string): Lock {
     return {
         release: () => {
             lockMap.set(pin, false);
-        }
+        },
     };
 }
 

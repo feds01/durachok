@@ -1,21 +1,20 @@
-import { isDef } from '../utils';
-import User, { IUser } from './../models/user.model';
 import Lobbies, { PopulatedGame } from "../models/game.model";
+import { isDef } from "../utils";
+import User, { IUser } from "./../models/user.model";
 
 /**
  * A service used to access common functionality and information
  * about data objects stored within the DB.
  */
 export class CommonService {
-    public constructor() {
-    }
+    public constructor() {}
 
     /** Find a user by `ID` and return the underling DB object. */
     public async getUserDbObject(userId: string): Promise<IUser> {
         const user = await User.findById(userId);
 
         if (!isDef(user)) {
-            throw new Error('User not found');
+            throw new Error("User not found");
         }
 
         return user;
@@ -23,7 +22,9 @@ export class CommonService {
 
     /** Find a lobby by `PIN` and return the underling DB object. */
     public async getLobbyDbObject(pin: string): Promise<PopulatedGame> {
-        const game = await Lobbies.findOne({ pin }).populate<Pick<PopulatedGame, 'owner'>>('owner');
+        const game = await Lobbies.findOne({ pin }).populate<
+            Pick<PopulatedGame, "owner">
+        >("owner");
 
         if (!isDef(game)) {
             throw new Error("Game not found");
