@@ -20,8 +20,13 @@ export const UserNameSchema = z
 /** A Username  */
 export type UserName = z.infer<typeof UserNameSchema>;
 
+/** A User's email */
+export const UserEmailSchema = z.string().email().trim();
+
+export type UserEmail = z.infer<typeof UserEmailSchema>;
+
 export const UserRegistrationSchema = z.object({
-    email: z.string().email(),
+    email: UserEmailSchema,
     username: UserNameSchema,
     password: z.string().min(8),
 });
