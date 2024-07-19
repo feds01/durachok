@@ -1,6 +1,6 @@
-import {IGame, PopulatedGame} from "../models/game";
-import {AnonymousUserTokenPayload, RegisteredUserTokenPayload} from "./auth";
-import {Logger} from "winston";
+import { PopulatedGame } from "../models/game.model";
+import { TokenPayload } from "../schemas/auth";
+import { Logger } from "winston";
 
 
 export type SocketQuery = {
@@ -12,15 +12,8 @@ declare module "socket.io" {
     export interface Socket {
         logger: Logger,
         lobby: PopulatedGame;
-        decoded: RegisteredUserTokenPayload | AnonymousUserTokenPayload | undefined,
+        decoded: TokenPayload | undefined,
         isAdmin: boolean,
         isUser: boolean,
     }
-
-    // export interface Handshake {
-    //     query: {
-    //         token?: string,
-    //         refreshToken?: string,
-    //     }
-    // }
 }
