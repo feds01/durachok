@@ -3,6 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
+import ControlledPasswordField from "../components/ControlledPasswordField";
 import ControlledTextField from "../components/ControlledTextField";
 import SubmitButton from "../components/SubmitButton";
 import { expr } from "../utils";
@@ -23,7 +24,7 @@ export type LoginResult = {
 };
 
 type Props = {
-    onSuccess: (result: LoginResult) => Promise<void>;
+    onSuccess: (result: LoginResult) => void;
 };
 
 export default function Login({ onSuccess }: Props) {
@@ -82,7 +83,7 @@ export default function Login({ onSuccess }: Props) {
                     autoComplete: "off",
                 }}
             />
-            <ControlledTextField
+            <ControlledPasswordField
                 name="password"
                 control={form.control}
                 textFieldProps={{
