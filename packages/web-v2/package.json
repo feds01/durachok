@@ -16,6 +16,7 @@
     "@emotion/styled": "^11.11.5",
     "@hookform/resolvers": "^3.9.0",
     "@mars/heroku-js-runtime-env": "^3.0.2",
+    "@mui/icons-material": "^5.16.4",
     "@mui/material": "^5.16.4",
     "@tanstack/react-query": "^4.36.1",
     "@tanstack/react-router": "^1.45.4",
