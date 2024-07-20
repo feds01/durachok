@@ -1,0 +1,61 @@
+import { Visibility, VisibilityOff } from "@mui/icons-material";
+import IconButton from "@mui/material/IconButton";
+import InputAdornment from "@mui/material/InputAdornment";
+import TextField, { TextFieldProps } from "@mui/material/TextField/TextField";
+import { ReactElement, useState } from "react";
+import { Control, FieldValues, Path, useController } from "react-hook-form";
+
+interface Props<T extends FieldValues> {
+    name: Path<T>;
+    control: Control<T>;
+    textFieldProps?: TextFieldProps;
+}
+
+export default function ControlledPasswordField<T extends FieldValues>({
+    name,
+    control,
+    textFieldProps,
+}: Props<T>): ReactElement {
+    const [showPassword, setShowPassword] = useState<boolean>(false);
+    const {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        field: { ref, ...inputProps },
+        fieldState: { error },
+    } = useController({
+        name,
+        control,
+        rules: { required: true },
+    });
+
+    return (
+        <TextField
+            {...inputProps}
+            fullWidth
+            sx={{
+                marginTop: 1,
+                marginBottom: 1,
+                ...(!error && !textFieldProps?.helperText && { pb: "20px" }),
+            }}
+            {...textFieldProps}
+            {...(typeof error !== "undefined" && {
+                error: true,
+                helperText: error.message,
+            })}
+            InputProps={{
+                endAdornment: (
+                    <InputAdornment position="end">
+                        <IconButton
+                            aria-label="toggle password visibility"
+                            onClick={() => setShowPassword(!showPassword)}
+                            onMouseDown={(e) => e.preventDefault()}
+                            edge="end"
+                        >
+                            {showPassword ? <VisibilityOff /> : <Visibility />}
+                        </IconButton>
+                    </InputAdornment>
+                ),
+            }}
+            type={showPassword ? "text" : "password"}
+        />
+    );
+}
