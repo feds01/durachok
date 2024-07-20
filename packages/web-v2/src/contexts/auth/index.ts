@@ -1,4 +1,4 @@
-import { useAuthDispatch, useAuthState } from "./context";
+import { useAuth, useAuthDispatch, useAuthState } from "./context";
 import { AuthProvider } from "./provider";
 
-export { AuthProvider, useAuthState, useAuthDispatch };
+export { AuthProvider, useAuthState, useAuthDispatch, useAuth };
