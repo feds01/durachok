@@ -2,10 +2,11 @@ import { css } from "@emotion/css";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { motion } from "framer-motion";
+import { useEffect } from "react";
 import { z } from "zod";
 
 import Logo from "../components/Logo";
-import { useAuthDispatch } from "../contexts/auth";
+import { useAuth } from "../contexts/auth";
 import LoginForm, { LoginResult } from "../forms/Login";
 
 const LoginSearchSchema = z.object({
@@ -76,14 +77,22 @@ const login = css`
 `;
 
 export default function Login() {
+    const navigate = useNavigate();
     const { redirect } = Route.useSearch();
-    const navigator = useNavigate();
-    const auth = useAuthDispatch();
+    const [state, dispatch] = useAuth();
 
-    const onSuccess = async (result: LoginResult) => {
-        auth({ type: "LOGIN", payload: result });
-        navigator({ to: redirect ?? "/user" });
+    const onSuccess = (result: LoginResult) => {
+        dispatch({ type: "login", payload: result });
     };
+
+    // @@Hack: we should be able to rely on `router.invalidate()` which
+    // should reset the context of the router, and hence re-direct use to
+    // the correct page.
+    useEffect(() => {
+        if (state.kind === "logged-in") {
+            navigate({ to: redirect ?? "/user" });
+        }
+    }, [state.kind, redirect, navigate]);
 
     return (
         <div className={container}>
