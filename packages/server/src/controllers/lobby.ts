@@ -4,8 +4,8 @@ import { CardSuits, shuffleArray } from "shared";
 import { Logger } from "winston";
 
 import Lobbies, { PopulatedGame } from "../models/game.model";
+import { SimplifiedLobby } from "../schemas/common";
 import { GameSettings, Lobby, LobbySchema, Player } from "../schemas/lobby";
-import { SimplifiedLobby } from "../schemas/user";
 import { assert, isDef } from "../utils";
 import { CommonService } from "./common";
 
@@ -56,6 +56,9 @@ export class LobbyService {
                 lobby.status === "waiting" &&
                 lobby.players.length < lobby.maxPlayers,
             passphrase: isDef(lobby.passphrase),
+            players: lobby.players.length,
+            maxPlayers: lobby.maxPlayers,
+            status: lobby.status,
         };
     }
 

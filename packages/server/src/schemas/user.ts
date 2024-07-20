@@ -1,6 +1,8 @@
 import { ObjectId } from "mongodb";
 import { z } from "zod";
 
+import { GameStatusSchema, SimplifiedLobbySchema } from "./common";
+
 /**
  * A Username, must follow the rules:
  *
@@ -102,20 +104,6 @@ export const UserStatisticsSchema = z.object({
 });
 
 export type UserStatistics = z.infer<typeof UserStatisticsSchema>;
-
-/**
- * A simplified Lobby object containing only information
- * that is necessary for the client to know. I.E. This can
- * be used to indicate to the client what conditions the
- * lobby is in.
- * */
-export const SimplifiedLobbySchema = z.object({
-    pin: z.string(),
-    joinable: z.boolean(),
-    passphrase: z.boolean(),
-});
-
-export type SimplifiedLobby = z.infer<typeof SimplifiedLobbySchema>;
 
 export const UserInfoSchema = UserSchema.extend({
     /** Player statistics that are accumulated over time. */
