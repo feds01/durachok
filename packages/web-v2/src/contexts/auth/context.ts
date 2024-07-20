@@ -1,7 +1,7 @@
-import React, { createContext, useReducer } from "react";
+import React, { createContext } from "react";
 
 import { isDef } from "../../utils";
-import { AuthAction, AuthState, init, reducer } from "./reducer";
+import { AuthAction, AuthState } from "./reducer";
 
 type AuthStateContextType = {
     state: AuthState;
@@ -32,22 +32,3 @@ export function useAuthDispatch() {
 
     return context.update;
 }
-
-interface AuthProviderProps {
-    children: React.ReactNode;
-}
-
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-    const [state, update] = useReducer(reducer, init());
-
-    return (
-        <AuthStateContext.Provider
-            value={{
-                state,
-                update,
-            }}
-        >
-            {children}
-        </AuthStateContext.Provider>
-    );
-};
