@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { GameStatusSchema } from "./common";
 import { DBUserSchema, UserNameSchema } from "./user";
 
 /** A player that is currently within the lobby. */
@@ -29,15 +30,6 @@ export const MessageSchema = z.object({
 });
 
 export type Message = z.infer<typeof MessageSchema>;
-
-/** What state the game is currently in. */
-export const GameStatusSchema = z.union([
-    z.literal("waiting"),
-    z.literal("playing"),
-    z.literal("finished"),
-]);
-
-export type GameStatus = z.infer<typeof GameStatusSchema>;
 
 /** A Game PIN consists of 6 digits. */
 export const GamePinSchema = z
