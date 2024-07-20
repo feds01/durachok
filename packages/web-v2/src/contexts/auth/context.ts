@@ -32,3 +32,13 @@ export function useAuthDispatch() {
 
     return context.update;
 }
+
+export function useAuth() {
+    const context = React.useContext(AuthStateContext);
+
+    if (!isDef(context)) {
+        throw new Error("useAuthDispatch must be used within a Context");
+    }
+
+    return [context.state, context.update] as const;
+}

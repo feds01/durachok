@@ -14,11 +14,11 @@ export type AuthState = LoggedInAuthState | LoggedOutAuthState;
 /** An action that indicates what happened to the auth-state. */
 export type AuthAction =
     | {
-          type: "LOGIN";
+          type: "login";
           payload: Omit<LoggedInAuthState, "kind">;
       }
     | {
-          type: "LOGOUT";
+          type: "logout";
       };
 
 export function init(): AuthState {
@@ -39,13 +39,15 @@ export function init(): AuthState {
 
 export const reducer = (state: AuthState, action: AuthAction): AuthState => {
     switch (action.type) {
-        case "LOGIN":
+        case "login":
+            console.log("we are in the login case");
             // update the local storage with them...
             localStorage.setItem("token", action.payload.token);
             localStorage.setItem("refreshToken", action.payload.refreshToken);
-
             return { "kind": "logged-in", ...action.payload };
-        case "LOGOUT":
+        case "logout":
+            localStorage.removeItem("token");
+            localStorage.removeItem("refreshToken");
             return { kind: "logged-out" };
     }
 };
