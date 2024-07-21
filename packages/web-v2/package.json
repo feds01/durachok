@@ -35,6 +35,7 @@
     "shared": "file:./../engine/",
     "socket.io-client": "4.7.5",
     "use-sound": "^4.0.3",
+    "usehooks-ts": "^3.1.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
