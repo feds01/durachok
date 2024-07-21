@@ -32,8 +32,7 @@ export default function Login({ onSuccess }: Props) {
     const loginWith = trpc.auth.login.useMutation();
     const form = useForm<Login>({
         resolver: zodResolver(LoginSchema),
-        reValidateMode: "onChange",
-        mode: "onChange",
+        reValidateMode: "onSubmit",
         defaultValues: {
             credential: "",
             password: "",
