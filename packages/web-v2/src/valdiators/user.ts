@@ -22,13 +22,20 @@ export type UserName = z.infer<typeof UserNameSchema>;
 
 /** A User's email */
 export const UserEmailSchema = z.string().email().trim();
-
 export type UserEmail = z.infer<typeof UserEmailSchema>;
+
+/** A User's password */
+export const UserPasswordSchema = z.string().min(8);
+export type UserPassword = z.infer<typeof UserPasswordSchema>;
 
 export const UserRegistrationSchema = z.object({
     email: UserEmailSchema,
-    username: UserNameSchema,
-    password: z.string().min(8),
+    name: UserNameSchema,
+    password: UserPasswordSchema,
 });
 
 export type UserRegistration = z.infer<typeof UserRegistrationSchema>;
+
+/** Update user details.  */
+export const UserUpdateSchema = UserRegistrationSchema.partial();
+export type UserUpdate = z.infer<typeof UserUpdateSchema>;

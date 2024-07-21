@@ -1,10 +1,12 @@
+import { assert } from "../../utils";
+
 /** Information that a registered user contextually stores. */
 export type RegisteredUser = {
     kind: "registered";
     id: string;
     name: string;
     email: string;
-    image: string | undefined;
+    image?: string;
 };
 
 /** Information that a anonymous user contextually stores. */
@@ -37,6 +39,10 @@ export type AuthAction =
           payload: Omit<LoggedInAuthState, "kind">;
       }
     | {
+          type: "update";
+          payload: Omit<RegisteredUser, "kind">;
+      }
+    | {
           type: "logout";
       };
 
@@ -62,13 +68,20 @@ export function init(): AuthState {
  * Function to reduce the current state of the auth-context based on the action
  * that was dispatched.
  * */
-export const reducer = (_: AuthState, action: AuthAction): AuthState => {
+export const reducer = (state: AuthState, action: AuthAction): AuthState => {
     switch (action.type) {
         case "login":
             localStorage.setItem("token", action.payload.token);
             localStorage.setItem("refreshToken", action.payload.refreshToken);
             localStorage.setItem("user", JSON.stringify(action.payload.user));
             return { "kind": "logged-in", ...action.payload };
+        case "update":
+            assert(state.kind === "logged-in");
+            localStorage.setItem("user", JSON.stringify(action.payload));
+            return {
+                ...state,
+                user: { ...action.payload, kind: "registered" },
+            };
         case "logout":
             localStorage.removeItem("token");
             localStorage.removeItem("refreshToken");

@@ -166,7 +166,7 @@ function UserSettingsRoute() {
                         to update your name or email to one that is already
                         taken by another user.
                     </p>
-                    <UpdateUserForm />
+                    <UpdateUserForm onResponse={handleOutcome} user={user} />
                 </section>
                 <section className={details}>
                     <h2 style={{ color: "red" }}>Danger Zone</h2>
