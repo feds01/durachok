@@ -1,5 +1,5 @@
 import { css } from "@emotion/css";
-import { Divider, Typography } from "@mui/material";
+import { Typography } from "@mui/material";
 import Button from "@mui/material/Button";
 import {
     Link,
@@ -7,14 +7,15 @@ import {
     redirect,
     useNavigate,
 } from "@tanstack/react-router";
+import { useState } from "react";
 
+import Alert, { AlertKind } from "../../components/Alert";
+import Divider from "../../components/Divider";
 import PlayerAvatar from "../../components/PlayerAvatar";
 import { useAuthDispatch } from "../../contexts/auth";
 import DeleteUserForm from "../../forms/DeleteUserForm";
 import UpdateUserForm from "../../forms/UpdateUserForm";
 import UpdateUserProfileImageForm from "../../forms/UpdateUserProfileImageForm";
-import { useState } from "react";
-import Alert, { AlertKind } from "../../components/Alert";
 
 const dashboard = css`
     text-align: center;
@@ -91,7 +92,7 @@ export const Route = createFileRoute("/user/settings")({
 });
 
 type SettingsEvent = {
-    severity: AlertKind
+    severity: AlertKind;
     message: string;
 };
 
@@ -134,7 +135,7 @@ function UserSettingsRoute() {
                 avatarSize={128}
                 name={user.name}
             />
-            <Divider style={{ width: "100%" }} />
+            <Divider />
             <div className={settings}>
                 {event && (
                     <Alert
@@ -147,7 +148,7 @@ function UserSettingsRoute() {
                 )}
                 <section className={details}>
                     <h2>Profile Picture</h2>
-                    <Divider style={{ width: "100%" }} />
+                    <Divider />
                     <p>
                         You can upload a JPG file that will be used a as a
                         profile picture. The maximum file size is 1MB. To get
@@ -158,7 +159,7 @@ function UserSettingsRoute() {
                 </section>
                 <section className={details}>
                     <h2>Update User Details</h2>
-                    <Divider style={{ width: "100%" }} />
+                    <Divider />
                     <p>
                         Update your user account details by replacing the
                         current information in the fields. You will not be able
@@ -169,7 +170,7 @@ function UserSettingsRoute() {
                 </section>
                 <section className={details}>
                     <h2 style={{ color: "red" }}>Danger Zone</h2>
-                    <Divider style={{ width: "100%" }} />
+                    <Divider />
                     <Typography component={"p"} sx={{ mb: "0.6em" }}>
                         Deleting your account will remove any and all
                         information on your account. This includes any games
