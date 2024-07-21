@@ -27,6 +27,17 @@ const GamePromptFormInputSchema = z.object({
 
 type GamePromptInput = z.infer<typeof GamePromptFormInputSchema>;
 
+const submitStyle = css`
+    height: 60px;
+    font-size: 2em !important;
+    background-color: #3f51b5 !important;
+    margintop: 19px;
+
+    &:hover {
+        background-color: #3f51b5 !important;
+    }
+`;
+
 export default function GamePrompt({ startPin }: Props) {
     const [stage, setStage] = useState<StageKind>("pin");
     const navigator = useNavigate();
@@ -156,6 +167,7 @@ export default function GamePrompt({ startPin }: Props) {
             <SubmitButton
                 disabled={!isDef(form.formState.dirtyFields[stage])}
                 isSubmitting={form.formState.isSubmitting}
+                className={submitStyle}
                 onClick={next}
             />
         </form>

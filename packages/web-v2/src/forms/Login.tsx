@@ -28,6 +28,17 @@ type Props = {
     onSuccess: (result: LoginResult) => void;
 };
 
+const submitStyle = css`
+    height: 60px;
+    font-size: 2em !important;
+    background-color: #3f51b5 !important;
+    margintop: 19px;
+
+    &:hover {
+        background-color: #3f51b5 !important;
+    }
+`;
+
 export default function Login({ onSuccess }: Props) {
     const loginWith = trpc.auth.login.useMutation();
     const form = useForm<Login>({
@@ -97,6 +108,7 @@ export default function Login({ onSuccess }: Props) {
             <SubmitButton
                 label="Login"
                 type="submit"
+                className={submitStyle}
                 isSubmitting={form.formState.isSubmitting}
             />
         </form>
