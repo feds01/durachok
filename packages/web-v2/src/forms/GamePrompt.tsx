@@ -41,11 +41,11 @@ export default function GamePrompt({ startPin }: Props) {
         },
     });
 
-    const onSubmit = (data: GamePromptInput) => {
-        if (isDef(data.pin)) {
+    const onSubmit = ({ pin }: GamePromptInput) => {
+        if (isDef(pin)) {
             navigator({
-                to: `/lobby/$id`,
-                params: { id: data.pin.toString() },
+                to: `/lobby/$pin`,
+                params: { pin },
             });
         }
     };
