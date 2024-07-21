@@ -30,8 +30,7 @@ export class UserService {
     ) {}
 
     /**
-     * A method to get the user's credentials based on either email or
-     * username.
+     * Get the user's credentials based on either email or username.
      */
     public async getCredentials(input: {
         email?: string;
@@ -40,10 +39,7 @@ export class UserService {
         const { name, email } = input;
 
         const searchQuery = {
-            $or: [
-                ...(name ? [{ name: name }] : []),
-                ...(email ? [{ email }] : []),
-            ],
+            $or: [...(name ? [{ name }] : []), ...(email ? [{ email }] : [])],
         };
 
         const user = await User.findOne(searchQuery);
@@ -59,6 +55,7 @@ export class UserService {
         };
     }
 
+    /** Get a user's information. */
     public async get(userId: string): Promise<UserInfo> {
         const user = await this.commonService.getUserDbObject(userId);
 
@@ -123,6 +120,7 @@ export class UserService {
         }
     }
 
+    /** Update a user's information. */
     public async update(userId: string, info: UserUpdate): Promise<void> {
         const user = await this.commonService.getUserDbObject(userId);
 

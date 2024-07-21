@@ -2,11 +2,17 @@ import { TRPCError } from "@trpc/server";
 
 import { ENV } from "../config";
 import { authProcedure, publicProcedure, router } from "../lib/trpc";
-import { UserLoginSchema, UserRegistrationSchema } from "../schemas/user";
+import {
+    UserInfoSchema,
+    UserLoginResponseSchema,
+    UserLoginSchema,
+    UserRegistrationSchema,
+} from "../schemas/user";
 
 export const authRouter = router({
     register: publicProcedure
         .input(UserRegistrationSchema)
+        .output(UserInfoSchema)
         .mutation(async (req) => {
             const { ctx, input } = req;
 
@@ -21,40 +27,43 @@ export const authRouter = router({
             return await ctx.userService.create(input);
         }),
 
-    login: publicProcedure.input(UserLoginSchema).mutation(async (req) => {
-        const { ctx, input } = req;
+    login: publicProcedure
+        .input(UserLoginSchema)
+        .output(UserLoginResponseSchema)
+        .mutation(async (req) => {
+            const { ctx, input } = req;
 
-        const credentials = await ctx.userService.getCredentials(input);
-        if (!credentials) {
-            throw new TRPCError({
-                code: "UNAUTHORIZED",
-                message: "Invalid credentials",
-            });
-        }
+            const credentials = await ctx.userService.getCredentials(input);
+            if (!credentials) {
+                throw new TRPCError({
+                    code: "UNAUTHORIZED",
+                    message: "Invalid credentials",
+                });
+            }
 
-        // Now check with auth service to see if the credentials are valid.
-        const valid = await ctx.authService.verify(
-            credentials.password,
-            input.password,
-        );
-        if (!valid) {
-            throw new TRPCError({
-                code: "UNAUTHORIZED",
-                message: "Invalid credentials",
-            });
-        }
+            // Now check with auth service to see if the credentials are valid.
+            const valid = await ctx.authService.verify(
+                credentials.password,
+                input.password,
+            );
+            if (!valid) {
+                throw new TRPCError({
+                    code: "UNAUTHORIZED",
+                    message: "Invalid credentials",
+                });
+            }
 
-        return {
-            id: credentials.id,
-            name: credentials.name,
-            email: credentials.email,
-            ...(await ctx.authService.createTokens({
+            return {
                 id: credentials.id,
                 name: credentials.name,
                 email: credentials.email,
-            })),
-        };
-    }),
+                ...(await ctx.authService.createTokens({
+                    id: credentials.id,
+                    name: credentials.name,
+                    email: credentials.email,
+                })),
+            };
+        }),
 
     refresh: authProcedure.mutation(async (req) => {
         const { ctx } = req;
