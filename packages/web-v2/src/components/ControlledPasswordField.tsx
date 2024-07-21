@@ -43,13 +43,13 @@ export default function ControlledPasswordField<T extends FieldValues>({
             })}
             InputProps={{
                 // @@Todo: this should be decided by the `TextFieldBackground` in `theme.ts`
-                sx:{
-                    backgroundColor: "#3b3d54"
+                sx: {
+                    backgroundColor: "#3b3d54",
                 },
                 endAdornment: (
                     <InputAdornment position="end">
                         <IconButton
-                            sx={{color: "rgba(172, 170, 190, 1)"}}
+                            sx={{ color: "rgba(172, 170, 190, 1)" }}
                             aria-label="toggle password visibility"
                             onClick={() => setShowPassword(!showPassword)}
                             onMouseDown={(e) => e.preventDefault()}
