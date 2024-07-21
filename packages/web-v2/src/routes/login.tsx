@@ -82,7 +82,16 @@ export default function Login() {
     const [state, dispatch] = useAuth();
 
     const onSuccess = (result: LoginResult) => {
-        dispatch({ type: "login", payload: result });
+        const { token, refreshToken, ...user } = result;
+
+        dispatch({
+            type: "login",
+            payload: {
+                token,
+                refreshToken,
+                user: { kind: "registered", ...user },
+            },
+        });
     };
 
     // @@Hack: we should be able to rely on `router.invalidate()` which

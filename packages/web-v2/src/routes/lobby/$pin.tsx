@@ -1,4 +1,5 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
+
 import { trpc } from "../../utils/trpc";
 
 export const Route = createFileRoute("/lobby/$pin")({
@@ -12,8 +13,8 @@ export const Route = createFileRoute("/lobby/$pin")({
             });
         }
     },
-    // We need to make a call to `lobbies.get(id)` and fetch the lobby, if we 
-    // fail (i.e.) unauthorized access, then we should re-direct them to home 
+    // We need to make a call to `lobbies.get(id)` and fetch the lobby, if we
+    // fail (i.e.) unauthorized access, then we should re-direct them to home
     // page where they can re-enter their details.
     loader: async ({ params: { pin } }) => {
         return {

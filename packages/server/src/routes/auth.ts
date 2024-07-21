@@ -45,6 +45,7 @@ export const authRouter = router({
         }
 
         return {
+            id: credentials.id,
             name: credentials.name,
             email: credentials.email,
             ...(await ctx.authService.createTokens({
