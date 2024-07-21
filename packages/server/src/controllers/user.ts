@@ -3,7 +3,7 @@ import { Logger } from "winston";
 
 import { UserInfo, UserRegistration, UserUpdate } from "../schemas/user";
 import { expr, isDef } from "../utils";
-import User, { IUser } from "./../models/user.model";
+import User from "./../models/user.model";
 import { AuthService } from "./auth";
 import { CommonService } from "./common";
 import { ImageService } from "./image";
@@ -111,6 +111,10 @@ export class UserService {
                 image: isDef(image),
             });
 
+            if (isDef(image)) {
+                await this.imageService.updateUserImage(user.id, image);
+            }
+
             const saved = await user.save();
             return this.get(saved.id);
         } catch (e: unknown) {
@@ -132,6 +136,7 @@ export class UserService {
             }
 
             if (isDef(info.image)) {
+                await this.imageService.updateUserImage(user.id, info.image);
                 user.image = true;
             }
 
@@ -145,6 +150,7 @@ export class UserService {
     public async delete(userId: string): Promise<void> {
         try {
             await User.deleteOne({ _id: userId });
+            await this.imageService.deleteUserImage(userId);
         } catch (e: unknown) {
             this.logger.warn("Failed to delete user", e);
         }
