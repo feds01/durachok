@@ -87,6 +87,20 @@ export const UserLoginSchema = z
 
 export type UserLogin = z.infer<typeof UserLoginSchema>;
 
+/** The response that we send when user successfully logs in.  */
+export const UserLoginResponseSchema = UserSchema.extend({
+    /** The user's id */
+    id: z.string(),
+    /** The user's user name */
+    name: UserNameSchema,
+    /** The user's email */
+    email: UserEmailSchema,
+    /** The user's access token */
+    token: z.string(),
+    /** The user's refresh token */
+    refreshToken: z.string(),
+}).strict();
+
 /** Updating a user's account, this allows us to update the username, email, and add an image. */
 export const UserUpdateSchema = UserSchema.partial().extend({
     image: z.string().optional(),
@@ -110,6 +124,6 @@ export const UserInfoSchema = UserSchema.extend({
     statistics: UserStatisticsSchema.optional(),
     /** The list of currently active games that the user is in. */
     games: z.array(SimplifiedLobbySchema),
-});
+}).strict();
 
 export type UserInfo = z.infer<typeof UserInfoSchema>;
