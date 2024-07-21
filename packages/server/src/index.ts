@@ -46,7 +46,7 @@ if (ENV === "dev") {
 }
 
 // catch 404 and forward to error handler
-app.use((req, res, next) => {
+app.use((_req, res) => {
     res.status(404).send({
         status: false,
     });

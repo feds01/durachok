@@ -1,9 +1,7 @@
 import type * as express from "express";
-import jwt from "jsonwebtoken";
 
-import { JWT_REFRESH_SECRET, JWT_SECRET } from "../config";
 import { AuthService } from "../controllers/auth";
-import { RawTokenPayload, TokenPayload } from "../schemas/auth";
+import { TokenPayload } from "../schemas/auth";
 import { assert, expr, isDef } from "../utils";
 
 type Tokens = {
