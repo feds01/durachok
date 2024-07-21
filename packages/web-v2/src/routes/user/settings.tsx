@@ -13,6 +13,8 @@ import { useAuthDispatch } from "../../contexts/auth";
 import DeleteUserForm from "../../forms/DeleteUserForm";
 import UpdateUserForm from "../../forms/UpdateUserForm";
 import UpdateUserProfileImageForm from "../../forms/UpdateUserProfileImageForm";
+import { useState } from "react";
+import Alert, { AlertKind } from "../../components/Alert";
 
 const dashboard = css`
     text-align: center;
@@ -88,7 +90,13 @@ export const Route = createFileRoute("/user/settings")({
     component: UserSettingsRoute,
 });
 
+type SettingsEvent = {
+    severity: AlertKind
+    message: string;
+};
+
 function UserSettingsRoute() {
+    const [event, setEvent] = useState<SettingsEvent | null>(null);
     const { user } = Route.useRouteContext();
     const auth = useAuthDispatch();
     const navigator = useNavigate();
@@ -96,6 +104,10 @@ function UserSettingsRoute() {
     const logout = () => {
         auth({ type: "logout" });
         navigator({ to: "/" });
+    };
+
+    const handleOutcome = (severity: AlertKind, message: string) => {
+        setEvent({ severity, message });
     };
 
     return (
@@ -124,6 +136,15 @@ function UserSettingsRoute() {
             />
             <Divider style={{ width: "100%" }} />
             <div className={settings}>
+                {event && (
+                    <Alert
+                        kind={event.severity}
+                        message={event.message}
+                        sx={{
+                            pt: 1,
+                        }}
+                    />
+                )}
                 <section className={details}>
                     <h2>Profile Picture</h2>
                     <Divider style={{ width: "100%" }} />
@@ -136,7 +157,7 @@ function UserSettingsRoute() {
                     <UpdateUserProfileImageForm />
                 </section>
                 <section className={details}>
-                    <h2>Profile Picture</h2>
+                    <h2>Update User Details</h2>
                     <Divider style={{ width: "100%" }} />
                     <p>
                         Update your user account details by replacing the
@@ -156,7 +177,7 @@ function UserSettingsRoute() {
                         statistics. Once your account is deleted, this
                         information will be unrecoverable.
                     </Typography>
-                    <DeleteUserForm />
+                    <DeleteUserForm onResponse={handleOutcome} />
                 </section>
             </div>
         </div>
