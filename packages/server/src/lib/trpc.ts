@@ -81,10 +81,29 @@ const t = initTRPC.context<Context>().create({
  */
 export const router = t.router;
 
-/** A procedure than any one can access. */
-export const publicProcedure = t.procedure;
+/**
+ * A procedure than any one can access.
+ *
+ * - Logs the request timing.
+ * - Logs if the request was successful or not.
+ */
+export const publicProcedure = t.procedure.use(async (opts) => {
+    const start = Date.now();
 
-export const authProcedure = t.procedure.use(async function hasToken(opts) {
+    const result = await opts.next();
+
+    const durationMs = Date.now() - start;
+    const meta = { path: opts.path, type: opts.type, durationMs };
+
+    result.ok
+        ? logger.info("OK request timing:", meta)
+        : logger.error("Non-OK request timing", meta);
+
+    return result;
+});
+
+/** A procedure that requires the request to send tokens. */
+export const authProcedure = publicProcedure.use(async function hasToken(opts) {
     const { ctx } = opts;
 
     if (!ctx.token || !ctx.rawTokens) {
@@ -103,8 +122,10 @@ export const authProcedure = t.procedure.use(async function hasToken(opts) {
  * A procedure that ensure that a `user` must be accessing
  * this procedure. This will check that the user has provided
  * a valid token, and that the user is logged in.
+ *
+ * - Ensure that the user is logged in, and a user that is "registered".
  */
-export const userProcedure = t.procedure.use(async function isAuthed(opts) {
+export const userProcedure = publicProcedure.use(async function isAuthed(opts) {
     const { ctx } = opts;
 
     const token = ctx.token;
