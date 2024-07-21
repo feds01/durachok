@@ -1,9 +1,42 @@
-import React from "react";
+import Button from "@mui/material/Button";
 
-// type Props = {}
+import { useAuthDispatch } from "../contexts/auth";
+import { trpc } from "../utils/trpc";
+import { AlertKind } from "../components/Alert";
+import { useNavigate } from "@tanstack/react-router";
 
-const DeleteUserForm = (/* props: Props */) => {
-    return <div>DeleteUserForm</div>;
+type DeleteUserFormProps = {
+    /** Used to determine what happens in the event of a failure. */
+    onResponse?: (severity: AlertKind, message: string) => void;
+};
+
+const DeleteUserForm = ({ onResponse }: DeleteUserFormProps) => {
+    const deleteUser = trpc.users.delete.useMutation();
+    const dispatch = useAuthDispatch();
+    const navigator = useNavigate();
+
+    const handleDelete = async () => {
+        try {
+            await deleteUser.mutateAsync();
+            dispatch({ type: "logout" });
+            navigator({ to: "/" });
+        } catch (e: unknown) {
+            if (onResponse) {
+                onResponse("error", "Could not delete user.");
+            }
+        }
+    };
+
+    return (
+        <Button
+            fullWidth={false}
+            color={"error"}
+            onClick={handleDelete}
+            variant={"contained"}
+        >
+            Delete
+        </Button>
+    );
 };
 
 export default DeleteUserForm;
