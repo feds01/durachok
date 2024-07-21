@@ -2,7 +2,11 @@ import { hash, verify } from "argon2";
 import jwt from "jsonwebtoken";
 
 import { JWT_REFRESH_SECRET, JWT_SECRET } from "../config";
-import { RawTokenPayload, TokenPayload } from "../schemas/auth";
+import {
+    RawTokenPayload,
+    TokenPayload,
+    UserTokensResponse,
+} from "../schemas/auth";
 import { expr, isDef } from "../utils";
 
 type Tokens = {
@@ -108,7 +112,7 @@ export class AuthService {
      */
     public async refreshTokens(
         refreshToken: string,
-    ): Promise<(Tokens & { payload: TokenPayload }) | undefined> {
+    ): Promise<UserTokensResponse | undefined> {
         const decodedToken = await this.verifyToken(
             refreshToken,
             JWT_REFRESH_SECRET,
