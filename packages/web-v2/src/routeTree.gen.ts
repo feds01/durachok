@@ -17,7 +17,7 @@ import { Route as IndexImport } from './routes/index'
 import { Route as UserIndexImport } from './routes/user/index'
 import { Route as LobbyIndexImport } from './routes/lobby/index'
 import { Route as UserSettingsImport } from './routes/user/settings'
-import { Route as LobbyIdImport } from './routes/lobby/$id'
+import { Route as LobbyPinImport } from './routes/lobby/$pin'
 
 // Create/Update Routes
 
@@ -51,8 +51,8 @@ const UserSettingsRoute = UserSettingsImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
-const LobbyIdRoute = LobbyIdImport.update({
-  path: '/lobby/$id',
+const LobbyPinRoute = LobbyPinImport.update({
+  path: '/lobby/$pin',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -81,11 +81,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RegisterImport
       parentRoute: typeof rootRoute
     }
-    '/lobby/$id': {
-      id: '/lobby/$id'
-      path: '/lobby/$id'
-      fullPath: '/lobby/$id'
-      preLoaderRoute: typeof LobbyIdImport
+    '/lobby/$pin': {
+      id: '/lobby/$pin'
+      path: '/lobby/$pin'
+      fullPath: '/lobby/$pin'
+      preLoaderRoute: typeof LobbyPinImport
       parentRoute: typeof rootRoute
     }
     '/user/settings': {
@@ -118,7 +118,7 @@ export const routeTree = rootRoute.addChildren({
   IndexRoute,
   LoginRoute,
   RegisterRoute,
-  LobbyIdRoute,
+  LobbyPinRoute,
   UserSettingsRoute,
   LobbyIndexRoute,
   UserIndexRoute,
@@ -135,7 +135,7 @@ export const routeTree = rootRoute.addChildren({
         "/",
         "/login",
         "/register",
-        "/lobby/$id",
+        "/lobby/$pin",
         "/user/settings",
         "/lobby/",
         "/user/"
@@ -150,8 +150,8 @@ export const routeTree = rootRoute.addChildren({
     "/register": {
       "filePath": "register.tsx"
     },
-    "/lobby/$id": {
-      "filePath": "lobby/$id.tsx"
+    "/lobby/$pin": {
+      "filePath": "lobby/$pin.tsx"
     },
     "/user/settings": {
       "filePath": "user/settings.tsx"

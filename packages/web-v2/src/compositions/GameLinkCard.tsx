@@ -54,7 +54,7 @@ export default function GameLinkCard({
     return (
         <Box
             className={card}
-            onClick={() => navigator({ to: `/lobby/$id`, params: { id: pin } })}
+            onClick={() => navigator({ to: `/lobby/$pin`, params: { pin } })}
         >
             <Box sx={{ flex: 1 }}>
                 <Box
