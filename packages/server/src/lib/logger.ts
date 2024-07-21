@@ -33,7 +33,7 @@ const lobbyFormat = printf(
             const { pin, event, ...rest } = metadata;
 
             // Format the message to display timestamp, log level, lobby pin and event handler with message
-            msg = `${timestamp} [${level}] [${metadata.pin}/${metadata.event}]: ${message}`;
+            msg = `${timestamp} [${level}] [${pin}/${event}]: ${message}`;
 
             // Append any additional metadata that was passed to the formatter
             if (Object.keys(rest).length > 0) {

@@ -1,7 +1,7 @@
 import { ObjectId } from "mongodb";
 import { z } from "zod";
 
-import { GameStatusSchema, SimplifiedLobbySchema } from "./common";
+import { SimplifiedLobbySchema } from "./common";
 
 /**
  * A Username, must follow the rules:

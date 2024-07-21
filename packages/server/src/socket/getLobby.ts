@@ -1,4 +1,4 @@
-import Lobby, { IGame, PopulatedGame } from "../models/game.model";
+import Lobby, { PopulatedGame } from "../models/game.model";
 
 export async function getLobby(pin: string): Promise<PopulatedGame> {
     const lobby = await Lobby.findOne({ pin }).populate<
