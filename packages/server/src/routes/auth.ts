@@ -2,6 +2,7 @@ import { TRPCError } from "@trpc/server";
 
 import { ENV } from "../config";
 import { authProcedure, publicProcedure, router } from "../lib/trpc";
+import { UserTokensResponseSchema } from "../schemas/auth";
 import {
     UserInfoSchema,
     UserLoginResponseSchema,
@@ -65,18 +66,29 @@ export const authRouter = router({
             };
         }),
 
-    refresh: authProcedure.mutation(async (req) => {
-        const { ctx } = req;
+    refresh: authProcedure
+        .output(UserTokensResponseSchema)
+        .mutation(async (req) => {
+            const { ctx } = req;
 
-        if (!req.ctx.rawTokens.refreshToken) {
-            throw new TRPCError({
-                code: "UNAUTHORIZED",
-                message: "No refresh token provided",
-            });
-        }
+            if (!req.ctx.rawTokens.refreshToken) {
+                throw new TRPCError({
+                    code: "UNAUTHORIZED",
+                    message: "No refresh token provided",
+                });
+            }
 
-        return await ctx.authService.refreshTokens(
-            req.ctx.rawTokens.refreshToken,
-        );
-    }),
+            const tokens = await ctx.authService.refreshTokens(
+                req.ctx.rawTokens.refreshToken,
+            );
+
+            if (!tokens) {
+                throw new TRPCError({
+                    code: "UNAUTHORIZED",
+                    message: "Invalid refresh token",
+                });
+            }
+
+            return tokens;
+        }),
 });

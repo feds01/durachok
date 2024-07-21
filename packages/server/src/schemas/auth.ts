@@ -35,3 +35,17 @@ const TokenPayloadSchema = z.union([
 ]);
 
 export type TokenPayload = z.infer<typeof TokenPayloadSchema>;
+
+/** The response that we send when we refresh the user's tokens. */
+export const UserTokensResponseSchema = z
+    .object({
+        /** The user's access token */
+        token: z.string(),
+        /** The user's refresh token */
+        refreshToken: z.string(),
+        /** The user payload. */
+        payload: TokenPayloadSchema,
+    })
+    .strict();
+
+export type UserTokensResponse = z.infer<typeof UserTokensResponseSchema>;
