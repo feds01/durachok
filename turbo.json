@@ -9,6 +9,9 @@
       },
       "test": {
         "cache": false
+      },
+      "dev": {
+        "cache": false
       }
     }
   }
