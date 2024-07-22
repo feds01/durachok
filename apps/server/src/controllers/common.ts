@@ -1,6 +1,6 @@
 import Lobbies, { PopulatedGame } from "../models/game.model";
+import User, { IUser } from "../models/user.model";
 import { isDef } from "../utils";
-import User, { IUser } from "./../models/user.model";
 
 /**
  * A service used to access common functionality and information

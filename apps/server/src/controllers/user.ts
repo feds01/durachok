@@ -1,9 +1,9 @@
 import { TRPCError } from "@trpc/server";
 import { Logger } from "winston";
 
+import User from "../models/user.model";
 import { UserInfo, UserRegistration, UserUpdate } from "../schemas/user";
 import { expr, isDef } from "../utils";
-import User from "./../models/user.model";
 import { AuthService } from "./auth";
 import { CommonService } from "./common";
 import { ImageService } from "./image";

@@ -54,25 +54,7 @@ importers:
         specifier: ^5.5.3
         version: 5.5.3
 
-  packages/engine:
-    devDependencies:
-      '@trivago/prettier-plugin-sort-imports':
-        specifier: ^4.3.0
-        version: 4.3.0(prettier@3.3.3)
-      '@types/node':
-        specifier: ^20.14.10
-        version: 20.14.11
-      prettier:
-        specifier: ^3.3.3
-        version: 3.3.3
-      typescript:
-        specifier: ^5.5.3
-        version: 5.5.3
-      vitest:
-        specifier: ^2.0.3
-        version: 2.0.3(@types/node@20.14.11)(jsdom@16.7.0)(terser@5.31.3)
-
-  packages/server:
+  apps/server:
     dependencies:
       '@trpc/server':
         specifier: ^10.45.2
@@ -114,8 +96,8 @@ importers:
         specifier: ^3.3.2
         version: 3.3.2
       shared:
-        specifier: file:./../engine/
-        version: link:../engine
+        specifier: file:./../../packages/engine
+        version: link:../../packages/engine
       socket.io:
         specifier: 4.7.5
         version: 4.7.5
@@ -166,7 +148,7 @@ importers:
         specifier: ^1.0.1
         version: 1.1.0
 
-  packages/web:
+  apps/web:
     dependencies:
       '@emotion/css':
         specifier: ^11.11.2
@@ -235,8 +217,8 @@ importers:
         specifier: ^4.7.12
         version: 4.7.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       shared:
-        specifier: file:./../engine/
-        version: link:../engine
+        specifier: file:./../../packages/engine
+        version: link:../../packages/engine
       socket.io-client:
         specifier: 4.7.5
         version: 4.7.5
@@ -304,6 +286,24 @@ importers:
       vite-plugin-svgr:
         specifier: ^4.2.0
         version: 4.2.0(rollup@4.19.0)(typescript@5.5.3)(vite@5.3.4(@types/node@20.14.11)(terser@5.31.3))
+
+  packages/engine:
+    devDependencies:
+      '@trivago/prettier-plugin-sort-imports':
+        specifier: ^4.3.0
+        version: 4.3.0(prettier@3.3.3)
+      '@types/node':
+        specifier: ^20.14.10
+        version: 20.14.11
+      prettier:
+        specifier: ^3.3.3
+        version: 3.3.3
+      typescript:
+        specifier: ^5.5.3
+        version: 5.5.3
+      vitest:
+        specifier: ^2.0.3
+        version: 2.0.3(@types/node@20.14.11)(jsdom@16.7.0)(terser@5.31.3)
 
 packages:
 
