@@ -19,7 +19,8 @@
     "scripts": {
         "fmt": "turbo fmt",
         "lint": "turbo lint",
-        "test": "turbo test"
+        "test": "turbo test",
+        "dev": "turbo dev"
     },
     "dependencies": {
         "@total-typescript/ts-reset": "^0.5.1",
