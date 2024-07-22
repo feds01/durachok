@@ -1,5 +1,5 @@
 {
-    "name": "shared",
+    "name": "@durachok/engine",
     "version": "1.0.0",
     "description": "Shared code between durak cards API and clients.",
     "main": "dist/index.js",
@@ -7,7 +7,7 @@
     "scripts": {
         "prepare": "npm run build",
         "build": "tsc --declaration",
-        "check": "tsc --noEmit",
+        "lint": "tsc --noEmit",
         "fmt": "prettier --write .",
         "test": "vitest run"
     },
