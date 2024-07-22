@@ -4,6 +4,9 @@
       "fmt": {
         "cache": false
       },
+      "check": {
+        "cache": false
+      },
       "lint": {
         "cache": false
       },
