@@ -3,12 +3,7 @@
 
 ## Installation
 
-1. Run the following command to install the dependencies:
-```bash
-npm i
-```
-
-2. Configure instance to have all the required environment variables (see `.env.sample` for reference).:
+1. Configure instance to have all the required environment variables (see `.env.sample` for reference).:
 ```bash
 # Application build information
 REACT_APP_NAME=$npm_package_name
@@ -27,7 +22,7 @@ REACT_APP_RE_CAPTCHA_SECRET=""
 
 > **Note** You can copy the `.env.sample` file to `.env` and update the values accordingly. `cp .env.sample .env`
 
-3. Run the following command to start the development server:
+2. Run the following command to start the development server:
 ```bash
 npm run dev
 ```
