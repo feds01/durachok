@@ -2,11 +2,13 @@ import { TRPCError, initTRPC } from "@trpc/server";
 import * as trpcExpress from "@trpc/server/adapters/express";
 import { ZodError } from "zod";
 
+import { IMAGE_STORAGE } from "../config";
 import { AuthService } from "../controllers/auth";
 import { CommonService } from "../controllers/common";
 import { ImageService } from "../controllers/image";
 import { LobbyService } from "../controllers/lobby";
 import { UserService } from "../controllers/user";
+import { LocalImageRepo, S3ImageRepo } from "../repos/image";
 import { expr } from "../utils";
 import { transformZodErrorIntoResponseError } from "../utils/error";
 import { getTokenFromHeaders } from "./authentication";
@@ -17,10 +19,17 @@ export const createContext = async ({
     req,
     res,
 }: trpcExpress.CreateExpressContextOptions) => {
+    const imageRepo = expr(() => {
+        if (IMAGE_STORAGE === "s3") {
+            return new S3ImageRepo(logger);
+        }
+
+        return new LocalImageRepo(logger);
+    });
     const authService = new AuthService();
     const commonService = new CommonService();
     const lobbyService = new LobbyService(logger, commonService);
-    const imageService = new ImageService(logger);
+    const imageService = new ImageService(logger, imageRepo);
     const userService = new UserService(
         logger,
         commonService,
