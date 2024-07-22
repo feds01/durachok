@@ -33,7 +33,7 @@
     "react-loader-spinner": "6.1.6",
     "react-transition-group": "^4.4.5",
     "react-virtuoso": "^4.7.12",
-    "shared": "file:./../engine/",
+    "shared": "file:./../../packages/engine",
     "socket.io-client": "4.7.5",
     "use-sound": "^4.0.3",
     "usehooks-ts": "^3.1.0",
