@@ -1,3 +1,21 @@
+{
+    "name": "@durachok/root",
+    "version": "0.0.0",
+    "description": "Durachok App",
+    "author": "Alexander Fedotov",
+    "maintainers": [
+        "Alexander Fedotov"
+    ],
+    "type": "module",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/feds01/durachok.git"
+    },
+    "engines": {
+        "node": ">=18.17.0"
+    },
+    "packageManager": "pnpm@9.6.0",
     "scripts": {
         "fmt": "turbo fmt",
         "lint": "turbo lint",
@@ -20,3 +38,4 @@
         "turbo": "^2.0.9",
         "typescript": "^5.5.3"
     }
+}

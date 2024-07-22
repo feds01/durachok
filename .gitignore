@@ -1,3 +1,13 @@
 # Editor configs
 
 .vscode/
+
+# Node installations
+
+node_modules/
+.turbo
+
+
+# Old sources
+
+old/

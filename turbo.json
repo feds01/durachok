@@ -1,0 +1,14 @@
+{
+    "$schema": "https://turbo.build/schema.json",
+    "tasks": {
+      "fmt": {
+        "cache": false
+      },
+      "lint": {
+        "cache": false
+      },
+      "test": {
+        "cache": false
+      }
+    }
+  }
