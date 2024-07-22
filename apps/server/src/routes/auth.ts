@@ -9,6 +9,7 @@ import {
     UserLoginSchema,
     UserRegistrationSchema,
 } from "../schemas/user";
+import { isDef } from "../utils";
 
 export const authRouter = router({
     register: publicProcedure
@@ -58,6 +59,7 @@ export const authRouter = router({
                 id: credentials.id,
                 name: credentials.name,
                 email: credentials.email,
+                ...(isDef(credentials.image) && { image: credentials.image }),
                 ...(await ctx.authService.createTokens({
                     id: credentials.id,
                     name: credentials.name,

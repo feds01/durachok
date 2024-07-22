@@ -105,8 +105,15 @@ export class S3ImageRepo implements ImageRepo {
     }
 }
 
+export type HostInfo = {
+    hostname: string;
+};
+
 export class LocalImageRepo implements ImageRepo {
-    constructor(private readonly logger: Logger) {}
+    constructor(
+        private readonly hostInfo: HostInfo,
+        private readonly logger: Logger,
+    ) {}
 
     private constructPath(path: string): string {
         return `${UPLOAD_FOLDER}/${path}`;
@@ -132,7 +139,7 @@ export class LocalImageRepo implements ImageRepo {
     }
 
     async getImage(path: string): Promise<string | undefined> {
-        return path;
+        return `${this.hostInfo.hostname}/${this.constructPath(path)}`;
     }
 
     async deleteImage(path: string): Promise<void> {
