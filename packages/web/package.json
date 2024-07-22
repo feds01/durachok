@@ -1,78 +1,62 @@
 {
-  "name": "client",
-  "version": "0.1.0",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/feds01/durachok"
-  },
+  "name": "@durachok/web",
   "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "preview": "vite preview",
+    "fmt": "prettier --write src"
+  },
   "dependencies": {
+    "@emotion/css": "^11.11.2",
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.11.5",
+    "@hookform/resolvers": "^3.9.0",
     "@mars/heroku-js-runtime-env": "^3.0.2",
-    "@material-ui/core": "5.0.0-alpha.23",
-    "@material-ui/icons": "4.11.3",
-    "@testing-library/jest-dom": "^6.4.6",
-    "@testing-library/react": "^16.0.0",
-    "@testing-library/user-event": "^14.5.2",
-    "@types/jest": "^29.5.12",
-    "@types/node": "^20.14.10",
-    "@types/react": "^18.3.3",
-    "@types/react-dom": "^18.3.0",
+    "@mui/icons-material": "^5.16.4",
+    "@mui/material": "^5.16.4",
+    "@tanstack/react-query": "^4.36.1",
+    "@tanstack/react-router": "^1.45.4",
+    "@tanstack/router-devtools": "^1.45.4",
+    "@trpc/client": "^10.45.2",
+    "@trpc/react-query": "^10.45.2",
     "clsx": "^2.1.1",
-    "formik": "2.4.6",
     "framer-motion": "^11.3.4",
-    "http-proxy-middleware": "^3.0.0",
-    "lodash.debounce": "^4.0.8",
-    "node-sass": "9.0.0",
     "react": "^18.3.1",
     "react-beautiful-dnd": "^13.1.1",
     "react-dom": "^18.3.1",
     "react-google-recaptcha": "^3.1.0",
+    "react-hook-form": "^7.52.1",
     "react-loader-spinner": "6.1.6",
-    "react-router": "6.25.0",
-    "react-router-dom": "6.25.0",
-    "react-scripts": "5.0.1",
     "react-transition-group": "^4.4.5",
     "react-virtuoso": "^4.7.12",
     "shared": "file:./../engine/",
     "socket.io-client": "4.7.5",
-    "source-map-explorer": "^2.5.3",
-    "typescript": "^5.5.3",
     "use-sound": "^4.0.3",
-    "web-vitals": "^4.2.1",
-    "yup": "^1.4.0"
-  },
-  "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "analyze": "source-map-explorer 'build/static/js/*.js'",
-    "serve": "serve -s build/",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",
-    "add-version": "ts-node scripts/versioning.ts & heroku config:set $(cat .env.local | sed '/^$/d; /#[[:print:]]*$/d')"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
+    "usehooks-ts": "^3.1.0",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
-    "prop-types": "^15.8.1",
-    "serve": "^14.2.3",
-    "ts-node": "^10.9.2"
+    "@tanstack/router-plugin": "^1.45.3",
+    "@trivago/prettier-plugin-sort-imports": "^4.3.0",
+    "@types/node": "^20.14.11",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@typescript-eslint/eslint-plugin": "^7.15.0",
+    "@typescript-eslint/parser": "^7.15.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "@vitejs/plugin-react-swc": "^3.5.0",
+    "dotenv": "^16.4.5",
+    "eslint": "^8.57.0",
+    "eslint-plugin-react-hooks": "^4.6.2",
+    "eslint-plugin-react-refresh": "^0.4.7",
+    "prettier": "^3.3.3",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.2.2",
+    "vite": "^5.3.4",
+    "vite-plugin-svgr": "^4.2.0"
   }
 }

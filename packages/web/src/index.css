@@ -1,17 +1,19 @@
-@import url('https://fonts.googleapis.com/css?family=Playfair+Display:400,700i,900i');
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans&display=swap');
+@import url("https://fonts.googleapis.com/css?family=Playfair+Display:400,700i,900i");
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans&display=swap");
 
 * {
     box-sizing: border-box;
 }
 
 /* Disable link styles */
-a:hover, a:link {
+a:hover,
+a:link {
     text-decoration: none;
 }
 
-html, body {
-    font-family: 'Playfair Display', serif;
+html,
+body {
+    font-family: "Playfair Display", serif;
     color: rgba(172, 170, 190, 1);
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
@@ -26,8 +28,9 @@ html, body {
     margin: 0;
 }
 
-h2, p {
-    font-family: 'Cabin', sans-serif;
+h2,
+p {
+    font-family: "Cabin", sans-serif;
 }
 
 #root {
