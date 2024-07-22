@@ -19,6 +19,7 @@
     "scripts": {
         "fmt": "turbo fmt",
         "lint": "turbo lint",
+        "check": "turbo check",
         "test": "turbo test",
         "dev": "turbo dev"
     },
