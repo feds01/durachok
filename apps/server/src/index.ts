@@ -7,7 +7,7 @@ import { createServer } from "http";
 import { AddressInfo } from "net";
 import { renderTrpcPanel } from "trpc-panel";
 
-import { ENV, PORT } from "./config";
+import { ENV, IMAGE_STORAGE, PORT } from "./config";
 import { connectDB } from "./lib/database";
 import logger from "./lib/logger";
 import { createContext } from "./lib/trpc";
@@ -78,5 +78,6 @@ server.listen(PORT, async () => {
         \`------'\`------'\`------'\`------'\`------'\`------'\`------'\`------'        
         ${bold("env")}: ${env} 
         ${bold("port")}:${port}
+        ${bold("image")}: ${chalk.bgGreen.bold(IMAGE_STORAGE)}
     `);
 });
