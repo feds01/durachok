@@ -24,7 +24,8 @@ export const createContext = async ({
             return new S3ImageRepo(logger);
         }
 
-        return new LocalImageRepo(logger);
+        const hostInfo = { hostname: `${req.protocol}://${req.get("host")}` };
+        return new LocalImageRepo(hostInfo, logger);
     });
     const authService = new AuthService();
     const commonService = new CommonService();

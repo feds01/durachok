@@ -1,9 +1,9 @@
 import { TRPCError } from "@trpc/server";
 import { Logger } from "winston";
 
-import User from "../models/user.model";
+import User, { IUser } from "../models/user.model";
 import { UserInfo, UserRegistration, UserUpdate } from "../schemas/user";
-import { expr, isDef } from "../utils";
+import { isDef } from "../utils";
 import { AuthService } from "./auth";
 import { CommonService } from "./common";
 import { ImageService } from "./image";
@@ -16,6 +16,8 @@ type Credentials = {
     name: string;
     /** User email. */
     email: string;
+    /** User image. */
+    image?: string;
     /** The hashed password stored in the DB. */
     password: string;
 };
@@ -28,6 +30,15 @@ export class UserService {
         private readonly imageService: ImageService,
         private readonly lobbyService: LobbyService,
     ) {}
+
+    /** Get a user's image  as a URL. */
+    private async getUserImageURL(user: IUser): Promise<string | undefined> {
+        if (!user.image) {
+            return;
+        }
+
+        return this.imageService.getUserImage(user.id);
+    }
 
     /**
      * Get the user's credentials based on either email or username.
@@ -51,6 +62,7 @@ export class UserService {
             id: user.id,
             name: user.name,
             email: user.email,
+            image: await this.getUserImageURL(user),
             password: user.password,
         };
     }
@@ -61,20 +73,13 @@ export class UserService {
 
         // We need to enrich the user object with additional information, information such as
         // the user's image, the user's lobby, etc.
-        const image = await expr(async () => {
-            if (!user.image) {
-                return;
-            }
-
-            return this.imageService.getUserImage(user.id);
-        });
         const games = await this.lobbyService.getByOwner(user.id);
 
         return {
             id: user.id,
             name: user.name,
             email: user.email,
-            image,
+            image: await this.getUserImageURL(user),
             games,
             // @@Todo: compute statistics.
             // statistics: {}

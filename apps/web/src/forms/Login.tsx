@@ -21,6 +21,7 @@ export type LoginResult = {
     name: string;
     email: string;
     token: string;
+    image?: string;
     refreshToken: string;
 };
 
