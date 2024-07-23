@@ -2,6 +2,7 @@ import { ThemeProvider } from "@emotion/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Navigate, RouterProvider, createRouter } from "@tanstack/react-router";
 import { httpBatchLink } from "@trpc/react-query";
+import { Buffer } from "buffer";
 import { useState } from "react";
 import superjson from "superjson";
 
@@ -26,6 +27,20 @@ declare module "@tanstack/react-router" {
         router: typeof router;
     }
 }
+
+/** 
+ * Register a hook to convert `Buffer`s to base64
+ * 
+ * @@Todo: maybe move this to `packages/transport`?
+ */
+superjson.registerCustom<Buffer, string>(
+    {
+        isApplicable: (value): value is Buffer => Buffer.isBuffer(value),
+        serialize: (value) => value.toString("base64"),
+        deserialize: (value) => Buffer.from(value, "base64"),
+    },
+    "buffer",
+);
 
 const App = () => {
     const auth = useAuthState();
