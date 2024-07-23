@@ -1,3 +1,4 @@
+import { renderTrpcPanel } from "@metamorph/trpc-panel";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import chalk from "chalk";
 import cors from "cors";
@@ -5,7 +6,6 @@ import express from "express";
 import helmet from "helmet";
 import { createServer } from "http";
 import { AddressInfo } from "net";
-import { renderTrpcPanel } from "trpc-panel";
 
 import { ENV, IMAGE_STORAGE, PORT, UPLOAD_FOLDER } from "./config";
 import { connectDB } from "./lib/database";
