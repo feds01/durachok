@@ -1,18 +1,33 @@
-let api_uri, socket_uri;
+import packageJson from "../../../package.json";
 
-if (
-    process.env.NODE_ENV === "development" ||
-    window.location.hostname === "localhost"
-) {
-    // api_uri = window.location.protocol + "//" + window.location.hostname + ":5000/api";
-    api_uri = "/api";
+/** Git & App version metadata. */
+export const APP_ENV = import.meta.env.NODE_ENV ?? "dev";
+export const APP_NAME = import.meta.env.REACT_APP_NAME ?? packageJson.name;
+export const APP_DEV_VERSION = import.meta.env.REACT_APP_DEV_VERSION ?? "";
+export const APP_VERSION =
+    import.meta.env.REACT_APP_VERSION ?? packageJson.version;
 
-    socket_uri =
-        window.location.protocol + "//" + window.location.hostname + `:5000`;
-} else {
-    api_uri = "https://durachok-api.herokuapp.com/api";
-    socket_uri = "https://durachok-api.herokuapp.com";
-}
+/** API Endpoint */
+export const API_URL =
+    import.meta.env.REACT_APP_API_URL ?? "http://localhost:5000/trpc";
+export const SOCKET_URL =
+    import.meta.env.REACT_APP_API_URL ?? "http://localhost:5000";
 
-export const API_ENDPOINT = api_uri;
-export const SOCKET_ENDPOINT = socket_uri;
+/** Google ReCAPTCHA v3 secret key. */
+export const RE_CAPTCHA_SECRET =
+    import.meta.env.REACT_APP_RE_CAPTCHA_SECRET ?? "";
+
+/** The configuration of the application. */
+const config = {
+    APP_ENV,
+    APP_NAME,
+    APP_DEV_VERSION,
+    APP_VERSION,
+    API_URL,
+    SOCKET_URL,
+    RE_CAPTCHA_SECRET,
+} as const;
+
+// @@Todo: add a `zod` schema that can validate on boot-up that
+// the environment is correctly configured.
+export type Config = typeof config;
