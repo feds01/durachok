@@ -155,7 +155,7 @@ function UserSettingsRoute() {
                         the best profile image fit, try to use an image that has
                         square dimensions.
                     </p>
-                    <UpdateUserProfileImageForm />
+                    <UpdateUserProfileImageForm onResponse={handleOutcome} />
                 </section>
                 <section className={details}>
                     <h2>Update User Details</h2>
