@@ -23,6 +23,7 @@
     "@tanstack/router-devtools": "^1.45.4",
     "@trpc/client": "11.0.0-rc.466",
     "@trpc/react-query": "11.0.0-rc.466",
+    "buffer": "^6.0.3",
     "clsx": "^2.1.1",
     "framer-motion": "^11.3.4",
     "react": "^18.3.1",
@@ -35,6 +36,7 @@
     "react-virtuoso": "^4.7.12",
     "shared": "file:./../../packages/engine",
     "socket.io-client": "4.7.5",
+    "superjson": "^2.2.1",
     "use-sound": "^4.0.3",
     "usehooks-ts": "^3.1.0",
     "zod": "^3.23.8"

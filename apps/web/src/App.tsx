@@ -1,8 +1,9 @@
 import { ThemeProvider } from "@emotion/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Navigate, RouterProvider, createRouter } from "@tanstack/react-router";
-import { httpBatchLink } from "@trpc/client";
+import { httpBatchLink } from "@trpc/react-query";
 import { useState } from "react";
+import superjson from "superjson";
 
 import { useAuthState } from "./contexts/auth";
 import { routeTree } from "./routeTree.gen";
@@ -37,6 +38,7 @@ const App = () => {
                     headers() {
                         return getAuthHeader();
                     },
+                    transformer: superjson,
                 }),
             ],
         }),
