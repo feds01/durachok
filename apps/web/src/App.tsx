@@ -28,9 +28,9 @@ declare module "@tanstack/react-router" {
     }
 }
 
-/** 
+/**
  * Register a hook to convert `Buffer`s to base64
- * 
+ *
  * @@Todo: maybe move this to `packages/transport`?
  */
 superjson.registerCustom<Buffer, string>(
