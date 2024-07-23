@@ -1,6 +1,5 @@
 import { css } from "@emotion/css";
 import Button from "@mui/material/Button";
-import Divider from "@mui/material/Divider";
 import {
     Link,
     createFileRoute,
@@ -12,6 +11,7 @@ import PlayerAvatar from "../../components/PlayerAvatar";
 import GameLinkCard from "../../compositions/GameLinkCard";
 import { useAuthDispatch } from "../../contexts/auth";
 import { trpc } from "../../utils/trpc";
+import Divider from "../../components/Divider";
 
 export const Route = createFileRoute("/user/")({
     beforeLoad: async ({ context, location }) => {
@@ -83,7 +83,7 @@ function UserRoute() {
 
     // @@Todo: add a `queryWrapper` component which can display
     // a loading spinner, error message, etc. based on the query state
-    if (userQuery.isLoading) {
+    if (userQuery.isLoading || !userQuery.data) {
         return <div>Loading...</div>;
     }
 
@@ -131,11 +131,11 @@ function UserRoute() {
             <div className={dashboardContent}>
                 {data.statistics && (
                     <>
-                        <Divider style={{ width: "100%" }} />
+                        <Divider />
                         <div></div>
                     </>
                 )}
-                <Divider style={{ width: "100%" }} />
+                <Divider />
                 <div className={games}>
                     {data.games.map((game, index) => {
                         return <GameLinkCard key={index} {...game} />;
