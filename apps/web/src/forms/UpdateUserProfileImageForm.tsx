@@ -71,7 +71,7 @@ export default function UpdateUserProfileImageForm({ onResponse }: Props) {
                         variant="contained"
                         color="primary"
                         component="span"
-                        sx={{mt: 1}}
+                        sx={{ mt: 1 }}
                     >
                         Upload
                     </Button>
