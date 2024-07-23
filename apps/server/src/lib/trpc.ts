@@ -66,9 +66,9 @@ export const createContext = async ({
 
 export type Context = Awaited<ReturnType<typeof createContext>>;
 
-/** 
+/**
  * Register a hook to convert `Buffer`s to base64
- * 
+ *
  * @@Todo: maybe move this to `packages/transport`?
  */
 superjson.registerCustom<Buffer, string>(

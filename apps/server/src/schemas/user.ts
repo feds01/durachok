@@ -92,7 +92,7 @@ export const UserLoginSchema = z
 export type UserLogin = z.infer<typeof UserLoginSchema>;
 
 /** The response that we send when user successfully logs in.  */
-export const UserLoginResponseSchema = UserSchema.extend({
+export const UserAuthResponseSchema = UserSchema.extend({
     /** The user's id */
     id: z.string(),
     /** The user's user name */

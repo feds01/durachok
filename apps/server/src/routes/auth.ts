@@ -4,8 +4,7 @@ import { ENV } from "../config";
 import { authProcedure, publicProcedure, router } from "../lib/trpc";
 import { UserTokensResponseSchema } from "../schemas/auth";
 import {
-    UserInfoSchema,
-    UserLoginResponseSchema,
+    UserAuthResponseSchema,
     UserLoginSchema,
     UserRegistrationSchema,
 } from "../schemas/user";
@@ -14,7 +13,7 @@ import { isDef } from "../utils";
 export const authRouter = router({
     register: publicProcedure
         .input(UserRegistrationSchema)
-        .output(UserInfoSchema)
+        .output(UserAuthResponseSchema)
         .mutation(async (req) => {
             const { ctx, input } = req;
 
@@ -26,12 +25,24 @@ export const authRouter = router({
                 });
             }
 
-            return await ctx.userService.create(input);
+            const user = await ctx.userService.create(input);
+
+            return {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                image: user.image,
+                ...(await ctx.authService.createTokens({
+                    id: user.id,
+                    name: user.name,
+                    email: user.email,
+                })),
+            };
         }),
 
     login: publicProcedure
         .input(UserLoginSchema)
-        .output(UserLoginResponseSchema)
+        .output(UserAuthResponseSchema)
         .mutation(async (req) => {
             const { ctx, input } = req;
 
