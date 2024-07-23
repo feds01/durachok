@@ -18,14 +18,8 @@ export class ImageService {
      * @param imageType - The mime type of image (jpeg or png)
      * @return The resulting buffer from the the raw image string.
      * */
-    private decodeImage(rawImage: string, imageType = "jpeg"): Buffer {
-        const headerPattern = new RegExp(`^data:image/${imageType};base64,`);
-        rawImage = rawImage.replace(headerPattern, "");
-
-        const buf = Buffer.from(rawImage, "base64");
-
-        // Check that this buffer is a jpg file
-        if (!buf || buf.length < 3) {
+    private decodeImage(buf: Buffer, imageType = "jpeg"): Buffer {
+        if (buf.length < 3) {
             throw new Error("Invalid image buffer.");
         }
 
@@ -52,7 +46,7 @@ export class ImageService {
     }
 
     /** Update a user image, given the buffer. */
-    public async updateUserImage(userId: string, image: string): Promise<void> {
+    public async updateUserImage(userId: string, image: Buffer): Promise<void> {
         const decodedImage = this.decodeImage(image);
         const filename = this.getUserImageKey(userId);
 

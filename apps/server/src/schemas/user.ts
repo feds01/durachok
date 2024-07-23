@@ -55,16 +55,20 @@ export const UserSchema = z.object({
     name: UserNameSchema,
     /** User email. */
     email: z.string().email(),
-    /** Optionally encoded base64 user profile image. */
+    /** URL to user's profile picture */
     image: z.string().optional(),
 });
 
 export type User = z.infer<typeof UserSchema>;
 
-export const UserRegistrationSchema = UserSchema.omit({ id: true }).extend({
+export const UserRegistrationSchema = UserSchema.omit({
+    id: true,
+    image: true,
+}).extend({
     /** The user's password */
     password: z.string().min(8),
-
+    /** Buffer of user profile picture */
+    image: z.instanceof(Buffer).optional(),
     /** A token to register with */
     reCaptchaToken: z.string(),
 });
@@ -103,7 +107,7 @@ export const UserLoginResponseSchema = UserSchema.extend({
 
 /** Updating a user's account, this allows us to update the username, email, and add an image. */
 export const UserUpdateSchema = UserSchema.partial().extend({
-    image: z.string().optional(),
+    image: z.instanceof(Buffer).optional(),
 });
 
 export type UserUpdate = z.infer<typeof UserUpdateSchema>;

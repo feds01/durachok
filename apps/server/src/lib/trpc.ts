@@ -1,5 +1,6 @@
 import { TRPCError, initTRPC } from "@trpc/server";
 import * as trpcExpress from "@trpc/server/adapters/express";
+import superjson from "superjson";
 import { ZodError } from "zod";
 
 import { IMAGE_STORAGE } from "../config";
@@ -70,6 +71,7 @@ export type Context = Awaited<ReturnType<typeof createContext>>;
  * Should be done only once per backend!
  */
 const t = initTRPC.context<Context>().create({
+    transformer: superjson,
     errorFormatter: ({ error, shape }) => {
         return {
             ...shape,
