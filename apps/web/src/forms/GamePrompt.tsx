@@ -31,7 +31,7 @@ const submitStyle = css`
     height: 60px;
     font-size: 2em !important;
     background-color: #3f51b5 !important;
-    margintop: 19px;
+    margin-top: 19px !important;
 
     &:hover {
         background-color: #3f51b5 !important;
