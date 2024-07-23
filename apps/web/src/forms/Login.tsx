@@ -1,32 +1,17 @@
 import { css } from "@emotion/css";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 
 import ControlledPasswordField from "../components/ControlledPasswordField";
 import ControlledTextField from "../components/ControlledTextField";
 import SubmitButton from "../components/SubmitButton";
+import { AuthResult, LoginFormData, LoginFormSchema } from "../types/auth";
 import { expr } from "../utils";
 import { trpc } from "../utils/trpc";
 import { UserEmailSchema } from "../valdiators/user";
 
-const LoginSchema = z.object({
-    credential: z.string(),
-    password: z.string().min(8),
-});
-
-export type Login = z.infer<typeof LoginSchema>;
-export type LoginResult = {
-    id: string;
-    name: string;
-    email: string;
-    token: string;
-    image?: string;
-    refreshToken: string;
-};
-
 type Props = {
-    onSuccess: (result: LoginResult) => void;
+    onSuccess: (result: AuthResult) => void;
 };
 
 const submitStyle = css`
@@ -42,8 +27,8 @@ const submitStyle = css`
 
 export default function Login({ onSuccess }: Props) {
     const loginWith = trpc.auth.login.useMutation();
-    const form = useForm<Login>({
-        resolver: zodResolver(LoginSchema),
+    const form = useForm<LoginFormData>({
+        resolver: zodResolver(LoginFormSchema),
         reValidateMode: "onSubmit",
         defaultValues: {
             credential: "",
@@ -51,7 +36,7 @@ export default function Login({ onSuccess }: Props) {
         },
     });
 
-    const onSubmit = async (login: Login) => {
+    const onSubmit = async (login: LoginFormData) => {
         try {
             const credentials = expr(() => {
                 const maybeEmail = UserEmailSchema.safeParse(login.credential);
@@ -69,6 +54,7 @@ export default function Login({ onSuccess }: Props) {
             await onSuccess(result);
         } catch (e: unknown) {
             if (e instanceof Error) {
+                // @@Todo: use the error-util to convert this into dorm errors.
                 form.setError("password", {
                     type: "manual",
                     message: e.message,
