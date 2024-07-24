@@ -168,6 +168,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@durachok/transport':
+        specifier: file:./../../packages/transport
+        version: link:../../packages/transport
       '@emotion/css':
         specifier: ^11.11.2
         version: 11.13.0
@@ -331,6 +334,25 @@ importers:
       vitest:
         specifier: ^2.0.3
         version: 2.0.3(@types/node@20.14.11)(jsdom@16.7.0)(terser@5.31.3)
+
+  packages/transport:
+    dependencies:
+      zod:
+        specifier: ^3.0.0
+        version: 3.23.8
+    devDependencies:
+      '@trivago/prettier-plugin-sort-imports':
+        specifier: ^4.3.0
+        version: 4.3.0(prettier@3.3.3)
+      '@types/node':
+        specifier: ^20.14.10
+        version: 20.14.11
+      prettier:
+        specifier: ^3.3.3
+        version: 3.3.3
+      typescript:
+        specifier: ^5.5.3
+        version: 5.5.3
 
 packages:
 
