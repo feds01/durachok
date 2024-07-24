@@ -1,10 +1,14 @@
 import { useReducer } from "react";
 
 import { AuthStateContext } from "./context";
-import { init, reducer } from "./reducer";
+import { AuthState, init, reducer } from "./reducer";
 
 interface AuthProviderProps {
     children: React.ReactNode;
+}
+
+function isRegistered(state: AuthState) {
+    return state.kind === "logged-in" && state.user.kind === "registered";
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
@@ -15,6 +19,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             value={{
                 state,
                 update,
+                isRegistered,
             }}
         >
             {children}

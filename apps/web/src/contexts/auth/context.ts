@@ -6,11 +6,15 @@ import { AuthAction, AuthState } from "./reducer";
 type AuthStateContextType = {
     state: AuthState;
     update: (action: AuthAction) => void;
+    isRegistered: (state: AuthState) => boolean;
 };
 
 export const AuthStateContext = createContext<AuthStateContextType>({
     state: { kind: "logged-out" },
     update: () => {},
+    isRegistered: (state) => {
+        return state.kind === "logged-in" && state.user.kind === "registered";
+    },
 });
 
 export function useAuthState() {
@@ -20,7 +24,10 @@ export function useAuthState() {
         throw new Error("useAuthState must be used within a Context");
     }
 
-    return context.state;
+    return {
+        state: context.state,
+        isRegistered: () => context.isRegistered(context.state),
+    };
 }
 
 export function useAuthDispatch() {
