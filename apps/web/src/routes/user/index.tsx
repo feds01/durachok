@@ -11,7 +11,7 @@ import Divider from "../../components/Divider";
 import PlayerAvatar from "../../components/PlayerAvatar";
 import GameLinkCard from "../../compositions/GameLinkCard";
 import { useAuthDispatch } from "../../contexts/auth";
-import { trpc } from "../../utils/trpc";
+import trpc from "../../utils/trpc";
 
 export const Route = createFileRoute("/user/")({
     beforeLoad: async ({ context, location }) => {

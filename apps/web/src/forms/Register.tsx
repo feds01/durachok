@@ -12,7 +12,7 @@ import {
     RegisterFormData,
     RegisterFormSchema,
 } from "../types/auth";
-import { trpc } from "../utils/trpc";
+import trpc from "../utils/trpc";
 
 type Props = {
     onSuccess: (result: AuthResult) => void;

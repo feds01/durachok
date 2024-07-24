@@ -7,7 +7,7 @@ import ControlledTextField from "../components/ControlledTextField";
 import SubmitButton from "../components/SubmitButton";
 import { AuthResult, LoginFormData, LoginFormSchema } from "../types/auth";
 import { expr } from "../utils";
-import { trpc } from "../utils/trpc";
+import trpc from "../utils/trpc";
 import { UserEmailSchema } from "../valdiators/user";
 
 type Props = {

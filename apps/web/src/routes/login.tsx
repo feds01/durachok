@@ -7,7 +7,8 @@ import { z } from "zod";
 
 import Logo from "../components/Logo";
 import { useAuth } from "../contexts/auth";
-import LoginForm, { LoginResult } from "../forms/Login";
+import LoginForm from "../forms/Login";
+import { AuthResult } from "../types/auth";
 
 const LoginSearchSchema = z.object({
     redirect: z.string().optional(),
@@ -81,7 +82,7 @@ export default function Login() {
     const { redirect } = Route.useSearch();
     const [state, dispatch] = useAuth();
 
-    const onSuccess = (result: LoginResult) => {
+    const onSuccess = (result: AuthResult) => {
         const { token, refreshToken, ...user } = result;
 
         dispatch({
