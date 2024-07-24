@@ -47,6 +47,7 @@ const PlayingCardIcon = ({ index }: { index: number }) => {
 
 function Index() {
     const [pin] = useState<string | undefined>();
+    const { isRegistered } = useAuthState();
 
     useEffect(() => {
         // set body overflow property to hidden to prevent the animation overflow, when user
@@ -90,19 +91,20 @@ function Index() {
                 `}
             >
                 <Logo size={64} />
-                <GamePrompt startPin={pin} />
-                {/* TODO: don't show this if we're already logged in */}
-                <p>
-                    Got an account? Login{" "}
-                    <Link
-                        className={css`
-                            color: #3f51b5;
-                        `}
-                        to={"/login"}
-                    >
-                        here
-                    </Link>
-                </p>
+                <GamePrompt startPin={pin} onSuccess={redirectToLobby} />
+                {isRegistered() && (
+                    <p>
+                        Got an account? Login{" "}
+                        <Link
+                            className={css`
+                                color: #3f51b5;
+                            `}
+                            to={"/login"}
+                        >
+                            here
+                        </Link>
+                    </p>
+                )}
             </div>
         </div>
     );

@@ -41,7 +41,7 @@ superjson.registerCustom<Buffer, string>(
 );
 
 const App = () => {
-    const auth = useAuthState();
+    const { state } = useAuthState();
     const [queryClient] = useState(() => new QueryClient());
     const [trpcClient] = useState(createReactQueryTRPClient);
 
@@ -49,7 +49,7 @@ const App = () => {
         <trpc.Provider client={trpcClient} queryClient={queryClient}>
             <QueryClientProvider client={queryClient}>
                 <ThemeProvider theme={theme()}>
-                    <RouterProvider router={router} context={{ auth }} />
+                    <RouterProvider router={router} context={{ auth: state }} />
                 </ThemeProvider>
             </QueryClientProvider>
         </trpc.Provider>
