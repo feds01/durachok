@@ -1,4 +1,15 @@
-import AWS, { CloudFront, S3 } from "aws-sdk";
+import {
+    CloudFrontClient,
+    CreateInvalidationCommand,
+} from "@aws-sdk/client-cloudfront";
+import {
+    DeleteObjectCommand,
+    GetObjectCommand,
+    HeadObjectCommand,
+    PutObjectCommand,
+    S3Client,
+} from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import fs from "fs-extra";
 import { dirname } from "node:path";
 import { Logger } from "winston";
@@ -23,50 +34,40 @@ export interface ImageRepo {
 }
 
 export class S3ImageRepo implements ImageRepo {
-    private readonly s3: AWS.S3;
-    private readonly cloudfront: AWS.CloudFront;
+    readonly #config = {
+        region: AWS_REGION,
+        credentials: {
+            accessKeyId: AWS_ACCESS_KEY,
+            secretAccessKey: AWS_SECRET_ACCESS_KEY,
+        },
+    };
+    private readonly s3 = new S3Client(this.#config);
+    private readonly cloudfront = new CloudFrontClient(this.#config);
 
-    constructor(private readonly logger: Logger) {
-        // Update aws sdk configuration
-        AWS.config.update({
-            accessKeyId: AWS_ACCESS_KEY, // Access key ID
-            secretAccessKey: AWS_SECRET_ACCESS_KEY, // Secret access key
-            region: AWS_REGION,
-        });
-
-        // Initiate the S3 API
-        this.s3 = new AWS.S3({
-            region: process.env.AWS_REGION,
-            apiVersion: "2006-03-01",
-        });
-        this.cloudfront = new AWS.CloudFront();
-    }
+    public constructor(private readonly logger: Logger) {}
 
     async saveImage(path: string, image: Buffer): Promise<void> {
-        const putRequest: S3.Types.PutObjectRequest = {
+        const putRequest = new PutObjectCommand({
             Bucket: AWS_BUCKET_NAME,
             Key: path,
             Body: image,
             ContentType: "image/jpeg",
-        };
-        const invalidationRequest: CloudFront.Types.CreateInvalidationRequest =
-            {
-                DistributionId: process.env.AWS_CLOUDFRONT_ID!,
-                InvalidationBatch: {
-                    CallerReference: Date.now().toString(),
-                    Paths: {
-                        Quantity: 1,
-                        Items: [path],
-                    },
+        });
+        const invalidationRequest = new CreateInvalidationCommand({
+            DistributionId: process.env.AWS_CLOUDFRONT_ID!,
+            InvalidationBatch: {
+                CallerReference: Date.now().toString(),
+                Paths: {
+                    Quantity: 1,
+                    Items: [path],
                 },
-            };
+            },
+        });
 
         try {
             await Promise.all([
-                this.s3.putObject(putRequest).promise(),
-                this.cloudfront
-                    .createInvalidation(invalidationRequest)
-                    .promise(),
+                this.s3.send(putRequest),
+                this.cloudfront.send(invalidationRequest),
             ]);
         } catch (e: unknown) {
             this.logger.warn(`Error updating user image: ${e}`);
@@ -75,15 +76,18 @@ export class S3ImageRepo implements ImageRepo {
     }
 
     async getImage(path: string): Promise<string | undefined> {
-        const params: S3.Types.HeadObjectRequest = {
+        const params = {
             Bucket: AWS_BUCKET_NAME,
             Key: path,
         };
 
         return await expr(async () => {
             try {
-                await this.s3.headObject(params).promise();
-                return this.s3.getSignedUrl("getObject", params);
+                await this.s3.send(new HeadObjectCommand(params));
+                return await getSignedUrl(
+                    this.s3,
+                    new GetObjectCommand(params),
+                );
             } catch (e) {
                 this.logger.warn(`Error fetching user image: ${e}`);
                 return;
@@ -92,13 +96,13 @@ export class S3ImageRepo implements ImageRepo {
     }
 
     async deleteImage(path: string): Promise<void> {
-        const params: S3.Types.DeleteObjectRequest = {
+        const params = new DeleteObjectCommand({
             Bucket: AWS_BUCKET_NAME,
             Key: path,
-        };
+        });
 
         try {
-            await this.s3.deleteObject(params).promise();
+            await this.s3.send(params);
         } catch (e: unknown) {
             this.logger.warn(`Error deleting user image: ${e}`);
         }
