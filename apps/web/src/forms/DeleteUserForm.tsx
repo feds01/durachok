@@ -3,7 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 
 import { AlertKind } from "../components/Alert";
 import { useAuthDispatch } from "../contexts/auth";
-import { trpc } from "../utils/trpc";
+import trpc from "../utils/trpc";
 
 type DeleteUserFormProps = {
     /** Used to determine what happens in the event of a failure. */

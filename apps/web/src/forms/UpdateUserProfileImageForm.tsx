@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { AlertKind } from "../components/Alert";
-import { trpc } from "../utils/trpc";
+import trpc from "../utils/trpc";
 
 type Props = {
     /** Used to determine what happens in the event of a failure. */

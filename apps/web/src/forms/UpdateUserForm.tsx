@@ -13,7 +13,7 @@ import ControlledTextField from "../components/ControlledTextField";
 import FieldLabel from "../components/FieldLabel";
 import SubmitButton from "../components/SubmitButton";
 import { RegisteredUser, useAuthDispatch } from "../contexts/auth";
-import { trpc } from "../utils/trpc";
+import trpc from "../utils/trpc";
 import { UserUpdate, UserUpdateSchema } from "../valdiators/user";
 
 type UpdateUserFormProps = {
