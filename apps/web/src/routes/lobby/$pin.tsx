@@ -1,6 +1,8 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 
-import { trpc } from "../../utils/trpc";
+import ErrorBoundary from "../../compositions/ErrorBoundary";
+import Loader from "../../compositions/Loader";
+import { trpcNativeClient } from "../../utils/trpc";
 
 export const Route = createFileRoute("/lobby/$pin")({
     beforeLoad: async ({ context, location }) => {
@@ -17,24 +19,31 @@ export const Route = createFileRoute("/lobby/$pin")({
     // fail (i.e.) unauthorized access, then we should re-direct them to home
     // page where they can re-enter their details.
     loader: async ({ params: { pin } }) => {
+        // Try and load the information about the lobby.
+        const lobby = await trpcNativeClient.lobbies.get.query({ pin });
+
+        // This user doesn't have access to this lobby.
+        if (lobby instanceof Error) {
+            throw redirect({
+                to: "/",
+                search: {
+                    startPin: pin,
+                },
+            });
+        }
+
         return {
             pin,
+            lobby,
         };
     },
+    pendingComponent: () => <Loader />,
+    errorComponent: (info) => <ErrorBoundary {...info} />,
     component: () => <Lobby />,
 });
 
 function Lobby() {
-    const { pin } = Route.useLoaderData();
-    const lobby = trpc.lobbies.get.useQuery({ pin });
+    const { lobby } = Route.useLoaderData();
 
-    if (lobby.error) {
-        return <div> {lobby.error.message} </div>;
-    }
-
-    if (lobby.isLoading) {
-        return <div> Loading... </div>;
-    }
-
-    return <div> {JSON.stringify(lobby.data, null, 4)} </div>;
+    return <div> {JSON.stringify(lobby, null, 4)} </div>;
 }

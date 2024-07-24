@@ -1,10 +1,12 @@
 import { css, keyframes } from "@emotion/css";
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
 import PlayingCard from "../assets/image/playing-card.svg?react";
 import Logo from "../components/Logo";
-import GamePrompt from "../forms/GamePrompt";
+import { useAuthDispatch, useAuthState } from "../contexts/auth";
+import GamePrompt, { LobbyInfo } from "../forms/GamePrompt";
+import { isDef } from "../utils";
 
 export const Route = createFileRoute("/")({
     component: Index,
@@ -48,6 +50,22 @@ const PlayingCardIcon = ({ index }: { index: number }) => {
 function Index() {
     const [pin] = useState<string | undefined>();
     const { isRegistered } = useAuthState();
+    const auth = useAuthDispatch();
+    const navigator = useNavigate();
+
+    const redirectToLobby = ({ pin, tokens }: LobbyInfo) => {
+        if (isDef(tokens)) {
+            auth({
+                type: "login",
+                payload: { user: { kind: "anonymous", lobby: pin }, ...tokens },
+            });
+        }
+
+        navigator({
+            to: `/lobby/$pin`,
+            params: { pin: pin },
+        });
+    };
 
     useEffect(() => {
         // set body overflow property to hidden to prevent the animation overflow, when user
