@@ -6,10 +6,11 @@ export const APP_NAME = import.meta.env.REACT_APP_NAME ?? packageJson.name;
 export const APP_DEV_VERSION = import.meta.env.REACT_APP_DEV_VERSION ?? "";
 export const APP_VERSION =
     import.meta.env.REACT_APP_VERSION ?? packageJson.version;
+export const APP_VERSION_BRANCH = import.meta.env.REACT_APP_BRANCH ?? "";
 
 /** API Endpoint */
 export const API_URL =
-    import.meta.env.REACT_APP_API_URL ?? "http://localhost:5000/trpc";
+    import.meta.env.REACT_APP_API_URL ?? "http://localhost:5000/api/trpc";
 export const SOCKET_URL =
     import.meta.env.REACT_APP_API_URL ?? "http://localhost:5000";
 
