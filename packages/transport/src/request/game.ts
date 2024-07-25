@@ -26,7 +26,7 @@ export const GameSettingsSchema = z
 
       return true;
     },
-    { message: "Short game deck can only be used with 6 players or less." },
+    { message: "Short game deck can only be used with 6 players or less.", path: ["shortGameDeck"] },
   );
 
 export type GameSettings = z.infer<typeof GameSettingsSchema>;
