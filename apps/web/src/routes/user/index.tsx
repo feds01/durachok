@@ -6,9 +6,11 @@ import {
     redirect,
     useNavigate,
 } from "@tanstack/react-router";
+import { useState } from "react";
 
 import Divider from "../../components/Divider";
 import PlayerAvatar from "../../components/PlayerAvatar";
+import CreateGameDialog from "../../compositions/CreateGameDialog";
 import GameLinkCard from "../../compositions/GameLinkCard";
 import { useAuthDispatch } from "../../contexts/auth";
 import trpc from "../../utils/trpc";
@@ -78,10 +80,15 @@ function UserRoute() {
     const auth = useAuthDispatch();
     const navigator = useNavigate();
     const userQuery = trpc.users.get.useQuery();
+    const [createGameDialogOpen, setCreateGameDialogOpen] = useState(false);
 
     const logout = () => {
         auth({ type: "logout" });
         navigator({ to: "/" });
+    };
+
+    const toggleCreateGameDialog = () => {
+        setCreateGameDialogOpen(!createGameDialogOpen);
     };
 
     // @@Todo: add a `queryWrapper` component which can display
@@ -100,7 +107,11 @@ function UserRoute() {
         <div className={dashboard}>
             <div className={dashboardActions}>
                 <div>
-                    <Button variant="contained" color="secondary">
+                    <Button
+                        variant="contained"
+                        color="secondary"
+                        onClick={toggleCreateGameDialog}
+                    >
                         Create game
                     </Button>
                 </div>
@@ -146,6 +157,10 @@ function UserRoute() {
                     {data.games.length === 0 && <p>No active games.</p>}
                 </div>
             </div>
+            <CreateGameDialog
+                open={createGameDialogOpen}
+                onClose={toggleCreateGameDialog}
+            />
         </div>
     );
 }
