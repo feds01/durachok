@@ -110,7 +110,7 @@ function Index() {
             >
                 <Logo size={64} />
                 <GamePrompt startPin={pin} onSuccess={redirectToLobby} />
-                {isRegistered() && (
+                {!isRegistered() && (
                     <p>
                         Got an account? Login{" "}
                         <Link
