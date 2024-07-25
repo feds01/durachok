@@ -1,6 +1,7 @@
+import { LobbyInfo } from "@durachok/transport/src/request";
+import { UserNameSchema } from "@durachok/transport/src/schemas/user";
 import { css } from "@emotion/css";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useNavigate } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -9,15 +10,28 @@ import { z } from "zod";
 import ControlledTextField from "../components/ControlledTextField";
 import GamePassphraseInput from "../components/GamePassphraseInput";
 import SubmitButton from "../components/SubmitButton";
-import { isDef } from "../utils";
+import { expr, isDef } from "../utils";
+import trpc, { trpcNativeClient } from "../utils/trpc";
 import { GamePassPhraseSchema, GamePinSchema } from "../valdiators/lobby";
-import { UserNameSchema } from "../valdiators/user";
+
+export type LobbyAuthInfo = {
+    pin: string;
+    tokens?: {
+        token: string;
+        refreshToken: string;
+    };
+};
 
 type Props = {
     startPin?: string;
+    onSuccess: (data: LobbyAuthInfo) => void;
 };
 
-type StageKind = "pin" | "name" | "security";
+type StageKind =
+    | {
+          kind: "pin";
+      }
+    | { kind: "name" | "security"; info: LobbyInfo };
 
 const GamePromptFormInputSchema = z.object({
     pin: GamePinSchema,
@@ -38,56 +52,116 @@ const submitStyle = css`
     }
 `;
 
-export default function GamePrompt({ startPin }: Props) {
-    const [stage, setStage] = useState<StageKind>("pin");
-    const navigator = useNavigate();
+export default function GamePrompt({ startPin, onSuccess }: Props) {
+    const [stage, setStage] = useState<StageKind>({ kind: "pin" });
+
+    const joinLobbyMutation = trpc.lobbies.join.useMutation();
 
     const form = useForm<GamePromptInput>({
         resolver: zodResolver(GamePromptFormInputSchema),
         reValidateMode: "onBlur",
         defaultValues: {
             pin: startPin ?? "",
-            security: "",
             name: "",
         },
     });
 
-    const onSubmit = ({ pin }: GamePromptInput) => {
-        if (isDef(pin)) {
-            navigator({
-                to: `/lobby/$pin`,
-                params: { pin },
+    const onSubmit = async (info: GamePromptInput) => {
+        try {
+            const { token, refreshToken } =
+                await joinLobbyMutation.mutateAsync(info);
+
+            const tokens = expr(() => {
+                if (isDef(token) && isDef(refreshToken)) {
+                    return { token, refreshToken };
+                } else {
+                    return;
+                }
             });
+
+            onSuccess({ pin: info.pin, ...(tokens && { tokens }) });
+        } catch (e: unknown) {
+            // @@Todo: handle errors better.
+            if (e instanceof Error) {
+                form.setError(stage.kind, {
+                    type: "manual",
+                    message: e.message,
+                });
+            }
         }
     };
 
     const next = async () => {
         // We always enter the name after the `pin` stage.
-        if (stage === "pin") {
+        if (stage.kind === "pin") {
             const result = await form.trigger("pin", { shouldFocus: true });
-
-            if (result) {
-                setStage("name");
-            }
-
-            // We need to pre-fetch info about the lobby to determine
-            // whether we will need to enter the security code.
-        } else if (stage === "name") {
-            const result = await form.trigger("name", { shouldFocus: true });
             if (!result) {
                 return;
             }
 
-            // TODO: test whether we need a security code...
-            const always = () => true;
+            const info = await expr(async () => {
+                try {
+                    return await trpcNativeClient.lobbies.getInfo.query({
+                        pin: form.getValues().pin,
+                    });
+                } catch (e: unknown) {
+                    // @@Todo: handle errors better.
+                    if (e instanceof Error) {
+                        form.setError(stage.kind, {
+                            type: "manual",
+                            message: e.message,
+                        });
+                    }
+                    return;
+                }
+            });
 
-            if (always()) {
-                setStage("security");
+            if (info) {
+                if (info.joinable) {
+                    setStage({ kind: "name", info });
+                } else {
+                    form.setError("pin", {
+                        type: "manual",
+                        message: "This lobby is not joinable.",
+                    });
+                }
+            } else {
+                form.setError("pin", {
+                    type: "manual",
+                    message: "This lobby does not exist.",
+                });
+            }
+        } else {
+            const { kind, info } = stage;
+            const { name, pin } = form.getValues();
+            const result = await form.trigger(kind, { shouldFocus: true });
+            if (!result) {
+                return;
+            }
+
+            if (kind === "name") {
+                const free =
+                    await trpcNativeClient.lobbies.nameFreeInLobby.query({
+                        pin,
+                        name,
+                    });
+
+                if (!free) {
+                    form.setError("name", {
+                        type: "manual",
+                        message: "Name is already taken.",
+                    });
+                    return;
+                }
+
+                if (info.passphrase) {
+                    setStage({ kind: "security", info });
+                } else {
+                    await form.handleSubmit(onSubmit)();
+                }
             } else {
                 await form.handleSubmit(onSubmit)();
             }
-        } else if (stage === "security") {
-            await form.handleSubmit(onSubmit)();
         }
     };
 
@@ -102,7 +176,7 @@ export default function GamePrompt({ startPin }: Props) {
             `}
             onSubmit={form.handleSubmit(onSubmit)}
         >
-            {stage === "pin" && (
+            {stage.kind === "pin" && (
                 <ControlledTextField
                     name="pin"
                     control={form.control}
@@ -123,7 +197,7 @@ export default function GamePrompt({ startPin }: Props) {
                     }}
                 />
             )}
-            {stage === "name" && (
+            {stage.kind === "name" && (
                 <motion.div
                     transition={{ duration: 0.3 }}
                     initial={{ opacity: 0, scale: 0.5 }}
@@ -151,7 +225,7 @@ export default function GamePrompt({ startPin }: Props) {
                     />
                 </motion.div>
             )}
-            {stage === "security" && (
+            {stage.kind === "security" && (
                 <motion.div
                     transition={{ duration: 0.3 }}
                     initial={{ opacity: 0, scale: 0.5 }}
@@ -165,7 +239,7 @@ export default function GamePrompt({ startPin }: Props) {
                 </motion.div>
             )}
             <SubmitButton
-                disabled={!isDef(form.formState.dirtyFields[stage])}
+                disabled={!isDef(form.formState.dirtyFields[stage.kind])}
                 isSubmitting={form.formState.isSubmitting}
                 className={submitStyle}
                 onClick={next}
