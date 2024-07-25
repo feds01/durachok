@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import PlayingCard from "../assets/image/playing-card.svg?react";
 import Logo from "../components/Logo";
 import { useAuthDispatch, useAuthState } from "../contexts/auth";
-import GamePrompt, { LobbyInfo } from "../forms/GamePrompt";
+import GamePrompt, { LobbyAuthInfo } from "../forms/GamePrompt";
 import { isDef } from "../utils";
 
 export const Route = createFileRoute("/")({
@@ -53,7 +53,7 @@ function Index() {
     const auth = useAuthDispatch();
     const navigator = useNavigate();
 
-    const redirectToLobby = ({ pin, tokens }: LobbyInfo) => {
+    const redirectToLobby = ({ pin, tokens }: LobbyAuthInfo) => {
         if (isDef(tokens)) {
             auth({
                 type: "login",

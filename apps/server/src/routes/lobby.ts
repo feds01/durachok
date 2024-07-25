@@ -1,3 +1,9 @@
+import {
+    ByPinRequestSchema,
+    GameCreateRequestSchema,
+    GameJoinRequestSchema,
+    NameFreeInLobbyRequestSchema,
+} from "@durachok/transport/src/request";
 import { TRPCError } from "@trpc/server";
 
 import {
@@ -6,12 +12,7 @@ import {
     router,
     userProcedure,
 } from "../lib/trpc";
-import {
-    ByPinRequestSchema,
-    GameCreateRequestSchema,
-    GameJoinRequestSchema,
-    Player,
-} from "../schemas/lobby";
+import { Player } from "../schemas/lobby";
 import { expr } from "../utils";
 
 export const lobbyRouter = router({

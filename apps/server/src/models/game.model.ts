@@ -1,7 +1,8 @@
+import { Message } from "@durachok/transport/src/schemas/lobby";
 import mongoose, { Document, Schema } from "mongoose";
 import { GameState, GameStatus, HistoryState } from "shared";
 
-import { Message, Player } from "../schemas/lobby";
+import { Player } from "../schemas/lobby";
 import { IUser } from "./user.model";
 
 export interface IGame extends Document {

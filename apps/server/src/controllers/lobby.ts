@@ -1,11 +1,11 @@
+import { GameSettings, LobbyInfo } from "@durachok/transport/src/request";
 import { TRPCError } from "@trpc/server";
 import { customAlphabet } from "nanoid";
 import { CardSuits, shuffleArray } from "shared";
 import { Logger } from "winston";
 
 import Lobbies, { PopulatedGame } from "../models/game.model";
-import { SimplifiedLobby } from "../schemas/common";
-import { GameSettings, Lobby, LobbySchema, Player } from "../schemas/lobby";
+import { Lobby, LobbySchema, Player } from "../schemas/lobby";
 import { assert, isDef } from "../utils";
 import { CommonService } from "./common";
 
@@ -49,7 +49,7 @@ export class LobbyService {
     }
 
     /** Convert a lobby object into a simplified lobby object. */
-    private transformLobbyToSimplifiedLobby(lobby: Lobby): SimplifiedLobby {
+    private lobbyIntoInfo(lobby: Lobby): LobbyInfo {
         return {
             pin: lobby.pin,
             joinable:
@@ -93,24 +93,22 @@ export class LobbyService {
     }
 
     /** Get basic information about a lobby. */
-    public async getInfoByPin(
-        pin: string,
-    ): Promise<SimplifiedLobby | undefined> {
+    public async getInfoByPin(pin: string): Promise<LobbyInfo | undefined> {
         const lobby = await this.getByPin(pin);
         if (!isDef(lobby)) {
             throw new TRPCError({ code: "NOT_FOUND" });
         }
 
-        return this.transformLobbyToSimplifiedLobby(lobby);
+        return this.lobbyIntoInfo(lobby);
     }
 
     /** Get all lobbies by a given user */
-    public async getByOwner(userId: string): Promise<SimplifiedLobby[]> {
+    public async getByOwner(userId: string): Promise<LobbyInfo[]> {
         const items = await Lobbies.find({ owner: userId }).populate<
             Pick<PopulatedGame, "owner">
         >("owner");
         const lobbies = await Promise.all(items.map(this.enrich));
-        return lobbies.map(this.transformLobbyToSimplifiedLobby);
+        return lobbies.map(this.lobbyIntoInfo);
     }
 
     /** Add a user to the current lobby. */
