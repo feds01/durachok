@@ -46,7 +46,7 @@ export default function GameLinkCard({
     const deleteGame = trpc.lobbies.delete.useMutation();
 
     const onDelete = async (e: React.MouseEvent) => {
-        e.preventDefault();
+        e.stopPropagation();
         await deleteGame.mutateAsync({ pin });
         // @@Todo: force the `user` to be re-fetched.
     };
