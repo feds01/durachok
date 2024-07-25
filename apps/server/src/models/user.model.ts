@@ -1,6 +1,5 @@
+import { UserStatistics } from "@durachok/transport/src/schemas/user";
 import mongoose, { Document, Schema } from "mongoose";
-
-import { UserStatistics } from "../schemas/user";
 
 export interface IUser extends Document {
     email: string;

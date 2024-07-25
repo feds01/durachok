@@ -1,10 +1,9 @@
-import { z } from "zod";
-
 import {
     UserEmailSchema,
     UserNameSchema,
     UserPasswordSchema,
-} from "../valdiators/user";
+} from "@durachok/transport/src/schemas/user";
+import { z } from "zod";
 
 export const LoginFormSchema = z.object({
     /** Either a user email or user name */

@@ -1,8 +1,12 @@
+import {
+    UserInfo,
+    UserRegistration,
+    UserUpdate,
+} from "@durachok/transport/src/request/user";
 import { TRPCError } from "@trpc/server";
 import { Logger } from "winston";
 
 import User, { IUser } from "../models/user.model";
-import { UserInfo, UserRegistration, UserUpdate } from "../schemas/user";
 import { isDef } from "../utils";
 import { AuthService } from "./auth";
 import { CommonService } from "./common";

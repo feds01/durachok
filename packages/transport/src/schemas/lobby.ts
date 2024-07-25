@@ -1,7 +1,5 @@
 import { z } from "zod";
 
-import { UserNameSchema } from "./user";
-
 /** A Game PIN consists of 6 digits. */
 export const GamePinSchema = z
   .string()
@@ -16,14 +14,16 @@ export const GamePassPhraseSchema = z
 
 export type GamePassPhrase = z.infer<typeof GamePassPhraseSchema>;
 
-/**
- * The information that must be provided in order to
- * join a game.
- */
-export const GameJoinRequestSchema = z.object({
-  pin: GamePinSchema,
-  passphrase: GamePassPhraseSchema.optional(),
-  name: UserNameSchema,
+/** A message that is sent through the lobby.  */
+export const MessageSchema = z.object({
+  /** The name of the user that sent the message. */
+  name: z.string(),
+  /** The time that the message was sent. */
+  time: z.number(),
+  /** The owner of the message. */
+  owner: z.string().optional(),
+  /** The message that was sent. */
+  message: z.string(),
 });
 
-export type GameJoinRequest = z.infer<typeof GameJoinRequestSchema>;
+export type Message = z.infer<typeof MessageSchema>;

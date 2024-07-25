@@ -65,6 +65,9 @@ importers:
       '@aws-sdk/s3-request-presigner':
         specifier: ^3.617.0
         version: 3.617.0
+      '@durachok/transport':
+        specifier: file:./../../packages/transport
+        version: link:../../packages/transport
       '@metamorph/trpc-panel':
         specifier: ^1.0.5
         version: 1.0.5(@trpc/server@11.0.0-rc.466)(zod@3.23.8)

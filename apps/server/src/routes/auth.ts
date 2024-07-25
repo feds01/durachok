@@ -1,13 +1,13 @@
+import {
+    UserAuthResponseSchema,
+    UserLoginSchema,
+    UserRegistrationSchema,
+} from "@durachok/transport/src/request/user";
 import { TRPCError } from "@trpc/server";
 
 import { ENV } from "../config";
 import { authProcedure, publicProcedure, router } from "../lib/trpc";
 import { UserTokensResponseSchema } from "../schemas/auth";
-import {
-    UserAuthResponseSchema,
-    UserLoginSchema,
-    UserRegistrationSchema,
-} from "../schemas/user";
 import { isDef } from "../utils";
 
 export const authRouter = router({
