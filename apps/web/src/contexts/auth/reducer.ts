@@ -85,6 +85,7 @@ export const reducer = (state: AuthState, action: AuthAction): AuthState => {
         case "logout":
             localStorage.removeItem("token");
             localStorage.removeItem("refreshToken");
+            localStorage.removeItem("user");
             return { kind: "logged-out" };
     }
 };

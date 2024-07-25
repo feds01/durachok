@@ -17,7 +17,10 @@ const LoginSearchSchema = z.object({
 export const Route = createFileRoute("/login")({
     validateSearch: (search) => LoginSearchSchema.parse(search),
     beforeLoad: async ({ context, search }) => {
-        if (context.auth.kind === "logged-in") {
+        if (
+            context.auth.kind === "logged-in" &&
+            context.auth.user.kind === "registered"
+        ) {
             throw redirect({
                 to: search.redirect ?? "/user",
             });

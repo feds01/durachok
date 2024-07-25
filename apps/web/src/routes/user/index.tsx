@@ -15,7 +15,10 @@ import trpc from "../../utils/trpc";
 
 export const Route = createFileRoute("/user/")({
     beforeLoad: async ({ context, location }) => {
-        if (context.auth.kind === "logged-out") {
+        if (
+            context.auth.kind === "logged-out" ||
+            context.auth.user.kind === "anonymous"
+        ) {
             throw redirect({
                 to: "/login",
                 search: {
