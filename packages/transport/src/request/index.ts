@@ -20,24 +20,24 @@ import {
 } from "./user";
 
 export {
-    ByPinRequestSchema,
-    GameCreateRequestSchema,
-    GameJoinRequestSchema,
-    GameSettingsSchema,
-    LobbyInfoSchema,
-    NameFreeInLobbyRequestSchema,
-    UserAuthResponseSchema,
-    UserLoginSchema,
-    UserUpdateSchema,
+  ByPinRequestSchema,
+  GameCreateRequestSchema,
+  GameJoinRequestSchema,
+  GameSettingsSchema,
+  LobbyInfoSchema,
+  NameFreeInLobbyRequestSchema,
+  UserAuthResponseSchema,
+  UserLoginSchema,
+  UserUpdateSchema,
 };
 
 export type {
-    ByPinRequest,
-    GameCreateRequest,
-    GameJoinRequest,
-    GameSettings,
-    LobbyInfo,
-    NameFreeInLobbyRequest,
-    UserLogin,
-    UserUpdate,
+  ByPinRequest,
+  GameCreateRequest,
+  GameJoinRequest,
+  GameSettings,
+  LobbyInfo,
+  NameFreeInLobbyRequest,
+  UserLogin,
+  UserUpdate,
 };
