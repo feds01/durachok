@@ -15,6 +15,7 @@
   "author": "Alexander. E. Fedotov",
   "license": "MIT",
   "dependencies": {
+    "buffer": "^6.0.3",
     "zod": "^3.0.0"
   },
   "devDependencies": {

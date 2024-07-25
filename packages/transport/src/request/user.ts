@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { Buffer } from "buffer";
 
 import {
   UserEmailSchema,
