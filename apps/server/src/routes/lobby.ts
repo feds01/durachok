@@ -21,6 +21,20 @@ export const lobbyRouter = router({
         return ctx.lobbyService.getInfoByPin(input.pin);
     }),
 
+    nameFreeInLobby: publicProcedure
+        .input(NameFreeInLobbyRequestSchema)
+        .query(async (req) => {
+            const { ctx, input } = req;
+            const token = ctx.token;
+            const registered = token?.kind === "registered";
+
+            return !(await ctx.lobbyService.isUserInLobby(
+                input.pin,
+                input.name,
+                registered ? token.user.id : undefined,
+            ));
+        }),
+
     create: userProcedure
         .input(GameCreateRequestSchema)
         .mutation(async (req) => {
