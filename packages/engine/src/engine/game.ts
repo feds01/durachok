@@ -1,5 +1,5 @@
 import { getRandomKey, shuffleArray } from "../utils";
-import { CardType, generateCardDeck, parseCard } from "./card";
+import { Card, generateCardDeck } from "./card";
 import { TableSize } from "./consts";
 import GameInitError from "./errors/GameInitError";
 import InvalidGameState from "./errors/InvalidGameState";
@@ -7,13 +7,17 @@ import { History, HistoryState } from "./history";
 import { Player } from "./player";
 import { GameState, PlayerGameState } from "./state";
 
+/** Options for the game. */
 export type GameSettings = {
+    /** Whether to randomise the player order. */
     randomisePlayerOrder: boolean;
+    /** Whether to use the short game deck. */
     shortGameDeck: boolean;
+    /** Whether to play in free-for-all mode. */
     freeForAll: boolean;
 };
 
-export const defaultSettings: GameSettings = {
+export const DEFAULT_SETTINGS: GameSettings = {
     randomisePlayerOrder: true,
     shortGameDeck: false,
     freeForAll: true,
@@ -26,12 +30,27 @@ export const defaultSettings: GameSettings = {
  * @author Alexander. E. Fedotov
  * */
 export class Game {
+    /** The deck of the game. */
     public deck: string[];
-    public trumpCard: CardType;
-    public tableTop: Map<string, string | null>;
+
+    /** The trump card. */
+    public trump: Card;
+
+    /**
+     * This is the deck that's currently placed on the table. It's easier to work
+     * with a Key-Value structure. The keys signify cards that are opposing the
+     * defending player, and the values are the cards that the defending player
+     * sets to defend against the card. */
+    public tableTop: Map<string, string | null> = new Map();
+
+    /** A map between the player's name and further player information. */
+    public players: Map<string, Player> = new Map();
+
+    /** The game settings. */
     public readonly history: History;
-    public players: Map<string, Player>;
-    public victory: boolean = false;
+
+    /** Whether the game has reached a conclusion. */
+    public victory = false;
 
     /**
      * @version 1.0.0
@@ -45,19 +64,10 @@ export class Game {
      * state from.
      * */
     constructor(
-        players: string[],
+        players: [string, ...string[]],
         history: HistoryState | null,
-        settings: GameSettings = defaultSettings,
+        settings: GameSettings = DEFAULT_SETTINGS,
     ) {
-        this.players = new Map();
-
-        /**
-         * This is the deck that's currently placed on the table. It's easier to work
-         * with a Key-Value structure. The keys signify cards that are opposing the
-         * defending player, and the values are the cards that the defending player
-         * sets to defend against the card. */
-        this.tableTop = new Map();
-
         // Check if the players argument follows the specified constraints.
         if (!Number.isInteger(players.length) && players.length < 1) {
             throw new GameInitError(
@@ -105,13 +115,9 @@ export class Game {
 
         // Select the first remaining card and set the 'suit' of the game and then
         // shift the first element to the end of the stack.
-        const topCard: CardType = parseCard(this.deck[0]);
+        const topCard = Card.fromString(this.deck[0]);
 
-        this.trumpCard = {
-            value: topCard.value,
-            suit: topCard.suit,
-            card: this.deck[0],
-        };
+        this.trump = new Card(topCard.value, topCard.suit, this.deck[0]);
 
         // put top card to the bottom of the deck as is in the real game
         this.deck.push(this.deck.shift()!);
@@ -146,11 +152,16 @@ export class Game {
     static fromState(
         state: GameState,
         history: HistoryState,
-        settings: GameSettings = defaultSettings,
+        settings: GameSettings = DEFAULT_SETTINGS,
     ): Game {
-        const game = new Game(Object.keys(state.players), history, settings);
+        // @@Todo: add a schema for the `game` state.
+        const game = new Game(
+            Object.keys(state.players) as [string, ...string[]],
+            history,
+            settings,
+        );
 
-        game.trumpCard = state.trumpCard;
+        game.trump = state.trump;
         game.tableTop = new Map(Object.entries(state.tableTop));
         game.players = new Map(Object.entries(state.players));
         game.deck = state.deck;
@@ -189,7 +200,7 @@ export class Game {
      * deck.
      *
      * */
-    finaliseRound(resignPlayer: boolean = false): void {
+    finaliseRound(resignPlayer: boolean = false) {
         if (this.victory) {
             throw new InvalidGameState(
                 "Can't mutate game state after victory.",
@@ -313,7 +324,7 @@ export class Game {
      * @param {String} name - The id of the player that's taking the card.
      * @param {String} card - The card that's being added to the table top.
      * */
-    addCardToTableTop(name: string, card: string): void {
+    addCardToTableTop(name: string, card: string) {
         if (this.victory)
             throw new InvalidGameState(
                 "Can't mutate game state after victory.",
@@ -332,13 +343,13 @@ export class Game {
 
         // Also check that the current card is allowed to be added to the deck. To determine this,
         // the cardLabel of the card to be added must be present on the tableTop.
-        const coveringCard: CardType = parseCard(card);
+        const coveringCard = Card.fromString(card);
         const tableTopCards = this.getTableTopDeck();
 
         if (
             tableTopCards.length > 0 &&
             !tableTopCards
-                .map((item) => parseCard(item).value)
+                .map((item) => Card.fromString(item).value)
                 .includes(coveringCard.value)
         ) {
             throw new InvalidGameState(
@@ -349,11 +360,11 @@ export class Game {
         // Now let's determine if the player is trying to transfer the defensive position
         // to the left hand side player. This can be checked by the fact if the 'card' they
         // are trying to cover is equal to null.
-        if (player.isDefending) {
-            // the player can't transfer defense if any of the cards are covered...
+        if (player.action === "defend") {
+            // the player can't transfer defence if any of the cards are covered...
             if (this.getCoveredCount() !== 0) {
                 throw new InvalidGameState(
-                    "Player can't transfer defense since they have covered a card.",
+                    "Player can't transfer defence since they have covered a card.",
                 );
             }
 
@@ -376,16 +387,16 @@ export class Game {
             if (
                 Array.from(this.tableTop.keys()).some(
                     (tableCard) =>
-                        parseCard(tableCard).value !== coveringCard.value,
+                        Card.fromString(tableCard).value !== coveringCard.value,
                 )
             ) {
                 throw new InvalidGameState(
-                    "Improper card for the transfer of defense state to next player.",
+                    "Improper card for the transfer of defence state to next player.",
                 );
             }
 
             // edge case here: if the defender puts the last card down and they don't have anymore
-            // cards to pickup, they should be flagged as out of the game, and the defense should
+            // cards to pickup, they should be flagged as out of the game, and the defence should
             // be transferred to the next player, but the attack should be the previous player.
             if (player.deck.length === 1 && this.deck.length === 0) {
                 player.out = Date.now();
@@ -477,7 +488,7 @@ export class Game {
      * @param {string} card - The card that's going to be used to cover the table top card.
      * @param {number} pos - The position of the card that's going to be covered.
      * */
-    coverCardOnTableTop(card: string, pos: number): void {
+    coverCardOnTableTop(card: string, pos: number) {
         const defendingPlayer = this.getPlayer(this.getDefendingPlayerName());
 
         if (this.victory) {
@@ -500,8 +511,8 @@ export class Game {
             );
         }
 
-        const placedCard: CardType = parseCard(this.getCardOnTableTopAt(pos)!);
-        const coveringCard: CardType = parseCard(card);
+        const placedCard = Card.fromString(this.getCardOnTableTopAt(pos)!);
+        const coveringCard = Card.fromString(card);
 
         /*
          * check whether we are dealing with the same suit of card, or if the defending
@@ -524,7 +535,7 @@ export class Game {
                     "Covering card must have a higher value.",
                 );
             }
-        } else if (coveringCard.suit !== this.trumpCard.suit) {
+        } else if (coveringCard.suit !== this.trump.suit) {
             throw new InvalidGameState(
                 `Covering card suit must be the same suit as the table card and have a higher numerical value.`,
             );
@@ -544,7 +555,7 @@ export class Game {
         // Add history entry for the pickup
         this.history.addEntry({
             type: "cover",
-            data: [card],
+            card,
             player: this.getDefendingPlayerName(),
             on: pos,
         });
@@ -595,7 +606,7 @@ export class Game {
      * @param {String} name - The name of the player that the defending status
      *        is being transferred to.
      * */
-    private setDefendingPlayer(name: string): void {
+    private setDefendingPlayer(name: string) {
         if (this.victory) {
             throw new InvalidGameState(
                 "Can't mutate game state after victory.",
@@ -606,9 +617,8 @@ export class Game {
 
         // reset everyone's privileges for attacking/defending...
         this.players.forEach((player) => {
-            player.canAttack = false;
+            player.action = "none";
             player.beganRound = false;
-            player.isDefending = false;
             player.turned = false;
         });
 
@@ -617,10 +627,9 @@ export class Game {
             this.getPlayerNameByOffset(name, -1),
         );
 
-        attackingPlayer.canAttack = true;
+        attackingPlayer.action = "attack";
         attackingPlayer.beganRound = true;
-
-        defendingPlayer.isDefending = true;
+        defendingPlayer.action = "defend";
     }
 
     /**
@@ -632,7 +641,7 @@ export class Game {
      *        is being transferred to.
      *
      * */
-    public finalisePlayerTurn(name: string): void {
+    public finalisePlayerTurn(name: string) {
         if (this.victory) {
             throw new InvalidGameState(
                 "Can't mutate game state after victory.",
@@ -671,7 +680,7 @@ export class Game {
         if (attackingPlayer === name || defendingPlayerName === name) {
             this.getActivePlayers().forEach(([name, player]) => {
                 if (name !== defendingPlayerName) {
-                    player.canAttack = true;
+                    player.action = "attack";
                 }
             });
         }
@@ -748,12 +757,12 @@ export class Game {
      *        is being transferred to.
      *
      * */
-    public resignPlayer(name: string): void {
+    public resignPlayer(name: string) {
         const player = this.getPlayer(name);
 
         // don't do anything if the player is already out, since this doesn't change the state of the game
         if (player.out) return;
-        player.out = "resigned";
+        // player.out = "resigned";
 
         // push the player's deck and the table top card onto the back of the deck
         this.deck.push(...player.deck);
@@ -763,7 +772,7 @@ export class Game {
             return;
         }
 
-        if (player.isDefending) {
+        if (player.action === "defend") {
             this.deck.push(...this.getTableTopDeck());
             this.finaliseRound(true);
         } else if (player.beganRound) {
@@ -782,7 +791,7 @@ export class Game {
      * */
     public getDefendingPlayerName(): string {
         const defendingPlayer = Array.from(this.players.keys()).find(
-            (name) => this.players.get(name)!.isDefending,
+            (name) => this.players.get(name)!.action === "defend",
         );
 
         if (typeof defendingPlayer === "undefined") {
@@ -853,7 +862,7 @@ export class Game {
 
     private getAttackingPlayers(): [string, Player][] {
         return this.getActivePlayers().filter(
-            ([name, player]) => !player.isDefending,
+            ([name, player]) => player.action !== "defend",
         );
     }
 
@@ -894,7 +903,7 @@ export class Game {
 
     getTableTopNumerics(): Set<number> {
         return new Set(
-            this.getTableTopDeck().map((card) => parseCard(card).value),
+            this.getTableTopDeck().map((card) => Card.fromString(card).value),
         );
     }
 
@@ -970,7 +979,7 @@ export class Game {
         player.deck.splice(player.deck.indexOf(card), 1);
 
         // Add history entry for the place
-        this.history.addEntry({ type: "place", data: [card], player: name });
+        this.history.addEntry({ type: "place", card, player: name });
     }
 
     /**
@@ -997,7 +1006,7 @@ export class Game {
         // Add history entry for the pickup
         this.history.addEntry({
             type: "pickup",
-            data: this.getTableTopDeck(),
+            cards: this.getTableTopDeck(),
             player: to,
         });
 
@@ -1011,7 +1020,7 @@ export class Game {
      * defended themselves against the attackers.
      *
      * */
-    private voidTableTop(): void {
+    private voidTableTop() {
         this.tableTop.clear();
     }
 
@@ -1044,13 +1053,8 @@ export class Game {
 
         return {
             ...player,
-            out: player.out !== null,
-
-            // general info about the game state
-            trumpCard: this.trumpCard,
+            trump: this.trump,
             deckSize: this.deck.length,
-
-            // @ts-ignore
             tableTop: Object.fromEntries(this.tableTop),
 
             // information about other players, including how many cards they
@@ -1061,9 +1065,17 @@ export class Game {
                 return {
                     name,
                     ...other,
-                    out: other.out !== null,
+                    out: other.out !== undefined,
                     // allow players who are out of the game to view player decks
-                    deck: player.out ? other.deck : other.deck.length,
+                    deck: player.out
+                        ? {
+                              type: "visible",
+                              cards: other.deck,
+                          }
+                        : {
+                              type: "hidden",
+                              size: other.deck.length,
+                          },
                 };
             }),
         };
@@ -1085,11 +1097,8 @@ export class Game {
         ];
 
         return {
-            // general info about the game state
-            trumpCard: this.trumpCard,
+            trump: this.trump,
             deckSize: this.deck.length,
-
-            // @ts-ignore
             tableTop: Object.fromEntries(this.tableTop),
             // information about other players, including how many cards they
             // are holding, if they have turned, and if they are defending...
@@ -1100,7 +1109,10 @@ export class Game {
                     name,
                     ...other,
                     out: other.out !== null,
-                    deck: other.deck.length,
+                    deck: {
+                        type: "hidden",
+                        size: other.deck.length,
+                    },
                 };
             }),
         };
@@ -1121,7 +1133,7 @@ export class Game {
             this.players,
             this.tableTop,
             this.deck,
-            this.trumpCard,
+            this.trump,
             this.victory,
         );
     }

@@ -1,6 +1,7 @@
+import { GameStatus } from "@durachok/transport/src/schemas/game";
 import { Message } from "@durachok/transport/src/schemas/lobby";
 import mongoose, { Document, Schema } from "mongoose";
-import { GameState, GameStatus, HistoryState } from "shared";
+import { GameState, HistoryState } from "shared";
 
 import { Player } from "../schemas/lobby";
 import { IUser } from "./user.model";
@@ -49,7 +50,7 @@ const GameSchema = new Schema<IGame>({
         required: true,
     },
     createdAt: { type: Date, required: true, default: Date.now },
-    status: { type: String, required: true, default: GameStatus.WAITING },
+    status: { type: String, required: true, default: "waiting" },
 
     maxPlayers: { type: Number, required: true },
     disableChat: { type: Boolean, required: true, default: false },

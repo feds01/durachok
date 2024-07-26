@@ -1,28 +1,36 @@
+export type PlayerActon = "attack" | "defend" | "none";
+
 export class Player {
     deck: string[];
-    canAttack: boolean;
+
+    /** Whether the player has finished the game. */
+    out?: number;
+
+    /** Whether the player has finished the current round. */
     turned: boolean;
-    out: number | null | "resigned";
-    isDefending: boolean;
+
+    /** Whether the player has started the round. */
     beganRound: boolean;
+
+    /** What can the player do. */
+    action: PlayerActon;
 
     constructor(
         deck: string[] = [],
-        canAttack: boolean = false,
         beganRound: boolean = false,
         turned: boolean = false,
-        out: number | null = null,
-        isDefending: boolean = false,
+        action: PlayerActon = "none",
+        out?: number,
     ) {
         this.deck = deck;
         this.beganRound = beganRound;
-        this.canAttack = canAttack;
         this.turned = turned;
+        this.action = action;
         this.out = out;
-        this.isDefending = isDefending;
     }
 
-    addCard(card: string): void {
+    /** Add a card to the current player. */
+    public addCard(card: string) {
         this.deck.push(card);
     }
 }

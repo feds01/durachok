@@ -1,34 +1,58 @@
 import InvalidHistoryState from "./errors/InvalidHistoryState";
 import { GameState } from "./state";
 
-export type PlayerActionType = "place" | "cover" | "forfeit" | "pickup";
-export type AutoActionType = "exit" | "victory" | "new_round" | "start";
+export type PlayerAction =
+    | {
+          type: "place";
+          card: string;
+          player: string;
+      }
+    | {
+          type: "cover";
+          card: string;
+          player: string;
+          on: number;
+      }
+    | {
+          type: "forfeit";
+          player: string;
+      }
+    | {
+          type: "pickup";
+          cards: string[];
+          player: string;
+      };
 
-export type PlayerAction = {
-    readonly type: PlayerActionType;
-    readonly data?: string[];
-    readonly player?: string;
-    readonly on?: number;
-};
-
-export type AutonomousAction = {
-    readonly type: AutoActionType;
-    readonly at?: number | string;
-    readonly player?: string;
-    readonly actors?: {
-        defender: string;
-        attacker: string;
-    };
-};
+export type AutonomousAction =
+    | {
+          type: "exit";
+          player: string;
+          at: number;
+      }
+    | {
+          type: "victory";
+          at: number;
+      }
+    | {
+          type: "new_round";
+          actors: {
+              defender: string;
+              attacker: string;
+          };
+      }
+    | {
+          type: "start";
+          actors: {
+              defender: string;
+              attacker: string;
+          };
+      };
 
 export type Action = PlayerAction | AutonomousAction;
 
 /**
- * @version 1.0.0
  * History class for a game. This class is used to record actions and player
  * interactions within a game so it can later be recalled or re-created.
- *
- * @author Alexander. E. Fedotov
  * */
 export class HistoryNode {
     /**
@@ -87,7 +111,7 @@ export class HistoryNode {
      *
      * @param {Action} action - The action to be added to the HistoryNode.
      * */
-    addAction(action: Action): void {
+    addAction(action: Action) {
         if (this.finalised)
             throw new InvalidHistoryState(
                 "Can't add Action to HistoryNode that's been finalised.",
@@ -99,9 +123,7 @@ export class HistoryNode {
     /**
      * Setter method for the node's actions parameter.
      * */
-    findAction<T extends AutoActionType | PlayerActionType>(
-        type: T,
-    ): (Action & { type: T })[] {
+    findAction<T extends Action["type"]>(type: T): (Action & { type: T })[] {
         return this._actions.filter(
             (action) => action.type === type,
         ) as (Action & { type: T })[];
@@ -120,7 +142,7 @@ export class HistoryNode {
     /**
      * Method to remove the last action of the current node.
      * */
-    removeLast(): void {
+    removeLast() {
         if (this._actions.length === 0) return;
 
         this._actions.pop();
@@ -180,7 +202,7 @@ export class History {
      * the node off. This parameter is optional and does not need to be utilised.
      *
      * */
-    createNode(begin: Action | null): void {
+    createNode(begin: Action | null) {
         const nodes = [];
 
         // We might have to declare the previous node as finalised
@@ -201,7 +223,7 @@ export class History {
      * @param {Action} action - The action that is to be added.
      * @throws {InvalidHistoryState} If no HistoryNode exists in the current object
      * */
-    addEntry(action: Action): void {
+    addEntry(action: Action) {
         if (this.nodes.length === 0) {
             throw new InvalidHistoryState(
                 "Cannot add entry when no nodes exist.",
@@ -216,7 +238,7 @@ export class History {
      * Method to remove the last added node to the history. If no nodes are currently within
      * the history, no action is performed.
      * */
-    removeLastNode(): void {
+    removeLastNode() {
         if (this.nodes.length === 0) return;
 
         this.nodes.pop();

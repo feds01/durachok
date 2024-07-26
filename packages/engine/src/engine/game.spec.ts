@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 
-import { Game, defaultSettings } from "./game";
+import { DEFAULT_SETTINGS, Game } from "./game";
 
 describe("Game tests", () => {
     test("should create a new game without crashing", () =>
@@ -10,17 +10,17 @@ describe("Game tests", () => {
         expect(
             () =>
                 new Game(["0", "1", "2", "3", "4", "5", "6"], null, {
-                    ...defaultSettings,
+                    ...DEFAULT_SETTINGS,
                     shortGameDeck: true,
                 }),
         ).toThrow());
 
     test("Game.fromState should produce the same object", () => {
-        const game = new Game(["player1", "player2"], null, defaultSettings);
+        const game = new Game(["player1", "player2"], null, DEFAULT_SETTINGS);
         const save = game.serialize();
 
         expect(
-            Game.fromState(save.state, save.history, defaultSettings),
+            Game.fromState(save.state, save.history, DEFAULT_SETTINGS),
         ).toStrictEqual(game);
     });
 
@@ -33,7 +33,7 @@ describe("Game tests", () => {
 
         const save = game.serialize();
         expect(
-            Game.fromState(save.state, save.history, defaultSettings),
+            Game.fromState(save.state, save.history, DEFAULT_SETTINGS),
         ).toStrictEqual(game);
     });
 });

@@ -1,32 +1,50 @@
 import { CardNumerics, CardSuits } from "./consts";
 
-export interface CardType {
+export class Card {
+    /**
+     * The value of the card.
+     * */
     value: number;
+
+    /**
+     * The suit of the card.
+     * */
     suit: string;
+
+    /**
+     * The card string.
+     * */
     card: string;
-}
 
-/**
- * Simple function to split the card string into it's 'numerical'
- * value and it's 'suit' value.
- *
- * @param {string} card String representing card which is to be parsed.
- * @return {CardType} The numerical and suit component of the card.
- * */
-export function parseCard(card: string): CardType {
-    // ensure the numeric and suit are valid
-    const suit = card.substring(card.length - 1);
-    const rawNumeric = card.substring(0, card.length - 1);
-
-    if (!Object.keys(CardSuits).includes(suit)) {
-        throw new Error("Invalid card suit.");
+    public constructor(value: number, suit: string, card: string) {
+        this.value = value;
+        this.suit = suit;
+        this.card = card;
     }
 
-    if (!CardNumerics.includes(rawNumeric)) {
-        throw new Error("Invalid card numeric.");
-    }
+    /**
+     * Converts the card to a string.
+     *
+     * @param card The card to be converted to a string.
+     *
+     * @throws Error if the card is invalid.
+     *
+     * @returns a Card object.
+     */
+    static fromString(card: string): Card {
+        const suit = card.substring(card.length - 1);
+        const rawNumeric = card.substring(0, card.length - 1);
 
-    return { value: CardNumerics.indexOf(rawNumeric) + 2, suit, card };
+        if (!Object.keys(CardSuits).includes(suit)) {
+            throw new Error("Invalid card suit.");
+        }
+
+        if (!CardNumerics.includes(rawNumeric)) {
+            throw new Error("Invalid card numeric.");
+        }
+
+        return new Card(CardNumerics.indexOf(rawNumeric) + 2, suit, card);
+    }
 }
 
 /**
@@ -35,7 +53,7 @@ export function parseCard(card: string): CardType {
  *
  * @param {boolean} short - Whether the deck is short or not
  * */
-export function generateCardDeck(short: boolean = false): string[] {
+export function generateCardDeck(short = false): string[] {
     return CardNumerics.slice(short ? 4 : 0, CardNumerics.length)
         .map((label) => {
             return Object.keys(CardSuits).map((suit) => {

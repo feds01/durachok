@@ -8,8 +8,7 @@
     "prepare": "npm run build",
     "build": "tsc --declaration",
     "lint": "tsc --noEmit",
-    "fmt": "prettier --write .",
-    "test": "vitest run"
+    "fmt": "prettier --write ."
   },
   "repository": "https://github.com/feds01/durachok",
   "author": "Alexander. E. Fedotov",
