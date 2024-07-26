@@ -23,7 +23,9 @@ export function shuffleArray(array: Array<any>): Array<any> {
     return array;
 }
 
-// returns random key from Set or Map
+/**
+ * Get a random key a Map.
+ * */
 export function getRandomKey(collection: Map<string, Object>): string {
     let keys = Array.from(collection.keys());
     return keys[Math.floor(Math.random() * keys.length)];
