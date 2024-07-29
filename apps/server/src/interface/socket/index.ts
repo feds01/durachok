@@ -11,6 +11,71 @@ const config = createSimpleConfig({
             name: "x-token",
         },
     ],
+    emission: {
+        /**
+         * Updates to the lobby state, this can happen when:
+         *
+         * - Admin has updated the passphrase.
+         * - New player joins the lobby.
+         * - countdown begins in the lobby.
+         * - Game has started.
+         * - When a player joins the game (private message).
+         */
+        lobbyState: {
+            schema: z.tuple([]),
+        },
+
+        /** A new message was sent to the lobby. */
+        message: {
+            schema: z.tuple([]),
+        },
+
+        /**
+         * When a round of a game finishes, emit a "victory" message, clients
+         * should react accordingly.
+         */
+        victory: {
+            schema: z.tuple([]),
+        },
+
+        /**
+         * Specify to a client that they should close the connection, its either
+         * stale or invalid.
+         */
+        close: {
+            schema: z.tuple([]),
+        },
+
+        /**
+         * General state update, player-clients don't need to process
+         * this message, its mostly for spectators.
+         * */
+        state: {
+            schema: z.tuple([]),
+        },
+
+        /**
+         * When a player has performed an action, represent this action in the
+         * UI.
+         *  */
+        action: {
+            schema: z.tuple([]),
+        },
+
+        /**
+         * General error message, this is used to send error messages.
+         *
+         * Errors can be:
+         *
+         * - Stale game, when a player tries to send moves for a game that's finished.
+         * - Invalid move, when a player tries to perform an invalid move.
+         * - Invalid session, when a player tries to send a move but their session is invalid,
+         *   i.e. an un-authorized action.
+         */
+        error: {
+            schema: z.tuple([]),
+        },
+    },
 });
 
 const sockets = new ActionsFactory(config);
