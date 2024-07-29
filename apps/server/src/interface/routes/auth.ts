@@ -5,10 +5,10 @@ import {
 } from "@durachok/transport/src/request/user";
 import { TRPCError } from "@trpc/server";
 
-import { ENV } from "../config";
-import { authProcedure, publicProcedure, router } from "../lib/trpc";
-import { UserTokensResponseSchema } from "../schemas/auth";
-import { isDef } from "../utils";
+import { ENV } from "../../config";
+import { authProcedure, publicProcedure, router } from "../../lib/trpc";
+import { UserTokensResponseSchema } from "../../schemas/auth";
+import { isDef } from "../../utils";
 
 export const authRouter = router({
     register: publicProcedure
