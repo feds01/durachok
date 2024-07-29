@@ -1,6 +1,6 @@
 import { UserUpdateSchema } from "@durachok/transport/src/request";
 
-import { router, userProcedure } from "../lib/trpc";
+import { router, userProcedure } from "../../lib/trpc";
 
 export const userRouter = router({
     get: userProcedure.query(async (req) => {

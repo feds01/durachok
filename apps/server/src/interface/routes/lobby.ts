@@ -11,9 +11,9 @@ import {
     publicProcedure,
     router,
     userProcedure,
-} from "../lib/trpc";
-import { Player } from "../schemas/lobby";
-import { expr } from "../utils";
+} from "../../lib/trpc";
+import { Player } from "../../schemas/lobby";
+import { expr } from "../../utils";
 
 export const lobbyRouter = router({
     getInfo: publicProcedure.input(ByPinRequestSchema).query(async (req) => {

@@ -8,10 +8,10 @@ import { createServer } from "http";
 import { AddressInfo } from "net";
 
 import { ENV, IMAGE_STORAGE, PORT, UPLOAD_FOLDER } from "./config";
+import { appRouter } from "./interface/routes";
 import { connectDB } from "./lib/database";
 import logger from "./lib/logger";
 import { createContext } from "./lib/trpc";
-import { appRouter } from "./routes";
 import { expr } from "./utils";
 
 const app = express();
