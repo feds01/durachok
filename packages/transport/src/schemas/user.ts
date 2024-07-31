@@ -8,11 +8,11 @@ import { z } from "zod";
  * - first character cannot be a dash.
  */
 export const UserNameSchema = z
-  .string()
-  .regex(
-    /^[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$/i,
-    "User name must be alphanumeric and can contain hyphens.",
-  );
+    .string()
+    .regex(
+        /^[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$/i,
+        "User name must be alphanumeric and can contain hyphens.",
+    );
 
 export type UserName = z.infer<typeof UserNameSchema>;
 
@@ -26,25 +26,25 @@ export type UserPassword = z.infer<typeof UserPasswordSchema>;
 
 /** A User */
 export const UserSchema = z.object({
-  /** Associated user id, only exists after user is created. */
-  id: z.string(),
-  /** User name. */
-  name: UserNameSchema,
-  /** User email. */
-  email: UserEmailSchema,
-  /** URL to user's profile picture */
-  image: z.string().optional(),
+    /** Associated user id, only exists after user is created. */
+    id: z.string(),
+    /** User name. */
+    name: UserNameSchema,
+    /** User email. */
+    email: UserEmailSchema,
+    /** URL to user's profile picture */
+    image: z.string().optional(),
 });
 
 export type User = z.infer<typeof UserSchema>;
 
 export const UserStatisticsSchema = z.object({
-  gamesPlayed: z.number().int(),
-  gamesHosted: z.number().int(),
-  gamesResigned: z.number().int(),
-  gamesWon: z.number().int(),
-  gamesLost: z.number().int(),
-  averageRounds: z.number().int(),
+    gamesPlayed: z.number().int(),
+    gamesHosted: z.number().int(),
+    gamesResigned: z.number().int(),
+    gamesWon: z.number().int(),
+    gamesLost: z.number().int(),
+    averageRounds: z.number().int(),
 });
 
 export type UserStatistics = z.infer<typeof UserStatisticsSchema>;

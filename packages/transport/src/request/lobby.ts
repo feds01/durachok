@@ -7,7 +7,7 @@ import { GameSettingsSchema } from "./game";
 
 /** Query some kind of information by a game `pin`. */
 export const ByPinRequestSchema = z.object({
-  pin: GamePinSchema,
+    pin: GamePinSchema,
 });
 
 export type ByPinRequest = z.infer<typeof ByPinRequestSchema>;
@@ -17,9 +17,9 @@ export type ByPinRequest = z.infer<typeof ByPinRequestSchema>;
  * join a game.
  */
 export const GameJoinRequestSchema = z.object({
-  pin: GamePinSchema,
-  passphrase: GamePassPhraseSchema.optional(),
-  name: UserNameSchema,
+    pin: GamePinSchema,
+    passphrase: GamePassPhraseSchema.optional(),
+    name: UserNameSchema,
 });
 
 export type GameJoinRequest = z.infer<typeof GameJoinRequestSchema>;
@@ -29,7 +29,7 @@ export type GameJoinRequest = z.infer<typeof GameJoinRequestSchema>;
  * create a game.
  */
 export const GameCreateRequestSchema = z.object({
-  settings: GameSettingsSchema,
+    settings: GameSettingsSchema,
 });
 
 export type GameCreateRequest = z.infer<typeof GameCreateRequestSchema>;
@@ -38,11 +38,11 @@ export type GameCreateRequest = z.infer<typeof GameCreateRequestSchema>;
  * A request to check if a name is free in a lobby.
  */
 export const NameFreeInLobbyRequestSchema = ByPinRequestSchema.extend({
-  name: UserNameSchema,
+    name: UserNameSchema,
 });
 
 export type NameFreeInLobbyRequest = z.infer<
-  typeof NameFreeInLobbyRequestSchema
+    typeof NameFreeInLobbyRequestSchema
 >;
 
 /**
@@ -52,12 +52,12 @@ export type NameFreeInLobbyRequest = z.infer<
  * lobby is in.
  * */
 export const LobbyInfoSchema = z.object({
-  pin: z.string(),
-  joinable: z.boolean(),
-  passphrase: z.boolean(),
-  players: z.number(),
-  status: GameStatusSchema,
-  maxPlayers: z.number(),
+    pin: z.string(),
+    joinable: z.boolean(),
+    passphrase: z.boolean(),
+    players: z.number(),
+    status: GameStatusSchema,
+    maxPlayers: z.number(),
 });
 
 export type LobbyInfo = z.infer<typeof LobbyInfoSchema>;
