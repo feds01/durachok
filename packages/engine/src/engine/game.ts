@@ -109,7 +109,7 @@ export class Game {
                 deck: [],
                 turned: false,
                 beganRound: false,
-                action: "none"
+                action: "none",
             });
         }
 
@@ -295,7 +295,7 @@ export class Game {
 
         if (hasVictory) {
             // Add history entry for the victory
-            this.history.addEntry({ type: "victory", at: Date.now() });
+            this.history.addEntry({ type: "victory" });
         } else {
             // since it's a new round, we need to create a new node.
             this.history.createNode({
@@ -413,7 +413,6 @@ export class Game {
                 this.history.addEntry({
                     type: "exit",
                     player: name,
-                    at: player.out,
                 });
             }
 
@@ -455,7 +454,6 @@ export class Game {
                 this.history.addEntry({
                     type: "exit",
                     player: name,
-                    at: player.out,
                 });
             } // The player may already be out due to the code above
 
@@ -464,7 +462,7 @@ export class Game {
                 this.victory = true;
 
                 // Add history entry for the victory
-                this.history.addEntry({ type: "victory", at: Date.now() });
+                this.history.addEntry({ type: "victory" });
             }
         }
 
@@ -587,7 +585,6 @@ export class Game {
                 this.history.addEntry({
                     type: "exit",
                     player: this.getDefendingPlayerName(),
-                    at: defendingPlayer.out,
                 });
             }
 

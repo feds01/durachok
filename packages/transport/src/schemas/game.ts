@@ -58,12 +58,10 @@ export const AutonomousActionSchema = z.union([
     z.object({
         type: z.literal("exit"),
         player: UserNameSchema,
-        at: z.number(),
     }),
     /** The completion of a game. */
     z.object({
         type: z.literal("victory"),
-        at: z.number(),
     }),
     /** The act of starting a new round. */
     z.object({

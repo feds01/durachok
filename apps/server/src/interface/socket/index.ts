@@ -1,3 +1,12 @@
+import {
+    ActionMessageSchema,
+    CloseGameMessageSchema,
+    ErrorMessageSchema,
+    LobbyMessageSchema,
+    StateUpdateMessageSchema,
+    VictoryMessageSchema,
+} from "@durachok/transport/src/request/socket";
+import { MessageSchema } from "@durachok/transport/src/schemas/lobby";
 import { z } from "zod";
 import { ActionsFactory } from "zod-sockets";
 import { createSimpleConfig } from "zod-sockets";
@@ -22,12 +31,22 @@ const config = createSimpleConfig({
          * - When a player joins the game (private message).
          */
         lobbyState: {
+            schema: z.tuple([LobbyMessageSchema]),
+        },
+
+        /** Message to indicate that the game is about start. */
+        countdown: {
+            schema: z.tuple([]),
+        },
+
+        /** Message to indicate that the game started. */
+        gameStarted: {
             schema: z.tuple([]),
         },
 
         /** A new message was sent to the lobby. */
         message: {
-            schema: z.tuple([]),
+            schema: z.tuple([MessageSchema]),
         },
 
         /**
@@ -35,7 +54,7 @@ const config = createSimpleConfig({
          * should react accordingly.
          */
         victory: {
-            schema: z.tuple([]),
+            schema: z.tuple([VictoryMessageSchema]),
         },
 
         /**
@@ -43,7 +62,7 @@ const config = createSimpleConfig({
          * stale or invalid.
          */
         close: {
-            schema: z.tuple([]),
+            schema: z.tuple([CloseGameMessageSchema]),
         },
 
         /**
@@ -51,7 +70,7 @@ const config = createSimpleConfig({
          * this message, its mostly for spectators.
          * */
         state: {
-            schema: z.tuple([]),
+            schema: z.tuple([StateUpdateMessageSchema]),
         },
 
         /**
@@ -59,7 +78,7 @@ const config = createSimpleConfig({
          * UI.
          *  */
         action: {
-            schema: z.tuple([]),
+            schema: z.tuple([ActionMessageSchema]),
         },
 
         /**
@@ -73,7 +92,7 @@ const config = createSimpleConfig({
          *   i.e. an un-authorized action.
          */
         error: {
-            schema: z.tuple([]),
+            schema: z.tuple([ErrorMessageSchema]),
         },
     },
 });
