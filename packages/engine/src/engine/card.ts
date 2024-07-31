@@ -1,50 +1,31 @@
+import { Card } from "@durachok/transport/src/schemas/game";
+
 import { CardNumerics, CardSuits } from "./consts";
 
-export class Card {
-    /**
-     * The value of the card.
-     * */
-    value: number;
+/**
+ * Converts the card to a string.
+ *
+ * @param card The card to be converted to a string.
+ *
+ * @throws Error if the card is invalid.
+ */
+export function cardFromString(card: string): Card {
+    const suit = card.substring(card.length - 1);
+    const rawNumeric = card.substring(0, card.length - 1);
 
-    /**
-     * The suit of the card.
-     * */
-    suit: string;
-
-    /**
-     * The card string.
-     * */
-    card: string;
-
-    public constructor(value: number, suit: string, card: string) {
-        this.value = value;
-        this.suit = suit;
-        this.card = card;
+    if (!Object.keys(CardSuits).includes(suit)) {
+        throw new Error("Invalid card suit.");
     }
 
-    /**
-     * Converts the card to a string.
-     *
-     * @param card The card to be converted to a string.
-     *
-     * @throws Error if the card is invalid.
-     *
-     * @returns a Card object.
-     */
-    static fromString(card: string): Card {
-        const suit = card.substring(card.length - 1);
-        const rawNumeric = card.substring(0, card.length - 1);
-
-        if (!Object.keys(CardSuits).includes(suit)) {
-            throw new Error("Invalid card suit.");
-        }
-
-        if (!CardNumerics.includes(rawNumeric)) {
-            throw new Error("Invalid card numeric.");
-        }
-
-        return new Card(CardNumerics.indexOf(rawNumeric) + 2, suit, card);
+    if (!CardNumerics.includes(rawNumeric)) {
+        throw new Error("Invalid card numeric.");
     }
+
+    return {
+        value: CardNumerics.indexOf(rawNumeric) + 2,
+        suit,
+        card,
+    };
 }
 
 /**

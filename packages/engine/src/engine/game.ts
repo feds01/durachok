@@ -1,5 +1,9 @@
+import {
+    Card,
+} from "@durachok/transport/src/schemas/game";
+
 import { getRandomKey, shuffleArray } from "../utils";
-import { Card, generateCardDeck } from "./card";
+import { cardFromString, generateCardDeck } from "./card";
 import { TableSize } from "./consts";
 import GameInitError from "./errors/GameInitError";
 import InvalidGameState from "./errors/InvalidGameState";
@@ -115,11 +119,7 @@ export class Game {
 
         // Select the first remaining card and set the 'suit' of the game and then
         // shift the first element to the end of the stack.
-        const topCard = Card.fromString(this.deck[0]);
-
-        this.trump = new Card(topCard.value, topCard.suit, this.deck[0]);
-
-        // put top card to the bottom of the deck as is in the real game
+        this.trump = cardFromString(this.deck[0]);
         this.deck.push(this.deck.shift()!);
 
         // initialise the history object if this game hasn't initialised a history
@@ -343,13 +343,13 @@ export class Game {
 
         // Also check that the current card is allowed to be added to the deck. To determine this,
         // the cardLabel of the card to be added must be present on the tableTop.
-        const coveringCard = Card.fromString(card);
+        const coveringCard = cardFromString(card);
         const tableTopCards = this.getTableTopDeck();
 
         if (
             tableTopCards.length > 0 &&
             !tableTopCards
-                .map((item) => Card.fromString(item).value)
+                .map((item) => cardFromString(item).value)
                 .includes(coveringCard.value)
         ) {
             throw new InvalidGameState(
@@ -387,7 +387,7 @@ export class Game {
             if (
                 Array.from(this.tableTop.keys()).some(
                     (tableCard) =>
-                        Card.fromString(tableCard).value !== coveringCard.value,
+                        cardFromString(tableCard).value !== coveringCard.value,
                 )
             ) {
                 throw new InvalidGameState(
@@ -511,8 +511,8 @@ export class Game {
             );
         }
 
-        const placedCard = Card.fromString(this.getCardOnTableTopAt(pos)!);
-        const coveringCard = Card.fromString(card);
+        const placedCard = cardFromString(this.getCardOnTableTopAt(pos)!);
+        const coveringCard = cardFromString(card);
 
         /*
          * check whether we are dealing with the same suit of card, or if the defending
@@ -903,7 +903,7 @@ export class Game {
 
     getTableTopNumerics(): Set<number> {
         return new Set(
-            this.getTableTopDeck().map((card) => Card.fromString(card).value),
+            this.getTableTopDeck().map((card) => cardFromString(card).value),
         );
     }
 
