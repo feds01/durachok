@@ -1,54 +1,6 @@
+import { Action, GameState } from "@durachok/transport/src/schemas/game";
+
 import InvalidHistoryState from "./errors/InvalidHistoryState";
-import { GameState } from "./state";
-
-export type PlayerAction =
-    | {
-          type: "place";
-          card: string;
-          player: string;
-      }
-    | {
-          type: "cover";
-          card: string;
-          player: string;
-          on: number;
-      }
-    | {
-          type: "forfeit";
-          player: string;
-      }
-    | {
-          type: "pickup";
-          cards: string[];
-          player: string;
-      };
-
-export type AutonomousAction =
-    | {
-          type: "exit";
-          player: string;
-          at: number;
-      }
-    | {
-          type: "victory";
-          at: number;
-      }
-    | {
-          type: "new_round";
-          actors: {
-              defender: string;
-              attacker: string;
-          };
-      }
-    | {
-          type: "start";
-          actors: {
-              defender: string;
-              attacker: string;
-          };
-      };
-
-export type Action = PlayerAction | AutonomousAction;
 
 /**
  * History class for a game. This class is used to record actions and player
@@ -171,8 +123,6 @@ export type HistoryState = {
  * @version 1.0.0
  * History class for a game. This class is used to record actions and player
  * interactions within a game so it can later be recalled or re-created.
- *
- * @author Alexander. E. Fedotov
  * */
 export class History {
     private readonly initialState: GameState;
