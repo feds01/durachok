@@ -96,6 +96,8 @@ export const CardSchema = z.object({
     value: z.number(),
 });
 
+export type Card = z.infer<typeof CardSchema>;
+
 /** The role that a player can take in the round of a game. */
 export const PlayerRoleSchema = z.union([
     /** The player can attack. */
