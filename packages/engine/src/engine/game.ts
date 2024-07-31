@@ -1,5 +1,8 @@
 import {
     Card,
+    GameState,
+    Player,
+    PlayerGameState,
 } from "@durachok/transport/src/schemas/game";
 
 import { getRandomKey, shuffleArray } from "../utils";
@@ -8,8 +11,6 @@ import { TableSize } from "./consts";
 import GameInitError from "./errors/GameInitError";
 import InvalidGameState from "./errors/InvalidGameState";
 import { History, HistoryState } from "./history";
-import { Player } from "./player";
-import { GameState, PlayerGameState } from "./state";
 
 /** Options for the game. */
 export type GameSettings = {
@@ -102,13 +103,20 @@ export class Game {
 
         // set the game up for the 'players' number.
         for (let index = 0; index < players.length; index++) {
-            this.players.set(players[index], new Player());
+            this.players.set(players[index], {
+                out: null,
+                name: players[index],
+                deck: [],
+                turned: false,
+                beganRound: false,
+                action: "none"
+            });
         }
 
         // distribute the cards between the players as if in a physical way
         for (let index = 0; index < TableSize; index++) {
             this.players.forEach((player) => {
-                player.addCard(this.deck.shift()!);
+                player.deck = [...player.deck, this.deck.shift()!];
             });
         }
 
@@ -1047,8 +1055,6 @@ export class Game {
      * */
     public getStateForPlayer(playerName: string): PlayerGameState {
         const player = this.getPlayer(playerName);
-
-        // transpose the array to match the position of the player on the table
         const playerOrder = this.getPlayerOrderFrom(playerName);
 
         return {
@@ -1063,9 +1069,8 @@ export class Game {
                 const other = this.players.get(name)!;
 
                 return {
-                    name,
                     ...other,
-                    out: other.out !== undefined,
+                    name,
                     // allow players who are out of the game to view player decks
                     deck: player.out
                         ? {
@@ -1106,9 +1111,8 @@ export class Game {
                 const other = this.players.get(name)!;
 
                 return {
-                    name,
                     ...other,
-                    out: other.out !== null,
+                    name,
                     deck: {
                         type: "hidden",
                         size: other.deck.length,
@@ -1128,16 +1132,6 @@ export class Game {
         return player;
     }
 
-    public getGameState(): GameState {
-        return new GameState(
-            this.players,
-            this.tableTop,
-            this.deck,
-            this.trump,
-            this.victory,
-        );
-    }
-
     /**
      * This method is used to serialize the object so it can be written to the database
      * or send over a http transmission.
@@ -1147,7 +1141,19 @@ export class Game {
     public serialize(): { history: HistoryState; state: GameState } {
         return {
             history: this.history?.serialize(),
-            state: this.getGameState(),
+            state: {
+                deck: this.deck,
+                trump: this.trump,
+                tableTop: Object.fromEntries(this.tableTop),
+                players: Array.from(this.players.entries()).reduce(
+                    (acc, [name, player]) => ({
+                        ...acc,
+                        [name]: player,
+                    }),
+                    {},
+                ),
+                victory: this.victory,
+            },
         };
     }
 }
