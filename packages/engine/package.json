@@ -14,6 +14,9 @@
     "repository": "https://github.com/feds01/durachok",
     "author": "Alexander. E. Fedotov",
     "license": "MIT",
+    "dependencies": {
+        "@durachok/transport": "file:./../transport"
+    },
     "devDependencies": {
         "@trivago/prettier-plugin-sort-imports": "^4.3.0",
         "@types/node": "^20.14.10",
