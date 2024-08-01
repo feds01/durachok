@@ -7,12 +7,13 @@ import helmet from "helmet";
 import { createServer } from "http";
 import { AddressInfo } from "net";
 
-import { ENV, IMAGE_STORAGE, PORT, UPLOAD_FOLDER } from "./config";
+import { APP_URL, ENV, IMAGE_STORAGE, PORT, UPLOAD_FOLDER } from "./config";
 import { appRouter } from "./interface/routes";
 import { connectDB } from "./lib/database";
 import logger from "./lib/logger";
 import { createContext } from "./lib/trpc";
 import { expr } from "./utils";
+import { connectSocket } from "./interface/socket";
 
 const app = express();
 
@@ -28,7 +29,7 @@ app.use((_, res, next) => {
 });
 app.use(
     cors({
-        origin: ["http://localhost:5173", "http://localhost:4173"],
+        origin: ["http://localhost:5173", "http://localhost:4173", APP_URL],
     }),
 );
 app.use(express.urlencoded({ extended: false }));
@@ -47,7 +48,7 @@ if (ENV === "dev") {
     app.use("/playground", (_, res) => {
         return res.send(
             renderTrpcPanel(appRouter, {
-                url: `http://localhost:${PORT}/api/trpc`,
+                url: `${APP_URL}/api/trpc`,
             }),
         );
     });
@@ -63,15 +64,15 @@ app.use((_req, res) => {
     });
 });
 
-//initialize a simple http server
+
 const server = createServer(app);
 
-//start our server
 server.listen(PORT, async () => {
     await connectDB();
-
+    await connectSocket(server);
+    
+    // Display the logo for the server.
     const info = server.address() as AddressInfo;
-    const bold = chalk.bold;
     const env = expr(() => {
         if (ENV === "dev") {
             return chalk.bgBlue.bold(ENV);
@@ -87,8 +88,8 @@ server.listen(PORT, async () => {
         | (__) || :\\/: || ()() || :\\/: || :\\/: || (__) || :\\/: || :\\/: |
         | '--'D|| '--'U|| '--'R|| '--'A|| '--'C|| '--'H|| '--'O|| '--'K|
         \`------'\`------'\`------'\`------'\`------'\`------'\`------'\`------'        
-        ${bold("env")}: ${env} 
-        ${bold("port")}:${port}
-        ${bold("image")}: ${chalk.bgGreen.bold(IMAGE_STORAGE)}
+        ${chalk.bold("env")}: ${env} 
+        ${chalk.bold("port")}:${port}
+        ${chalk.bold("image")}: ${chalk.bgGreen.bold(IMAGE_STORAGE)}
     `);
 });
