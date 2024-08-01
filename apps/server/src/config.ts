@@ -15,6 +15,7 @@ export const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || "secret";
 /** Networking configurations */
 export const PORT = process.env.PORT || 5000;
 export const ENV = process.env.NODE_ENV || "dev";
+export const APP_URL = process.env.APP_URL || `http://localhost:${PORT}`;
 
 /** AWS configurations */
 export const AWS_ACCESS_KEY = process.env.AWS_ACCESS_KEY || "";
