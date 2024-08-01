@@ -9,11 +9,11 @@ import { AddressInfo } from "net";
 
 import { APP_URL, ENV, IMAGE_STORAGE, PORT, UPLOAD_FOLDER } from "./config";
 import { appRouter } from "./interface/routes";
+import { connectSocket } from "./interface/socket";
 import { connectDB } from "./lib/database";
 import logger from "./lib/logger";
 import { createContext } from "./lib/trpc";
 import { expr } from "./utils";
-import { connectSocket } from "./interface/socket";
 
 const app = express();
 
@@ -64,13 +64,12 @@ app.use((_req, res) => {
     });
 });
 
-
 const server = createServer(app);
 
 server.listen(PORT, async () => {
     await connectDB();
     await connectSocket(server);
-    
+
     // Display the logo for the server.
     const info = server.address() as AddressInfo;
     const env = expr(() => {

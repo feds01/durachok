@@ -157,6 +157,20 @@ export const PlayerSchema = OpaquePlayerStateSchema.omit({ deck: true }).extend(
 
 export type Player = z.infer<typeof PlayerSchema>;
 
+/** A player move. */
+export const PlayerMoveSchema = z.union([
+    /** An attacker places a card on the table. */
+    z.object({ type: z.literal("place"), card: z.string() }),
+    /** A player covers a card on the table. */
+    z.object({
+        type: z.literal("cover"),
+        position: z.number().min(0).max(5).int(),
+        card: z.string(),
+    }),
+]);
+
+export type PlayerMove = z.infer<typeof PlayerMoveSchema>;
+
 /** The current game state. */
 export const GameStateSchema = z.object({
     /** The current trump card of the game. */

@@ -135,14 +135,36 @@ export namespace Root {
         }) => void;
     }
     export interface Actions {
-        join: (...rest: {}[]) => void;
-        leave: (...rest: {}[]) => void;
-        kick: (...rest: {}[]) => void;
-        message: (...rest: {}[]) => void;
-        move: (...rest: {}[]) => void;
-        resign: (...rest: {}[]) => void;
-        start: (...rest: {}[]) => void;
-        passphrase: (...rest: {}[]) => void;
+        join: (p1: string) => void;
+        leave: (p1: string) => void;
+        kick: (
+            p1: string,
+            p2: {
+                id: string;
+            },
+        ) => void;
+        message: (
+            p1: string,
+            p2: {
+                message: string;
+            },
+        ) => void;
+        move: (
+            p1: string,
+            p2:
+                | {
+                      type: "place";
+                      card: string;
+                  }
+                | {
+                      type: "cover";
+                      position: number;
+                      card: string;
+                  },
+        ) => void;
+        resign: (p1: string) => void;
+        start: (p1: string) => void;
+        passphrase: (p1: string, p2: string) => void;
     }
     /** @example const socket: Root.Socket = io(Root.path) */
     export type Socket = SocketBase<Emission, Actions>;

@@ -1,5 +1,5 @@
-import { Logger } from "pino";
 import { Server as HTTPServer } from "http";
+import { Logger } from "pino";
 import { Server } from "socket.io";
 import { attachSockets } from "zod-sockets";
 
@@ -28,7 +28,6 @@ export async function connectSocket(server: HTTPServer) {
         logger,
     });
 }
-
 
 declare module "zod-sockets" {
     interface LoggerOverrides extends Logger {}
