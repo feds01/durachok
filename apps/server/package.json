@@ -9,6 +9,7 @@
         "lint": "eslint . --ext ts --report-unused-disable-directives --max-warnings 0",
         "check": "tsc",
         "build": "esbuild src/index.ts --bundle --packages=external --platform=node --format=esm --outdir=dist --sourcemap",
+        "build:client": "tsx src/interface/socket/generate-client.ts",
         "fmt": "prettier --write ."
     },
     "dependencies": {
