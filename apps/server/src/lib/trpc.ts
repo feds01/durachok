@@ -3,59 +3,28 @@ import * as trpcExpress from "@trpc/server/adapters/express";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
-import { IMAGE_STORAGE } from "../config";
-import { AuthService } from "../controllers/auth";
-import { CommonService } from "../controllers/common";
-import { ImageService } from "../controllers/image";
-import { LobbyService } from "../controllers/lobby";
-import { UserService } from "../controllers/user";
-import { LocalImageRepo, S3ImageRepo } from "../repos/image";
 import { expr } from "../utils";
 import { transformZodErrorIntoErrorSummary } from "../utils/error";
 import { getTokenFromHeaders } from "./authentication";
+import { createContext } from "./context";
 import logger from "./logger";
 
 /** Function to construct the context that we need */
-export const createContext = async ({
+export const createSessionContext = async ({
     req,
     res,
 }: trpcExpress.CreateExpressContextOptions) => {
-    const imageRepo = expr(() => {
-        if (IMAGE_STORAGE === "s3") {
-            return new S3ImageRepo(logger);
-        }
-
-        const hostInfo = { hostname: `${req.protocol}://${req.get("host")}` };
-        return new LocalImageRepo(hostInfo, logger);
-    });
-    const authService = new AuthService();
-    const commonService = new CommonService();
-    const lobbyService = new LobbyService(logger, commonService);
-    const imageService = new ImageService(logger, imageRepo);
-    const userService = new UserService(
-        logger,
-        commonService,
-        authService,
-        imageService,
-        lobbyService,
-    );
-
-    const serviceMap = {
-        logger,
-        authService,
-        lobbyService,
-        imageService,
-        userService,
-    };
+    const hostname = `${req.protocol}://${req.get("host")}`;
+    const ctx = createContext(logger, hostname);
 
     // Try and read the user.
     const tokens = await getTokenFromHeaders(authService, req, res);
     if (!tokens) {
-        return { ...serviceMap, token: undefined, rawTokens: undefined };
+        return { ...ctx, token: undefined, rawTokens: undefined };
     }
 
     return {
-        ...serviceMap,
+        ...ctx,
         token: tokens.payload,
         rawTokens: {
             token: tokens.token,
@@ -64,7 +33,9 @@ export const createContext = async ({
     };
 };
 
-export type Context = Awaited<ReturnType<typeof createContext>>;
+export type AuthenticatedContext = Awaited<
+    ReturnType<typeof createSessionContext>
+>;
 
 /**
  * Register a hook to convert `Buffer`s to base64
@@ -84,7 +55,7 @@ superjson.registerCustom<Buffer, string>(
  * Initialization of tRPC backend
  * Should be done only once per backend!
  */
-const t = initTRPC.context<Context>().create({
+const t = initTRPC.context<AuthenticatedContext>().create({
     transformer: superjson,
     errorFormatter: ({ error, shape }) => {
         return {

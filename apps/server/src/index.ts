@@ -12,7 +12,7 @@ import { appRouter } from "./interface/routes";
 import { connectSocket } from "./interface/socket";
 import { connectDB } from "./lib/database";
 import logger from "./lib/logger";
-import { createContext } from "./lib/trpc";
+import { createSessionContext } from "./lib/trpc";
 import { expr } from "./utils";
 
 const app = express();
@@ -40,7 +40,7 @@ app.use(
     "/api/trpc",
     createExpressMiddleware({
         router: appRouter,
-        createContext,
+        createContext: createSessionContext,
     }),
 );
 
