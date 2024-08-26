@@ -2,7 +2,7 @@ import { ErrorMessage } from "@durachok/transport/src/request/socket";
 import { ZodError } from "zod";
 import { InputValidationError } from "zod-sockets";
 
-import { transformZodErrorIntoErrorSummary } from "../../utils/error";
+import { ApiError, transformZodErrorIntoErrorSummary } from "../../utils/error";
 
 /**
  * Convert an error into a message that can be sent to the client.
@@ -17,6 +17,8 @@ export function transformErrorIntoMessage(error: Error): ErrorMessage {
             message: `invalid event ${error.name} sent`,
             details: transformZodErrorIntoErrorSummary(error.originalError),
         };
+    } else if (error instanceof ApiError) {
+        return error.toMessage();
     } else if (error instanceof ZodError) {
         return {
             type: "bad_request",

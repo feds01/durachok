@@ -139,7 +139,7 @@ export const config = createSimpleConfig({
         onError: async ({ client, error, logger }) => {
             // Log the problem (@@Todo: sentry) and then emit the error
             // to the client.
-            logger.error("something went wrong", error);
+            logger.error(error, "something went wrong");
 
             if (client) {
                 await client.emit("error", transformErrorIntoMessage(error));

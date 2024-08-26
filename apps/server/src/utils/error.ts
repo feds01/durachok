@@ -1,4 +1,8 @@
-import { ErrorSummary } from "@durachok/transport/src/request/socket";
+import {
+    ErrorMessage,
+    ErrorMessageType,
+    ErrorSummary,
+} from "@durachok/transport/src/request/socket";
 import { ZodError } from "zod";
 
 import { expr } from ".";
@@ -110,5 +114,53 @@ export class ApiError extends Error {
 
     static http(code: number, message: string, errors?: ErrorSummary) {
         return new ApiError(code, InternalApiErrorCode.None, message, errors);
+    }
+
+    /**
+     * Get the `ErrorMessageType` from this. This will take into
+     * account if the error is an internal error or an HTTP error.
+     */
+    private get errorCode(): ErrorMessageType {
+        if (
+            this.internalCode &&
+            this.internalCode !== InternalApiErrorCode.None
+        ) {
+            switch (this.internalCode) {
+                case InternalApiErrorCode.NotFound:
+                    return "not_found";
+                case InternalApiErrorCode.InvalidItem:
+                    return "bad_request";
+                case InternalApiErrorCode.AccessDenied:
+                    return "unauthorized";
+                default:
+                    return "internal";
+            }
+        }
+
+        switch (this.code) {
+            /** Request level failures */
+            case 400:
+                return "bad_request";
+            case 401:
+                return "unauthorized";
+            case 404:
+                return "not_found";
+            /** Server errors */
+            case 500:
+                return "internal";
+            default:
+                return "internal";
+        }
+    }
+
+    /**
+     * Convert the error into an `ErrorMessage`.
+     */
+    public toMessage(): ErrorMessage {
+        return {
+            type: this.errorCode,
+            details: this.errors,
+            message: this.message,
+        };
     }
 }
