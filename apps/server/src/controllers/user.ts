@@ -4,7 +4,7 @@ import {
     UserUpdate,
 } from "@durachok/transport/src/request/user";
 import { TRPCError } from "@trpc/server";
-import { Logger } from "winston";
+import { Logger } from "pino";
 
 import User, { IUser } from "../models/user.model";
 import { isDef } from "../utils";

@@ -3,7 +3,7 @@ import * as rq from "@trpc/react-query";
 import { Buffer } from "buffer";
 import superjson from "superjson";
 
-import type { AppRouter } from "../../../server/src/routes";
+import type { AppRouter } from "../../../server/src/interface/routes";
 import { API_URL } from "../config";
 import { getAuthHeader } from "./auth";
 
