@@ -57,10 +57,24 @@ export const ErrorMessageTypeSchema = z.union([
     z.literal("stale_game"),
 ]);
 
+export const ErrorSummarySchema = z.record(
+    z.string(),
+    z.object({
+        message: z.union([z.string(), z.array(z.string())]),
+        code: z.number().optional(),
+    }),
+);
+
+export type ErrorSummary = z.infer<typeof ErrorSummarySchema>;
+
 /** Indicate to the player that an error has occurred. */
 export const ErrorMessageSchema = z.object({
     /** The type of error that occurred. */
     type: ErrorMessageTypeSchema,
+    /** An optional schema that indicates any details about the error, i.e. unprocessable fields. */
+    details: ErrorSummarySchema.optional(),
     /** Additional optional information about the error. */
     message: z.string().optional(),
 });
+
+export type ErrorMessage = z.infer<typeof ErrorMessageSchema>;

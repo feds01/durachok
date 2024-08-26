@@ -11,7 +11,7 @@ import { LobbyService } from "../controllers/lobby";
 import { UserService } from "../controllers/user";
 import { LocalImageRepo, S3ImageRepo } from "../repos/image";
 import { expr } from "../utils";
-import { transformZodErrorIntoResponseError } from "../utils/error";
+import { transformZodErrorIntoErrorSummary } from "../utils/error";
 import { getTokenFromHeaders } from "./authentication";
 import logger from "./logger";
 
@@ -94,7 +94,7 @@ const t = initTRPC.context<Context>().create({
                 zodError:
                     error.code === "BAD_REQUEST" &&
                     error.cause instanceof ZodError
-                        ? transformZodErrorIntoResponseError(error.cause)
+                        ? transformZodErrorIntoErrorSummary(error.cause)
                         : null,
             },
         };
