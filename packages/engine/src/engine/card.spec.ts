@@ -1,25 +1,25 @@
 import { describe, expect, test } from "vitest";
 
-import { generateCardDeck, parseCard } from "./card";
+import { cardFromString, generateCardDeck } from "./card";
 
 describe("Card tests", () => {
-    describe("parseCard", () => {
+    describe("cardFromString", () => {
         test("Parse a simple card", () => {
             const expected = [
                 { value: 4, suit: "D", card: "4D" },
                 { value: 14, suit: "S", card: "AS" },
             ];
 
-            expect(parseCard("4D")).toEqual(expected[0]);
-            expect(parseCard("AS")).toEqual(expected[1]);
+            expect(cardFromString("4D")).toEqual(expected[0]);
+            expect(cardFromString("AS")).toEqual(expected[1]);
         });
 
-        test("parseCard should throw on invalid numeric", () => {
-            expect(() => parseCard("1D")).toThrow();
+        test("cardFromString should throw on invalid numeric", () => {
+            expect(() => cardFromString("1D")).toThrow();
         });
 
-        test("parseCard should throw on invalid suit", () => {
-            expect(() => parseCard("2B")).toThrow();
+        test("cardFromString should throw on invalid suit", () => {
+            expect(() => cardFromString("2B")).toThrow();
         });
     });
 
