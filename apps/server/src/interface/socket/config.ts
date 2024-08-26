@@ -10,6 +10,8 @@ import { MessageSchema } from "@durachok/transport/src/schemas/lobby";
 import { z } from "zod";
 import { createSimpleConfig } from "zod-sockets";
 
+import { getTokenFromHeaders } from "../../lib/authentication";
+import { expr } from "../../utils";
 import { transformErrorIntoMessage } from "./error";
 
 export const config = createSimpleConfig({
@@ -98,9 +100,41 @@ export const config = createSimpleConfig({
         },
     },
     hooks: {
+        /**
+         * On `onConnection` we perform the first step of authentication, which
+         * is to extract and validate the provided `x-token` header. We should
+         * be able to pass in the same `AuthContext` as we do in the tRPC implementation.
+         */
         onConnection: async ({ client, logger }) => {
             logger.info("connected", client.id, client.getData());
-            client.join("lobby-1");
+
+            // Try and read the user.
+            const ctx = logger.ctx; // @@Hack!
+            const tokens = await getTokenFromHeaders(
+                ctx.authService,
+                client.handshake.headers,
+            );
+
+            const authCtx = expr(() => {
+                if (!tokens) {
+                    logger.info("failed to authorise", { clientId: client.id });
+                    return { token: undefined, rawTokens: undefined };
+                }
+
+                logger.info("successfully authorised", { clientId: client.id });
+                return {
+                    token: tokens.payload,
+                    rawTokens: {
+                        token: tokens.token,
+                        refreshToken: tokens.refreshToken,
+                    },
+                };
+            });
+
+            // @@Hack: we pass the `authCtx` into all of the handlers, and
+            // then expect the handlers to determine what the handling of
+            // a particular authentication state is.
+            client.handshake.auth = authCtx;
         },
         onError: async ({ client, error, logger }) => {
             // Log the problem (@@Todo: sentry) and then emit the error
