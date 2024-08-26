@@ -1,16 +1,10 @@
 import type * as express from "express";
 
 import { AuthService } from "../controllers/auth";
-import { TokenPayload } from "../schemas/auth";
+import { UserTokensResponse, UserTokensResponseSchema } from "../schemas/auth";
 import { assert, expr, isDef } from "../utils";
 
-type Tokens = {
-    payload: TokenPayload;
-    /** The basic token. */
-    token: string;
-    /** The refresh token. */
-    refreshToken: string | null;
-};
+type Headers = { [key: string]: string | string[] | undefined };
 
 /**
  * This function will attempt to extract the token from the request headers. If the token
@@ -24,12 +18,12 @@ type Tokens = {
  */
 export async function getTokenFromHeaders(
     authService: AuthService,
-    req: express.Request,
-    res: express.Response,
-): Promise<Tokens | null> {
-    const token = req.headers["x-token"];
+    headers: Headers,
+    onNewTokens?: (tokens: UserTokensResponse) => void,
+): Promise<UserTokensResponse | null> {
+    const token = headers["x-token"];
     const refreshToken = expr(() => {
-        const raw = req.headers["x-refresh-token"];
+        const raw = headers["x-refresh-token"];
         if (!isDef(raw) || typeof raw !== "string") {
             return null;
         }
@@ -54,13 +48,44 @@ export async function getTokenFromHeaders(
     const newTokens = await authService.refreshTokens(refreshToken);
 
     // Send back new tokens if they were generated.
-    if (isDef(newTokens)) {
-        res.set("Access-Control-Expose-Headers", "x-token, x-refresh-token");
-        res.set("x-token", newTokens.token);
-        res.set("x-refresh-token", newTokens.refreshToken);
+    if (isDef(newTokens) && onNewTokens) {
+        onNewTokens(newTokens);
         return newTokens;
     }
 
     // We failed to refresh the token, so we return null.
+    return null;
+}
+
+/**
+ * Set the tokens in the response headers.
+ *
+ * @param res - The response object.
+ * @param tokens - The tokens to set.
+ */
+export function setTokensInResponse(
+    res: express.Response,
+    tokens: UserTokensResponse,
+): void {
+    res.set("Access-Control-Expose-Headers", "x-token, x-refresh-token");
+    res.set("x-token", tokens.token);
+    res.set("x-refresh-token", tokens.refreshToken ?? "");
+}
+
+/**
+ * Ensure that the payload is a valid token payload.
+ *
+ * @param payload - The payload to check.
+ * @returns - The payload if it is valid, otherwise null.
+ */
+export function ensurePayloadIsTokens(
+    payload: unknown,
+): UserTokensResponse | null {
+    const parsed = UserTokensResponseSchema.safeParse(payload);
+
+    if (parsed.success) {
+        return parsed.data;
+    }
+
     return null;
 }
