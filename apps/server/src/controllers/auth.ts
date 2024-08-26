@@ -1,5 +1,6 @@
 import { hash, verify } from "argon2";
 import jwt from "jsonwebtoken";
+import { Logger } from "pino";
 
 import { JWT_REFRESH_SECRET, JWT_SECRET } from "../config";
 import {
@@ -17,7 +18,7 @@ type Tokens = {
 };
 
 export class AuthService {
-    public constructor() {}
+    public constructor(private readonly logger: Logger) {}
 
     /**
      * Verifies the token payload, if the token is invalid, it will return undefined.
@@ -25,7 +26,7 @@ export class AuthService {
      * @param token - The token to verify.
      * @returns The token payload if the token is valid, otherwise undefined.
      */
-    private verifyTokenPayload(
+    public verifyTokenPayload(
         rawPayload: string | jwt.JwtPayload | undefined,
     ): TokenPayload | undefined {
         if (!isDef(rawPayload)) {
@@ -157,6 +158,7 @@ export class AuthService {
             try {
                 return jwt.verify(token, secret);
             } catch (e: unknown) {
+                this.logger.warn(`Failed to verify token: ${e}`);
                 return undefined;
             }
         });

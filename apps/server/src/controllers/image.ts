@@ -1,4 +1,4 @@
-import { Logger } from "winston";
+import { Logger } from "pino";
 
 import { ImageRepo } from "../repos/image";
 
