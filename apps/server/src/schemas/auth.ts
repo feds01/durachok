@@ -41,7 +41,7 @@ export const UserTokensResponseSchema = z
         /** The user's access token */
         token: z.string(),
         /** The user's refresh token */
-        refreshToken: z.string(),
+        refreshToken: z.string().nullable(),
         /** The user payload. */
         payload: TokenPayloadSchema,
     })

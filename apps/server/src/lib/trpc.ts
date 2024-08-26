@@ -5,7 +5,7 @@ import { ZodError } from "zod";
 
 import { expr } from "../utils";
 import { transformZodErrorIntoErrorSummary } from "../utils/error";
-import { getTokenFromHeaders } from "./authentication";
+import { getTokenFromHeaders, setTokensInResponse } from "./authentication";
 import { createContext } from "./context";
 import logger from "./logger";
 
@@ -18,7 +18,11 @@ export const createSessionContext = async ({
     const ctx = createContext(logger, hostname);
 
     // Try and read the user.
-    const tokens = await getTokenFromHeaders(authService, req, res);
+    const tokens = await getTokenFromHeaders(
+        ctx.authService,
+        req.headers,
+        (tokens) => setTokensInResponse(res, tokens),
+    );
     if (!tokens) {
         return { ...ctx, token: undefined, rawTokens: undefined };
     }

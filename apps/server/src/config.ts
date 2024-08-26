@@ -9,8 +9,9 @@ export const MONGO_URI =
     process.env.MONGODB_URI || "mongodb://localhost:27017/db";
 
 /** JWT keys and configurations */
-export const JWT_SECRET = process.env.JWT_SECRET || "secret";
-export const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || "secret";
+export const JWT_SECRET = process.env.JWT_SECRET_KEY || "secret";
+export const JWT_REFRESH_SECRET =
+    process.env.JWT_REFRESH_SECRET_KEY || "secret";
 
 /** Networking configurations */
 export const PORT = process.env.PORT || 5000;
