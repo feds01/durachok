@@ -52,10 +52,13 @@ export const ActionMessageSchema = z.object({
 export const ErrorMessageTypeSchema = z.union([
     z.literal("internal"),
     z.literal("bad_request"),
+    z.literal("not_found"),
     z.literal("unauthorized"),
     z.literal("invalid_move"),
     z.literal("stale_game"),
 ]);
+
+export type ErrorMessageType = z.infer<typeof ErrorMessageTypeSchema>;
 
 export const ErrorSummarySchema = z.record(
     z.string(),
