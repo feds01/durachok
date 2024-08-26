@@ -29,7 +29,7 @@ app.use((_, res, next) => {
 });
 app.use(
     cors({
-        origin: ["http://localhost:5173", "http://localhost:4173", APP_URL],
+        origin: ["http://localhost:5173", "http://localhost:4173"],
     }),
 );
 app.use(express.urlencoded({ extended: false }));
