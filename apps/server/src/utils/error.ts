@@ -1,13 +1,7 @@
+import { ErrorSummary } from "@durachok/transport/src/request/socket";
 import { ZodError } from "zod";
 
 import { expr } from ".";
-
-export interface ResponseError {
-    message: string | string[];
-    code?: number;
-}
-
-export type ResponseErrorSummary = Record<string, ResponseError>;
 
 /**
  * Function that is used to transform @see ZodError that are returned from any
@@ -16,9 +10,9 @@ export type ResponseErrorSummary = Record<string, ResponseError>;
  * @param error - Any ZodError from a schema
  * @returns A transformed readable error map
  */
-export function transformZodErrorIntoResponseError<T>(
+export function transformZodErrorIntoErrorSummary<T>(
     error: ZodError<T>,
-): ResponseErrorSummary {
+): ErrorSummary {
     const errorMap = new Map();
 
     error.errors.forEach((errorItem) => {
@@ -46,7 +40,7 @@ export function transformZodErrorIntoResponseError<T>(
         };
     });
 
-    return Object.fromEntries(errorMap) as ResponseErrorSummary;
+    return Object.fromEntries(errorMap) as ErrorSummary;
 }
 
 /**
@@ -83,7 +77,7 @@ export class ApiError extends Error {
     /**
      * The error summary that will be returned to the client.
      */
-    readonly errors?: ResponseErrorSummary;
+    readonly errors?: ErrorSummary;
 
     /**
      * Constructor for the ApiError class.
@@ -97,7 +91,7 @@ export class ApiError extends Error {
         code: number,
         internal: InternalApiErrorCode,
         message: string,
-        errors?: ResponseErrorSummary,
+        errors?: ErrorSummary,
     ) {
         super(message);
 
@@ -109,12 +103,12 @@ export class ApiError extends Error {
     static internal(
         code: InternalApiErrorCode,
         message: string,
-        errors?: ResponseErrorSummary,
+        errors?: ErrorSummary,
     ) {
         return new ApiError(500, code, message, errors);
     }
 
-    static http(code: number, message: string, errors?: ResponseErrorSummary) {
+    static http(code: number, message: string, errors?: ErrorSummary) {
         return new ApiError(code, InternalApiErrorCode.None, message, errors);
     }
 }
