@@ -10,6 +10,8 @@ import { MessageSchema } from "@durachok/transport/src/schemas/lobby";
 import { z } from "zod";
 import { createSimpleConfig } from "zod-sockets";
 
+import { transformErrorIntoMessage } from "./error";
+
 export const config = createSimpleConfig({
     startupLogo: false,
     security: [
@@ -20,16 +22,6 @@ export const config = createSimpleConfig({
             name: "x-token",
         },
     ],
-    hooks: {
-        onConnection: async ({ client }) => {
-            console.log("connected", client.id);
-            client.join("lobby-1");
-        },
-        onDisconnect: async ({ client }) => {
-            console.log("connected", client.id);
-        },
-    },
-
     emission: {
         /**
          * Updates to the lobby state, this can happen when:
@@ -103,6 +95,24 @@ export const config = createSimpleConfig({
          */
         error: {
             schema: z.tuple([ErrorMessageSchema]),
+        },
+    },
+    hooks: {
+        onConnection: async ({ client, logger }) => {
+            logger.info("connected", client.id, client.getData());
+            client.join("lobby-1");
+        },
+        onError: async ({ client, error, logger }) => {
+            // Log the problem (@@Todo: sentry) and then emit the error
+            // to the client.
+            logger.error("something went wrong", error);
+
+            if (client) {
+                await client.emit("error", transformErrorIntoMessage(error));
+            }
+        },
+        onDisconnect: async ({ client, logger }) => {
+            logger.info("disconnected", client.id);
         },
     },
 });

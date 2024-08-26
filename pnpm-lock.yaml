@@ -129,8 +129,8 @@ importers:
         specifier: ^3.23.8
         version: 3.23.8
       zod-sockets:
-        specifier: ^2.0.1
-        version: 2.0.1(socket.io@4.7.5)(typescript@5.5.3)(zod@3.23.8)
+        specifier: ^2.1.0
+        version: 2.1.0(socket.io@4.7.5)(typescript@5.5.3)(zod@3.23.8)
     devDependencies:
       '@trivago/prettier-plugin-sort-imports':
         specifier: ^4.3.0
@@ -4585,8 +4585,8 @@ packages:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
 
-  zod-sockets@2.0.1:
-    resolution: {integrity: sha512-TF5Ix7gbXL228tPcrCzB/BY3fy08ix9qPo/NfDIPCfo8nrIVnmmp8NfQQ20yTx7lkxB2wxmeOXNvXi9j2q2dkA==}
+  zod-sockets@2.1.0:
+    resolution: {integrity: sha512-iedtiGkZrKElCDB1SXX2CR0Q/sze8ZvhFAx/ydiSzZ/fDm5AypEPEX1+wZEyzYkAGd92laLNGns74dHowskkBw==}
     engines: {node: ^18.18.0 || ^20.9.0 || ^22.0.0}
     peerDependencies:
       socket.io: ^4.7.4
@@ -9708,7 +9708,7 @@ snapshots:
 
   yocto-queue@0.1.0: {}
 
-  zod-sockets@2.0.1(socket.io@4.7.5)(typescript@5.5.3)(zod@3.23.8):
+  zod-sockets@2.1.0(socket.io@4.7.5)(typescript@5.5.3)(zod@3.23.8):
     dependencies:
       ansis: 3.3.2
       ramda: 0.30.1
