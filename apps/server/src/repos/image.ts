@@ -12,7 +12,7 @@ import {
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import fs from "fs-extra";
 import { dirname } from "node:path";
-import { Logger } from "winston";
+import { Logger } from "pino";
 
 import {
     AWS_ACCESS_KEY,
