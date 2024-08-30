@@ -1,6 +1,6 @@
 import React, { createContext } from "react";
 
-import { isDef } from "../../utils";
+import { assert, isDef } from "../../utils";
 import { AuthAction, AuthState } from "./reducer";
 
 type AuthStateContextType = {
@@ -21,7 +21,7 @@ export function useAuthState() {
     const context = React.useContext(AuthStateContext);
 
     if (!isDef(context)) {
-        throw new Error("useAuthState must be used within a Context");
+        throw new Error("useAuthState must be used within an AuthStateContext");
     }
 
     return {
@@ -30,11 +30,34 @@ export function useAuthState() {
     };
 }
 
+export function useRegisteredUser() {
+    const context = React.useContext(AuthStateContext);
+
+    if (!isDef(context)) {
+        throw new Error(
+            "useRegisteredUser must be used within an AuthStateContext",
+        );
+    }
+
+    assert(
+        context.state.kind === "logged-in",
+        "useRegisteredUser can only be used when the user is logged in",
+    );
+    assert(
+        context.state.user.kind === "registered",
+        "useRegisteredUser can only be used with a registered user",
+    );
+
+    return context.state.user;
+}
+
 export function useAuthDispatch() {
     const context = React.useContext(AuthStateContext);
 
     if (!isDef(context)) {
-        throw new Error("useAuthDispatch must be used within a Context");
+        throw new Error(
+            "useAuthDispatch must be used within an AuthStateContext",
+        );
     }
 
     return context.update;
@@ -44,7 +67,9 @@ export function useAuth() {
     const context = React.useContext(AuthStateContext);
 
     if (!isDef(context)) {
-        throw new Error("useAuthDispatch must be used within a Context");
+        throw new Error(
+            "useAuthDispatch must be used within an AuthStateContext",
+        );
     }
 
     return [context.state, context.update] as const;

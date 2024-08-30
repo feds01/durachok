@@ -13,6 +13,7 @@ import Alert, { AlertKind } from "../../components/Alert";
 import Divider from "../../components/Divider";
 import PlayerAvatar from "../../components/PlayerAvatar";
 import { useAuthDispatch } from "../../contexts/auth";
+import { useRegisteredUser } from "../../contexts/auth/context";
 import DeleteUserForm from "../../forms/DeleteUserForm";
 import UpdateUserForm from "../../forms/UpdateUserForm";
 import UpdateUserProfileImageForm from "../../forms/UpdateUserProfileImageForm";
@@ -83,10 +84,6 @@ export const Route = createFileRoute("/user/settings")({
                 },
             });
         }
-
-        return {
-            user: context.auth.user,
-        };
     },
     component: UserSettingsRoute,
 });
@@ -98,7 +95,7 @@ type SettingsEvent = {
 
 function UserSettingsRoute() {
     const [event, setEvent] = useState<SettingsEvent | null>(null);
-    const { user } = Route.useRouteContext();
+    const user = useRegisteredUser();
     const auth = useAuthDispatch();
     const navigator = useNavigate();
 

@@ -50,10 +50,6 @@ const UpdateUserForm = ({ user, onResponse }: UpdateUserFormProps) => {
 
             delete update.password;
             dispatchAuth({ type: "update", payload: { ...user, ...update } });
-
-            // @@Todo: fix re-render of tbe user page.
-            queryClient.invalidateQueries();
-            router.invalidate();
         } catch (e: unknown) {
             if (e instanceof TRPCClientError) {
                 console.log(e);
