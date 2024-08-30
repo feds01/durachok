@@ -1,8 +1,6 @@
 import { css } from "@emotion/css";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Grid from "@mui/material/Grid";
-import { useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "@tanstack/react-router";
 import { TRPCClientError } from "@trpc/client";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -24,8 +22,6 @@ type UpdateUserFormProps = {
 };
 
 const UpdateUserForm = ({ user, onResponse }: UpdateUserFormProps) => {
-    const router = useRouter();
-    const queryClient = useQueryClient();
     const dispatchAuth = useAuthDispatch();
     const updateWith = trpc.users.update.useMutation();
     const form = useForm<UserUpdate>({
