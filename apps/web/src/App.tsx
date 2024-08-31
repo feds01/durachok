@@ -2,7 +2,7 @@ import { ThemeProvider } from "@emotion/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Navigate, RouterProvider, createRouter } from "@tanstack/react-router";
 import { Buffer } from "buffer";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import superjson from "superjson";
 
 import { useAuthState } from "./contexts/auth";
@@ -44,6 +44,10 @@ const App = () => {
     const { state } = useAuthState();
     const [queryClient] = useState(() => new QueryClient());
     const [trpcClient] = useState(createReactQueryTRPClient);
+
+    useEffect(() => {
+        router.invalidate();
+    }, [state]);
 
     return (
         <trpc.Provider client={trpcClient} queryClient={queryClient}>
