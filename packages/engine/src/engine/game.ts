@@ -1,7 +1,7 @@
 import {
     Card,
+    GamePlayer,
     GameState,
-    Player,
     PlayerGameState,
 } from "@durachok/transport/src/schemas/game";
 
@@ -13,14 +13,14 @@ import InvalidGameState from "./errors/InvalidGameState";
 import { History, HistoryState } from "./history";
 
 /** Options for the game. */
-export type GameSettings = {
+export interface GameSettings {
     /** Whether to randomise the player order. */
     randomisePlayerOrder: boolean;
     /** Whether to use the short game deck. */
     shortGameDeck: boolean;
     /** Whether to play in free-for-all mode. */
     freeForAll: boolean;
-};
+}
 
 export const DEFAULT_SETTINGS: GameSettings = {
     randomisePlayerOrder: true,
@@ -49,7 +49,7 @@ export class Game {
     public tableTop: Map<string, string | null> = new Map();
 
     /** A map between the player's name and further player information. */
-    public players: Map<string, Player> = new Map();
+    public players: Map<string, GamePlayer> = new Map();
 
     /** The game settings. */
     public readonly history: History;
@@ -856,13 +856,13 @@ export class Game {
      *
      * @returns {Array<Array<string, object>>} An array of player name with the player's state.
      * */
-    private getActivePlayers(): [string, Player][] {
+    private getActivePlayers(): [string, GamePlayer][] {
         return Array.from(this.players.entries()).filter(
             ([name, player]) => !player.out,
         );
     }
 
-    private getAttackingPlayers(): [string, Player][] {
+    private getAttackingPlayers(): [string, GamePlayer][] {
         return this.getActivePlayers().filter(
             ([name, player]) => player.action !== "defend",
         );
@@ -1116,7 +1116,7 @@ export class Game {
         };
     }
 
-    public getPlayer(name: string): Player {
+    public getPlayer(name: string): GamePlayer {
         const player = this.players.get(name);
 
         if (typeof player === "undefined") {
