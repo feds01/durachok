@@ -5,7 +5,7 @@ import { Logger } from "pino";
 import { CardSuits, shuffleArray } from "shared";
 
 import Lobbies, { PopulatedGame } from "../models/game.model";
-import { Lobby, LobbySchema, Player } from "../schemas/lobby";
+import { DBLobby, DBLobbySchema, DBPlayer } from "../schemas/lobby";
 import { assert, isDef } from "../utils";
 import { CommonService } from "./common";
 
@@ -36,8 +36,8 @@ export class LobbyService {
     }
 
     /** Get an enriched Lobby object. */
-    private async enrich(lobby: PopulatedGame): Promise<Lobby> {
-        const result = await LobbySchema.safeParseAsync(lobby.toObject());
+    private async enrich(lobby: PopulatedLobby): Promise<DBLobby> {
+        const result = await DBLobbySchema.safeParseAsync(lobby.toObject());
 
         if (result.success) {
             return result.data;
@@ -48,8 +48,8 @@ export class LobbyService {
         throw new Error("Could not parse lobby");
     }
 
-    /** Convert a lobby object into a simplified lobby object. */
-    private lobbyIntoInfo(lobby: Lobby): LobbyInfo {
+    /** Convert a lobby object into a lobby info object. */
+    private lobbyIntoInfo(lobby: DBLobby): LobbyInfo {
         return {
             pin: lobby.pin,
             joinable:
@@ -63,7 +63,7 @@ export class LobbyService {
     }
 
     /** Get a lobby state. */
-    public async getByPin(pin: string): Promise<Lobby | undefined> {
+    public async getByPin(pin: string): Promise<DBLobby | undefined> {
         const game = await Lobbies.findOne({ pin })
             .populate<Pick<PopulatedGame, "owner">>("owner")
             .exec();
@@ -112,7 +112,7 @@ export class LobbyService {
     }
 
     /** Add a user to the current lobby. */
-    public async addUserTo(pin: string, player: Player): Promise<void> {
+    public async addUserTo(pin: string, player: DBPlayer): Promise<void> {
         const lobby = await this.getByPin(pin);
         assert(isDef(lobby), "modifying non-existant lobby.");
 

@@ -12,7 +12,7 @@ import {
     router,
     userProcedure,
 } from "../../lib/trpc";
-import { Player } from "../../schemas/lobby";
+import { DBPlayer } from "../../schemas/lobby";
 import { expr } from "../../utils";
 
 export const lobbyRouter = router({
@@ -128,7 +128,7 @@ export const lobbyRouter = router({
             throw new TRPCError({ code: "UNAUTHORIZED" });
         }
 
-        const player: Player = expr(() => {
+        const player: DBPlayer = expr(() => {
             if (ctx.token?.kind === "registered") {
                 return {
                     name: input.name,
