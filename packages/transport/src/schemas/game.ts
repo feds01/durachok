@@ -149,13 +149,13 @@ export type OpaquePlayerState = z.infer<typeof OpaquePlayerStateSchema>;
  * A player object, only overriding `OpaquePlayerState` to always know
  * the deck, this is useful in particular to the `GameState` and the engine.
  */
-export const PlayerSchema = OpaquePlayerStateSchema.omit({ deck: true }).extend(
-    {
-        deck: z.array(z.string()),
-    },
-);
+export const GamePlayerSchema = OpaquePlayerStateSchema.omit({
+    deck: true,
+}).extend({
+    deck: z.array(z.string()),
+});
 
-export type Player = z.infer<typeof PlayerSchema>;
+export type GamePlayer = z.infer<typeof GamePlayerSchema>;
 
 /** A player move. */
 export const PlayerMoveSchema = z.union([
@@ -176,7 +176,7 @@ export const GameStateSchema = z.object({
     /** The current trump card of the game. */
     trump: CardSchema,
     /** The players in the game. */
-    players: z.record(PlayerSchema),
+    players: z.record(GamePlayerSchema),
     /** The playing table top state. */
     tableTop: z.record(z.string().nullable()),
     /** The remaining deck of cards. */
@@ -205,3 +205,25 @@ export const PlayerGameStateSchema = z.object({
 });
 
 export type PlayerGameState = z.infer<typeof PlayerGameStateSchema>;
+
+export const GameHistorySchema = z.object({
+    /** The current game state. */
+    state: GameStateSchema.nullable(),
+    /** The game history. */
+    nodes: z.array(ActionSchema),
+});
+
+export type GameHistory = z.infer<typeof GameHistorySchema>;
+
+/**
+ * A full game object, including the game state and the
+ * game history.
+ */
+export const GameSchema = z.object({
+    /** The current game state. */
+    state: GameStateSchema,
+    /** The game history. */
+    history: GameHistorySchema,
+});
+
+export type Game = z.infer<typeof GameSchema>;
