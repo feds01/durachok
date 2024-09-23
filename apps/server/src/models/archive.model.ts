@@ -1,5 +1,6 @@
+import { HistoryState } from "@durachok/engine/src";
+import { GameState } from "@durachok/transport/src/schemas/game";
 import mongoose, { Document, Schema } from "mongoose";
-import { GameState, HistoryState } from "shared";
 
 import { IUser } from "./user.model";
 
@@ -39,7 +40,7 @@ const ArchivedGameSchema = new Schema<IArchivedGame>({
                     },
                     deck: { type: [String] },
                     victory: { type: Boolean },
-                    trumpCard: {
+                    trump: {
                         type: {
                             value: { type: Number },
                             suit: { type: String },
