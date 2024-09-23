@@ -18,8 +18,7 @@ export default function ControlledPasswordField<T extends FieldValues>({
 }: Props<T>): ReactElement {
     const [showPassword, setShowPassword] = useState<boolean>(false);
     const {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        field: { ref, ...inputProps },
+        field: { ref: _, ...inputProps },
         fieldState: { error },
     } = useController({
         name,
