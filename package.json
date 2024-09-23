@@ -15,7 +15,7 @@
     "engines": {
         "node": ">=18.17.0"
     },
-    "packageManager": "pnpm@9.6.0",
+    "packageManager": "pnpm@9.11.0",
     "scripts": {
         "fmt": "turbo fmt",
         "lint": "turbo lint",
@@ -24,20 +24,20 @@
         "dev": "turbo dev"
     },
     "dependencies": {
-        "@total-typescript/ts-reset": "^0.5.1",
+        "@total-typescript/ts-reset": "^0.6.1",
         "@types/eslint": "^8.56.10",
-        "@types/node": "^20.14.11",
-        "@typescript-eslint/eslint-plugin": "^7.16.1",
-        "@typescript-eslint/parser": "^7.16.1",
+        "@types/node": "^22.6.0",
+        "@typescript-eslint/eslint-plugin": "^8.7.0",
+        "@typescript-eslint/parser": "^8.7.0",
         "eslint": "^8.57.0",
         "eslint-config-prettier": "^9.1.0",
-        "eslint-plugin-import": "^2.29.1",
+        "eslint-plugin-import": "^2.30.0",
         "eslint-plugin-isaacscript": "^3.12.2",
         "eslint-plugin-prettier": "^5.2.1",
-        "eslint-plugin-react": "^7.35.0",
+        "eslint-plugin-react": "^7.36.1",
         "eslint-plugin-react-hooks": "^4.6.2",
         "prettier": "^3.3.3",
-        "turbo": "^2.0.9",
-        "typescript": "^5.5.3"
+        "turbo": "^2.1.2",
+        "typescript": "^5.6.2"
     }
 }
