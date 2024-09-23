@@ -1,8 +1,10 @@
+import { Lobby } from "@durachok/transport/src/schemas/lobby";
 import { Logger } from "pino";
 
 import { IMAGE_STORAGE } from "../config";
 import { AuthService } from "../controllers/auth";
 import { CommonService } from "../controllers/common";
+import { GameService } from "../controllers/game";
 import { ImageService } from "../controllers/image";
 import { LobbyService } from "../controllers/lobby";
 import { UserService } from "../controllers/user";
@@ -28,8 +30,8 @@ export const createContext = (logger: Logger, hostname: string = "") => {
     });
     const authService = new AuthService(logger);
     const commonService = new CommonService();
-    const lobbyService = new LobbyService(logger, commonService);
     const imageService = new ImageService(logger, imageRepo);
+    const lobbyService = new LobbyService(logger, commonService, imageService);
     const userService = new UserService(
         logger,
         commonService,
@@ -37,6 +39,8 @@ export const createContext = (logger: Logger, hostname: string = "") => {
         imageService,
         lobbyService,
     );
+    const gameService = (lobby: Lobby) =>
+        new GameService(lobby, logger, commonService, lobbyService);
 
     return {
         logger,
@@ -44,6 +48,7 @@ export const createContext = (logger: Logger, hostname: string = "") => {
         lobbyService,
         imageService,
         userService,
+        gameService,
     };
 };
 
