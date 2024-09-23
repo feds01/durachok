@@ -48,3 +48,11 @@ export const UserStatisticsSchema = z.object({
 });
 
 export type UserStatistics = z.infer<typeof UserStatisticsSchema>;
+
+/**
+ * A player that is currently within a lobby, the `id` of the player
+ * is referring to their connection id.
+ */
+export const PlayerSchema = UserSchema.omit({ email: true });
+
+export type Player = z.infer<typeof PlayerSchema>;
