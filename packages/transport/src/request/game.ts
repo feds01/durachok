@@ -14,7 +14,7 @@ export const GameSettingsSchema = z
         /** Whether to use `passphrase` when joining a game. */
         passphrase: z.boolean().default(false),
         /** Whether to randomise the player starting order. */
-        randomPlayerOrder: z.boolean().default(false),
+        randomisePlayerOrder: z.boolean().default(false),
         /** Timeout in seconds. */
         roundTimeout: z.number().min(60).max(600),
     })

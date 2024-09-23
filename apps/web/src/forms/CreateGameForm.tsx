@@ -25,7 +25,7 @@ export default function CreateGameForm({ onSuccess }: CreateGameFormProps) {
             maxPlayers: 4,
             roundTimeout: 300,
             passphrase: false,
-            randomPlayerOrder: true,
+            randomisePlayerOrder: true,
             shortGameDeck: false,
             freeForAll: true,
             disableChat: false,
@@ -87,7 +87,7 @@ export default function CreateGameForm({ onSuccess }: CreateGameFormProps) {
                 label="Enable passphrase step for joining players."
             />
             <ControlledSwitchInput
-                name="randomPlayerOrder"
+                name="randomisePlayerOrder"
                 control={form.control}
                 legend="Random player order"
                 label="Randomise the player starting order."

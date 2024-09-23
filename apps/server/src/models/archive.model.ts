@@ -5,7 +5,7 @@ import { IUser } from "./user.model";
 
 export interface IArchivedGame extends Document {
     maxPlayers: number;
-    randomPlayerOrder: boolean;
+    randomisePlayerOrder: boolean;
     owner: IUser["_id"];
     game: {
         history: HistoryState;
@@ -16,7 +16,7 @@ export interface IArchivedGame extends Document {
 const ArchivedGameSchema = new Schema<IArchivedGame>({
     // game preferences need to be preserved
     maxPlayers: { type: Number, required: true },
-    randomPlayerOrder: { type: Boolean, required: true },
+    randomisePlayerOrder: { type: Boolean, required: true },
 
     // owner details need to be preserved
     owner: { type: mongoose.Schema.Types.ObjectId, ref: "user" },
