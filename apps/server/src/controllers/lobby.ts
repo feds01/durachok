@@ -149,7 +149,7 @@ export class LobbyService {
             shortGameDeck,
             freeForAll,
             disableChat,
-            randomPlayerOrder,
+            randomisePlayerOrder,
             roundTimeout,
         } = settings;
 
@@ -170,7 +170,7 @@ export class LobbyService {
                 shortGameDeck,
                 freeForAll,
                 disableChat,
-                randomPlayerOrder,
+                randomisePlayerOrder,
                 roundTimeout,
                 status: "waiting",
                 // Automatically add the owner to the lobby.
