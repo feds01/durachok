@@ -1,4 +1,5 @@
-import Lobbies, { PopulatedGame } from "../models/game.model";
+import Games, { IGame } from "../models/game.model";
+import Lobbies, { PopulatedLobby } from "../models/lobby.model";
 import User, { IUser } from "../models/user.model";
 import { isDef } from "../utils";
 
@@ -21,11 +22,26 @@ export class CommonService {
     }
 
     /** Find a lobby by `PIN` and return the underling DB object. */
-    public async getLobbyDbObject(pin: string): Promise<PopulatedGame> {
+    public async getLobbyDbObject(pin: string): Promise<PopulatedLobby> {
         const game = await Lobbies.findOne({ pin }).populate<
-            Pick<PopulatedGame, "owner">
+            Pick<PopulatedLobby, "owner">
         >("owner");
 
+        if (!isDef(game)) {
+            throw new Error("Lobby not found");
+        }
+
+        return game;
+    }
+
+    /** Find a lobby by `PIN` and return the underling DB object. */
+    public async getGameDbObject(pin: string): Promise<IGame> {
+        const doc = await Lobbies.findOne({ pin }).select("game");
+        if (!isDef(doc)) {
+            throw new Error("Lobby not found");
+        }
+
+        const game = await Games.findById(doc.game);
         if (!isDef(game)) {
             throw new Error("Game not found");
         }
