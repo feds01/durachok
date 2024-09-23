@@ -4,7 +4,7 @@ import { customAlphabet } from "nanoid";
 import { Logger } from "pino";
 import { CardSuits, shuffleArray } from "shared";
 
-import Lobbies, { PopulatedGame } from "../models/game.model";
+import Lobbies, { PopulatedLobby } from "../models/lobby.model";
 import { DBLobby, DBLobbySchema, DBPlayer } from "../schemas/lobby";
 import { assert, isDef } from "../utils";
 import { CommonService } from "./common";
@@ -65,7 +65,7 @@ export class LobbyService {
     /** Get a lobby state. */
     public async getByPin(pin: string): Promise<DBLobby | undefined> {
         const game = await Lobbies.findOne({ pin })
-            .populate<Pick<PopulatedGame, "owner">>("owner")
+            .populate<Pick<PopulatedLobby, "owner">>("owner")
             .exec();
 
         if (!isDef(game)) {
@@ -105,7 +105,7 @@ export class LobbyService {
     /** Get all lobbies by a given user */
     public async getByOwner(userId: string): Promise<LobbyInfo[]> {
         const items = await Lobbies.find({ owner: userId }).populate<
-            Pick<PopulatedGame, "owner">
+            Pick<PopulatedLobby, "owner">
         >("owner");
         const lobbies = await Promise.all(items.map(this.enrich));
         return lobbies.map(this.lobbyIntoInfo);
