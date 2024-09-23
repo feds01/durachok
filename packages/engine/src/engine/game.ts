@@ -132,11 +132,11 @@ export class Game {
 
         // initialise the history object if this game hasn't initialised a history
         // object yet, otherwise re-use the provided history object
-        if (history === null || history.initialState === null) {
+        if (history === null || history.state === null) {
             this.history = new History(this.serialize().state, []);
 
             // since it's a new round, we need to create a new node.
-            this.history.createNode({
+            this.history.addEntry({
                 type: "start",
                 actors: {
                     defender: this.getDefendingPlayerName(),
@@ -144,7 +144,7 @@ export class Game {
                 },
             });
         } else {
-            this.history = new History(history.initialState, history.nodes);
+            this.history = new History(history.state, history.nodes);
         }
     }
 
@@ -298,7 +298,7 @@ export class Game {
             this.history.addEntry({ type: "victory" });
         } else {
             // since it's a new round, we need to create a new node.
-            this.history.createNode({
+            this.history.addEntry({
                 type: "new_round",
                 actors: {
                     defender: this.getDefendingPlayerName(),
@@ -665,12 +665,9 @@ export class Game {
         // since these players are of significant importance to the round, add a
         // history entry for the forfeit's, (that's if they haven't already declared that
         // they have forfeited.
-        const forfeitDeclarations = this.history
-            .getLastNode()!
-            .findAction("forfeit");
-
-        if (forfeitDeclarations.find((action) => action.player === name)) {
+        if (player.action !== "none") {
             this.history.addEntry({ type: "forfeit", player: name });
+            player.action = "none"; // @@Todo: should we really do this?
         }
 
         // If this is the attacking player, set everyone's 'canAttack' (except defending)
