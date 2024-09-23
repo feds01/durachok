@@ -14,7 +14,6 @@ const ControlledTextField = <T extends FieldValues>({
     textFieldProps,
 }: ControlledTextFieldProps<T>): ReactElement => {
     const {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         field: { ref: _, ...inputProps },
         fieldState: { error },
     } = useController({
