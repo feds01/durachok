@@ -1,5 +1,7 @@
 import { CardSuits, shuffleArray } from "@durachok/engine/src";
 import { GameSettings, LobbyInfo } from "@durachok/transport/src/request";
+import { Lobby } from "@durachok/transport/src/schemas/lobby";
+import { Player } from "@durachok/transport/src/schemas/user";
 import { TRPCError } from "@trpc/server";
 import { customAlphabet } from "nanoid";
 import { Logger } from "pino";
@@ -9,11 +11,13 @@ import { TokenPayload } from "../schemas/auth";
 import { DBLobby, DBLobbySchema, DBPlayer } from "../schemas/lobby";
 import { assert, isDef } from "../utils";
 import { CommonService } from "./common";
+import { ImageService } from "./image";
 
 export class LobbyService {
     public constructor(
         private readonly logger: Logger,
-        private readonly commonService: CommonService,
+        private commonService: CommonService,
+        private imageService: ImageService,
     ) {}
 
     /** Generate a new game pin. */
@@ -60,6 +64,54 @@ export class LobbyService {
             players: lobby.players.length,
             maxPlayers: lobby.maxPlayers,
             status: lobby.status,
+        };
+    }
+
+    private async getUserAsPlayer(userId: string): Promise<Player> {
+        const user = await this.commonService.getUserDbObject(userId);
+
+        return {
+            name: user.name,
+            id: user.id,
+            image: await this.imageService.getUserImage(user.id),
+        };
+    }
+
+    /**
+     * Convert a lobby into the lobby state object.
+     *
+     * @@Todo: perhaps unify the `LobbyInfo` and the `LobbyState` objects.
+     */
+    private async lobbyIntoState(lobby: DBLobby): Promise<Lobby> {
+        return {
+            pin: lobby.pin,
+            /** Settings */
+            maxPlayers: lobby.maxPlayers,
+            shortGameDeck: lobby.shortGameDeck,
+            freeForAll: lobby.freeForAll,
+            disableChat: lobby.disableChat,
+            randomisePlayerOrder: lobby.randomisePlayerOrder,
+            roundTimeout: lobby.roundTimeout,
+
+            /** State */
+            status: lobby.status,
+            chat: lobby.chat,
+            players: await Promise.all(
+                lobby.players
+                    .filter((p) => p.socket)
+                    .map(async (p) => {
+                        if (p.registered) {
+                            return this.getUserAsPlayer(p.registered);
+                        } else {
+                            return {
+                                name: p.name,
+                                registered: null,
+                                id: p.name,
+                            };
+                        }
+                    }),
+            ),
+            owner: await this.getUserAsPlayer(lobby.owner.id),
         };
     }
 
@@ -139,6 +191,41 @@ export class LobbyService {
         } else {
             lobby.players.push(player);
         }
+
+        // We need to update the lobby in the database.
+        await Lobbies.updateOne(
+            { pin },
+            {
+                $set: {
+                    players: lobby.players,
+                },
+            },
+        );
+    }
+
+    /** Confirm that the user is playing in the lobby. */
+    public async confirmUser(
+        pin: string,
+        name: string,
+        socket: string,
+    ): Promise<void> {
+        const lobby = await this.getByPin(pin);
+        assert(isDef(lobby), "modifying non-existant lobby.");
+
+        const players = lobby.players;
+        const idx = players.findIndex((player) => player.name === name);
+
+        if (idx < 0) {
+            throw new TRPCError({ code: "NOT_FOUND" });
+        }
+
+        // Now, we should update the player's entry to say that they've confirmed
+        // their connection to the lobby.
+        players[idx] = {
+            ...players[idx],
+            socket,
+            confirmed: true,
+        };
 
         // We need to update the lobby in the database.
         await Lobbies.updateOne(
