@@ -1,6 +1,7 @@
 import { z } from "zod";
 
-import { ActionSchema, GameStateSchema } from "../schemas/game";
+import { ActionSchema, GameSchema, GameStateSchema } from "../schemas/game";
+import { LobbySchema } from "../schemas/lobby";
 
 const LobbyUpdateSchema = z.union([
     z.object({
@@ -11,10 +12,35 @@ const LobbyUpdateSchema = z.union([
     }),
 ]);
 
+/**
+ * An event that's generic to any users within a lobby, usually to
+ * indicate
+ */
 export const LobbyMessageSchema = z.object({
     update: LobbyUpdateSchema,
-    // lobby: LobbySchema,
+    lobby: LobbySchema,
 });
+
+/**
+ * An event that's emitted to a client once they have joined the
+ * lobby.
+ */
+export const PlayerJoinSchema = z
+    .object({
+        lobby: LobbySchema,
+        game: GameSchema.optional(),
+    })
+    .refine(
+        (value) => {
+            // @@Todo: potentially change the definition so that we can always
+            // assume when a `playing` status is set, that the game state is
+            // always present.
+            return value.lobby.status === "playing" && !value.game;
+        },
+        {
+            message: "Expected a game state when the game is playing.",
+        },
+    );
 
 const PlayerExitSchema = z.object({
     name: z.string(),

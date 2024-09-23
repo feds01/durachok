@@ -3,6 +3,7 @@ import {
     CloseGameMessageSchema,
     ErrorMessageSchema,
     LobbyMessageSchema,
+    PlayerJoinSchema,
     StateUpdateMessageSchema,
     VictoryMessageSchema,
 } from "@durachok/transport/src/request/socket";
@@ -25,6 +26,14 @@ export const config = createSimpleConfig({
         },
     ],
     emission: {
+        /**
+         * An event that is emitted to the joining player of the
+         * lobby, this is the first message that the player will
+         * receive.
+         */
+        join: {
+            schema: z.tuple([PlayerJoinSchema]),
+        },
         /**
          * Updates to the lobby state, this can happen when:
          *
