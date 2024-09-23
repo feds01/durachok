@@ -1,8 +1,8 @@
+import { CardSuits, shuffleArray } from "@durachok/engine/src";
 import { GameSettings, LobbyInfo } from "@durachok/transport/src/request";
 import { TRPCError } from "@trpc/server";
 import { customAlphabet } from "nanoid";
 import { Logger } from "pino";
-import { CardSuits, shuffleArray } from "shared";
 
 import Lobbies, { PopulatedLobby } from "../models/lobby.model";
 import { TokenPayload } from "../schemas/auth";

@@ -65,6 +65,9 @@ importers:
       '@aws-sdk/s3-request-presigner':
         specifier: ^3.617.0
         version: 3.617.0
+      '@durachok/engine':
+        specifier: file:../../packages/engine
+        version: link:../../packages/engine
       '@durachok/transport':
         specifier: file:./../../packages/transport
         version: link:../../packages/transport
@@ -116,9 +119,6 @@ importers:
       pino-pretty:
         specifier: ^11.2.2
         version: 11.2.2
-      shared:
-        specifier: file:./../../packages/engine
-        version: link:../../packages/engine
       socket.io:
         specifier: 4.7.5
         version: 4.7.5
@@ -177,6 +177,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@durachok/engine':
+        specifier: file:./../../packages/engine
+        version: link:../../packages/engine
       '@durachok/transport':
         specifier: file:./../../packages/transport
         version: link:../../packages/transport
@@ -255,9 +258,6 @@ importers:
       react-virtuoso:
         specifier: ^4.7.12
         version: 4.7.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      shared:
-        specifier: file:./../../packages/engine
-        version: link:../../packages/engine
       socket.io-client:
         specifier: 4.7.5
         version: 4.7.5
