@@ -53,21 +53,7 @@ export const lobbyRouter = router({
         } = req;
 
         // Ensure player can read the lobby
-        const hasAccess = await expr(async () => {
-            if (token.kind === "registered") {
-                return await ctx.lobbyService.isUserInLobby(
-                    input.pin,
-                    token.user.name,
-                );
-            } else {
-                // @@Todo: There is a potential problem, if a lobby pin is re-used within
-                // the expiration time of the token, then the user could join the new
-                // lobby without the owner's permission or without going through the standard
-                // join process. Mitigation is to parametrise the token over the `id` of the
-                // lobby which should be unique.
-                return token.pin === input.pin;
-            }
-        });
+        const hasAccess = ctx.lobbyService.hasAccess(token, input.pin);
 
         if (!hasAccess) {
             return new TRPCError({ code: "UNAUTHORIZED" });

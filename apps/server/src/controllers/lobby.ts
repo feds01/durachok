@@ -5,6 +5,7 @@ import { Logger } from "pino";
 import { CardSuits, shuffleArray } from "shared";
 
 import Lobbies, { PopulatedLobby } from "../models/lobby.model";
+import { TokenPayload } from "../schemas/auth";
 import { DBLobby, DBLobbySchema, DBPlayer } from "../schemas/lobby";
 import { assert, isDef } from "../utils";
 import { CommonService } from "./common";
@@ -73,6 +74,20 @@ export class LobbyService {
         }
 
         return await this.enrich(game);
+    }
+
+    /** Check if a user has access to a lobby. */
+    public async hasAccess(token: TokenPayload, pin: string): Promise<boolean> {
+        if (token.kind === "registered") {
+            return await this.isUserInLobby(pin, token.user.name);
+        } else {
+            // @@Todo: There is a potential problem, if a lobby pin is re-used within
+            // the expiration time of the token, then the user could join the new
+            // lobby without the owner's permission or without going through the standard
+            // join process. Mitigation is to parametrise the token over the `id` of the
+            // lobby which should be unique.
+            return token.pin === pin;
+        }
     }
 
     /** Check whether a user is within a lobby */
