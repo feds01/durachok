@@ -18,7 +18,7 @@ import { expr } from "../../utils";
 export const lobbyRouter = router({
     getInfo: publicProcedure.input(ByPinRequestSchema).query(async (req) => {
         const { ctx, input } = req;
-        return ctx.lobbyService.getInfoByPin(input.pin);
+        return ctx.lobbyService.getInfo(input.pin);
     }),
 
     nameFreeInLobby: publicProcedure
@@ -60,7 +60,7 @@ export const lobbyRouter = router({
         }
 
         // Check that the user is the owner of the lobby
-        const lobby = await ctx.lobbyService.getByPin(input.pin);
+        const lobby = await ctx.lobbyService.get(input.pin);
         if (!lobby) {
             throw new TRPCError({ code: "NOT_FOUND" });
         }
@@ -72,7 +72,7 @@ export const lobbyRouter = router({
         const { ctx, input } = req;
 
         // Check that the user is the owner of the lobby
-        const lobby = await ctx.lobbyService.getByPin(input.pin);
+        const lobby = await ctx.lobbyService.get(input.pin);
 
         if (!lobby) {
             throw new TRPCError({ code: "NOT_FOUND" });
@@ -96,7 +96,7 @@ export const lobbyRouter = router({
         // - Must have the correct passphrase if it is enabled.
         // - Provided name must not be taken.
 
-        const lobby = await ctx.lobbyService.getByPin(input.pin);
+        const lobby = await ctx.lobbyService.get(input.pin);
         if (!lobby) {
             throw new TRPCError({ code: "NOT_FOUND" });
         }
