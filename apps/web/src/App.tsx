@@ -5,7 +5,7 @@ import { Buffer } from "buffer";
 import { useEffect, useState } from "react";
 import superjson from "superjson";
 
-import { useAuthState } from "./contexts/auth";
+import { useAuthDispatch, useAuthState } from "./contexts/auth";
 import { routeTree } from "./routeTree.gen";
 import theme from "./theme";
 import trpc, { createReactQueryTRPClient } from "./utils/trpc";
@@ -42,6 +42,7 @@ superjson.registerCustom<Buffer, string>(
 
 const App = () => {
     const { state } = useAuthState();
+    const auth = useAuthDispatch();
     const [queryClient] = useState(() => new QueryClient());
     const [trpcClient] = useState(createReactQueryTRPClient);
 
@@ -53,7 +54,13 @@ const App = () => {
         <trpc.Provider client={trpcClient} queryClient={queryClient}>
             <QueryClientProvider client={queryClient}>
                 <ThemeProvider theme={theme()}>
-                    <RouterProvider router={router} context={{ auth: state }} />
+                    <RouterProvider
+                        router={router}
+                        context={{
+                            auth: state,
+                            logout: () => auth({ type: "logout" }),
+                        }}
+                    />
                 </ThemeProvider>
             </QueryClientProvider>
         </trpc.Provider>
