@@ -8,7 +8,7 @@ import { ActionsFactory, ClientContext, EmissionMap } from "zod-sockets";
 
 import { ensurePayloadIsTokens } from "../../../lib/authentication";
 import { UserTokensResponse } from "../../../schemas/auth";
-import { expr } from "../../../utils";
+import { assert, expr, isDef } from "../../../utils";
 import { ApiError } from "../../../utils/error";
 import { config } from "../config";
 
@@ -71,16 +71,15 @@ const onJoin = factory.build({
             return;
         }
 
-        const lobby = await ctx.lobbyService.getByPin(pin);
+        const lobby = await ctx.lobbyService.get(pin);
         if (!lobby) {
             client.emit("close", {
                 reason: "stale_game",
             });
             return;
         }
-
         // Emit to the current player, the game state.
-        const game = ctx.gameService(lobby).getGameStateFor(name);
+        const game = await ctx.gameService(lobby).getGameStateFor(name);
         client.emit("join", {
             lobby,
             game,
@@ -89,8 +88,10 @@ const onJoin = factory.build({
         // We need to send messages to all of the players that are in this
         // lobby, we send to all players with sockets.
         const clients = await all.getClients();
+        const players = await ctx.lobbyService.getPlayers(pin);
+        assert(isDef(players));
 
-        lobby.players
+        players
             .filter((p) => p.socket)
             .forEach((p) => {
                 // @@Slowness: we need to loop through all of the clients to find
@@ -102,6 +103,7 @@ const onJoin = factory.build({
                         update: {
                             type: "new_player",
                         },
+                        lobby,
                     });
             });
     },
