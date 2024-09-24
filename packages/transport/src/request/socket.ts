@@ -1,6 +1,11 @@
 import { z } from "zod";
 
-import { ActionSchema, GameSchema, GameStateSchema } from "../schemas/game";
+import {
+    ActionSchema,
+    GameSchema,
+    GameStateSchema,
+    PlayerGameStateSchema,
+} from "../schemas/game";
 import { LobbySchema } from "../schemas/lobby";
 
 const LobbyUpdateSchema = z.union([
@@ -28,7 +33,7 @@ export const LobbyMessageSchema = z.object({
 export const PlayerJoinSchema = z
     .object({
         lobby: LobbySchema,
-        game: GameSchema.optional(),
+        game: PlayerGameStateSchema.optional(),
     })
     .refine(
         (value) => {

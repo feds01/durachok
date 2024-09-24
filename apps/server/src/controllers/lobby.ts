@@ -48,8 +48,7 @@ export class LobbyService {
             return result.data;
         }
 
-        // @@Todo: add logging about why...
-        this.logger.error("Failed to parse lobby:\n", result.error);
+        this.logger.error("Failed to parse lobby:\n" + result.error);
         throw new Error("Could not parse lobby");
     }
 
@@ -115,19 +114,6 @@ export class LobbyService {
         };
     }
 
-    /** Get a lobby state. */
-    public async getByPin(pin: string): Promise<DBLobby | undefined> {
-        const game = await Lobbies.findOne({ pin })
-            .populate<Pick<PopulatedLobby, "owner">>("owner")
-            .exec();
-
-        if (!isDef(game)) {
-            return undefined;
-        }
-
-        return await this.enrich(game);
-    }
-
     /** Check if a user has access to a lobby. */
     public async hasAccess(token: TokenPayload, pin: string): Promise<boolean> {
         if (token.kind === "registered") {
@@ -159,9 +145,33 @@ export class LobbyService {
         );
     }
 
+    /** Get a lobby in the "DB" format. */
+    private async getRaw(pin: string): Promise<DBLobby | undefined> {
+        const game = await Lobbies.findOne({ pin })
+            .populate<Pick<PopulatedLobby, "owner">>("owner")
+            .exec();
+
+        if (!isDef(game)) {
+            return undefined;
+        }
+
+        return await this.enrich(game);
+    }
+
+    /** Get a lobby state. */
+    public async get(pin: string): Promise<Lobby | undefined> {
+        const lobby = await this.getRaw(pin);
+
+        if (!isDef(lobby)) {
+            throw new TRPCError({ code: "NOT_FOUND" });
+        }
+
+        return this.lobbyIntoState(lobby);
+    }
+
     /** Get basic information about a lobby. */
-    public async getInfoByPin(pin: string): Promise<LobbyInfo | undefined> {
-        const lobby = await this.getByPin(pin);
+    public async getInfo(pin: string): Promise<LobbyInfo | undefined> {
+        const lobby = await this.getRaw(pin);
         if (!isDef(lobby)) {
             throw new TRPCError({ code: "NOT_FOUND" });
         }
@@ -174,13 +184,13 @@ export class LobbyService {
         const items = await Lobbies.find({ owner: userId }).populate<
             Pick<PopulatedLobby, "owner">
         >("owner");
-        const lobbies = await Promise.all(items.map(this.enrich));
+        const lobbies = await Promise.all(items.map((i) => this.enrich(i)));
         return lobbies.map(this.lobbyIntoInfo);
     }
 
     /** Add a user to the current lobby. */
     public async addUserTo(pin: string, player: DBPlayer): Promise<void> {
-        const lobby = await this.getByPin(pin);
+        const lobby = await this.getRaw(pin);
         assert(isDef(lobby), "modifying non-existant lobby.");
 
         // find an un-honoured connection entry and overwrite it, otherwise we
@@ -209,7 +219,7 @@ export class LobbyService {
         name: string,
         socket: string,
     ): Promise<void> {
-        const lobby = await this.getByPin(pin);
+        const lobby = await this.getRaw(pin);
         assert(isDef(lobby), "modifying non-existant lobby.");
 
         const players = lobby.players;

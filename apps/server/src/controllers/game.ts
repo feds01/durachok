@@ -24,7 +24,7 @@ export class GameService {
         const result = await GameSchema.safeParseAsync(game.toObject());
         if (!result.success) {
             // @@Todo: add logging about why...
-            this.logger.error("Failed to parse game:\n", result.error);
+            this.logger.error("Failed to parse game:\n" + result.error);
             throw new Error("Could not parse game");
         }
 
