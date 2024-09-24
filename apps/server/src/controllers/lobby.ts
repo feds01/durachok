@@ -179,6 +179,16 @@ export class LobbyService {
         return this.lobbyIntoInfo(lobby);
     }
 
+    /** Get all of the players that are currently in the lobby */
+    public async getPlayers(pin: string): Promise<DBPlayer[]> {
+        const lobby = await this.getRaw(pin);
+        if (!isDef(lobby)) {
+            throw new TRPCError({ code: "NOT_FOUND" });
+        }
+
+        return lobby.players;
+    }
+
     /** Get all lobbies by a given user */
     public async getByOwner(userId: string): Promise<LobbyInfo[]> {
         const items = await Lobbies.find({ owner: userId }).populate<
