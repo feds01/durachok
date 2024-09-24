@@ -4,6 +4,7 @@ import {
     LobbySettingsSchema,
     MessageSchema,
 } from "@durachok/transport/src/schemas/lobby";
+import { ObjectId } from "mongodb";
 import { z } from "zod";
 
 import { DBUserSchema } from "./user";
@@ -28,6 +29,10 @@ export type DBPlayer = z.infer<typeof DBPlayerSchema>;
  * */
 export const DBLobbySchema = z
     .object({
+        /** Associated user id, only exists after user is created. */
+        _id: z.instanceof(ObjectId),
+        __v: z.number(),
+
         /** The unique identifier for the game. */
         pin: GamePinSchema,
         createdAt: z.date(),
@@ -43,6 +48,9 @@ export const DBLobbySchema = z
         /** The owner of the lobby. */
         owner: DBUserSchema,
     })
-    .merge(LobbySettingsSchema);
+    .merge(LobbySettingsSchema)
+    .transform(({ _id, __v, ...data }) => {
+        return { ...data, id: _id.toString() };
+    });
 
 export type DBLobby = z.infer<typeof DBLobbySchema>;
