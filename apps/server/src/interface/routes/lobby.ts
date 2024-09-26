@@ -13,7 +13,7 @@ import {
     userProcedure,
 } from "../../lib/trpc";
 import { DBPlayer } from "../../schemas/lobby";
-import { expr } from "../../utils";
+import { assert, expr, isDef } from "../../utils";
 
 export const lobbyRouter = router({
     getInfo: publicProcedure.input(ByPinRequestSchema).query(async (req) => {
@@ -42,7 +42,21 @@ export const lobbyRouter = router({
                 ctx,
                 input: { settings },
             } = req;
-            return ctx.lobbyService.create(ctx.user.id, settings);
+
+            // @@Hack: we should just return the lobby and then we can
+            // constraint into ` { pin }`.
+            const { pin } = await ctx.lobbyService.create(
+                ctx.user.id,
+                settings,
+            );
+            const lobby = await ctx.lobbyService.get(pin);
+            assert(isDef(lobby), "Lobby must exist");
+
+            // We also need to create the lobby and then create the actual
+            // game instance.
+            await ctx.gameService(lobby).create(ctx.user.name);
+
+            return { pin };
         }),
 
     get: authProcedure.input(ByPinRequestSchema).query(async (req) => {
