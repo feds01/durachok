@@ -39,7 +39,7 @@ const ArchivedGameSchema = new Schema<IArchivedGame>({
                         },
                     },
                     deck: { type: [String] },
-                    victory: { type: Boolean },
+                    status: { type: String, default: "waiting" },
                     trump: {
                         type: {
                             value: { type: Number },

@@ -173,6 +173,8 @@ export type PlayerMove = z.infer<typeof PlayerMoveSchema>;
 
 /** The current game state. */
 export const GameStateSchema = z.object({
+    /** The current status of the game. */
+    status: GameStatusSchema,
     /** The current trump card of the game. */
     trump: CardSchema,
     /** The players in the game. */
@@ -181,8 +183,6 @@ export const GameStateSchema = z.object({
     tableTop: z.record(z.string().nullable()),
     /** The remaining deck of cards. */
     deck: z.array(z.string()),
-    /** The current status of the game. */
-    victory: z.boolean(),
 });
 
 export type GameState = z.infer<typeof GameStateSchema>;
