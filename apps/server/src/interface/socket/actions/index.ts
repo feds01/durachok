@@ -6,6 +6,7 @@ import {
 import { z } from "zod";
 import { ActionsFactory, ClientContext, EmissionMap } from "zod-sockets";
 
+import { LobbyNotFoundError } from "../../../controllers/common";
 import { ensurePayloadIsTokens } from "../../../lib/authentication";
 import { UserTokensResponse } from "../../../schemas/auth";
 import { assert, expr, isDef } from "../../../utils";
@@ -31,7 +32,7 @@ const onJoin = factory.build({
     handler: async ({ input, client, all, logger: $ctx }) => {
         const { ctx } = $ctx;
         const logger = $ctx;
-        logger.info("join", client.id);
+        logger.info("join " + client.id);
 
         const [pin] = input;
 
@@ -55,16 +56,21 @@ const onJoin = factory.build({
                 return auth.payload.name;
             }
         });
-        logger.info("user joining lobby", name, pin);
+        logger.info("user joining lobby name=" + name + "pin= " + pin);
 
         try {
             await ctx.lobbyService.confirmUser(pin, name, client.id);
-        } catch (e) {
-            logger.warn(
-                "User tried to connect to lobby, but their entry couldn't be found.",
-                pin,
-                name,
-            );
+        } catch (e: unknown) {
+            if (e instanceof LobbyNotFoundError) {
+                logger.warn(
+                    "User tried to connect to lobby, but their entry couldn't be found.",
+                    pin,
+                    name,
+                );
+            } else {
+                logger.warn("Error confirming user", e);
+            }
+
             client.emit("close", {
                 reason: "stale_token",
             });
