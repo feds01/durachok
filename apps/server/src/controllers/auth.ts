@@ -40,7 +40,7 @@ export class AuthService {
                 }
 
                 return RawTokenPayload.parse(rawPayload);
-            } catch (error) {
+            } catch (_e: unknown) {
                 return null;
             }
         });
