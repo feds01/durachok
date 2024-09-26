@@ -2,7 +2,6 @@ import { z } from "zod";
 
 import {
     ActionSchema,
-    GameSchema,
     GameStateSchema,
     PlayerGameStateSchema,
 } from "../schemas/game";
@@ -40,7 +39,11 @@ export const PlayerJoinSchema = z
             // @@Todo: potentially change the definition so that we can always
             // assume when a `playing` status is set, that the game state is
             // always present.
-            return value.lobby.status === "playing" && !value.game;
+            if (value.lobby.status === "playing") {
+                return typeof value.game !== "undefined";
+            }
+
+            return true;
         },
         {
             message: "Expected a game state when the game is playing.",

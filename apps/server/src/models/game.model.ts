@@ -22,7 +22,7 @@ const GameSchema = new Schema<IGame>({
                 },
             },
             deck: { type: [String] },
-            victory: { type: Boolean, default: false },
+            status: { type: String, default: "waiting" },
             trump: {
                 type: {
                     value: { type: Number },

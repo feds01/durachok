@@ -2,6 +2,7 @@ import {
     Card,
     GamePlayer,
     GameState,
+    GameStatus,
     PlayerGameState,
 } from "@durachok/transport/src/schemas/game";
 
@@ -54,8 +55,8 @@ export class Game {
     /** The game settings. */
     public readonly history: History;
 
-    /** Whether the game has reached a conclusion. */
-    public victory = false;
+    /** The current game status. */
+    public status: GameStatus = "waiting";
 
     /**
      * @version 1.0.0
@@ -71,7 +72,7 @@ export class Game {
     constructor(
         players: [string, ...string[]],
         history: HistoryState | null,
-        settings: GameSettings = DEFAULT_SETTINGS,
+        private readonly settings: GameSettings = DEFAULT_SETTINGS,
     ) {
         // Check if the players argument follows the specified constraints.
         if (!Number.isInteger(players.length) && players.length < 1) {
@@ -173,7 +174,7 @@ export class Game {
         game.tableTop = new Map(Object.entries(state.tableTop));
         game.players = new Map(Object.entries(state.players));
         game.deck = state.deck;
-        game.victory = state.victory;
+        game.status = state.status;
 
         return game;
     }
@@ -209,7 +210,7 @@ export class Game {
      *
      * */
     finaliseRound(resignPlayer: boolean = false) {
-        if (this.victory) {
+        if (this.status === "finished") {
             throw new InvalidGameState(
                 "Can't mutate game state after victory.",
             );
@@ -296,6 +297,7 @@ export class Game {
         if (hasVictory) {
             // Add history entry for the victory
             this.history.addEntry({ type: "victory" });
+            this.status = "finished";
         } else {
             // since it's a new round, we need to create a new node.
             this.history.addEntry({
@@ -306,8 +308,6 @@ export class Game {
                 },
             });
         }
-
-        this.victory = hasVictory;
     }
 
     /**
@@ -333,10 +333,11 @@ export class Game {
      * @param {String} card - The card that's being added to the table top.
      * */
     addCardToTableTop(name: string, card: string) {
-        if (this.victory)
+        if (this.status === "finished") {
             throw new InvalidGameState(
                 "Can't mutate game state after victory.",
             );
+        }
 
         // check if the deck is already filled up.
         if (this.tableTop.size === 6)
@@ -459,7 +460,7 @@ export class Game {
 
             // now check here if there is only one player remaining in the game.
             if (this.getActivePlayers().length === 1) {
-                this.victory = true;
+                this.status = "finished";
 
                 // Add history entry for the victory
                 this.history.addEntry({ type: "victory" });
@@ -497,7 +498,7 @@ export class Game {
     coverCardOnTableTop(card: string, pos: number) {
         const defendingPlayer = this.getPlayer(this.getDefendingPlayerName());
 
-        if (this.victory) {
+        if (this.status === "finished") {
             throw new InvalidGameState(
                 "Can't mutate game state after victory.",
             );
@@ -612,13 +613,14 @@ export class Game {
      *        is being transferred to.
      * */
     private setDefendingPlayer(name: string) {
-        if (this.victory) {
+        if (this.status === "finished") {
             throw new InvalidGameState(
                 "Can't mutate game state after victory.",
             );
         }
 
-        const defendingPlayer = this.getPlayer(name);
+        // Specify that the game has started.
+        this.status = "playing";
 
         // reset everyone's privileges for attacking/defending...
         this.players.forEach((player) => {
@@ -647,7 +649,7 @@ export class Game {
      *
      * */
     public finalisePlayerTurn(name: string) {
-        if (this.victory) {
+        if (this.status === "finished") {
             throw new InvalidGameState(
                 "Can't mutate game state after victory.",
             );
@@ -770,7 +772,7 @@ export class Game {
         this.deck.push(...player.deck);
 
         if (this.getActivePlayers().length === 1) {
-            this.victory = true;
+            this.status = "finished";
             return;
         }
 
@@ -951,7 +953,7 @@ export class Game {
      *
      * */
     private transferCardOntoTable(name: string, card: string) {
-        if (this.victory) {
+        if (this.status == "finished") {
             throw new InvalidGameState(
                 "Can't mutate game state after victory.",
             );
@@ -995,7 +997,7 @@ export class Game {
      *
      * */
     private transferTableTop(to: string) {
-        if (this.victory) {
+        if (this.status == "finished") {
             throw new InvalidGameState(
                 "Can't mutate game state after victory.",
             );
@@ -1146,7 +1148,7 @@ export class Game {
                     }),
                     {},
                 ),
-                victory: this.victory,
+                status: this.status,
             },
         };
     }
