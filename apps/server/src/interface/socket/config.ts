@@ -131,13 +131,7 @@ export const config = createSimpleConfig({
                 }
 
                 logger.info("successfully authorised", { clientId: client.id });
-                return {
-                    token: tokens.payload,
-                    rawTokens: {
-                        token: tokens.token,
-                        refreshToken: tokens.refreshToken,
-                    },
-                };
+                return tokens;
             });
 
             // @@Hack: we pass the `authCtx` into all of the handlers, and

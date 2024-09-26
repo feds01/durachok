@@ -30,10 +30,7 @@ export const createSessionContext = async ({
     return {
         ...ctx,
         token: tokens.payload,
-        rawTokens: {
-            token: tokens.token,
-            refreshToken: tokens.refreshToken,
-        },
+        rawTokens: tokens.rawTokens,
     };
 };
 

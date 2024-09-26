@@ -36,7 +36,7 @@ export async function getTokenFromHeaders(
     // Fast path, we have a valid token.
     if (verifiedToken) {
         assert(isDef(token) && typeof token === "string");
-        return { payload: verifiedToken, token, refreshToken };
+        return { payload: verifiedToken, rawTokens: { token, refreshToken } };
     }
 
     // Since we don't have a refresh token, we can't try to
@@ -68,8 +68,8 @@ export function setTokensInResponse(
     tokens: UserTokensResponse,
 ): void {
     res.set("Access-Control-Expose-Headers", "x-token, x-refresh-token");
-    res.set("x-token", tokens.token);
-    res.set("x-refresh-token", tokens.refreshToken ?? "");
+    res.set("x-token", tokens.rawTokens.token);
+    res.set("x-refresh-token", tokens.rawTokens.refreshToken ?? "");
 }
 
 /**
@@ -87,5 +87,6 @@ export function ensurePayloadIsTokens(
         return parsed.data;
     }
 
+    console.warn(`Invalid token payload, error=\n${parsed.error}`);
     return null;
 }

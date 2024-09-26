@@ -142,8 +142,10 @@ export class AuthService {
         const newTokens = await this.createTokens(rawPayload);
 
         return {
-            token: newTokens.token,
-            refreshToken: newTokens.refreshToken,
+            rawTokens: {
+                token: newTokens.token,
+                refreshToken: newTokens.refreshToken,
+            },
             payload: decodedToken,
         };
     }
