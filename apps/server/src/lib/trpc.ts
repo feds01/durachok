@@ -96,6 +96,7 @@ export const publicProcedure = t.procedure.use(async (opts) => {
     const durationMs = Date.now() - start;
     const meta = { path: opts.path, type: opts.type, durationMs };
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     result.ok
         ? logger.info("OK request timing:", meta)
         : logger.error("Non-OK request timing", meta);
@@ -138,7 +139,7 @@ export const userProcedure = publicProcedure.use(async function isAuthed(opts) {
     const user = await expr(async () => {
         try {
             return await ctx.userService.get(token.user.id);
-        } catch (e: unknown) {
+        } catch (_e: unknown) {
             ctx.logger.warn("user not found");
             throw new TRPCError({ code: "UNAUTHORIZED" });
         }
