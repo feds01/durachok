@@ -10,7 +10,7 @@ import Lobbies, { PopulatedLobby } from "../models/lobby.model";
 import { TokenPayload } from "../schemas/auth";
 import { DBLobby, DBLobbySchema, DBPlayer } from "../schemas/lobby";
 import { assert, isDef } from "../utils";
-import { CommonService } from "./common";
+import { CommonService, LobbyNotFoundError } from "./common";
 import { ImageService } from "./image";
 
 export class LobbyService {
@@ -152,6 +152,7 @@ export class LobbyService {
             .exec();
 
         if (!isDef(game)) {
+            this.logger.warn("Failed to find lobby with pin: " + pin);
             return undefined;
         }
 
@@ -163,7 +164,7 @@ export class LobbyService {
         const lobby = await this.getRaw(pin);
 
         if (!isDef(lobby)) {
-            throw new TRPCError({ code: "NOT_FOUND" });
+            throw new LobbyNotFoundError();
         }
 
         return this.lobbyIntoState(lobby);
@@ -173,7 +174,7 @@ export class LobbyService {
     public async getInfo(pin: string): Promise<LobbyInfo | undefined> {
         const lobby = await this.getRaw(pin);
         if (!isDef(lobby)) {
-            throw new TRPCError({ code: "NOT_FOUND" });
+            throw new LobbyNotFoundError();
         }
 
         return this.lobbyIntoInfo(lobby);
@@ -183,7 +184,7 @@ export class LobbyService {
     public async getPlayers(pin: string): Promise<DBPlayer[]> {
         const lobby = await this.getRaw(pin);
         if (!isDef(lobby)) {
-            throw new TRPCError({ code: "NOT_FOUND" });
+            throw new LobbyNotFoundError();
         }
 
         return lobby.players;
@@ -236,7 +237,7 @@ export class LobbyService {
         const idx = players.findIndex((player) => player.name === name);
 
         if (idx < 0) {
-            throw new TRPCError({ code: "NOT_FOUND" });
+            throw new LobbyNotFoundError();
         }
 
         // Now, we should update the player's entry to say that they've confirmed

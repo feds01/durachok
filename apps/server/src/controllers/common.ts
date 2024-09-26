@@ -1,21 +1,49 @@
+import { TRPCError } from "@trpc/server";
+import { Logger } from "pino";
+
 import Games, { IGame } from "../models/game.model";
 import Lobbies, { PopulatedLobby } from "../models/lobby.model";
 import User, { IUser } from "../models/user.model";
+import { DBGameSelectionSchema } from "../schemas/game";
 import { isDef } from "../utils";
+
+/** An exception that indicates that a game could not be found. */
+export class GameNotFound extends TRPCError {
+    public constructor() {
+        super({
+            code: "NOT_FOUND",
+            message: "Game not found",
+        });
+    }
+}
+
+/** Error to be thrown when a lobby is not found. */
+export class LobbyNotFoundError extends TRPCError {
+    public constructor() {
+        super({ code: "NOT_FOUND" });
+    }
+}
+
+/** Error to be thrown when a user is not found. */
+export class UserNotFoundError extends TRPCError {
+    public constructor() {
+        super({ code: "NOT_FOUND" });
+    }
+}
 
 /**
  * A service used to access common functionality and information
  * about data objects stored within the DB.
  */
 export class CommonService {
-    public constructor() {}
+    public constructor(private readonly logger: Logger) {}
 
     /** Find a user by `ID` and return the underling DB object. */
     public async getUserDbObject(userId: string): Promise<IUser> {
         const user = await User.findById(userId);
 
         if (!isDef(user)) {
-            throw new Error("User not found");
+            throw new UserNotFoundError();
         }
 
         return user;
@@ -23,15 +51,15 @@ export class CommonService {
 
     /** Find a lobby by `PIN` and return the underling DB object. */
     public async getLobbyDbObject(pin: string): Promise<PopulatedLobby> {
-        const game = await Lobbies.findOne({ pin }).populate<
+        const lobby = await Lobbies.findOne({ pin }).populate<
             Pick<PopulatedLobby, "owner">
         >("owner");
 
-        if (!isDef(game)) {
-            throw new Error("Lobby not found");
+        if (!isDef(lobby)) {
+            throw new LobbyNotFoundError();
         }
 
-        return game;
+        return lobby;
     }
 
     /** Find a lobby by `PIN` and return the underling DB object. */
@@ -41,9 +69,20 @@ export class CommonService {
             throw new Error("Lobby not found");
         }
 
-        const game = await Games.findById(doc.game);
+        const parsedDoc = await DBGameSelectionSchema.safeParseAsync(
+            doc.toObject(),
+        );
+
+        if (!parsedDoc.success) {
+            this.logger.error(
+                "Failed to parse game selection:\n" + parsedDoc.error,
+            );
+            throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        }
+
+        const game = await Games.findById(parsedDoc.data.game);
         if (!isDef(game)) {
-            throw new Error("Game not found");
+            throw new GameNotFound();
         }
 
         return game;

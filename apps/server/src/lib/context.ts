@@ -29,7 +29,7 @@ export const createContext = (logger: Logger, hostname: string = "") => {
         return new LocalImageRepo(hostInfo, logger);
     });
     const authService = new AuthService(logger);
-    const commonService = new CommonService();
+    const commonService = new CommonService(logger);
     const imageService = new ImageService(logger, imageRepo);
     const lobbyService = new LobbyService(logger, commonService, imageService);
     const userService = new UserService(
