@@ -93,33 +93,8 @@ export class Game {
             throw new GameInitError("Player names must be unique.");
         }
 
-        this.deck = generateCardDeck(settings.shortGameDeck);
-
-        // generate card deck and shuffle it for the game
-        shuffleArray(this.deck);
-
-        // apply a shuffle to player array if the caller specified to begin
-        // the game with random player order
-        if (settings.randomisePlayerOrder) shuffleArray(players);
-
-        // set the game up for the 'players' number.
-        for (let index = 0; index < players.length; index++) {
-            this.players.set(players[index], {
-                out: null,
-                name: players[index],
-                deck: [],
-                turned: false,
-                beganRound: false,
-                action: "none",
-            });
-        }
-
-        // distribute the cards between the players as if in a physical way
-        for (let index = 0; index < TableSize; index++) {
-            this.players.forEach((player) => {
-                player.deck = [...player.deck, this.deck.shift()!];
-            });
-        }
+        // Deal all of the cards to all the players in the game...
+        this.deck = this.resetDeckFor(players);
 
         // select the attacking player randomly, the SDK can provide a method
         // for overriding the starting attacking player later on...
@@ -177,6 +152,42 @@ export class Game {
         game.status = state.status;
 
         return game;
+    }
+
+    /**
+     * Reset all the player states, and deal for N-players.
+     */
+    private resetDeckFor(players: string[]) {
+        const deck = generateCardDeck(this.settings.shortGameDeck);
+
+        // generate card deck and shuffle it for the game
+        shuffleArray(deck);
+        this.players.clear();
+
+        // apply a shuffle to player array if the caller specified to begin
+        // the game with random player order
+        if (this.settings.randomisePlayerOrder) shuffleArray(players);
+
+        // set the game up for the 'players' number.
+        for (let index = 0; index < players.length; index++) {
+            this.players.set(players[index], {
+                out: null,
+                name: players[index],
+                deck: [],
+                turned: false,
+                beganRound: false,
+                action: "none",
+            });
+        }
+
+        // distribute the cards between the players as if in a physical way
+        for (let index = 0; index < TableSize; index++) {
+            this.players.forEach((player) => {
+                player.deck = [...player.deck, deck.shift()!];
+            });
+        }
+
+        return deck;
     }
 
     static performSanityCheck(game: Game): boolean {
@@ -630,12 +641,13 @@ export class Game {
         });
 
         // Update the parameters for the attacking and defending player...
-        let attackingPlayer = this.getPlayer(
+        const attackingPlayer = this.getPlayer(
             this.getPlayerNameByOffset(name, -1),
         );
-
         attackingPlayer.action = "attack";
         attackingPlayer.beganRound = true;
+
+        const defendingPlayer = this.getPlayer(name);
         defendingPlayer.action = "defend";
     }
 
@@ -1118,6 +1130,7 @@ export class Game {
         };
     }
 
+    /** Get a specific player by name. */
     public getPlayer(name: string): GamePlayer {
         const player = this.players.get(name);
 
@@ -1126,6 +1139,21 @@ export class Game {
         }
 
         return player;
+    }
+
+    /** Add a player to the game.
+     *
+     * Note: This can only be done whilst the game is in the lobby state.
+     */
+    public addPlayer(name: string) {
+        if (this.status !== "waiting") {
+            throw new InvalidGameState(
+                "Can't add players when the game is in progress.",
+            );
+        }
+
+        const players = [...this.players.keys(), name];
+        this.deck = this.resetDeckFor(players);
     }
 
     /**
