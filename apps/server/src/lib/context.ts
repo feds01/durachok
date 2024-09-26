@@ -40,7 +40,7 @@ export const createContext = (logger: Logger, hostname: string = "") => {
         lobbyService,
     );
     const gameService = (lobby: Lobby) =>
-        new GameService(lobby, logger, commonService, lobbyService);
+        new GameService(lobby, logger, commonService);
 
     return {
         logger,
