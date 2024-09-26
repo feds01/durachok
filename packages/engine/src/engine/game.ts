@@ -133,8 +133,8 @@ export class Game {
 
         // initialise the history object if this game hasn't initialised a history
         // object yet, otherwise re-use the provided history object
-        if (history === null || history.state === null) {
-            this.history = new History(this.serialize().state, []);
+        if (history === null) {
+            this.history = new History([]);
 
             // since it's a new round, we need to create a new node.
             this.history.addEntry({
@@ -145,7 +145,7 @@ export class Game {
                 },
             });
         } else {
-            this.history = new History(history.state, history.nodes);
+            this.history = new History(history.nodes);
         }
     }
 

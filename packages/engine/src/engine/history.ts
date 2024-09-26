@@ -1,7 +1,6 @@
 import { Action, GameState } from "@durachok/transport/src/schemas/game";
 
 export type HistoryState = {
-    state: GameState | null;
     nodes: Action[];
 };
 
@@ -18,10 +17,7 @@ export class History {
      *                    the game can be re-created from the initial state.
      * @param {?Action[]} nodes - The events that make up the history.
      * */
-    constructor(
-        private readonly state: GameState,
-        private readonly nodes: Action[] = [],
-    ) {}
+    constructor(private readonly nodes: Action[] = []) {}
 
     /**
      * Method to an entry to the history. This will add an action to the history.
@@ -40,7 +36,6 @@ export class History {
      * */
     serialize(): HistoryState {
         return {
-            state: this.state,
             nodes: this.nodes,
         };
     }
