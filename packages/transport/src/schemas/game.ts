@@ -207,8 +207,6 @@ export const PlayerGameStateSchema = z.object({
 export type PlayerGameState = z.infer<typeof PlayerGameStateSchema>;
 
 export const GameHistorySchema = z.object({
-    /** The current game state. */
-    state: GameStateSchema.nullable(),
     /** The game history. */
     nodes: z.array(ActionSchema),
 });
