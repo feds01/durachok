@@ -2,7 +2,7 @@ import { PlayerMoveSchema } from "@durachok/transport/src/schemas/game";
 import { GamePinSchema } from "@durachok/transport/src/schemas/lobby";
 import { z } from "zod";
 
-import { ensureAuth, factory } from "./ctx";
+import { ensureAuth, factory } from "../common/auth";
 
 const onMove = factory.build({
     event: "move",

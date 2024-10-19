@@ -4,7 +4,8 @@ import { z } from "zod";
 import { LobbyNotFoundError } from "../../../controllers/common";
 import { assert, expr, isDef } from "../../../utils";
 import { ApiError } from "../../../utils/error";
-import { ensureAuth, factory } from "./ctx";
+import { ensureAuth } from "../common/auth";
+import { factory } from "./ctx";
 
 const onJoin = factory.build({
     event: "join",

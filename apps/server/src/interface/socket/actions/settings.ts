@@ -4,7 +4,7 @@ import {
 } from "@durachok/transport/src/schemas/lobby";
 import { z } from "zod";
 
-import { ensureAuth, factory } from "./ctx";
+import { ensureAuth, factory } from "../common/auth";
 
 const onSettingsUpdate = factory.build({
     event: "passphrase",
