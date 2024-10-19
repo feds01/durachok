@@ -1,5 +1,6 @@
 import { CardSuits, shuffleArray } from "@durachok/engine/src";
 import { GameSettings, LobbyInfo } from "@durachok/transport/src/request";
+import { GameStatus } from "@durachok/transport/src/schemas/game";
 import { Lobby } from "@durachok/transport/src/schemas/lobby";
 import { Player } from "@durachok/transport/src/schemas/user";
 import { TRPCError } from "@trpc/server";
@@ -10,7 +11,11 @@ import Lobbies, { PopulatedLobby } from "../models/lobby.model";
 import { TokenPayload } from "../schemas/auth";
 import { DBLobby, DBLobbySchema, DBPlayer } from "../schemas/lobby";
 import { assert, isDef } from "../utils";
-import { CommonService, LobbyNotFoundError } from "./common";
+import {
+    CommonService,
+    LobbyNotFoundError,
+    PlayerNotInLobbyError,
+} from "./common";
 import { ImageService } from "./image";
 
 export class LobbyService {
@@ -189,12 +194,21 @@ export class LobbyService {
     /** Get a lobby state. */
     public async get(pin: string): Promise<Lobby | undefined> {
         const lobby = await this.getRaw(pin);
-
         if (!isDef(lobby)) {
             throw new LobbyNotFoundError();
         }
 
         return this.lobbyIntoState(lobby);
+    }
+
+    /** Get the status of a lobby. */
+    public async getStatus(pin: string): Promise<GameStatus> {
+        const lobby = await this.getRaw(pin);
+        if (!isDef(lobby)) {
+            throw new LobbyNotFoundError();
+        }
+
+        return lobby.status;
     }
 
     /** Get basic information about a lobby. */
@@ -215,6 +229,19 @@ export class LobbyService {
         }
 
         return lobby.players;
+    }
+
+    /** Get a player by their connection id. */
+    public async getPlayerBySocket(
+        pin: string,
+        socket: string,
+    ): Promise<DBPlayer | undefined> {
+        const lobby = await this.getRaw(pin);
+        if (!isDef(lobby)) {
+            throw new LobbyNotFoundError();
+        }
+
+        return lobby.players.find((player) => player.socket === socket);
     }
 
     /** Get all lobbies by a given user */
@@ -281,6 +308,40 @@ export class LobbyService {
             {
                 $set: {
                     players: lobby.players,
+                },
+            },
+        );
+    }
+
+    /** Remove a player from the lobby by their connection id. */
+    public async removePlayerByConnectionId(
+        pin: string,
+        socket: string,
+    ): Promise<void> {
+        const lobby = await this.getRaw(pin);
+        assert(isDef(lobby), "modifying non-existant lobby.");
+
+        const players = lobby.players;
+        const idx = players.findIndex((player) => player.socket === socket);
+
+        if (idx < 0) {
+            throw new PlayerNotInLobbyError();
+        }
+
+        // Ensure that the owner isn't being removed.
+        if (players[idx].registered === lobby.owner.id) {
+            this.logger.warn("Attempted to remove the owner from the lobby.");
+            throw new TRPCError({ code: "BAD_REQUEST" });
+        }
+
+        players.splice(idx, 1);
+
+        // We need to update the lobby in the database.
+        await Lobbies.updateOne(
+            { pin },
+            {
+                $set: {
+                    players,
                 },
             },
         );

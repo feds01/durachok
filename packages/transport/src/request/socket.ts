@@ -12,6 +12,9 @@ const LobbyUpdateSchema = z.union([
         type: z.literal("new_player"),
     }),
     z.object({
+        type: z.literal("player_exit"),
+    }),
+    z.object({
         type: z.literal("new_spectator"),
     }),
 ]);
@@ -24,6 +27,8 @@ export const LobbyMessageSchema = z.object({
     update: LobbyUpdateSchema,
     lobby: LobbySchema,
 });
+
+export type LobbyMessage = z.infer<typeof LobbyMessageSchema>;
 
 /**
  * An event that's emitted to a client once they have joined the
