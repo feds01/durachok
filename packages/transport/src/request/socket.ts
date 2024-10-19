@@ -71,9 +71,9 @@ export const CloseGameMessageSchema = z.object({
     extra: z.string().optional(),
 });
 
-/** The current state of the game. */
+/** The current state of the game for a particular state. */
 export const StateUpdateMessageSchema = z.object({
-    update: GameStateSchema,
+    update: PlayerGameStateSchema,
 });
 
 export const ActionWithTimeSchema = z.object({
