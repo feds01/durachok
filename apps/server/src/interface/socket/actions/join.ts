@@ -2,14 +2,13 @@ import { GamePinSchema } from "@durachok/transport/src/schemas/lobby";
 import { z } from "zod";
 
 import { LobbyNotFoundError } from "../../../controllers/common";
-import { assert, expr, isDef } from "../../../utils";
 import { ensureLobbyAccess } from "../common/auth";
 import { factory } from "./ctx";
 
 const onJoin = factory.build({
     event: "join",
     input: z.tuple([GamePinSchema]),
-    handler: async ({ input, client, all, logger: $ctx }) => {
+    handler: async ({ input, client, withRooms, logger: $ctx }) => {
         const { ctx } = $ctx;
         const logger = $ctx;
 
@@ -49,6 +48,10 @@ const onJoin = factory.build({
             });
             return;
         }
+
+        // Specify that this client is now within the "lobby" room.
+        client.join(lobby.pin);
+
         // Emit to the current player, the game state.
         const game = await ctx.gameService(lobby).getGameStateFor(name);
         client.emit("join", {
@@ -56,27 +59,12 @@ const onJoin = factory.build({
             game,
         });
 
-        // We need to send messages to all of the players that are in this
-        // lobby, we send to all players with sockets.
-        const clients = await all.getClients();
-        const players = await ctx.lobbyService.getPlayers(pin);
-        assert(isDef(players));
-
-        players
-            .filter((p) => p.socket)
-            .forEach((p) => {
-                // @@Slowness: we need to loop through all of the clients to find
-                // the specific client, ideally we should be able to get just the
-                // client directly by id?
-                clients
-                    .find((c) => c.id === p.socket)
-                    ?.emit("lobbyState", {
-                        update: {
-                            type: "new_player",
-                        },
-                        lobby,
-                    });
-            });
+        withRooms("lobby").broadcast("lobbyState", {
+            update: {
+                type: "new_player",
+            },
+            lobby,
+        });
     },
 });
 

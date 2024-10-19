@@ -9,7 +9,7 @@ import { factory } from "./ctx";
 const onKick = factory.build({
     event: "kick",
     input: z.tuple([GamePinSchema, z.object({ id: z.string() })]),
-    handler: async ({ all, input, client, logger: $ctx }) => {
+    handler: async ({ withRooms, input, client, logger: $ctx }) => {
         const { ctx } = $ctx;
         const logger = $ctx;
         const [[pin], { id }] = input;
@@ -64,29 +64,17 @@ const onKick = factory.build({
             throw err;
         }
 
-        // We need to send messages to all of the players that are in this
-        // lobby, we send to all players with sockets.
-        const clients = await all.getClients();
-
         const lobby = await ctx.lobbyService.get(pin);
-        const players = await ctx.lobbyService.getPlayers(pin);
-        assert(isDef(players) && isDef(lobby));
+        assert(isDef(lobby));
 
-        players
-            .filter((p) => p.socket)
-            .forEach((p) => {
-                // @@Slowness: we need to loop through all of the clients to find
-                // the specific client, ideally we should be able to get just the
-                // client directly by id?
-                clients
-                    .find((c) => c.id === p.socket)
-                    ?.emit("lobbyState", {
-                        update: {
-                            type: "player_exit",
-                        },
-                        lobby,
-                    });
-            });
+        // Send a message to all players in the lobby that a player has been
+        // kicked.
+        withRooms("lobby").broadcast("lobbyState", {
+            update: {
+                type: "player_exit",
+            },
+            lobby,
+        });
     },
 });
 
