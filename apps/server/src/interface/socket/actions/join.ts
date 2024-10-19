@@ -3,8 +3,7 @@ import { z } from "zod";
 
 import { LobbyNotFoundError } from "../../../controllers/common";
 import { assert, expr, isDef } from "../../../utils";
-import { ApiError } from "../../../utils/error";
-import { ensureAuth } from "../common/auth";
+import { ensureLobbyAccess } from "../common/auth";
 import { factory } from "./ctx";
 
 const onJoin = factory.build({
@@ -21,22 +20,8 @@ const onJoin = factory.build({
         // @@Todo: support spectators, if we the game allows for spectators, and
         // if the game is currently in progress, we can send the specific connection
         // the spectator version of the game.
-        const auth = ensureAuth(client);
+        const { name } = await ensureLobbyAccess(ctx, client, pin);
 
-        // we need to check that the user has permission to access this room.
-        // if they don't, we should return an error.
-        const hasAccess = ctx.lobbyService.hasAccess(auth.payload, pin);
-        if (!hasAccess) {
-            throw ApiError.http(401, "Unauthorized");
-        }
-
-        const name = expr(() => {
-            if (auth.payload.kind === "registered") {
-                return auth.payload.user.name;
-            } else {
-                return auth.payload.name;
-            }
-        });
         logger.info({ ...meta, name }, "user joining lobby");
 
         try {
