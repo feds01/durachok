@@ -232,16 +232,21 @@ export class LobbyService {
     }
 
     /** Get a player by their connection id. */
-    public async getPlayerBySocket(
+    public async getPlayerByConnectionId(
         pin: string,
         socket: string,
-    ): Promise<DBPlayer | undefined> {
+    ): Promise<DBPlayer> {
         const lobby = await this.getRaw(pin);
         if (!isDef(lobby)) {
             throw new LobbyNotFoundError();
         }
 
-        return lobby.players.find((player) => player.socket === socket);
+        const player = lobby.players.find((player) => player.socket === socket);
+        if (!isDef(player)) {
+            throw new PlayerNotInLobbyError();
+        }
+
+        return player;
     }
 
     /** Get all lobbies by a given user */

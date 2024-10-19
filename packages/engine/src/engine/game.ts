@@ -1141,7 +1141,8 @@ export class Game {
         return player;
     }
 
-    /** Add a player to the game.
+    /**
+     * Add a player to the game.
      *
      * Note: This can only be done whilst the game is in the lobby state.
      */
@@ -1153,6 +1154,22 @@ export class Game {
         }
 
         const players = [...this.players.keys(), name];
+        this.deck = this.resetDeckFor(players);
+    }
+
+    /**
+     * Remove a player from the game.
+     *
+     * Note: This can only be done whilst the game is in the lobby state.
+     */
+    public removePlayer(name: string) {
+        if (this.status !== "waiting") {
+            throw new InvalidGameState(
+                "Can't remove players when the game is in progress.",
+            );
+        }
+
+        const players = [...this.players.keys()].filter((p) => p !== name);
         this.deck = this.resetDeckFor(players);
     }
 
