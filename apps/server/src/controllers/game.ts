@@ -104,4 +104,16 @@ export class GameService {
         // Finally, save the game.
         await this.save(raw.id, game);
     }
+
+    /** Remove a player from the current game. */
+    public async removePlayer(player: string): Promise<void> {
+        const raw = await this.commonService.getGameDbObject(this.lobby.pin);
+
+        // Remove the player from the game.
+        const game = await this.enrich(raw);
+        game.removePlayer(player);
+
+        // Finally, save the game.
+        await this.save(raw.id, game);
+    }
 }

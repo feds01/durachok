@@ -32,7 +32,21 @@ const onKick = factory.build({
         }
 
         try {
+            const player = await ctx.lobbyService.getPlayerByConnectionId(
+                pin,
+                id,
+            );
+
+            logger.info(meta, "removing player from lobby");
             await ctx.lobbyService.removePlayerByConnectionId(pin, id);
+
+            const lobby = await ctx.lobbyService.get(pin);
+            assert(isDef(lobby));
+
+            logger.info(meta, "removing player from game state");
+            ctx.gameService(lobby).removePlayer(player.name);
+
+            logger.info(meta, "player removed");
         } catch (err: unknown) {
             if (err instanceof PlayerNotInLobbyError) {
                 logger.warn(
