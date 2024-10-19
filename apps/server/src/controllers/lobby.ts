@@ -128,7 +128,34 @@ export class LobbyService {
         }
     }
 
-    /** Check whether a user is within a lobby */
+    /**
+     * Check if the user has owner right s to a lobby.
+     *
+     * @param token - The token of the user.
+     * @param pin - The pin of the lobby.
+     *
+     * @returns Whether the user has owner access to the lobby.
+     */
+    public async hasOwnerAccess(
+        token: TokenPayload,
+        pin: string,
+    ): Promise<boolean> {
+        if (token.kind === "registered") {
+            return isDef(await Lobbies.findOne({ pin, owner: token.user.id }));
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Check whether a user is within a lobby.
+     *
+     * @param pin - The pin of the lobby.
+     * @param name - The name of the user.
+     * @param userId - The user's ID, if they are registered.
+     *
+     * @returns Whether the user is in the lobby.
+     * */
     public async isUserInLobby(
         pin: string,
         name: string,
