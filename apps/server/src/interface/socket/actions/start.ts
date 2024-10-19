@@ -69,7 +69,7 @@ const onStart = factory.build({
             }
 
             await c.emit("playerState", {
-                update: await game.getStateForPlayer(player.name),
+                update: await game.getGameStateFor(player.name),
             });
         });
 

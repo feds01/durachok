@@ -125,14 +125,4 @@ export class GameService {
         // Finally, save the game.
         await this.save(raw.id, game);
     }
-
-    /**
-     * Get that state for a specific player.
-     *
-     * @param player The player to get the state for.
-     *  */
-    public async getStateForPlayer(player: string): Promise<PlayerGameState> {
-        const game = await this.get();
-        return game.getStateForPlayer(player);
-    }
 }
