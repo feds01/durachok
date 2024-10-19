@@ -1,7 +1,7 @@
 import { CardSuits, shuffleArray } from "@durachok/engine/src";
 import { GameSettings, LobbyInfo } from "@durachok/transport/src/request";
 import { GameStatus } from "@durachok/transport/src/schemas/game";
-import { Lobby } from "@durachok/transport/src/schemas/lobby";
+import { Lobby, Message } from "@durachok/transport/src/schemas/lobby";
 import { Player } from "@durachok/transport/src/schemas/user";
 import { TRPCError } from "@trpc/server";
 import { customAlphabet } from "nanoid";
@@ -10,7 +10,7 @@ import { Logger } from "pino";
 import Lobbies, { PopulatedLobby } from "../models/lobby.model";
 import { TokenPayload } from "../schemas/auth";
 import { DBLobby, DBLobbySchema, DBPlayer } from "../schemas/lobby";
-import { assert, isDef } from "../utils";
+import { assert, expr, isDef } from "../utils";
 import {
     CommonService,
     LobbyNotFoundError,
@@ -345,6 +345,54 @@ export class LobbyService {
                 },
             },
         );
+    }
+
+    /**
+     * Send a message from a player to the lobby chat.
+     *
+     * @param pin - The pin of the lobby.
+     * @param socket - The socket of the player.
+     * @param message - The message to send.
+     */
+    public async sendMessage(
+        pin: string,
+        socket: string,
+        message: string,
+    ): Promise<Message> {
+        const lobby = await this.getRaw(pin);
+        assert(isDef(lobby), "modifying non-existant lobby.");
+
+        const players = lobby.players;
+        const idx = players.findIndex((player) => player.socket === socket);
+
+        if (idx < 0) {
+            throw new PlayerNotInLobbyError();
+        }
+
+        const player = players[idx]!;
+
+        const payload: Message = {
+            message,
+            time: Date.now(),
+            name: player.name,
+            owner: expr(() => {
+                if (player.registered) {
+                    return player.registered;
+                }
+            }),
+        };
+
+        // We need to update the lobby in the database.
+        await Lobbies.updateOne(
+            { pin },
+            {
+                $push: {
+                    chat: payload,
+                },
+            },
+        );
+
+        return payload;
     }
 
     /**
