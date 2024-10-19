@@ -35,7 +35,7 @@ export async function ensureLobbyAccess(
     ctx: Context,
     client: Client,
     pin: string,
-): Promise<void> {
+): Promise<{ name: string; isRegistered: boolean }> {
     const auth = ensureAuth(client);
 
     // Ensure that the current client has access to the lobby.
@@ -46,7 +46,11 @@ export async function ensureLobbyAccess(
     }
 
     // @@Todo: perhaps we should return the player since the information might be useful?
-    return;
+    if (auth.payload.kind === "anonymous") {
+        return { name: auth.payload.name, isRegistered: false };
+    } else {
+        return { name: auth.payload.user.name, isRegistered: true };
+    }
 }
 
 /**
