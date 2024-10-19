@@ -15,7 +15,7 @@ const onKick = factory.build({
         const [[pin], { id }] = input;
         const meta = { event: "kick", pin, clientId: client.id };
 
-        logger.info(meta, "processing `kick` request");
+        logger.info(meta, "processing event");
         await ensureOwnerAccess(ctx, client, pin);
 
         const status = await ctx.lobbyService.getStatus(pin);

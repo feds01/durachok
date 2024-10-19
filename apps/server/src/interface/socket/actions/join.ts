@@ -21,7 +21,6 @@ const onJoin = factory.build({
         // @@Todo: support spectators, if we the game allows for spectators, and
         // if the game is currently in progress, we can send the specific connection
         // the spectator version of the game.
-
         const auth = ensureAuth(client);
 
         // we need to check that the user has permission to access this room.
