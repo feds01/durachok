@@ -12,9 +12,10 @@ const onKick = factory.build({
     handler: async ({ all, input, client, logger: $ctx }) => {
         const { ctx } = $ctx;
         const logger = $ctx;
-        logger.info("processing `kick` request", client.id);
-
         const [[pin], { id }] = input;
+        const meta = { event: "kick", pin, clientId: client.id };
+
+        logger.info(meta, "processing `kick` request");
         await ensureOwnerAccess(ctx, client, pin);
 
         const status = await ctx.lobbyService.getStatus(pin);
@@ -22,7 +23,7 @@ const onKick = factory.build({
         // Ensure that the lobby is not in "playing" state when
         // players are locked in.
         if (status !== "waiting") {
-            logger.info("cannot kick player when game is not waiting", status);
+            logger.info(meta, "cannot kick player when game is not waiting");
             client.emit("error", {
                 type: "bad_request",
                 message: "can't kick player when playing.",
@@ -35,6 +36,7 @@ const onKick = factory.build({
         } catch (err: unknown) {
             if (err instanceof PlayerNotInLobbyError) {
                 logger.warn(
+                    meta,
                     "failed to kick player from lobby because they don't exist",
                     err,
                 );

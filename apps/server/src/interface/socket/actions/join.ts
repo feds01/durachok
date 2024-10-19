@@ -13,9 +13,10 @@ const onJoin = factory.build({
     handler: async ({ input, client, all, logger: $ctx }) => {
         const { ctx } = $ctx;
         const logger = $ctx;
-        logger.info("join " + client.id);
 
         const [pin] = input;
+        const meta = { event: "join", pin, clientId: client.id };
+        logger.info(meta, "processing event");
 
         // @@Todo: support spectators, if we the game allows for spectators, and
         // if the game is currently in progress, we can send the specific connection
@@ -37,19 +38,18 @@ const onJoin = factory.build({
                 return auth.payload.name;
             }
         });
-        logger.info("user joining lobby name=" + name + "pin= " + pin);
+        logger.info({ ...meta, name }, "user joining lobby");
 
         try {
             await ctx.lobbyService.confirmUser(pin, name, client.id);
         } catch (e: unknown) {
             if (e instanceof LobbyNotFoundError) {
                 logger.warn(
+                    { ...meta, name },
                     "User tried to connect to lobby, but their entry couldn't be found.",
-                    pin,
-                    name,
                 );
             } else {
-                logger.warn("Error confirming user", e);
+                logger.warn(meta, "Error confirming user", e);
             }
 
             client.emit("close", {
