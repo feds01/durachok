@@ -112,8 +112,27 @@ export class GameService {
         // Remove the player from the game.
         const game = await this.enrich(raw);
         game.removePlayer(player);
+    }
+
+    /** Start a game. */
+    public async start(): Promise<void> {
+        const raw = await this.commonService.getGameDbObject(this.lobby.pin);
+
+        // Start the game.
+        const game = await this.enrich(raw);
+        game.status = "playing";
 
         // Finally, save the game.
         await this.save(raw.id, game);
+    }
+
+    /**
+     * Get that state for a specific player.
+     *
+     * @param player The player to get the state for.
+     *  */
+    public async getStateForPlayer(player: string): Promise<PlayerGameState> {
+        const game = await this.get();
+        return game.getStateForPlayer(player);
     }
 }

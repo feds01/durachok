@@ -53,7 +53,7 @@ export const config = createSimpleConfig({
         },
 
         /** Message to indicate that the game started. */
-        gameStarted: {
+        start: {
             schema: z.tuple([]),
         },
 
@@ -79,10 +79,10 @@ export const config = createSimpleConfig({
         },
 
         /**
-         * General state update, player-clients don't need to process
-         * this message, its mostly for spectators.
+         * When a player has updated their state, this is emitted to all
+         * players in the game.
          * */
-        state: {
+        playerState: {
             schema: z.tuple([StateUpdateMessageSchema]),
         },
 
