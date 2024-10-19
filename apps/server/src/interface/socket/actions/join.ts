@@ -23,8 +23,20 @@ const onJoin = factory.build({
 
         logger.info({ ...meta, name }, "user joining lobby");
 
+        const lobby = await ctx.lobbyService.get(pin);
+
+        // @@Todo: make these automatic.
+        if (!lobby) {
+            client.emit("close", {
+                reason: "stale_game",
+            });
+            return;
+        }
+        const game = await ctx.gameService(lobby);
+
         try {
             await ctx.lobbyService.confirmUser(pin, name, client.id);
+            await game.addPlayer(name);
         } catch (e: unknown) {
             if (e instanceof LobbyNotFoundError) {
                 logger.warn(
@@ -41,22 +53,13 @@ const onJoin = factory.build({
             return;
         }
 
-        const lobby = await ctx.lobbyService.get(pin);
-        if (!lobby) {
-            client.emit("close", {
-                reason: "stale_game",
-            });
-            return;
-        }
-
         // Specify that this client is now within the "lobby" room.
         client.join(lobby.pin);
 
         // Emit to the current player, the game state.
-        const game = await ctx.gameService(lobby).getGameStateFor(name);
         client.emit("join", {
             lobby,
-            game,
+            game: await game.getGameStateFor(name),
         });
 
         withRooms("lobby").broadcast("lobbyState", {
