@@ -2,8 +2,7 @@ import onJoin from "./join";
 import onKick from "./kick";
 import onLeave from "./leave";
 import onMessage from "./message";
-import onMove from "./message";
-import onResign from "./resign";
+import onMove from "./move";
 import onSettingsUpdate from "./settings";
 import onStart from "./start";
 
@@ -14,7 +13,6 @@ export const actions = [
     onKick,
     onMessage,
     onMove,
-    onResign,
     onStart,
     onSettingsUpdate,
 ];
