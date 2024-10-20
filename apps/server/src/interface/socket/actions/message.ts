@@ -10,7 +10,7 @@ const onMessage = factory.build({
     handler: async ({ withRooms, input, client, logger: $ctx }) => {
         const { ctx } = $ctx;
         const logger = $ctx;
-        const [[pin], { message }] = input;
+        const [pin, { message }] = input;
         const meta = { event: "message", pin, clientId: client.id };
 
         logger.info(meta, "processing event");

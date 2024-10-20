@@ -11,7 +11,7 @@ const onKick = factory.build({
     handler: async ({ withRooms, input, client, logger: $ctx }) => {
         const { ctx } = $ctx;
         const logger = $ctx;
-        const [[pin], { id }] = input;
+        const [pin, { id }] = input;
         const meta = { event: "kick", pin, clientId: client.id };
 
         logger.info(meta, "processing event");

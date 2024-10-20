@@ -11,7 +11,7 @@ const onLeave = factory.build({
     handler: async ({ withRooms, input, client, logger: $ctx }) => {
         const { ctx } = $ctx;
         const logger = $ctx;
-        const [[pin]] = input;
+        const [pin] = input;
         const meta = { event: "leave", pin, clientId: client.id };
 
         logger.info(meta, "processing event");
