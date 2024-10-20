@@ -13,9 +13,9 @@
         "url": "https://github.com/feds01/durachok.git"
     },
     "engines": {
-        "node": ">=18.17.0"
+        "node": ">=22"
     },
-    "packageManager": "pnpm@9.11.0",
+    "packageManager": "pnpm@9.12.2",
     "scripts": {
         "fmt": "turbo fmt",
         "lint": "turbo lint",
@@ -25,19 +25,18 @@
     },
     "dependencies": {
         "@total-typescript/ts-reset": "^0.6.1",
-        "@types/eslint": "^8.56.10",
-        "@types/node": "^22.6.0",
-        "@typescript-eslint/eslint-plugin": "^8.7.0",
-        "@typescript-eslint/parser": "^8.7.0",
-        "eslint": "^8.57.0",
+        "@types/eslint": "^9.6.1",
+        "@types/node": "^22.7.7",
+        "@typescript-eslint/eslint-plugin": "^8.10.0",
+        "@typescript-eslint/parser": "^8.10.0",
+        "eslint": "^9.13.0",
         "eslint-config-prettier": "^9.1.0",
-        "eslint-plugin-import": "^2.30.0",
-        "eslint-plugin-isaacscript": "^3.12.2",
+        "eslint-plugin-import": "^2.31.0",
         "eslint-plugin-prettier": "^5.2.1",
-        "eslint-plugin-react": "^7.36.1",
-        "eslint-plugin-react-hooks": "^4.6.2",
+        "eslint-plugin-react": "^7.37.1",
+        "eslint-plugin-react-hooks": "^5.0.0",
         "prettier": "^3.3.3",
-        "turbo": "^2.2.0",
-        "typescript": "^5.6.2"
+        "turbo": "^2.2.1",
+        "typescript": "^5.6.3"
     }
 }
