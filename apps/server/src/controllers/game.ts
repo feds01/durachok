@@ -1,13 +1,20 @@
 import { Game } from "@durachok/engine/src";
-import { PlayerGameState, PlayerMove } from "@durachok/transport/src/schemas/game";
+import {
+    PlayerGameState,
+    PlayerMove,
+} from "@durachok/transport/src/schemas/game";
 import { Lobby } from "@durachok/transport/src/schemas/lobby";
 import { TRPCError } from "@trpc/server";
 import { Logger } from "pino";
 
+import { withLock } from "../lib/database";
 import Games, { IGame } from "../models/game.model";
 import { DBGameSchema } from "../schemas/game";
-import { CommonService, InvalidMoveError, PlayerNotInLobbyError } from "./common";
-import { withLock } from "../lib/database";
+import {
+    CommonService,
+    InvalidMoveError,
+    PlayerNotInLobbyError,
+} from "./common";
 
 /** An exception that indicates that a game already exists for a certain lobby. */
 export class GameAlreadyExists extends TRPCError {
@@ -25,7 +32,7 @@ export class GameService {
         private readonly lobby: Lobby,
         private readonly logger: Logger,
         private readonly commonService: CommonService,
-    ) { }
+    ) {}
 
     /** Get an enriched Lobby object. */
     private async enrich(game: IGame): Promise<Game> {
@@ -81,7 +88,7 @@ export class GameService {
 
     /**
      * Save the game to the database.
-     * 
+     *
      * @param id The ID of the game.
      * @param game The game to save.
      * */
@@ -101,7 +108,7 @@ export class GameService {
 
     /**
      * Add a player to the current game.
-     * 
+     *
      * @param player The player to add.
      * */
     public async addPlayer(player: string): Promise<void> {
@@ -117,15 +124,14 @@ export class GameService {
         });
     }
 
-    /** 
+    /**
      * Remove a player from the current game.
-     * 
+     *
      * @param player The player to remove.
      * */
     public async removePlayer(player: string): Promise<void> {
         const raw = await this.commonService.getGameDbObject(this.lobby.pin);
         const game = await this.enrich(raw);
-
 
         // Remove the player from the game.
         withLock(this.lobby.pin, async () => {
@@ -133,15 +139,15 @@ export class GameService {
 
             // Finally, save the game.
             await this.save(raw.id, game);
-        })
+        });
     }
 
-    /** 
+    /**
      * Make a move on the player.
-     * 
+     *
      * @param name The player to make the move for.
      * @param move The move to make.
-     * 
+     *
      * @returns The updated game state.
      * */
     public async makeMove(name: string, move: PlayerMove): Promise<Game> {
@@ -168,8 +174,12 @@ export class GameService {
                             break;
                         }
                         case "cover": {
-                            this.logger.warn("Can't cover a card when attacking");
-                            throw new InvalidMoveError("Can't cover a card when attacking");
+                            this.logger.warn(
+                                "Can't cover a card when attacking",
+                            );
+                            throw new InvalidMoveError(
+                                "Can't cover a card when attacking",
+                            );
                         }
                     }
 
@@ -194,12 +204,15 @@ export class GameService {
                     return game;
                 }
                 case "none": {
-                    this.logger.warn("Can't perform action on player with no role");
-                    throw new InvalidMoveError("Can't perform action on player with no role");
+                    this.logger.warn(
+                        "Can't perform action on player with no role",
+                    );
+                    throw new InvalidMoveError(
+                        "Can't perform action on player with no role",
+                    );
                 }
             }
-        })
-
+        });
     }
 
     /** Start a game. */
