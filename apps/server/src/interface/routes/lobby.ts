@@ -13,7 +13,7 @@ import {
     userProcedure,
 } from "../../lib/trpc";
 import { DBPlayer } from "../../schemas/lobby";
-import { assert, expr, isDef } from "../../utils";
+import { expr } from "../../utils";
 
 export const lobbyRouter = router({
     getInfo: publicProcedure.input(ByPinRequestSchema).query(async (req) => {
@@ -50,7 +50,6 @@ export const lobbyRouter = router({
                 settings,
             );
             const lobby = await ctx.lobbyService.get(pin);
-            assert(isDef(lobby), "Lobby must exist");
 
             // We also need to create the lobby and then create the actual
             // game instance.

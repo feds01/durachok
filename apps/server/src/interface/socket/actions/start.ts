@@ -48,7 +48,6 @@ const onStart = factory.build({
 
         // "start" the game.
         const lobby = await ctx.lobbyService.get(pin);
-        assert(isDef(lobby));
 
         // Initiate the countdown, and begin.
         withRooms(pin).broadcast("countdown");
