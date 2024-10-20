@@ -23,41 +23,49 @@ import { Route as LobbyPinImport } from './routes/lobby/$pin'
 // Create/Update Routes
 
 const RegisterRoute = RegisterImport.update({
+  id: '/register',
   path: '/register',
   getParentRoute: () => rootRoute,
 } as any)
 
 const LogoutRoute = LogoutImport.update({
+  id: '/logout',
   path: '/logout',
   getParentRoute: () => rootRoute,
 } as any)
 
 const LoginRoute = LoginImport.update({
+  id: '/login',
   path: '/login',
   getParentRoute: () => rootRoute,
 } as any)
 
 const IndexRoute = IndexImport.update({
+  id: '/',
   path: '/',
   getParentRoute: () => rootRoute,
 } as any)
 
 const UserIndexRoute = UserIndexImport.update({
+  id: '/user/',
   path: '/user/',
   getParentRoute: () => rootRoute,
 } as any)
 
 const LobbyIndexRoute = LobbyIndexImport.update({
+  id: '/lobby/',
   path: '/lobby/',
   getParentRoute: () => rootRoute,
 } as any)
 
 const UserSettingsRoute = UserSettingsImport.update({
+  id: '/user/settings',
   path: '/user/settings',
   getParentRoute: () => rootRoute,
 } as any)
 
 const LobbyPinRoute = LobbyPinImport.update({
+  id: '/lobby/$pin',
   path: '/lobby/$pin',
   getParentRoute: () => rootRoute,
 } as any)
@@ -127,16 +135,99 @@ declare module '@tanstack/react-router' {
 
 // Create and export the route tree
 
-export const routeTree = rootRoute.addChildren({
-  IndexRoute,
-  LoginRoute,
-  LogoutRoute,
-  RegisterRoute,
-  LobbyPinRoute,
-  UserSettingsRoute,
-  LobbyIndexRoute,
-  UserIndexRoute,
-})
+export interface FileRoutesByFullPath {
+  '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/logout': typeof LogoutRoute
+  '/register': typeof RegisterRoute
+  '/lobby/$pin': typeof LobbyPinRoute
+  '/user/settings': typeof UserSettingsRoute
+  '/lobby': typeof LobbyIndexRoute
+  '/user': typeof UserIndexRoute
+}
+
+export interface FileRoutesByTo {
+  '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/logout': typeof LogoutRoute
+  '/register': typeof RegisterRoute
+  '/lobby/$pin': typeof LobbyPinRoute
+  '/user/settings': typeof UserSettingsRoute
+  '/lobby': typeof LobbyIndexRoute
+  '/user': typeof UserIndexRoute
+}
+
+export interface FileRoutesById {
+  __root__: typeof rootRoute
+  '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/logout': typeof LogoutRoute
+  '/register': typeof RegisterRoute
+  '/lobby/$pin': typeof LobbyPinRoute
+  '/user/settings': typeof UserSettingsRoute
+  '/lobby/': typeof LobbyIndexRoute
+  '/user/': typeof UserIndexRoute
+}
+
+export interface FileRouteTypes {
+  fileRoutesByFullPath: FileRoutesByFullPath
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/logout'
+    | '/register'
+    | '/lobby/$pin'
+    | '/user/settings'
+    | '/lobby'
+    | '/user'
+  fileRoutesByTo: FileRoutesByTo
+  to:
+    | '/'
+    | '/login'
+    | '/logout'
+    | '/register'
+    | '/lobby/$pin'
+    | '/user/settings'
+    | '/lobby'
+    | '/user'
+  id:
+    | '__root__'
+    | '/'
+    | '/login'
+    | '/logout'
+    | '/register'
+    | '/lobby/$pin'
+    | '/user/settings'
+    | '/lobby/'
+    | '/user/'
+  fileRoutesById: FileRoutesById
+}
+
+export interface RootRouteChildren {
+  IndexRoute: typeof IndexRoute
+  LoginRoute: typeof LoginRoute
+  LogoutRoute: typeof LogoutRoute
+  RegisterRoute: typeof RegisterRoute
+  LobbyPinRoute: typeof LobbyPinRoute
+  UserSettingsRoute: typeof UserSettingsRoute
+  LobbyIndexRoute: typeof LobbyIndexRoute
+  UserIndexRoute: typeof UserIndexRoute
+}
+
+const rootRouteChildren: RootRouteChildren = {
+  IndexRoute: IndexRoute,
+  LoginRoute: LoginRoute,
+  LogoutRoute: LogoutRoute,
+  RegisterRoute: RegisterRoute,
+  LobbyPinRoute: LobbyPinRoute,
+  UserSettingsRoute: UserSettingsRoute,
+  LobbyIndexRoute: LobbyIndexRoute,
+  UserIndexRoute: UserIndexRoute,
+}
+
+export const routeTree = rootRoute
+  ._addFileChildren(rootRouteChildren)
+  ._addFileTypes<FileRouteTypes>()
 
 /* prettier-ignore-end */
 
