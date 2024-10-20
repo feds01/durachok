@@ -1102,7 +1102,7 @@ export class Game {
      * @returns {Partial<PlayerGameState>} A game state from the spectators viewpoint which redacts player
      * state and information on player decks.
      * */
-    public getStateForSpectator(): Partial<PlayerGameState> {
+    public getStateForSpectator(): PlayerGameState {
         // transpose the array to match the position of the player on the table
         const playerOrder = [
             this.getDefendingPlayerName(),
