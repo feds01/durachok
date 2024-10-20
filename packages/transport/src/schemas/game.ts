@@ -167,6 +167,8 @@ export const PlayerMoveSchema = z.union([
         position: z.number().min(0).max(5).int(),
         card: z.string(),
     }),
+    /** The act of forfeiting a round. */
+    z.object({ type: z.literal("forfeit") }),
 ]);
 
 export type PlayerMove = z.infer<typeof PlayerMoveSchema>;

@@ -1,12 +1,12 @@
 import { Game } from "@durachok/engine/src";
-import { PlayerGameState } from "@durachok/transport/src/schemas/game";
+import { PlayerGameState, PlayerMove } from "@durachok/transport/src/schemas/game";
 import { Lobby } from "@durachok/transport/src/schemas/lobby";
 import { TRPCError } from "@trpc/server";
 import { Logger } from "pino";
 
 import Games, { IGame } from "../models/game.model";
 import { DBGameSchema } from "../schemas/game";
-import { CommonService } from "./common";
+import { CommonService, InvalidMoveError, PlayerNotInLobbyError } from "./common";
 import { withLock } from "../lib/database";
 
 /** An exception that indicates that a game already exists for a certain lobby. */
@@ -135,8 +135,71 @@ export class GameService {
             await this.save(raw.id, game);
         })
     }
+
+    /** 
+     * Make a move on the player.
+     * 
+     * @param name The player to make the move for.
+     * @param move The move to make.
+     * 
+     * @returns The updated game state.
+     * */
+    public async makeMove(name: string, move: PlayerMove): Promise<Game> {
+        const raw = await this.commonService.getGameDbObject(this.lobby.pin);
         const game = await this.enrich(raw);
-        game.removePlayer(player);
+
+        const player = game.getPlayer(name);
+
+        if (!player) {
+            throw new PlayerNotInLobbyError();
+        }
+
+        // Perform the game move
+        return await withLock(this.lobby.pin, async () => {
+            switch (player.action) {
+                case "attack": {
+                    switch (move.type) {
+                        case "place": {
+                            game.addCardToTableTop(name, move.card);
+                            break;
+                        }
+                        case "forfeit": {
+                            game.finalisePlayerTurn(name);
+                            break;
+                        }
+                        case "cover": {
+                            this.logger.warn("Can't cover a card when attacking");
+                            throw new InvalidMoveError("Can't cover a card when attacking");
+                        }
+                    }
+
+                    return game;
+                }
+                case "defend": {
+                    switch (move.type) {
+                        case "forfeit": {
+                            game.finalisePlayerTurn(name);
+                            break;
+                        }
+                        case "place": {
+                            game.addCardToTableTop(name, move.card);
+                            break;
+                        }
+                        case "cover": {
+                            game.coverCardOnTableTop(move.card, move.position);
+                            break;
+                        }
+                    }
+
+                    return game;
+                }
+                case "none": {
+                    this.logger.warn("Can't perform action on player with no role");
+                    throw new InvalidMoveError("Can't perform action on player with no role");
+                }
+            }
+        })
+
     }
 
     /** Start a game. */

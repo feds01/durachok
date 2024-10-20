@@ -17,6 +17,13 @@ export class GameNotFound extends TRPCError {
     }
 }
 
+/** An error when an invalid move is made. */
+export class InvalidMoveError extends TRPCError {
+    public constructor(message: string) {
+        super({ code: "BAD_REQUEST", message });
+    }
+}
+
 /** Error to be thrown when a lobby is not found. */
 export class LobbyNotFoundError extends TRPCError {
     public constructor() {
