@@ -73,10 +73,10 @@ importers:
         version: link:../../packages/transport
       '@metamorph/trpc-panel':
         specifier: ^1.0.5
-        version: 1.0.5(@trpc/server@11.0.0-rc.466)(zod@3.23.8)
+        version: 1.0.5(@trpc/server@11.0.0-rc.589)(zod@3.23.8)
       '@trpc/server':
-        specifier: 11.0.0-rc.466
-        version: 11.0.0-rc.466
+        specifier: 11.0.0-rc.589
+        version: 11.0.0-rc.589
       argon2:
         specifier: ^0.41.1
         version: 0.41.1
@@ -2089,8 +2089,8 @@ packages:
       react: '>=18.2.0'
       react-dom: '>=18.2.0'
 
-  '@trpc/server@11.0.0-rc.466':
-    resolution: {integrity: sha512-/40QZXyZCc3HvgJbQ2+IqCGm4m+fJs7q7gMp6nLiuPB3FIJJeV0r+w1M/NGcG5avbCJ3A5Qy45s4N1glcMv1ug==}
+  '@trpc/server@11.0.0-rc.589':
+    resolution: {integrity: sha512-/FrBBRzb2lpqe+a2tIcQfLhE9Dk2k5DRobufqp5fFhy/evw4drZ8AcZgh+ckhYuFmZysqdwmw5kmD3uIUD2yjw==}
 
   '@tsconfig/node10@1.0.11':
     resolution: {integrity: sha512-DcRjDCujK/kCk/cUe8Xz8ZSpm8mS3mNNpta+jGCA6USEDfktlNvm1+IuZ9eTcDbNk41BHwpHHeW+N1lKCz4zOw==}
@@ -6317,9 +6317,9 @@ snapshots:
 
   '@mars/heroku-js-runtime-env@3.0.2': {}
 
-  '@metamorph/trpc-panel@1.0.5(@trpc/server@11.0.0-rc.466)(zod@3.23.8)':
+  '@metamorph/trpc-panel@1.0.5(@trpc/server@11.0.0-rc.589)(zod@3.23.8)':
     dependencies:
-      '@trpc/server': 11.0.0-rc.466
+      '@trpc/server': 11.0.0-rc.589
       fuzzysort: 2.0.4
       path: 0.12.7
       url: 0.11.3
@@ -7047,7 +7047,7 @@ snapshots:
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
 
-  '@trpc/server@11.0.0-rc.466': {}
+  '@trpc/server@11.0.0-rc.589': {}
 
   '@tsconfig/node10@1.0.11': {}
 
