@@ -10,9 +10,9 @@ import { useState } from "react";
 
 import Divider from "../../components/Divider";
 import PlayerAvatar from "../../components/PlayerAvatar";
-import CreateGameDialog from "../../compositions/CreateGameDialog";
-import GameLinkCard from "../../compositions/GameLinkCard";
 import { useAuthDispatch } from "../../contexts/auth";
+import CreateGameDialog from "../../fragments/CreateGameDialog";
+import GameLinkCard from "../../fragments/GameLinkCard";
 import trpc from "../../utils/trpc";
 
 export const Route = createFileRoute("/user/")({
