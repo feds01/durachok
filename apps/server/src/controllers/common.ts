@@ -30,6 +30,12 @@ export class PlayerNotInLobbyError extends TRPCError {
     }
 }
 
+export class InvalidLobbySettingsError extends TRPCError {
+    public constructor(message: string) {
+        super({ code: "BAD_REQUEST", message });
+    }
+}
+
 /** Error to be thrown when a user is not found. */
 export class UserNotFoundError extends TRPCError {
     public constructor() {

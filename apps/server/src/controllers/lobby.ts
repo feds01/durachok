@@ -13,6 +13,7 @@ import { DBLobby, DBLobbySchema, DBPlayer } from "../schemas/lobby";
 import { assert, expr, isDef } from "../utils";
 import {
     CommonService,
+    InvalidLobbySettingsError,
     LobbyNotFoundError,
     PlayerNotInLobbyError,
 } from "./common";
@@ -464,6 +465,55 @@ export class LobbyService {
             // emitLobbyEvent(pin, ClientEvents.CLOSE, { reason: "lobby_closed" });
         } catch (e: unknown) {
             this.logger.error("Failed to delete lobby", e);
+            throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        }
+    }
+
+    /** Update the settings of a particular lobby. */
+    public async update(
+        pin: string,
+        settings: Partial<GameSettings>,
+    ): Promise<void> {
+        const lobby = await this.getInfo(pin);
+        assert(isDef(lobby), "modifying non-existant lobby.");
+
+        const {
+            maxPlayers,
+            passphrase,
+            shortGameDeck,
+            freeForAll,
+            disableChat,
+            randomisePlayerOrder,
+            roundTimeout,
+        } = { ...lobby, ...settings };
+
+        // If the user tries to update the max players to be less than the current
+        // player count, then we should throw an error.
+        if (lobby.players > maxPlayers) {
+            throw new InvalidLobbySettingsError(
+                "Cannot reduce the max players below the current player count.",
+            );
+        }
+
+        try {
+            await Lobbies.updateOne(
+                { pin },
+                {
+                    $set: {
+                        maxPlayers,
+                        ...(passphrase
+                            ? { passphrase: this.newGamePassphrase() }
+                            : {}),
+                        shortGameDeck,
+                        freeForAll,
+                        disableChat,
+                        randomisePlayerOrder,
+                        roundTimeout,
+                    },
+                },
+            );
+        } catch (e: unknown) {
+            this.logger.error("Failed to update lobby", e);
             throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
         }
     }

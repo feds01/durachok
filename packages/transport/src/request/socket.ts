@@ -12,6 +12,9 @@ const LobbyUpdateSchema = z.union([
         type: z.literal("new_player"),
     }),
     z.object({
+        type: z.literal("settings_update"),
+    }),
+    z.object({
         type: z.literal("player_exit"),
     }),
     z.object({
