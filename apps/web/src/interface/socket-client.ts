@@ -5,17 +5,106 @@ export namespace Root {
     /** @desc The actual path of the Root namespace */
     export const path = "/";
     export interface Emission {
+        join: (p1: {
+            lobby: {
+                pin: string;
+                owner: {
+                    id: string;
+                    name: string;
+                    image?: string | undefined;
+                };
+                maxPlayers: number;
+                shortGameDeck: boolean;
+                freeForAll: boolean;
+                disableChat: boolean;
+                passphrase?: string | undefined;
+                randomisePlayerOrder: boolean;
+                roundTimeout: number;
+                status: "waiting" | "playing" | "finished";
+                players: {
+                    id: string;
+                    name: string;
+                    image?: string | undefined;
+                }[];
+                chat: {
+                    name: string;
+                    time: number;
+                    owner?: string | undefined;
+                    message: string;
+                }[];
+            };
+            game?:
+                | {
+                      players: {
+                          name: string;
+                          deck:
+                              | {
+                                    type: "visible";
+                                    cards: string[];
+                                }
+                              | {
+                                    type: "hidden";
+                                    size: number;
+                                };
+                          out: number | null;
+                          turned: boolean;
+                          beganRound: boolean;
+                          action: "attack" | "defend" | "none";
+                      }[];
+                      tableTop: Record<string, string | null>;
+                      deckSize: number;
+                      trump: {
+                          suit: string;
+                          card: string;
+                          value: number;
+                      };
+                  }
+                | undefined;
+        }) => void;
         lobbyState: (p1: {
             update:
                 | {
                       type: "new_player";
                   }
                 | {
+                      type: "settings_update";
+                  }
+                | {
+                      type: "player_exit";
+                  }
+                | {
                       type: "new_spectator";
                   };
+            lobby: {
+                pin: string;
+                owner: {
+                    id: string;
+                    name: string;
+                    image?: string | undefined;
+                };
+                maxPlayers: number;
+                shortGameDeck: boolean;
+                freeForAll: boolean;
+                disableChat: boolean;
+                passphrase?: string | undefined;
+                randomisePlayerOrder: boolean;
+                roundTimeout: number;
+                status: "waiting" | "playing" | "finished";
+                players: {
+                    id: string;
+                    name: string;
+                    image?: string | undefined;
+                }[];
+                chat: {
+                    name: string;
+                    time: number;
+                    owner?: string | undefined;
+                    message: string;
+                }[];
+            };
         }) => void;
         countdown: () => void;
-        gameStarted: () => void;
+        start: () => void;
         message: (p1: {
             name: string;
             time: number;
@@ -29,27 +118,31 @@ export namespace Root {
             }[];
         }) => void;
         close: (p1: { reason: string; extra?: string | undefined }) => void;
-        state: (p1: {
+        playerState: (p1: {
             update: {
+                players: {
+                    name: string;
+                    deck:
+                        | {
+                              type: "visible";
+                              cards: string[];
+                          }
+                        | {
+                              type: "hidden";
+                              size: number;
+                          };
+                    out: number | null;
+                    turned: boolean;
+                    beganRound: boolean;
+                    action: "attack" | "defend" | "none";
+                }[];
+                tableTop: Record<string, string | null>;
+                deckSize: number;
                 trump: {
                     suit: string;
                     card: string;
                     value: number;
                 };
-                players: Record<
-                    string,
-                    {
-                        name: string;
-                        out: number | null;
-                        turned: boolean;
-                        beganRound: boolean;
-                        action: "attack" | "defend" | "none";
-                        deck: string[];
-                    }
-                >;
-                tableTop: Record<string, string | null>;
-                deck: string[];
-                victory: boolean;
             };
         }) => void;
         action: (p1: {
@@ -103,6 +196,7 @@ export namespace Root {
                 occurred_at: Date;
             }[];
             update: {
+                status: "waiting" | "playing" | "finished";
                 trump: {
                     suit: string;
                     card: string;
@@ -121,16 +215,25 @@ export namespace Root {
                 >;
                 tableTop: Record<string, string | null>;
                 deck: string[];
-                victory: boolean;
             };
         }) => void;
         error: (p1: {
             type:
                 | "internal"
                 | "bad_request"
+                | "not_found"
                 | "unauthorized"
                 | "invalid_move"
                 | "stale_game";
+            details?:
+                | Record<
+                      string,
+                      {
+                          message: string | string[];
+                          code?: number | undefined;
+                      }
+                  >
+                | undefined;
             message?: string | undefined;
         }) => void;
     }
@@ -160,11 +263,13 @@ export namespace Root {
                       type: "cover";
                       position: number;
                       card: string;
+                  }
+                | {
+                      type: "forfeit";
                   },
         ) => void;
-        resign: (p1: string) => void;
         start: (p1: string) => void;
-        passphrase: (p1: string, p2: string) => void;
+        passphrase: (p1: string) => void;
     }
     /** @example const socket: Root.Socket = io(Root.path) */
     export type Socket = SocketBase<Emission, Actions>;
