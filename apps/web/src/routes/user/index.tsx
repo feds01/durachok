@@ -1,3 +1,11 @@
+import { useState } from "react";
+
+import Divider from "@/components/Divider";
+import PlayerAvatar from "@/components/PlayerAvatar";
+import { useAuthDispatch } from "@/contexts/auth";
+import CreateGameDialog from "@/fragments/CreateGameDialog";
+import GameLinkCard from "@/fragments/GameLinkCard";
+import trpc from "@/utils/trpc";
 import { css } from "@emotion/css";
 import Button from "@mui/material/Button";
 import {
@@ -6,14 +14,6 @@ import {
     redirect,
     useNavigate,
 } from "@tanstack/react-router";
-import { useState } from "react";
-
-import Divider from "../../components/Divider";
-import PlayerAvatar from "../../components/PlayerAvatar";
-import { useAuthDispatch } from "../../contexts/auth";
-import CreateGameDialog from "../../fragments/CreateGameDialog";
-import GameLinkCard from "../../fragments/GameLinkCard";
-import trpc from "../../utils/trpc";
 
 export const Route = createFileRoute("/user/")({
     beforeLoad: async ({ context, location }) => {

@@ -1,7 +1,6 @@
-import React, { createContext } from "react";
-
 import { isDef } from "../../utils";
 import { AuthAction, AuthState } from "./reducer";
+import React, { createContext } from "react";
 
 type AuthStateContextType = {
     state: AuthState;

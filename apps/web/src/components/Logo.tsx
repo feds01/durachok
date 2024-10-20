@@ -1,6 +1,5 @@
+import PlayingCards from "@/assets/image/playing-cards.svg";
 import { css } from "@emotion/css";
-
-import PlayingCards from "../assets/image/playing-cards.svg";
 
 const Logo = ({ size }: { size: number }) => (
     <div>

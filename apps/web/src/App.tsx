@@ -1,14 +1,14 @@
-import { ThemeProvider } from "@emotion/react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Navigate, RouterProvider, createRouter } from "@tanstack/react-router";
 import { Buffer } from "buffer";
 import { useEffect, useState } from "react";
 import superjson from "superjson";
 
-import { useAuthDispatch, useAuthState } from "./contexts/auth";
-import { routeTree } from "./routeTree.gen";
-import theme from "./theme";
-import trpc, { createReactQueryTRPClient } from "./utils/trpc";
+import { useAuthDispatch, useAuthState } from "@/contexts/auth";
+import { routeTree } from "@/routeTree.gen";
+import theme from "@/theme";
+import trpc, { createReactQueryTRPClient } from "@/utils/trpc";
+import { ThemeProvider } from "@emotion/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Navigate, RouterProvider, createRouter } from "@tanstack/react-router";
 
 // Create a new router instance
 const router = createRouter({

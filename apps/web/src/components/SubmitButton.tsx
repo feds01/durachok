@@ -1,5 +1,6 @@
-import Button, { ButtonProps } from "@mui/material/Button";
 import { ThreeDots } from "react-loader-spinner";
+
+import Button, { ButtonProps } from "@mui/material/Button";
 
 interface Props extends ButtonProps {
     /** Whether the button is in a submitting state. */

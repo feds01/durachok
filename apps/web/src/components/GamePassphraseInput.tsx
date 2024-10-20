@@ -1,10 +1,10 @@
-import { css, keyframes } from "@emotion/css";
+import GamePassphraseCard from "./GamePassphraseCard";
 import clsx from "clsx";
 import { useEffect, useState } from "react";
 import { Control, FieldValues, Path, useController } from "react-hook-form";
 
-import { isDef } from "../utils";
-import GamePassphraseCard from "./GamePassphraseCard";
+import { isDef } from "@/utils";
+import { css, keyframes } from "@emotion/css";
 
 const shake = keyframes`
   10%, 90% {

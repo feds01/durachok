@@ -1,18 +1,14 @@
-import { css } from "@emotion/css";
-import { zodResolver } from "@hookform/resolvers/zod";
 import ReCAPTCHA from "react-google-recaptcha";
 import { useForm } from "react-hook-form";
 
-import ControlledPasswordField from "../components/ControlledPasswordField";
-import ControlledTextField from "../components/ControlledTextField";
-import SubmitButton from "../components/SubmitButton";
-import { APP_ENV, RE_CAPTCHA_SECRET } from "../config";
-import {
-    AuthResult,
-    RegisterFormData,
-    RegisterFormSchema,
-} from "../types/auth";
-import trpc from "../utils/trpc";
+import ControlledPasswordField from "@/components/ControlledPasswordField";
+import ControlledTextField from "@/components/ControlledTextField";
+import SubmitButton from "@/components/SubmitButton";
+import { APP_ENV, RE_CAPTCHA_SECRET } from "@/config";
+import { AuthResult, RegisterFormData, RegisterFormSchema } from "@/types/auth";
+import trpc from "@/utils/trpc";
+import { css } from "@emotion/css";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 type Props = {
     onSuccess: (result: AuthResult) => void;

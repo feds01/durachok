@@ -1,3 +1,12 @@
+import { useState } from "react";
+
+import Alert, { AlertKind } from "@/components/Alert";
+import Divider from "@/components/Divider";
+import PlayerAvatar from "@/components/PlayerAvatar";
+import { useAuthDispatch } from "@/contexts/auth";
+import DeleteUserForm from "@/forms/DeleteUserForm";
+import UpdateUserForm from "@/forms/UpdateUserForm";
+import UpdateUserProfileImageForm from "@/forms/UpdateUserProfileImageForm";
 import { css } from "@emotion/css";
 import { Typography } from "@mui/material";
 import Button from "@mui/material/Button";
@@ -7,15 +16,6 @@ import {
     redirect,
     useNavigate,
 } from "@tanstack/react-router";
-import { useState } from "react";
-
-import Alert, { AlertKind } from "../../components/Alert";
-import Divider from "../../components/Divider";
-import PlayerAvatar from "../../components/PlayerAvatar";
-import { useAuthDispatch } from "../../contexts/auth";
-import DeleteUserForm from "../../forms/DeleteUserForm";
-import UpdateUserForm from "../../forms/UpdateUserForm";
-import UpdateUserProfileImageForm from "../../forms/UpdateUserProfileImageForm";
 
 const dashboard = css`
     text-align: center;

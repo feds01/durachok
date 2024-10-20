@@ -1,9 +1,8 @@
+import Divider from "@/components/Divider";
+import CreateGameForm from "@/forms/CreateGameForm";
 import { css } from "@emotion/css";
 import { Typography } from "@mui/material";
 import Dialog from "@mui/material/Dialog";
-
-import Divider from "../components/Divider";
-import CreateGameForm from "../forms/CreateGameForm";
 
 type Props = {
     open: boolean;

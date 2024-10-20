@@ -1,15 +1,15 @@
+import { useForm } from "react-hook-form";
+
+import ControlledSliderInput from "@/components/ControlledSliderField";
+import ControlledSwitchInput from "@/components/ControlledSwitchField";
+import SubmitButton from "@/components/SubmitButton";
+import trpc from "@/utils/trpc";
 import {
     GameSettings,
     GameSettingsSchema,
 } from "@durachok/transport/src/request";
 import { css } from "@emotion/css";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-
-import ControlledSliderInput from "../components/ControlledSliderField";
-import ControlledSwitchInput from "../components/ControlledSwitchField";
-import SubmitButton from "../components/SubmitButton";
-import trpc from "../utils/trpc";
 
 type CreateGameFormProps = {
     onSuccess: () => void;

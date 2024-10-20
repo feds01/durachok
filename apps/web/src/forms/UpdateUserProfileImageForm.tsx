@@ -1,12 +1,12 @@
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "@mui/material";
-import { TRPCClientError } from "@trpc/client";
 import { Buffer } from "buffer";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { AlertKind } from "../components/Alert";
-import trpc from "../utils/trpc";
+import { AlertKind } from "@/components/Alert";
+import trpc from "@/utils/trpc";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@mui/material";
+import { TRPCClientError } from "@trpc/client";
 
 type Props = {
     /** Used to determine what happens in the event of a failure. */

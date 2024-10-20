@@ -1,9 +1,10 @@
+import { useState } from "react";
+import { useTimeout } from "usehooks-ts";
+
 import { SxProps } from "@mui/material";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Collapse from "@mui/material/Collapse";
-import { useState } from "react";
-import { useTimeout } from "usehooks-ts";
 
 /** The kind of alert that we should display */
 export type AlertKind = "success" | "info" | "warning" | "error";

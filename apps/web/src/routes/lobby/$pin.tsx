@@ -1,8 +1,7 @@
+import ErrorBoundary from "@/components/ErrorBoundary";
+import Loader from "@/components/Loader";
+import { trpcNativeClient } from "@/utils/trpc";
 import { createFileRoute, redirect } from "@tanstack/react-router";
-
-import ErrorBoundary from "../../fragments/ErrorBoundary";
-import Loader from "../../fragments/Loader";
-import { trpcNativeClient } from "../../utils/trpc";
 
 export const Route = createFileRoute("/lobby/$pin")({
     beforeLoad: async ({ context, location }) => {

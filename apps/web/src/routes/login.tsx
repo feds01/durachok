@@ -1,14 +1,14 @@
-import { css } from "@emotion/css";
-import { createFileRoute, redirect } from "@tanstack/react-router";
-import { Link, useNavigate } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { useEffect } from "react";
 import { z } from "zod";
 
-import Logo from "../components/Logo";
-import { useAuth } from "../contexts/auth";
-import LoginForm from "../forms/Login";
-import { AuthResult } from "../types/auth";
+import Logo from "@/components/Logo";
+import { useAuth } from "@/contexts/auth";
+import LoginForm from "@/forms/Login";
+import { AuthResult } from "@/types/auth";
+import { css } from "@emotion/css";
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 
 const LoginSearchSchema = z.object({
     redirect: z.string().optional(),

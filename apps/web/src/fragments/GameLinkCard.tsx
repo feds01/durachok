@@ -1,10 +1,9 @@
+import trpc from "@/utils/trpc";
 import { css } from "@emotion/css";
 import { Typography } from "@mui/material";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import { useNavigate } from "@tanstack/react-router";
-
-import trpc from "../utils/trpc";
 
 const card = css`
     display: flex;

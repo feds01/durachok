@@ -1,7 +1,7 @@
-import { FormControl, Slider, SliderProps, styled } from "@mui/material";
+import FieldLabel from "./FieldLabel";
 import { Control, Controller, FieldValues, Path } from "react-hook-form";
 
-import FieldLabel from "./FieldLabel";
+import { FormControl, Slider, SliderProps, styled } from "@mui/material";
 
 const StyledSlider = styled(Slider)({
     color: "#3f51b5 ",

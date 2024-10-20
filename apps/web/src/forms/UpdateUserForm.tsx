@@ -1,18 +1,18 @@
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+
+import { AlertKind } from "@/components/Alert";
+import ControlledPasswordField from "@/components/ControlledPasswordField";
+import ControlledTextField from "@/components/ControlledTextField";
+import FieldLabel from "@/components/FieldLabel";
+import SubmitButton from "@/components/SubmitButton";
+import { RegisteredUser, useAuthDispatch } from "@/contexts/auth";
+import trpc from "@/utils/trpc";
+import { UserUpdate, UserUpdateSchema } from "@/valdiators/user";
 import { css } from "@emotion/css";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Grid from "@mui/material/Grid";
 import { TRPCClientError } from "@trpc/client";
-import { useEffect } from "react";
-import { useForm } from "react-hook-form";
-
-import { AlertKind } from "../components/Alert";
-import ControlledPasswordField from "../components/ControlledPasswordField";
-import ControlledTextField from "../components/ControlledTextField";
-import FieldLabel from "../components/FieldLabel";
-import SubmitButton from "../components/SubmitButton";
-import { RegisteredUser, useAuthDispatch } from "../contexts/auth";
-import trpc from "../utils/trpc";
-import { UserUpdate, UserUpdateSchema } from "../valdiators/user";
 
 type UpdateUserFormProps = {
     /** The user to update. */

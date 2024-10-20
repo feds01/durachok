@@ -1,9 +1,10 @@
+import { ReactElement, useState } from "react";
+import { Control, FieldValues, Path, useController } from "react-hook-form";
+
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import IconButton from "@mui/material/IconButton";
 import InputAdornment from "@mui/material/InputAdornment";
 import TextField, { TextFieldProps } from "@mui/material/TextField/TextField";
-import { ReactElement, useState } from "react";
-import { Control, FieldValues, Path, useController } from "react-hook-form";
 
 interface Props<T extends FieldValues> {
     name: Path<T>;
