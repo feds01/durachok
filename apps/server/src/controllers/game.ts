@@ -7,6 +7,7 @@ import { Logger } from "pino";
 import Games, { IGame } from "../models/game.model";
 import { DBGameSchema } from "../schemas/game";
 import { CommonService } from "./common";
+import { withLock } from "../lib/database";
 
 /** An exception that indicates that a game already exists for a certain lobby. */
 export class GameAlreadyExists extends TRPCError {
@@ -24,7 +25,7 @@ export class GameService {
         private readonly lobby: Lobby,
         private readonly logger: Logger,
         private readonly commonService: CommonService,
-    ) {}
+    ) { }
 
     /** Get an enriched Lobby object. */
     private async enrich(game: IGame): Promise<Game> {
@@ -78,7 +79,12 @@ export class GameService {
         return game;
     }
 
-    /** Save the game to the database. */
+    /**
+     * Save the game to the database.
+     * 
+     * @param id The ID of the game.
+     * @param game The game to save.
+     * */
     private async save(id: string, game: Game): Promise<void> {
         const raw = game.serialize();
 
@@ -93,23 +99,42 @@ export class GameService {
         }
     }
 
-    /** Add a player to the current game. */
+    /**
+     * Add a player to the current game.
+     * 
+     * @param player The player to add.
+     * */
     public async addPlayer(player: string): Promise<void> {
         const raw = await this.commonService.getGameDbObject(this.lobby.pin);
+        const game = await this.enrich(raw);
 
         // Add the player to the game.
-        const game = await this.enrich(raw);
-        game.addPlayer(player);
+        withLock(this.lobby.pin, async () => {
+            game.addPlayer(player);
 
-        // Finally, save the game.
-        await this.save(raw.id, game);
+            // Finally, save the game.
+            await this.save(raw.id, game);
+        });
     }
 
-    /** Remove a player from the current game. */
+    /** 
+     * Remove a player from the current game.
+     * 
+     * @param player The player to remove.
+     * */
     public async removePlayer(player: string): Promise<void> {
         const raw = await this.commonService.getGameDbObject(this.lobby.pin);
+        const game = await this.enrich(raw);
+
 
         // Remove the player from the game.
+        withLock(this.lobby.pin, async () => {
+            game.removePlayer(player);
+
+            // Finally, save the game.
+            await this.save(raw.id, game);
+        })
+    }
         const game = await this.enrich(raw);
         game.removePlayer(player);
     }
