@@ -1,12 +1,12 @@
-import { css, keyframes } from "@emotion/css";
-import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
-import PlayingCard from "../assets/image/playing-card.svg?react";
-import Logo from "../components/Logo";
-import { useAuthDispatch, useAuthState } from "../contexts/auth";
-import GamePrompt, { LobbyAuthInfo } from "../forms/GamePrompt";
-import { isDef } from "../utils";
+import PlayingCard from "@/assets/image/playing-card.svg?react";
+import Logo from "@/components/Logo";
+import { useAuthDispatch, useAuthState } from "@/contexts/auth";
+import GamePrompt, { LobbyAuthInfo } from "@/forms/GamePrompt";
+import { isDef } from "@/utils";
+import { css, keyframes } from "@emotion/css";
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/")({
     component: Index,

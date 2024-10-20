@@ -1,11 +1,11 @@
-import * as native from "@trpc/client";
-import * as rq from "@trpc/react-query";
+import type { AppRouter } from "../../../server/src/interface/routes";
 import { Buffer } from "buffer";
 import superjson from "superjson";
 
-import type { AppRouter } from "../../../server/src/interface/routes";
-import { API_URL } from "../config";
-import { getAuthHeader } from "./auth";
+import { API_URL } from "@/config";
+import { getAuthHeader } from "@/utils/auth";
+import * as native from "@trpc/client";
+import * as rq from "@trpc/react-query";
 
 /** Define our tRPC instance from the server definition. */
 const trpc = rq.createTRPCReact<AppRouter>();

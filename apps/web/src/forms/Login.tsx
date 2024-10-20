@@ -1,14 +1,14 @@
+import { useForm } from "react-hook-form";
+
+import ControlledPasswordField from "@/components/ControlledPasswordField";
+import ControlledTextField from "@/components/ControlledTextField";
+import SubmitButton from "@/components/SubmitButton";
+import { AuthResult, LoginFormData, LoginFormSchema } from "@/types/auth";
+import { expr } from "@/utils";
+import trpc from "@/utils/trpc";
 import { UserEmailSchema } from "@durachok/transport/src/schemas/user";
 import { css } from "@emotion/css";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-
-import ControlledPasswordField from "../components/ControlledPasswordField";
-import ControlledTextField from "../components/ControlledTextField";
-import SubmitButton from "../components/SubmitButton";
-import { AuthResult, LoginFormData, LoginFormSchema } from "../types/auth";
-import { expr } from "../utils";
-import trpc from "../utils/trpc";
 
 type Props = {
     onSuccess: (result: AuthResult) => void;

@@ -1,3 +1,7 @@
+import FieldLabel from "./FieldLabel";
+import { Control, Controller, FieldValues, Path } from "react-hook-form";
+
+import { isDef } from "@/utils";
 import {
     Checkbox,
     CheckboxProps,
@@ -5,10 +9,6 @@ import {
     FormControlLabel,
     FormHelperText,
 } from "@mui/material";
-import { Control, Controller, FieldValues, Path } from "react-hook-form";
-
-import { isDef } from "../utils";
-import FieldLabel from "./FieldLabel";
 
 interface ControlledSwitchInputProps<T extends FieldValues>
     extends CheckboxProps {

@@ -1,18 +1,18 @@
-import { LobbyInfo } from "@durachok/transport/src/request";
-import { UserNameSchema } from "@durachok/transport/src/schemas/user";
-import { css } from "@emotion/css";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import ControlledTextField from "../components/ControlledTextField";
-import GamePassphraseInput from "../components/GamePassphraseInput";
-import SubmitButton from "../components/SubmitButton";
-import { expr, isDef } from "../utils";
-import trpc, { trpcNativeClient } from "../utils/trpc";
-import { GamePassPhraseSchema, GamePinSchema } from "../valdiators/lobby";
+import ControlledTextField from "@/components/ControlledTextField";
+import GamePassphraseInput from "@/components/GamePassphraseInput";
+import SubmitButton from "@/components/SubmitButton";
+import { expr, isDef } from "@/utils";
+import trpc, { trpcNativeClient } from "@/utils/trpc";
+import { GamePassPhraseSchema, GamePinSchema } from "@/valdiators/lobby";
+import { LobbyInfo } from "@durachok/transport/src/request";
+import { UserNameSchema } from "@durachok/transport/src/schemas/user";
+import { css } from "@emotion/css";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 export type LobbyAuthInfo = {
     pin: string;
