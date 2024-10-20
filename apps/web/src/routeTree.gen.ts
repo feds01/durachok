@@ -16,7 +16,6 @@ import { Route as LogoutImport } from './routes/logout'
 import { Route as LoginImport } from './routes/login'
 import { Route as IndexImport } from './routes/index'
 import { Route as UserIndexImport } from './routes/user/index'
-import { Route as LobbyIndexImport } from './routes/lobby/index'
 import { Route as UserSettingsImport } from './routes/user/settings'
 import { Route as LobbyPinImport } from './routes/lobby/$pin'
 
@@ -49,12 +48,6 @@ const IndexRoute = IndexImport.update({
 const UserIndexRoute = UserIndexImport.update({
   id: '/user/',
   path: '/user/',
-  getParentRoute: () => rootRoute,
-} as any)
-
-const LobbyIndexRoute = LobbyIndexImport.update({
-  id: '/lobby/',
-  path: '/lobby/',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -116,13 +109,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UserSettingsImport
       parentRoute: typeof rootRoute
     }
-    '/lobby/': {
-      id: '/lobby/'
-      path: '/lobby'
-      fullPath: '/lobby'
-      preLoaderRoute: typeof LobbyIndexImport
-      parentRoute: typeof rootRoute
-    }
     '/user/': {
       id: '/user/'
       path: '/user'
@@ -142,7 +128,6 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/lobby/$pin': typeof LobbyPinRoute
   '/user/settings': typeof UserSettingsRoute
-  '/lobby': typeof LobbyIndexRoute
   '/user': typeof UserIndexRoute
 }
 
@@ -153,7 +138,6 @@ export interface FileRoutesByTo {
   '/register': typeof RegisterRoute
   '/lobby/$pin': typeof LobbyPinRoute
   '/user/settings': typeof UserSettingsRoute
-  '/lobby': typeof LobbyIndexRoute
   '/user': typeof UserIndexRoute
 }
 
@@ -165,7 +149,6 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/lobby/$pin': typeof LobbyPinRoute
   '/user/settings': typeof UserSettingsRoute
-  '/lobby/': typeof LobbyIndexRoute
   '/user/': typeof UserIndexRoute
 }
 
@@ -178,7 +161,6 @@ export interface FileRouteTypes {
     | '/register'
     | '/lobby/$pin'
     | '/user/settings'
-    | '/lobby'
     | '/user'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -188,7 +170,6 @@ export interface FileRouteTypes {
     | '/register'
     | '/lobby/$pin'
     | '/user/settings'
-    | '/lobby'
     | '/user'
   id:
     | '__root__'
@@ -198,7 +179,6 @@ export interface FileRouteTypes {
     | '/register'
     | '/lobby/$pin'
     | '/user/settings'
-    | '/lobby/'
     | '/user/'
   fileRoutesById: FileRoutesById
 }
@@ -210,7 +190,6 @@ export interface RootRouteChildren {
   RegisterRoute: typeof RegisterRoute
   LobbyPinRoute: typeof LobbyPinRoute
   UserSettingsRoute: typeof UserSettingsRoute
-  LobbyIndexRoute: typeof LobbyIndexRoute
   UserIndexRoute: typeof UserIndexRoute
 }
 
@@ -221,7 +200,6 @@ const rootRouteChildren: RootRouteChildren = {
   RegisterRoute: RegisterRoute,
   LobbyPinRoute: LobbyPinRoute,
   UserSettingsRoute: UserSettingsRoute,
-  LobbyIndexRoute: LobbyIndexRoute,
   UserIndexRoute: UserIndexRoute,
 }
 
@@ -243,7 +221,6 @@ export const routeTree = rootRoute
         "/register",
         "/lobby/$pin",
         "/user/settings",
-        "/lobby/",
         "/user/"
       ]
     },
@@ -264,9 +241,6 @@ export const routeTree = rootRoute
     },
     "/user/settings": {
       "filePath": "user/settings.tsx"
-    },
-    "/lobby/": {
-      "filePath": "lobby/index.tsx"
     },
     "/user/": {
       "filePath": "user/index.tsx"
