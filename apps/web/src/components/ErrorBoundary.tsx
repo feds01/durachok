@@ -1,10 +1,10 @@
-import { css } from "@emotion/css";
-import SentimentVeryDissatisfiedIcon from "@mui/icons-material/SentimentVeryDissatisfied";
 import React from "react";
 
-import Divider from "../components/Divider";
-import { APP_DEV_VERSION, APP_VERSION, APP_VERSION_BRANCH } from "../config";
-import { expr, isDef } from "../utils";
+import Divider from "@/components/Divider";
+import { APP_DEV_VERSION, APP_VERSION, APP_VERSION_BRANCH } from "@/config";
+import { expr, isDef } from "@/utils";
+import { css } from "@emotion/css";
+import SentimentVeryDissatisfiedIcon from "@mui/icons-material/SentimentVeryDissatisfied";
 
 type ErrorContainerProps = {
     children?: React.ReactNode;
