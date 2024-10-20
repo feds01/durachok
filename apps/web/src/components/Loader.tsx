@@ -1,7 +1,8 @@
 // type Props = {}
+import { Bars } from "react-loader-spinner";
+
 import { css } from "@emotion/css";
 import Box from "@mui/material/Box";
-import { Bars } from "react-loader-spinner";
 
 const Loader = (/* props: Props */) => {
     return (
