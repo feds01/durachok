@@ -1,4 +1,4 @@
-import { GameSettings, GameSettingsSchema } from "./game";
+import { GameSettings, GameSettingsSchema } from "@/request/game";
 import {
     ByPinRequest,
     ByPinRequestSchema,
@@ -10,14 +10,14 @@ import {
     LobbyInfoSchema,
     NameFreeInLobbyRequest,
     NameFreeInLobbyRequestSchema,
-} from "./lobby";
+} from "@/request/lobby";
 import {
     UserAuthResponseSchema,
     UserLogin,
     UserLoginSchema,
     UserUpdate,
     UserUpdateSchema,
-} from "./user";
+} from "@/request/user";
 
 export {
     ByPinRequestSchema,

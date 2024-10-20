@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-import { GameStatusSchema } from "./game";
-import { PlayerSchema } from "./user";
+import { GameStatusSchema } from "@/schemas/game";
+import { PlayerSchema } from "@/schemas/user";
 
 /** A Game PIN consists of 6 digits. */
 export const GamePinSchema = z

@@ -1,9 +1,9 @@
 import { z } from "zod";
 
-import { GameStatusSchema } from "../schemas/game";
-import { GamePassPhraseSchema, GamePinSchema } from "../schemas/lobby";
-import { UserNameSchema } from "../schemas/user";
-import { GameSettingsSchema } from "./game";
+import { GameSettingsSchema } from "@/request/game";
+import { GameStatusSchema } from "@/schemas/game";
+import { GamePassPhraseSchema, GamePinSchema } from "@/schemas/lobby";
+import { UserNameSchema } from "@/schemas/user";
 
 /** Query some kind of information by a game `pin`. */
 export const ByPinRequestSchema = z.object({

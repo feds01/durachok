@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { UserNameSchema } from "./user";
+import { UserNameSchema } from "@/schemas/user";
 
 /** What state the game is currently in. */
 export const GameStatusSchema = z.union([
