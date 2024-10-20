@@ -19,7 +19,7 @@ export const RE_CAPTCHA_SECRET =
     import.meta.env.REACT_APP_RE_CAPTCHA_SECRET ?? "";
 
 /** The configuration of the application. */
-const config = {
+export const config = {
     APP_ENV,
     APP_NAME,
     APP_DEV_VERSION,

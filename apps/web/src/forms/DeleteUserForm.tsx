@@ -20,7 +20,7 @@ const DeleteUserForm = ({ onResponse }: DeleteUserFormProps) => {
             await deleteUser.mutateAsync();
             dispatch({ type: "logout" });
             navigator({ to: "/" });
-        } catch (e: unknown) {
+        } catch (_e: unknown) {
             if (onResponse) {
                 onResponse("error", "Could not delete user.");
             }

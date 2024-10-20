@@ -6,7 +6,7 @@
     "type": "module",
     "scripts": {
         "dev": "tsx watch src/index",
-        "lint": "eslint . --ext ts --report-unused-disable-directives --max-warnings 0",
+        "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
         "check": "tsc",
         "build": "esbuild src/index.ts --bundle --packages=external --platform=node --format=esm --outdir=dist --sourcemap",
         "build:client": "tsx src/interface/socket/generate-client.ts",
@@ -40,6 +40,8 @@
         "zod-sockets": "^2.1.0"
     },
     "devDependencies": {
+        "@eslint/eslintrc": "^3.1.0",
+        "@eslint/js": "^9.13.0",
         "@trivago/prettier-plugin-sort-imports": "^4.3.0",
         "@types/cors": "^2.8.17",
         "@types/express": "^5.0.0",
@@ -50,6 +52,7 @@
         "@typescript-eslint/eslint-plugin": "8.10.0",
         "esbuild": "^0.24.0",
         "eslint": "^9.13.0",
+        "globals": "^15.11.0",
         "prettier": "^3.3.3",
         "tsx": "^4.19.1",
         "typescript": "^5.6.3",
