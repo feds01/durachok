@@ -192,7 +192,7 @@ export class LobbyService {
     }
 
     /** Get a lobby state. */
-    public async get(pin: string): Promise<Lobby | undefined> {
+    public async get(pin: string): Promise<Lobby> {
         const lobby = await this.getRaw(pin);
         if (!isDef(lobby)) {
             throw new LobbyNotFoundError();

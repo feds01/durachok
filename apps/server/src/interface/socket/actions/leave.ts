@@ -2,7 +2,6 @@ import { GamePinSchema } from "@durachok/transport/src/schemas/lobby";
 import { z } from "zod";
 
 import { PlayerNotInLobbyError } from "../../../controllers/common";
-import { assert, isDef } from "../../../utils";
 import { ensureLobbyAccess } from "../common/auth";
 import { factory } from "./ctx";
 
@@ -40,7 +39,6 @@ const onLeave = factory.build({
             await ctx.lobbyService.removePlayerByConnectionId(pin, client.id);
 
             const lobby = await ctx.lobbyService.get(pin);
-            assert(isDef(lobby));
 
             logger.info(meta, "removing player from game state");
             ctx.gameService(lobby).removePlayer(player.name);
@@ -60,7 +58,6 @@ const onLeave = factory.build({
         }
 
         const lobby = await ctx.lobbyService.get(pin);
-        assert(isDef(lobby));
 
         withRooms("lobby").broadcast("lobbyState", {
             update: {
