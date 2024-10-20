@@ -1,13 +1,13 @@
 import { Buffer } from "buffer";
 import { z } from "zod";
 
+import { LobbyInfoSchema } from "@/request/lobby";
 import {
     UserEmailSchema,
     UserNameSchema,
     UserSchema,
     UserStatisticsSchema,
-} from "../schemas/user";
-import { LobbyInfoSchema } from "./lobby";
+} from "@/schemas/user";
 
 export const UserRegistrationSchema = UserSchema.omit({
     id: true,

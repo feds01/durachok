@@ -4,8 +4,8 @@ import {
     ActionSchema,
     GameStateSchema,
     PlayerGameStateSchema,
-} from "../schemas/game";
-import { LobbySchema } from "../schemas/lobby";
+} from "@/schemas/game";
+import { LobbySchema } from "@/schemas/lobby";
 
 const LobbyUpdateSchema = z.union([
     z.object({
