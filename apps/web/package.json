@@ -14,7 +14,7 @@
         "@durachok/engine": "file:./../../packages/engine",
         "@durachok/transport": "file:./../../packages/transport",
         "@emotion/css": "^11.13.4",
-        "@emotion/react": "^11.13.3",
+        "@emotion/react": "^11.13.5",
         "@emotion/styled": "^11.13.0",
         "@hookform/resolvers": "^3.9.0",
         "@mars/heroku-js-runtime-env": "^3.0.2",
