@@ -34,7 +34,7 @@
         "react-beautiful-dnd": "^13.1.1",
         "react-dom": "^18.3.1",
         "react-google-recaptcha": "^3.1.0",
-        "react-hook-form": "^7.53.1",
+        "react-hook-form": "^7.54.1",
         "react-loader-spinner": "6.1.6",
         "react-transition-group": "^4.4.5",
         "react-virtuoso": "^4.12.0",
