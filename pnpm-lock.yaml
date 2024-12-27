@@ -73,7 +73,7 @@ importers:
         version: link:../../packages/transport
       '@metamorph/trpc-panel':
         specifier: ^1.0.5
-        version: 1.0.5(@trpc/server@11.0.0-rc.630(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(zod@3.23.8)
+        version: 1.0.5(@trpc/server@11.0.0-rc.630(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(zod@3.24.1)
       '@trpc/server':
         specifier: 11.0.0-rc.630
         version: 11.0.0-rc.630(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -126,11 +126,11 @@ importers:
         specifier: ^2.2.1
         version: 2.2.1
       zod:
-        specifier: ^3.23.8
-        version: 3.23.8
+        specifier: ^3.24.1
+        version: 3.24.1
       zod-sockets:
         specifier: ^2.1.1
-        version: 2.1.1(socket.io@4.8.0)(typescript@5.6.3)(zod@3.23.8)
+        version: 2.1.1(socket.io@4.8.0)(typescript@5.6.3)(zod@3.24.1)
     devDependencies:
       '@eslint/eslintrc':
         specifier: ^3.1.0
@@ -280,8 +280,8 @@ importers:
         specifier: ^3.1.0
         version: 3.1.0(react@18.3.1)
       zod:
-        specifier: ^3.23.8
-        version: 3.23.8
+        specifier: ^3.24.1
+        version: 3.24.1
     devDependencies:
       '@eslint/compat':
         specifier: ^1.2.2
@@ -375,8 +375,8 @@ importers:
         specifier: ^6.0.3
         version: 6.0.3
       zod:
-        specifier: ^3.23.8
-        version: 3.23.8
+        specifier: ^3.24.1
+        version: 3.24.1
     devDependencies:
       '@trivago/prettier-plugin-sort-imports':
         specifier: ^4.3.0
@@ -5544,8 +5544,8 @@ packages:
     peerDependencies:
       zod: ^3.23.3
 
-  zod@3.23.8:
-    resolution: {integrity: sha512-XBx9AXhXktjUqnepgTiE5flcKIYWi/rme0Eaj+5Y0lftuGBq+jyRu/md4WnuxqgP1ubdpNCsYEYPxrzVHD8d6g==}
+  zod@3.24.1:
+    resolution: {integrity: sha512-muH7gBL9sI1nciMZV67X5fTKKBLtwpZ5VBp1vsOQzj1MhrBZ4wlVCm3gedKZWLp0Oyel8sIGfeiz54Su+OVT+A==}
 
 snapshots:
 
@@ -7288,14 +7288,14 @@ snapshots:
 
   '@mars/heroku-js-runtime-env@3.0.2': {}
 
-  '@metamorph/trpc-panel@1.0.5(@trpc/server@11.0.0-rc.630(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(zod@3.23.8)':
+  '@metamorph/trpc-panel@1.0.5(@trpc/server@11.0.0-rc.630(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(zod@3.24.1)':
     dependencies:
       '@trpc/server': 11.0.0-rc.630(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       fuzzysort: 2.0.4
       path: 0.12.7
       url: 0.11.3
-      zod: 3.23.8
-      zod-to-json-schema: 3.23.1(zod@3.23.8)
+      zod: 3.24.1
+      zod-to-json-schema: 3.23.1(zod@3.24.1)
 
   '@mongodb-js/saslprep@1.1.9':
     dependencies:
@@ -8278,7 +8278,7 @@ snapshots:
       '@tanstack/virtual-file-routes': 1.64.0
       prettier: 3.3.3
       tsx: 4.19.2
-      zod: 3.23.8
+      zod: 3.24.1
 
   '@tanstack/router-plugin@1.76.0(vite@6.0.3(@types/node@22.9.3)(terser@5.31.3)(tsx@4.19.2)(yaml@2.5.0))(webpack-sources@3.2.3)(webpack@5.93.0(@swc/core@1.7.36(@swc/helpers@0.5.13)))':
     dependencies:
@@ -8299,7 +8299,7 @@ snapshots:
       babel-dead-code-elimination: 1.0.6
       chokidar: 3.6.0
       unplugin: 1.14.1(webpack-sources@3.2.3)
-      zod: 3.23.8
+      zod: 3.24.1
     optionalDependencies:
       vite: 6.0.3(@types/node@22.9.3)(terser@5.31.3)(tsx@4.19.2)(yaml@2.5.0)
       webpack: 5.93.0(@swc/core@1.7.36(@swc/helpers@0.5.13))
@@ -11866,17 +11866,17 @@ snapshots:
 
   yocto-queue@0.1.0: {}
 
-  zod-sockets@2.1.1(socket.io@4.8.0)(typescript@5.6.3)(zod@3.23.8):
+  zod-sockets@2.1.1(socket.io@4.8.0)(typescript@5.6.3)(zod@3.24.1):
     dependencies:
       ansis: 3.3.2
       ramda: 0.30.1
       socket.io: 4.8.0
       typescript: 5.6.3
       yaml: 2.5.0
-      zod: 3.23.8
+      zod: 3.24.1
 
-  zod-to-json-schema@3.23.1(zod@3.23.8):
+  zod-to-json-schema@3.23.1(zod@3.24.1):
     dependencies:
-      zod: 3.23.8
+      zod: 3.24.1
 
-  zod@3.23.8: {}
+  zod@3.24.1: {}
