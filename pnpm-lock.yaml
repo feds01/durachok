@@ -129,8 +129,8 @@ importers:
         specifier: ^3.24.1
         version: 3.24.1
       zod-sockets:
-        specifier: ^2.1.1
-        version: 2.1.1(socket.io@4.8.0)(typescript@5.6.3)(zod@3.24.1)
+        specifier: ^2.2.0
+        version: 2.2.0(socket.io@4.8.0)(typescript@5.6.3)(zod@3.24.1)
     devDependencies:
       '@eslint/eslintrc':
         specifier: ^3.1.0
@@ -5356,8 +5356,8 @@ packages:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
 
-  zod-sockets@2.1.1:
-    resolution: {integrity: sha512-nlSwkWRqimnU3E/mSRy/v2gxbvWiiEacpNj2gX+paA6dsjnLQ4DpZmIhBZUZNgw7rVNxNHcR4EfDvNfOxlv0Wg==}
+  zod-sockets@2.2.0:
+    resolution: {integrity: sha512-OFD2IxblGU/g33dBsOAkTpV1k9uXRQa7ZGfp5L41tO/rvzw4kpxpo7RWPIM4uaxxeRXef1rq1IZlXyC2A2cOnA==}
     engines: {node: ^18.18.0 || ^20.9.0 || ^22.0.0}
     peerDependencies:
       socket.io: ^4.7.4
@@ -11227,7 +11227,7 @@ snapshots:
 
   yocto-queue@0.1.0: {}
 
-  zod-sockets@2.1.1(socket.io@4.8.0)(typescript@5.6.3)(zod@3.24.1):
+  zod-sockets@2.2.0(socket.io@4.8.0)(typescript@5.6.3)(zod@3.24.1):
     dependencies:
       ansis: 3.3.2
       ramda: 0.30.1
