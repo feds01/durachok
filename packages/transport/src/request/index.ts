@@ -1,4 +1,4 @@
-import { GameSettings, GameSettingsSchema } from "@/request/game";
+import { GameSettings, GameSettingsSchema } from "./game";
 import {
     ByPinRequest,
     ByPinRequestSchema,
@@ -10,14 +10,15 @@ import {
     LobbyInfoSchema,
     NameFreeInLobbyRequest,
     NameFreeInLobbyRequestSchema,
-} from "@/request/lobby";
+} from "./lobby";
 import {
     UserAuthResponseSchema,
     UserLogin,
     UserLoginSchema,
+    UserRegistrationSchema,
     UserUpdate,
     UserUpdateSchema,
-} from "@/request/user";
+} from "./user";
 
 export {
     ByPinRequestSchema,
@@ -29,6 +30,7 @@ export {
     UserAuthResponseSchema,
     UserLoginSchema,
     UserUpdateSchema,
+    UserRegistrationSchema,
 };
 
 export type {
@@ -41,3 +43,5 @@ export type {
     UserLogin,
     UserUpdate,
 };
+
+export * from "./socket";

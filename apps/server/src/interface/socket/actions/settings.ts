@@ -1,4 +1,4 @@
-import { GamePinSchema } from "@durachok/transport/src/schemas/lobby";
+import { GamePinSchema } from "@durachok/transport";
 import { z } from "zod";
 
 import { ensureOwnerAccess } from "../common/auth";

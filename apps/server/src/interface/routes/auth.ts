@@ -2,7 +2,7 @@ import {
     UserAuthResponseSchema,
     UserLoginSchema,
     UserRegistrationSchema,
-} from "@durachok/transport/src/request/user";
+} from "@durachok/transport";
 import { TRPCError } from "@trpc/server";
 
 import { ENV } from "../../config";

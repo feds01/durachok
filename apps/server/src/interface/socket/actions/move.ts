@@ -1,6 +1,6 @@
-import InvalidGameState from "@durachok/engine/src/engine/errors/InvalidGameState";
-import { PlayerMoveSchema } from "@durachok/transport/src/schemas/game";
-import { GamePinSchema } from "@durachok/transport/src/schemas/lobby";
+import { InvalidGameState } from "@durachok/engine";
+import { PlayerMoveSchema } from "@durachok/transport";
+import { GamePinSchema } from "@durachok/transport";
 import { z } from "zod";
 
 import { InvalidMoveError } from "../../../controllers/common";

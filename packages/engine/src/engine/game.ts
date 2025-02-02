@@ -1,3 +1,10 @@
+import { getRandomKey, shuffleArray } from "../utils";
+import { cardFromString, generateCardDeck } from "./card";
+import { TableSize } from "./consts";
+import GameInitError from "./errors/GameInitError";
+import InvalidGameState from "./errors/InvalidGameState";
+import { History, HistoryState } from "./history";
+
 import {
     Card,
     GamePlayer,
@@ -5,13 +12,6 @@ import {
     GameStatus,
     PlayerGameState,
 } from "@durachok/transport/src/schemas/game";
-
-import { getRandomKey, shuffleArray } from "../utils";
-import { cardFromString, generateCardDeck } from "./card";
-import { TableSize } from "./consts";
-import GameInitError from "./errors/GameInitError";
-import InvalidGameState from "./errors/InvalidGameState";
-import { History, HistoryState } from "./history";
 
 /** Options for the game. */
 export interface GameSettings {

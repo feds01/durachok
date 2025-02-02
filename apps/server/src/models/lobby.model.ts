@@ -1,5 +1,5 @@
-import { GameStatus } from "@durachok/transport/src/schemas/game";
-import { Message } from "@durachok/transport/src/schemas/lobby";
+import { GameStatus } from "@durachok/transport";
+import { Message } from "@durachok/transport";
 import mongoose, { Document, Schema } from "mongoose";
 
 import { DBPlayer } from "../schemas/lobby";

@@ -1,6 +1,5 @@
-import { describe, expect, test } from "vitest";
-
 import { DEFAULT_SETTINGS, Game } from "./game";
+import { describe, expect, test } from "vitest";
 
 describe("Game tests", () => {
     test("should create a new game without crashing", () =>

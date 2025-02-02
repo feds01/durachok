@@ -3,7 +3,7 @@ import {
     GameCreateRequestSchema,
     GameJoinRequestSchema,
     NameFreeInLobbyRequestSchema,
-} from "@durachok/transport/src/request";
+} from "@durachok/transport";
 import { TRPCError } from "@trpc/server";
 
 import {

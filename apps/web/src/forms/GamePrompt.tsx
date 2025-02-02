@@ -9,8 +9,8 @@ import SubmitButton from "@/components/SubmitButton";
 import { expr, isDef } from "@/utils";
 import trpc, { trpcNativeClient } from "@/utils/trpc";
 import { GamePassPhraseSchema, GamePinSchema } from "@/valdiators/lobby";
-import { LobbyInfo } from "@durachok/transport/src/request";
-import { UserNameSchema } from "@durachok/transport/src/schemas/user";
+import { LobbyInfo } from "@durachok/transport";
+import { UserNameSchema } from "@durachok/transport";
 import { css } from "@emotion/css";
 import { zodResolver } from "@hookform/resolvers/zod";
 

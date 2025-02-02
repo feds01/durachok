@@ -2,8 +2,8 @@ import {
     GamePlayerSchema,
     GameSchema,
     GameStateSchema,
-} from "@durachok/transport/src/schemas/game";
-import { UserNameSchema } from "@durachok/transport/src/schemas/user";
+} from "@durachok/transport";
+import { UserNameSchema } from "@durachok/transport";
 import { ObjectId } from "mongodb";
 import { z } from "zod";
 

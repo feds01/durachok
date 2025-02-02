@@ -1,4 +1,4 @@
-import { Action, GameState } from "@durachok/transport/src/schemas/game";
+import { Action } from "@durachok/transport/src/schemas/game";
 
 export type HistoryState = {
     nodes: Action[];

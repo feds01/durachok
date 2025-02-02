@@ -1,4 +1,4 @@
-import { ErrorMessage } from "@durachok/transport/src/request/socket";
+import { ErrorMessage } from "@durachok/transport";
 import { ZodError } from "zod";
 import { InputValidationError } from "zod-sockets";
 

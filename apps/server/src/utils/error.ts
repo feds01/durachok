@@ -2,7 +2,7 @@ import {
     ErrorMessage,
     ErrorMessageType,
     ErrorSummary,
-} from "@durachok/transport/src/request/socket";
+} from "@durachok/transport";
 import { ZodError } from "zod";
 
 import { expr } from ".";

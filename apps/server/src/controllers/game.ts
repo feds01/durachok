@@ -1,9 +1,6 @@
-import { Game } from "@durachok/engine/src";
-import {
-    PlayerGameState,
-    PlayerMove,
-} from "@durachok/transport/src/schemas/game";
-import { Lobby } from "@durachok/transport/src/schemas/lobby";
+import { Game } from "@durachok/engine";
+import { PlayerGameState, PlayerMove } from "@durachok/transport";
+import { Lobby } from "@durachok/transport";
 import { TRPCError } from "@trpc/server";
 import { Logger } from "pino";
 

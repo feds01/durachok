@@ -1,6 +1,6 @@
-import { Card } from "@durachok/transport/src/schemas/game";
-
 import { CardNumerics, CardSuits } from "./consts";
+
+import { Card } from "@durachok/transport/src/schemas/game";
 
 /**
  * Converts the card to a string.

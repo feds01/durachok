@@ -69,7 +69,7 @@ importers:
         specifier: file:../../packages/engine
         version: link:../../packages/engine
       '@durachok/transport':
-        specifier: file:./../../packages/transport
+        specifier: file:../../packages/transport
         version: link:../../packages/transport
       '@metamorph/trpc-panel':
         specifier: ^1.0.5

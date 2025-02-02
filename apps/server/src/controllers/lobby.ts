@@ -1,8 +1,8 @@
-import { CardSuits, shuffleArray } from "@durachok/engine/src";
-import { GameSettings, LobbyInfo } from "@durachok/transport/src/request";
-import { GameStatus } from "@durachok/transport/src/schemas/game";
-import { Lobby, Message } from "@durachok/transport/src/schemas/lobby";
-import { Player } from "@durachok/transport/src/schemas/user";
+import { CardSuits, shuffleArray } from "@durachok/engine";
+import { GameSettings, LobbyInfo } from "@durachok/transport";
+import { GameStatus } from "@durachok/transport";
+import { Lobby, Message } from "@durachok/transport";
+import { Player } from "@durachok/transport";
 import { TRPCError } from "@trpc/server";
 import { customAlphabet } from "nanoid";
 import { Logger } from "pino";
