@@ -1,11 +1,10 @@
-import { z } from "zod";
-
 import {
     ActionSchema,
     GameStateSchema,
     PlayerGameStateSchema,
-} from "@/schemas/game";
-import { LobbySchema } from "@/schemas/lobby";
+} from "../schemas/game";
+import { LobbySchema } from "../schemas/lobby";
+import { z } from "zod";
 
 const LobbyUpdateSchema = z.union([
     z.object({

@@ -6,7 +6,7 @@ import SubmitButton from "@/components/SubmitButton";
 import { AuthResult, LoginFormData, LoginFormSchema } from "@/types/auth";
 import { expr } from "@/utils";
 import trpc from "@/utils/trpc";
-import { UserEmailSchema } from "@durachok/transport/src/schemas/user";
+import { UserEmailSchema } from "@durachok/transport";
 import { css } from "@emotion/css";
 import { zodResolver } from "@hookform/resolvers/zod";
 

@@ -1,8 +1,4 @@
-import {
-    UserInfo,
-    UserRegistration,
-    UserUpdate,
-} from "@durachok/transport/src/request/user";
+import { UserInfo, UserRegistration, UserUpdate } from "@durachok/transport";
 import { TRPCError } from "@trpc/server";
 import { Logger } from "pino";
 

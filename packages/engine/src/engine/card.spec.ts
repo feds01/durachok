@@ -1,6 +1,5 @@
-import { describe, expect, test } from "vitest";
-
 import { cardFromString, generateCardDeck } from "./card";
+import { describe, expect, test } from "vitest";
 
 describe("Card tests", () => {
     describe("cardFromString", () => {

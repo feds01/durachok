@@ -1,5 +1,5 @@
 import { HistoryState } from "@durachok/engine/src";
-import { GameState } from "@durachok/transport/src/schemas/game";
+import { GameState } from "@durachok/transport";
 import mongoose, { Document, Schema } from "mongoose";
 
 import { IUser } from "./user.model";

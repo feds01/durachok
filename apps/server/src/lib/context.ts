@@ -1,4 +1,4 @@
-import { Lobby } from "@durachok/transport/src/schemas/lobby";
+import { Lobby } from "@durachok/transport";
 import { Logger } from "pino";
 
 import { IMAGE_STORAGE } from "../config";

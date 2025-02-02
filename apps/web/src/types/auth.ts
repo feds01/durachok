@@ -4,7 +4,7 @@ import {
     UserEmailSchema,
     UserNameSchema,
     UserPasswordSchema,
-} from "@durachok/transport/src/schemas/user";
+} from "@durachok/transport";
 
 export const LoginFormSchema = z.object({
     /** Either a user email or user name */

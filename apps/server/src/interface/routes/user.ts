@@ -1,4 +1,4 @@
-import { UserUpdateSchema } from "@durachok/transport/src/request";
+import { UserUpdateSchema } from "@durachok/transport";
 
 import { router, userProcedure } from "../../lib/trpc";
 

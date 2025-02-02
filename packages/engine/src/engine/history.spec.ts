@@ -1,7 +1,6 @@
-import { describe, expect, test } from "vitest";
-
 import { Game } from "./game";
 import { History } from "./history";
+import { describe, expect, test } from "vitest";
 
 describe("History sub-system tests", () => {
     describe("History", () => {

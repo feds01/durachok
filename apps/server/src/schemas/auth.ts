@@ -1,4 +1,4 @@
-import { UserSchema } from "@durachok/transport/src/schemas/user";
+import { UserSchema } from "@durachok/transport";
 import { z } from "zod";
 
 export const RawTokenPayload = z.object({

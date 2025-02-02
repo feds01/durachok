@@ -4,6 +4,13 @@
     "description": "Transport and communication utilities for Durachok",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
+    "type": "module",
+    "exports": {
+        ".": {
+            "import": "./dist/index.js",
+            "types": "./dist/index.d.ts"
+        }
+    },
     "scripts": {
         "prepare": "npm run build",
         "build": "tsc --declaration",

@@ -1,9 +1,9 @@
-import { GameStatusSchema } from "@durachok/transport/src/schemas/game";
+import { GameStatusSchema } from "@durachok/transport";
 import {
     GamePinSchema,
     LobbySettingsSchema,
     MessageSchema,
-} from "@durachok/transport/src/schemas/lobby";
+} from "@durachok/transport";
 import { ObjectId } from "mongodb";
 import { z } from "zod";
 

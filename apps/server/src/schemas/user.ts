@@ -1,4 +1,4 @@
-import { UserNameSchema } from "@durachok/transport/src/schemas/user";
+import { UserNameSchema } from "@durachok/transport";
 import { ObjectId } from "mongodb";
 import { z } from "zod";
 

@@ -6,8 +6,8 @@ import {
     PlayerJoinSchema,
     StateUpdateMessageSchema,
     VictoryMessageSchema,
-} from "@durachok/transport/src/request/socket";
-import { MessageSchema } from "@durachok/transport/src/schemas/lobby";
+} from "@durachok/transport";
+import { MessageSchema } from "@durachok/transport";
 import { z } from "zod";
 import { createSimpleConfig } from "zod-sockets";
 

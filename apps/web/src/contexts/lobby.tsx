@@ -6,7 +6,7 @@ import {
     OpaquePlayerState,
     PlayerGameState,
     PlayerMove,
-} from "@durachok/transport/src/schemas/game";
+} from "@durachok/transport";
 
 /**
  * A store that represents a wrapper around the current player's game state.
