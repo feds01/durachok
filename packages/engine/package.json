@@ -25,7 +25,7 @@
         "@durachok/transport": "file:./../transport"
     },
     "devDependencies": {
-        "@trivago/prettier-plugin-sort-imports": "^5.2.1",
+        "@trivago/prettier-plugin-sort-imports": "^5.2.2",
         "@types/node": "^22.10.10",
         "prettier": "^3.3.3",
         "typescript": "^5.7.3",
