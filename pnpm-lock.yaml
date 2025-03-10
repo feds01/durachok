@@ -274,8 +274,8 @@ importers:
         specifier: ^2.2.2
         version: 2.2.2
       use-sound:
-        specifier: ^4.0.3
-        version: 4.0.3(react@19.0.0)
+        specifier: ^5.0.0
+        version: 5.0.0(react@19.0.0)
       usehooks-ts:
         specifier: ^3.1.0
         version: 3.1.0(react@19.0.0)
@@ -5033,8 +5033,8 @@ packages:
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0
 
-  use-sound@4.0.3:
-    resolution: {integrity: sha512-L205pEUFIrLsGYsCUKHQVCt0ajs//YQOFbEQeNwaWaqQj3y3st4SuR+rvpMHLmv8hgTcfUFlvMQawZNI3OE18w==}
+  use-sound@5.0.0:
+    resolution: {integrity: sha512-MNHT3FFC5HxNCrgZtrnpIMJI2cw/0D2xismcrtyht8BTuF5FhFhb57xO/jlQr2xJaFrc/0btzRQvGyHQwB7PVA==}
     peerDependencies:
       react: '>=16.8'
 
@@ -11248,7 +11248,7 @@ snapshots:
     dependencies:
       react: 19.0.0
 
-  use-sound@4.0.3(react@19.0.0):
+  use-sound@5.0.0(react@19.0.0):
     dependencies:
       howler: 2.2.4
       react: 19.0.0
