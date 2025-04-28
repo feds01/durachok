@@ -48,7 +48,7 @@
         "@eslint/compat": "^1.2.7",
         "@eslint/eslintrc": "^3.3.1",
         "@eslint/js": "^9.22.0",
-        "@tanstack/router-plugin": "^1.76.0",
+        "@tanstack/router-plugin": "^1.117.2",
         "@trivago/prettier-plugin-sort-imports": "^5.2.2",
         "@types/node": "^22.13.13",
         "@types/react": "^19.1.1",
