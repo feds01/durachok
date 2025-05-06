@@ -29,7 +29,7 @@
         "@types/react-google-recaptcha": "^2.1.9",
         "buffer": "^6.0.3",
         "clsx": "^2.1.1",
-        "framer-motion": "^12.6.2",
+        "framer-motion": "^12.9.6",
         "react": "^19.1.0",
         "react-beautiful-dnd": "^13.1.1",
         "react-dom": "^19.1.0",
