@@ -28,6 +28,6 @@
         "@trivago/prettier-plugin-sort-imports": "^5.2.2",
         "@types/node": "^22.13.13",
         "prettier": "^3.3.3",
-        "typescript": "^5.7.3"
+        "typescript": "^5.8.3"
     }
 }
