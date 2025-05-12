@@ -22,7 +22,7 @@
         "@mui/material": "^7.0.2",
         "@mui/system": "^6.4.2",
         "@tanstack/react-query": "^5.64.2",
-        "@tanstack/react-router": "^1.99.0",
+        "@tanstack/react-router": "^1.120.3",
         "@tanstack/router-devtools": "^1.75.0",
         "@trpc/client": "11.0.0-rc.808",
         "@trpc/react-query": "11.0.1",
