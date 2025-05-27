@@ -66,6 +66,6 @@
         "typescript": "^5.8.3",
         "vite": "^6.2.7",
         "vite-tsconfig-paths": "5.1.4",
-        "vite-plugin-svgr": "^4.2.0"
+        "vite-plugin-svgr": "^4.3.0"
     }
 }
