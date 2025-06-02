@@ -73,10 +73,10 @@ importers:
         version: link:../../packages/transport
       '@metamorph/trpc-panel':
         specifier: ^1.0.5
-        version: 1.0.5(@trpc/server@11.1.2(typescript@5.8.3))(zod@3.24.2)
+        version: 1.0.5(@trpc/server@11.2.0(typescript@5.8.3))(zod@3.24.2)
       '@trpc/server':
-        specifier: 11.1.2
-        version: 11.1.2(typescript@5.8.3)
+        specifier: 11.2.0
+        version: 11.2.0(typescript@5.8.3)
       argon2:
         specifier: ^0.43.0
         version: 0.43.0
@@ -227,10 +227,10 @@ importers:
         version: 1.75.0(@tanstack/react-router@1.120.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(csstype@3.1.3)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       '@trpc/client':
         specifier: 11.1.2
-        version: 11.1.2(@trpc/server@11.1.1(typescript@5.8.3))(typescript@5.8.3)
+        version: 11.1.2(@trpc/server@11.2.0(typescript@5.8.3))(typescript@5.8.3)
       '@trpc/react-query':
         specifier: 11.1.2
-        version: 11.1.2(@tanstack/react-query@5.64.2(react@19.1.0))(@trpc/client@11.1.2(@trpc/server@11.1.1(typescript@5.8.3))(typescript@5.8.3))(@trpc/server@11.1.1(typescript@5.8.3))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.8.3)
+        version: 11.1.2(@tanstack/react-query@5.64.2(react@19.1.0))(@trpc/client@11.1.2(@trpc/server@11.2.0(typescript@5.8.3))(typescript@5.8.3))(@trpc/server@11.2.0(typescript@5.8.3))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.8.3)
       '@types/react-google-recaptcha':
         specifier: ^2.1.9
         version: 2.1.9
@@ -2210,8 +2210,8 @@ packages:
       react-dom: '>=18.2.0'
       typescript: '>=5.7.2'
 
-  '@trpc/server@11.1.2':
-    resolution: {integrity: sha512-Oi9zWHG0ZDkbDo4sYkduoV7q4sIe6UwjrRLC91vNMYQK+PVgpbTCmK1laRwewAGu0zaayqcGDosANjceOIC3GA==}
+  '@trpc/server@11.2.0':
+    resolution: {integrity: sha512-clESXvCT3rTRUavB3wjtmPDlbB+rayVPeaTeXEQVeQNdTrK5o6GnYfCdiJJSdQspUQAwkGgQFRnku5pckuISlw==}
     peerDependencies:
       typescript: '>=5.7.2'
 
@@ -2308,8 +2308,8 @@ packages:
   '@types/node@22.14.1':
     resolution: {integrity: sha512-u0HuPQwe/dHrItgHHpmw3N2fYCR6x4ivMNbPHRkBVP4CvN+kiRrKHWk3i8tXiO/joPwXLMYvF9TTF0eqgHIuOw==}
 
-  '@types/node@22.15.21':
-    resolution: {integrity: sha512-EV/37Td6c+MgKAbkcLG6vqZ2zEYHD7bvSrzqqs2RIhbA6w3x+Dqz8MZM3sP6kGTeLrdoOgKZe+Xja7tUB2DNkQ==}
+  '@types/node@22.15.29':
+    resolution: {integrity: sha512-LNdjOkUDlU1RZb8e1kOIUpN1qQUlzGkEtbVNo53vbrwDg5om6oduhm4SiUaPW5ASTXhAiP0jInWG8Qx9fVlOeQ==}
 
   '@types/parse-json@4.0.2':
     resolution: {integrity: sha512-dISoDXWWQwUquiKsyZ4Ng+HX2KsPL7LyHKHQwgGFEA3IaKac4Obd+h2a/a6waisAoepJlBcx9paWqjA8/HVjCw==}
@@ -2710,6 +2710,11 @@ packages:
     engines: {node: ^6 || ^7 || ^8 || ^9 || ^10 || ^11 || ^12 || >=13.7}
     hasBin: true
 
+  browserslist@4.25.0:
+    resolution: {integrity: sha512-PJ8gYKeS5e/whHBh8xrwYK+dAvEj7JXtz6uTucnMRB8OiGTsKccFekoRrjajPBHV8oOY+2tI4uxeceSimKwMFA==}
+    engines: {node: ^6 || ^7 || ^8 || ^9 || ^10 || ^11 || ^12 || >=13.7}
+    hasBin: true
+
   bson@6.10.3:
     resolution: {integrity: sha512-MTxGsqgYTwfshYWTRdmZRC+M7FnG1b4y7RO7p2k3X24Wq0yv1m77Wsj0BzlPzd/IowgESfsruQCUToa7vbOpPQ==}
     engines: {node: '>=16.20.1'}
@@ -2760,6 +2765,9 @@ packages:
 
   caniuse-lite@1.0.30001717:
     resolution: {integrity: sha512-auPpttCq6BDEG8ZAuHJIplGw6GODhjw+/11e7IjpnYCxZcW/ONgPs0KVBJ0d1bY3e2+7PRe5RCLyP+PfwVgkYw==}
+
+  caniuse-lite@1.0.30001720:
+    resolution: {integrity: sha512-Ec/2yV2nNPwb4DnTANEV99ZWwm3ZWfdlfkQbWSDDt+PsXEVYwlhPH8tdMaPunYTKKmz7AnHi2oNEi1GcmKCD8g==}
 
   chai@5.2.0:
     resolution: {integrity: sha512-mCuXncKXk5iCLhfhwTc0izo0gtEmpz5CtG2y8GiOINBlMVS6v8TMRc5TaLWKS6692m9+dVVfzgeVxR5UxWHTYw==}
@@ -3034,6 +3042,9 @@ packages:
 
   electron-to-chromium@1.5.152:
     resolution: {integrity: sha512-xBOfg/EBaIlVsHipHl2VdTPJRSvErNUaqW8ejTq5OlOlIYx1wOllCHsAvAIrr55jD1IYEfdR86miUEt8H5IeJg==}
+
+  electron-to-chromium@1.5.161:
+    resolution: {integrity: sha512-hwtetwfKNZo/UlwHIVBlKZVdy7o8bIZxxKs0Mv/ROPiQQQmDgdm5a+KvKtBsxM8ZjFzTaCeLoodZ8jiBE3o9rA==}
 
   encodeurl@2.0.0:
     resolution: {integrity: sha512-Q0n9HRi4m6JuGIV1eFlmvJB7ZEVxu93IrMyiMsGC0lrMJMWzRgx6WGquyfQgZVb31vhGgXnfmPNNXmxnOkRBrg==}
@@ -6703,9 +6714,9 @@ snapshots:
 
   '@mars/heroku-js-runtime-env@3.0.2': {}
 
-  '@metamorph/trpc-panel@1.0.5(@trpc/server@11.1.2(typescript@5.8.3))(zod@3.24.2)':
+  '@metamorph/trpc-panel@1.0.5(@trpc/server@11.2.0(typescript@5.8.3))(zod@3.24.2)':
     dependencies:
-      '@trpc/server': 11.1.2(typescript@5.8.3)
+      '@trpc/server': 11.2.0(typescript@5.8.3)
       fuzzysort: 2.0.4
       path: 0.12.7
       url: 0.11.3
@@ -7766,21 +7777,21 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@trpc/client@11.1.2(@trpc/server@11.1.1(typescript@5.8.3))(typescript@5.8.3)':
+  '@trpc/client@11.1.2(@trpc/server@11.2.0(typescript@5.8.3))(typescript@5.8.3)':
     dependencies:
-      '@trpc/server': 11.1.1(typescript@5.8.3)
+      '@trpc/server': 11.2.0(typescript@5.8.3)
       typescript: 5.8.3
 
-  '@trpc/react-query@11.1.2(@tanstack/react-query@5.64.2(react@19.1.0))(@trpc/client@11.1.2(@trpc/server@11.1.1(typescript@5.8.3))(typescript@5.8.3))(@trpc/server@11.1.1(typescript@5.8.3))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.8.3)':
+  '@trpc/react-query@11.1.2(@tanstack/react-query@5.64.2(react@19.1.0))(@trpc/client@11.1.2(@trpc/server@11.2.0(typescript@5.8.3))(typescript@5.8.3))(@trpc/server@11.2.0(typescript@5.8.3))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.8.3)':
     dependencies:
       '@tanstack/react-query': 5.64.2(react@19.1.0)
-      '@trpc/client': 11.1.2(@trpc/server@11.1.1(typescript@5.8.3))(typescript@5.8.3)
-      '@trpc/server': 11.1.1(typescript@5.8.3)
+      '@trpc/client': 11.1.2(@trpc/server@11.2.0(typescript@5.8.3))(typescript@5.8.3)
+      '@trpc/server': 11.2.0(typescript@5.8.3)
       react: 19.1.0
       react-dom: 19.1.0(react@19.1.0)
       typescript: 5.8.3
 
-  '@trpc/server@11.1.2(typescript@5.8.3)':
+  '@trpc/server@11.2.0(typescript@5.8.3)':
     dependencies:
       typescript: 5.8.3
 
@@ -7902,7 +7913,7 @@ snapshots:
     dependencies:
       undici-types: 6.21.0
 
-  '@types/node@22.15.21':
+  '@types/node@22.15.29':
     dependencies:
       undici-types: 6.21.0
     optional: true
@@ -8460,6 +8471,14 @@ snapshots:
       node-releases: 2.0.19
       update-browserslist-db: 1.1.3(browserslist@4.24.5)
 
+  browserslist@4.25.0:
+    dependencies:
+      caniuse-lite: 1.0.30001720
+      electron-to-chromium: 1.5.161
+      node-releases: 2.0.19
+      update-browserslist-db: 1.1.3(browserslist@4.25.0)
+    optional: true
+
   bson@6.10.3: {}
 
   buffer-equal-constant-time@1.0.1: {}
@@ -8508,6 +8527,9 @@ snapshots:
   camelize@1.0.1: {}
 
   caniuse-lite@1.0.30001717: {}
+
+  caniuse-lite@1.0.30001720:
+    optional: true
 
   chai@5.2.0:
     dependencies:
@@ -8765,6 +8787,9 @@ snapshots:
   ee-first@1.1.1: {}
 
   electron-to-chromium@1.5.152: {}
+
+  electron-to-chromium@1.5.161:
+    optional: true
 
   encodeurl@2.0.0: {}
 
@@ -9801,7 +9826,7 @@ snapshots:
 
   jest-worker@27.5.1:
     dependencies:
-      '@types/node': 22.15.21
+      '@types/node': 22.15.29
       merge-stream: 2.0.0
       supports-color: 8.1.1
     optional: true
@@ -11150,6 +11175,13 @@ snapshots:
       escalade: 3.2.0
       picocolors: 1.1.1
 
+  update-browserslist-db@1.1.3(browserslist@4.25.0):
+    dependencies:
+      browserslist: 4.25.0
+      escalade: 3.2.0
+      picocolors: 1.1.1
+    optional: true
+
   uri-js@4.4.1:
     dependencies:
       punycode: 2.3.1
@@ -11338,7 +11370,7 @@ snapshots:
       '@webassemblyjs/wasm-parser': 1.14.1
       acorn: 8.14.1
       acorn-import-attributes: 1.9.5(acorn@8.14.1)
-      browserslist: 4.24.5
+      browserslist: 4.25.0
       chrome-trace-event: 1.0.4
       enhanced-resolve: 5.18.1
       es-module-lexer: 1.7.0
