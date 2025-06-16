@@ -73,7 +73,7 @@ importers:
         version: link:../../packages/transport
       '@metamorph/trpc-panel':
         specifier: ^1.0.5
-        version: 1.0.5(@trpc/server@11.2.0(typescript@5.8.3))(zod@3.24.2)
+        version: 1.0.5(@trpc/server@11.2.0(typescript@5.8.3))(zod@3.25.64)
       '@trpc/server':
         specifier: 11.2.0
         version: 11.2.0(typescript@5.8.3)
@@ -126,11 +126,11 @@ importers:
         specifier: ^2.2.2
         version: 2.2.2
       zod:
-        specifier: ^3.24.2
-        version: 3.24.2
+        specifier: ^3.25.64
+        version: 3.25.64
       zod-sockets:
         specifier: ^2.2.0
-        version: 2.2.0(socket.io@4.8.1)(typescript@5.8.3)(zod@3.24.2)
+        version: 2.2.0(socket.io@4.8.1)(typescript@5.8.3)(zod@3.25.64)
     devDependencies:
       '@eslint/eslintrc':
         specifier: ^3.3.1
@@ -280,8 +280,8 @@ importers:
         specifier: ^3.1.1
         version: 3.1.1(react@19.1.0)
       zod:
-        specifier: ^3.24.2
-        version: 3.24.2
+        specifier: ^3.25.64
+        version: 3.25.64
     devDependencies:
       '@eslint/compat':
         specifier: ^1.2.7
@@ -378,8 +378,8 @@ importers:
         specifier: ^6.0.3
         version: 6.0.3
       zod:
-        specifier: ^3.24.2
-        version: 3.24.2
+        specifier: ^3.25.64
+        version: 3.25.64
     devDependencies:
       '@trivago/prettier-plugin-sort-imports':
         specifier: ^5.2.2
@@ -2321,8 +2321,8 @@ packages:
   '@types/node@22.15.29':
     resolution: {integrity: sha512-LNdjOkUDlU1RZb8e1kOIUpN1qQUlzGkEtbVNo53vbrwDg5om6oduhm4SiUaPW5ASTXhAiP0jInWG8Qx9fVlOeQ==}
 
-  '@types/node@22.15.31':
-    resolution: {integrity: sha512-jnVe5ULKl6tijxUhvQeNbQG/84fHfg+yMak02cT8QVhBx/F05rAVxCGBYYTh2EKz22D6JF5ktXuNwdx7b9iEGw==}
+  '@types/node@22.15.32':
+    resolution: {integrity: sha512-3jigKqgSjsH6gYZv2nEsqdXfZqIFGAV36XYYjf9KGZ3PSG+IhLecqPnI310RvjutyMwifE2hhhNEklOUrvx/wA==}
 
   '@types/parse-json@4.0.2':
     resolution: {integrity: sha512-dISoDXWWQwUquiKsyZ4Ng+HX2KsPL7LyHKHQwgGFEA3IaKac4Obd+h2a/a6waisAoepJlBcx9paWqjA8/HVjCw==}
@@ -2791,8 +2791,8 @@ packages:
   caniuse-lite@1.0.30001717:
     resolution: {integrity: sha512-auPpttCq6BDEG8ZAuHJIplGw6GODhjw+/11e7IjpnYCxZcW/ONgPs0KVBJ0d1bY3e2+7PRe5RCLyP+PfwVgkYw==}
 
-  caniuse-lite@1.0.30001721:
-    resolution: {integrity: sha512-cOuvmUVtKrtEaoKiO0rSc29jcjwMwX5tOHDy4MgVFEWiUXj4uBMJkwI8MDySkgXidpMiHUcviogAvFi4pA2hDQ==}
+  caniuse-lite@1.0.30001723:
+    resolution: {integrity: sha512-1R/elMjtehrFejxwmexeXAtae5UO9iSyFn6G/I806CYC/BLyyBk1EPhrKBkWhy6wM6Xnm47dSJQec+tLJ39WHw==}
 
   chai@5.2.0:
     resolution: {integrity: sha512-mCuXncKXk5iCLhfhwTc0izo0gtEmpz5CtG2y8GiOINBlMVS6v8TMRc5TaLWKS6692m9+dVVfzgeVxR5UxWHTYw==}
@@ -3068,8 +3068,8 @@ packages:
   electron-to-chromium@1.5.152:
     resolution: {integrity: sha512-xBOfg/EBaIlVsHipHl2VdTPJRSvErNUaqW8ejTq5OlOlIYx1wOllCHsAvAIrr55jD1IYEfdR86miUEt8H5IeJg==}
 
-  electron-to-chromium@1.5.166:
-    resolution: {integrity: sha512-QPWqHL0BglzPYyJJ1zSSmwFFL6MFXhbACOCcsCdUMCkzPdS9/OIBVxg516X/Ado2qwAq8k0nJJ7phQPCqiaFAw==}
+  electron-to-chromium@1.5.167:
+    resolution: {integrity: sha512-LxcRvnYO5ez2bMOFpbuuVuAI5QNeY1ncVytE/KXaL6ZNfzX1yPlAO0nSOyIHx2fVAuUprMqPs/TdVhUFZy7SIQ==}
 
   encodeurl@2.0.0:
     resolution: {integrity: sha512-Q0n9HRi4m6JuGIV1eFlmvJB7ZEVxu93IrMyiMsGC0lrMJMWzRgx6WGquyfQgZVb31vhGgXnfmPNNXmxnOkRBrg==}
@@ -5353,8 +5353,8 @@ packages:
     peerDependencies:
       zod: ^3.23.3
 
-  zod@3.24.2:
-    resolution: {integrity: sha512-lY7CDW43ECgW9u1TcT3IoXHflywfVqDYze4waEz812jR/bZ8FHDsl7pFQoSZTz5N+2NqRXs8GBwnAwo3ZNxqhQ==}
+  zod@3.25.64:
+    resolution: {integrity: sha512-hbP9FpSZf7pkS7hRVUrOjhwKJNyampPgtXKc3AN6DsWtoHsg2Sb4SQaS4Tcay380zSwd2VPo9G9180emBACp5g==}
 
 snapshots:
 
@@ -6759,14 +6759,14 @@ snapshots:
 
   '@mars/heroku-js-runtime-env@3.0.2': {}
 
-  '@metamorph/trpc-panel@1.0.5(@trpc/server@11.2.0(typescript@5.8.3))(zod@3.24.2)':
+  '@metamorph/trpc-panel@1.0.5(@trpc/server@11.2.0(typescript@5.8.3))(zod@3.25.64)':
     dependencies:
       '@trpc/server': 11.2.0(typescript@5.8.3)
       fuzzysort: 2.0.4
       path: 0.12.7
       url: 0.11.3
-      zod: 3.24.2
-      zod-to-json-schema: 3.23.1(zod@3.24.2)
+      zod: 3.25.64
+      zod-to-json-schema: 3.23.1(zod@3.25.64)
 
   '@mongodb-js/saslprep@1.2.2':
     dependencies:
@@ -7786,7 +7786,7 @@ snapshots:
       '@tanstack/virtual-file-routes': 1.115.0
       prettier: 3.5.3
       tsx: 4.19.4
-      zod: 3.24.2
+      zod: 3.25.64
     optionalDependencies:
       '@tanstack/react-router': 1.120.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
 
@@ -7808,7 +7808,7 @@ snapshots:
       babel-dead-code-elimination: 1.0.10
       chokidar: 3.6.0
       unplugin: 2.3.3
-      zod: 3.24.2
+      zod: 3.25.64
     optionalDependencies:
       '@tanstack/react-router': 1.120.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       vite: 6.3.5(@types/node@22.13.13)(terser@5.31.3)(tsx@4.19.4)(yaml@2.5.0)
@@ -7982,7 +7982,7 @@ snapshots:
     dependencies:
       undici-types: 6.21.0
 
-  '@types/node@22.15.31':
+  '@types/node@22.15.32':
     dependencies:
       undici-types: 6.21.0
     optional: true
@@ -8550,8 +8550,8 @@ snapshots:
 
   browserslist@4.25.0:
     dependencies:
-      caniuse-lite: 1.0.30001721
-      electron-to-chromium: 1.5.166
+      caniuse-lite: 1.0.30001723
+      electron-to-chromium: 1.5.167
       node-releases: 2.0.19
       update-browserslist-db: 1.1.3(browserslist@4.25.0)
     optional: true
@@ -8607,7 +8607,7 @@ snapshots:
 
   caniuse-lite@1.0.30001717: {}
 
-  caniuse-lite@1.0.30001721:
+  caniuse-lite@1.0.30001723:
     optional: true
 
   chai@5.2.0:
@@ -8867,7 +8867,7 @@ snapshots:
 
   electron-to-chromium@1.5.152: {}
 
-  electron-to-chromium@1.5.166:
+  electron-to-chromium@1.5.167:
     optional: true
 
   encodeurl@2.0.0: {}
@@ -9911,7 +9911,7 @@ snapshots:
 
   jest-worker@27.5.1:
     dependencies:
-      '@types/node': 22.15.31
+      '@types/node': 22.15.32
       merge-stream: 2.0.0
       supports-color: 8.1.1
     optional: true
@@ -11594,17 +11594,17 @@ snapshots:
 
   yocto-queue@0.1.0: {}
 
-  zod-sockets@2.2.0(socket.io@4.8.1)(typescript@5.8.3)(zod@3.24.2):
+  zod-sockets@2.2.0(socket.io@4.8.1)(typescript@5.8.3)(zod@3.25.64):
     dependencies:
       ansis: 3.3.2
       ramda: 0.30.1
       socket.io: 4.8.1
       typescript: 5.8.3
       yaml: 2.5.0
-      zod: 3.24.2
+      zod: 3.25.64
 
-  zod-to-json-schema@3.23.1(zod@3.24.2):
+  zod-to-json-schema@3.23.1(zod@3.25.64):
     dependencies:
-      zod: 3.24.2
+      zod: 3.25.64
 
-  zod@3.24.2: {}
+  zod@3.25.64: {}
