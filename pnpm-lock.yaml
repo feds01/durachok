@@ -105,8 +105,8 @@ importers:
         specifier: ^6.17.0
         version: 6.17.0(socks@2.8.3)
       mongoose:
-        specifier: 8.14.0
-        version: 8.14.0(socks@2.8.3)
+        specifier: 8.15.2
+        version: 8.15.2(socks@2.8.3)
       nanoid:
         specifier: 5.1.5
         version: 5.1.5
@@ -1304,6 +1304,9 @@ packages:
   '@mongodb-js/saslprep@1.2.2':
     resolution: {integrity: sha512-EB0O3SCSNRUFk66iRCpI+cXzIjdswfCs7F6nOC3RAGJ7xr5YhaicvsRwJ9eyzYvYRlCSDUO/c7g4yNulxKC1WA==}
 
+  '@mongodb-js/saslprep@1.3.0':
+    resolution: {integrity: sha512-zlayKCsIjYb7/IdfqxorK5+xUMyi4vOKcFy10wKJYc63NSdKI8mNME+uJqfatkPmOSMMUiojrL58IePKBm3gvQ==}
+
   '@mui/core-downloads-tracker@7.1.1':
     resolution: {integrity: sha512-yBckQs4aQ8mqukLnPC6ivIRv6guhaXi8snVl00VtyojBbm+l6VbVhyTSZ68Abcx7Ah8B+GZhrB7BOli+e+9LkQ==}
 
@@ -2321,8 +2324,8 @@ packages:
   '@types/node@22.15.29':
     resolution: {integrity: sha512-LNdjOkUDlU1RZb8e1kOIUpN1qQUlzGkEtbVNo53vbrwDg5om6oduhm4SiUaPW5ASTXhAiP0jInWG8Qx9fVlOeQ==}
 
-  '@types/node@22.15.31':
-    resolution: {integrity: sha512-jnVe5ULKl6tijxUhvQeNbQG/84fHfg+yMak02cT8QVhBx/F05rAVxCGBYYTh2EKz22D6JF5ktXuNwdx7b9iEGw==}
+  '@types/node@22.15.32':
+    resolution: {integrity: sha512-3jigKqgSjsH6gYZv2nEsqdXfZqIFGAV36XYYjf9KGZ3PSG+IhLecqPnI310RvjutyMwifE2hhhNEklOUrvx/wA==}
 
   '@types/parse-json@4.0.2':
     resolution: {integrity: sha512-dISoDXWWQwUquiKsyZ4Ng+HX2KsPL7LyHKHQwgGFEA3IaKac4Obd+h2a/a6waisAoepJlBcx9paWqjA8/HVjCw==}
@@ -2736,10 +2739,6 @@ packages:
     engines: {node: ^6 || ^7 || ^8 || ^9 || ^10 || ^11 || ^12 || >=13.7}
     hasBin: true
 
-  bson@6.10.3:
-    resolution: {integrity: sha512-MTxGsqgYTwfshYWTRdmZRC+M7FnG1b4y7RO7p2k3X24Wq0yv1m77Wsj0BzlPzd/IowgESfsruQCUToa7vbOpPQ==}
-    engines: {node: '>=16.20.1'}
-
   bson@6.10.4:
     resolution: {integrity: sha512-WIsKqkSC0ABoBJuT1LEX+2HEvNmNKKgnTAyd0fL8qzK4SH2i9NXg+t08YtdZp/V9IZ33cxe3iV4yM0qg8lMQng==}
     engines: {node: '>=16.20.1'}
@@ -2791,8 +2790,8 @@ packages:
   caniuse-lite@1.0.30001717:
     resolution: {integrity: sha512-auPpttCq6BDEG8ZAuHJIplGw6GODhjw+/11e7IjpnYCxZcW/ONgPs0KVBJ0d1bY3e2+7PRe5RCLyP+PfwVgkYw==}
 
-  caniuse-lite@1.0.30001721:
-    resolution: {integrity: sha512-cOuvmUVtKrtEaoKiO0rSc29jcjwMwX5tOHDy4MgVFEWiUXj4uBMJkwI8MDySkgXidpMiHUcviogAvFi4pA2hDQ==}
+  caniuse-lite@1.0.30001723:
+    resolution: {integrity: sha512-1R/elMjtehrFejxwmexeXAtae5UO9iSyFn6G/I806CYC/BLyyBk1EPhrKBkWhy6wM6Xnm47dSJQec+tLJ39WHw==}
 
   chai@5.2.0:
     resolution: {integrity: sha512-mCuXncKXk5iCLhfhwTc0izo0gtEmpz5CtG2y8GiOINBlMVS6v8TMRc5TaLWKS6692m9+dVVfzgeVxR5UxWHTYw==}
@@ -3068,8 +3067,8 @@ packages:
   electron-to-chromium@1.5.152:
     resolution: {integrity: sha512-xBOfg/EBaIlVsHipHl2VdTPJRSvErNUaqW8ejTq5OlOlIYx1wOllCHsAvAIrr55jD1IYEfdR86miUEt8H5IeJg==}
 
-  electron-to-chromium@1.5.166:
-    resolution: {integrity: sha512-QPWqHL0BglzPYyJJ1zSSmwFFL6MFXhbACOCcsCdUMCkzPdS9/OIBVxg516X/Ado2qwAq8k0nJJ7phQPCqiaFAw==}
+  electron-to-chromium@1.5.167:
+    resolution: {integrity: sha512-LxcRvnYO5ez2bMOFpbuuVuAI5QNeY1ncVytE/KXaL6ZNfzX1yPlAO0nSOyIHx2fVAuUprMqPs/TdVhUFZy7SIQ==}
 
   encodeurl@2.0.0:
     resolution: {integrity: sha512-Q0n9HRi4m6JuGIV1eFlmvJB7ZEVxu93IrMyiMsGC0lrMJMWzRgx6WGquyfQgZVb31vhGgXnfmPNNXmxnOkRBrg==}
@@ -4103,8 +4102,8 @@ packages:
       socks:
         optional: true
 
-  mongoose@8.14.0:
-    resolution: {integrity: sha512-IxDxIUu42apE7oEknJK535xkQ6Gd7GKx/gNrNHY+vP4+ucVU2TOCWjVVW14Vc79y9DEEElzHDlTOuVNM8glUFA==}
+  mongoose@8.15.2:
+    resolution: {integrity: sha512-GLwghI2dS/n5BTBljspF4+FsCEBeHgnMQyX8GloYkLkl+MKljKkjcP9DhLr47Yod2RO1RCr4vZ3evUZAyuoILw==}
     engines: {node: '>=16.20.1'}
 
   motion-dom@12.9.6:
@@ -6772,6 +6771,10 @@ snapshots:
     dependencies:
       sparse-bitfield: 3.0.3
 
+  '@mongodb-js/saslprep@1.3.0':
+    dependencies:
+      sparse-bitfield: 3.0.3
+
   '@mui/core-downloads-tracker@7.1.1': {}
 
   '@mui/icons-material@6.4.8(@mui/material@7.1.1(@emotion/react@11.14.0(@types/react@19.1.6)(react@19.1.0))(@emotion/styled@11.14.0(@emotion/react@11.14.0(@types/react@19.1.6)(react@19.1.0))(@types/react@19.1.6)(react@19.1.0))(@types/react@19.1.6)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(@types/react@19.1.6)(react@19.1.0)':
@@ -7982,7 +7985,7 @@ snapshots:
     dependencies:
       undici-types: 6.21.0
 
-  '@types/node@22.15.31':
+  '@types/node@22.15.32':
     dependencies:
       undici-types: 6.21.0
     optional: true
@@ -8550,13 +8553,11 @@ snapshots:
 
   browserslist@4.25.0:
     dependencies:
-      caniuse-lite: 1.0.30001721
-      electron-to-chromium: 1.5.166
+      caniuse-lite: 1.0.30001723
+      electron-to-chromium: 1.5.167
       node-releases: 2.0.19
       update-browserslist-db: 1.1.3(browserslist@4.25.0)
     optional: true
-
-  bson@6.10.3: {}
 
   bson@6.10.4: {}
 
@@ -8607,7 +8608,7 @@ snapshots:
 
   caniuse-lite@1.0.30001717: {}
 
-  caniuse-lite@1.0.30001721:
+  caniuse-lite@1.0.30001723:
     optional: true
 
   chai@5.2.0:
@@ -8867,7 +8868,7 @@ snapshots:
 
   electron-to-chromium@1.5.152: {}
 
-  electron-to-chromium@1.5.166:
+  electron-to-chromium@1.5.167:
     optional: true
 
   encodeurl@2.0.0: {}
@@ -9911,7 +9912,7 @@ snapshots:
 
   jest-worker@27.5.1:
     dependencies:
-      '@types/node': 22.15.31
+      '@types/node': 22.15.32
       merge-stream: 2.0.0
       supports-color: 8.1.1
     optional: true
@@ -10127,8 +10128,8 @@ snapshots:
 
   mongodb@6.16.0(socks@2.8.3):
     dependencies:
-      '@mongodb-js/saslprep': 1.2.2
-      bson: 6.10.3
+      '@mongodb-js/saslprep': 1.3.0
+      bson: 6.10.4
       mongodb-connection-string-url: 3.0.2
     optionalDependencies:
       socks: 2.8.3
@@ -10141,9 +10142,9 @@ snapshots:
     optionalDependencies:
       socks: 2.8.3
 
-  mongoose@8.14.0(socks@2.8.3):
+  mongoose@8.15.2(socks@2.8.3):
     dependencies:
-      bson: 6.10.3
+      bson: 6.10.4
       kareem: 2.6.3
       mongodb: 6.16.0(socks@2.8.3)
       mpath: 0.9.0
