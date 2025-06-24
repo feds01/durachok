@@ -28,7 +28,7 @@
         "@types/eslint": "^9.6.1",
         "@types/node": "^22.13.13",
         "@typescript-eslint/eslint-plugin": "^8.32.1",
-        "@typescript-eslint/parser": "^8.32.1",
+        "@typescript-eslint/parser": "^8.35.0",
         "eslint": "^9.28.0",
         "eslint-config-prettier": "^10.1.5",
         "eslint-plugin-import": "^2.31.0",
