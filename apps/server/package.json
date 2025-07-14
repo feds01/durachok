@@ -48,7 +48,7 @@
         "@types/express": "^5.0.3",
         "@types/fs-extra": "^11.0.4",
         "@types/jsonwebtoken": "^9.0.9",
-        "@types/node": "^22.13.13",
+        "@types/node": "^24.0.13",
         "@types/node-fetch": "^2.6.12",
         "@typescript-eslint/eslint-plugin": "8.32.1",
         "esbuild": "^0.25.3",
