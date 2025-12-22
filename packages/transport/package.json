@@ -22,7 +22,7 @@
     "license": "MIT",
     "dependencies": {
         "buffer": "^6.0.3",
-        "zod": "^3.25.75"
+        "zod": "^4.2.1"
     },
     "devDependencies": {
         "@trivago/prettier-plugin-sort-imports": "^5.2.2",
