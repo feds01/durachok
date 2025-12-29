@@ -226,11 +226,11 @@ importers:
         specifier: ^1.75.0
         version: 1.75.0(@tanstack/react-router@1.142.8(react-dom@19.2.3(react@19.2.0))(react@19.2.0))(csstype@3.1.3)(react-dom@19.2.3(react@19.2.0))(react@19.2.0)
       '@trpc/client':
-        specifier: 11.4.3
-        version: 11.4.3(typescript@5.8.3)
+        specifier: 11.8.1
+        version: 11.8.1(typescript@5.8.3)
       '@trpc/react-query':
         specifier: 11.5.0
-        version: 11.5.0(@tanstack/react-query@5.87.4(react@19.2.0))(@trpc/client@11.4.3(typescript@5.8.3))(react-dom@19.2.3(react@19.2.0))(react@19.2.0)(typescript@5.8.3)
+        version: 11.5.0(@tanstack/react-query@5.87.4(react@19.2.0))(@trpc/client@11.8.1(typescript@5.8.3))(react-dom@19.2.3(react@19.2.0))(react@19.2.0)(typescript@5.8.3)
       '@types/react-google-recaptcha':
         specifier: ^2.1.9
         version: 2.1.9
@@ -2259,10 +2259,10 @@ packages:
       svelte:
         optional: true
 
-  '@trpc/client@11.4.3':
-    resolution: {integrity: sha512-i2suttUCfColktXT8bqex5kHW5jpT15nwUh0hGSDiW1keN621kSUQKcLJ095blqQAUgB+lsmgSqSMmB4L9shQQ==}
+  '@trpc/client@11.8.1':
+    resolution: {integrity: sha512-L/SJFGanr9xGABmuDoeXR4xAdHJmsXsiF9OuH+apecJ+8sUITzVT1EPeqp0ebqA6lBhEl5pPfg3rngVhi/h60Q==}
     peerDependencies:
-      '@trpc/server': 11.4.3
+      '@trpc/server': 11.8.1
       typescript: '>=5.7.2'
 
   '@trpc/react-query@11.5.0':
@@ -5124,8 +5124,8 @@ packages:
     engines: {node: '>=10'}
     hasBin: true
 
-  watchpack@2.4.4:
-    resolution: {integrity: sha512-c5EGNOiyxxV5qmTtAB7rbiXxi1ooX1pQKMLX/MIabJjRA0SJBQOjKF+KSVfHkr9U1cADPon0mRiVe/riyaiDUA==}
+  watchpack@2.5.0:
+    resolution: {integrity: sha512-e6vZvY6xboSwLz2GD36c16+O/2Z6fKvIf4pOXptw2rY9MVwE/TXc6RGqxD3I3x0a28lwBY7DE+76uTPSsBrrCA==}
     engines: {node: '>=10.13.0'}
 
   web-streams-polyfill@3.3.3:
@@ -5163,6 +5163,7 @@ packages:
 
   whatwg-encoding@1.0.5:
     resolution: {integrity: sha512-b5lim54JOPN9HtzvK9HFXvBma/rnfFeqsic0hSpjtDbVxR3dJKLc+KB4V6GgiGOvl7CY/KNh8rxSo9DKQrnUEw==}
+    deprecated: Use @exodus/bytes instead for a more spec-conformant and faster implementation
 
   whatwg-mimetype@2.3.0:
     resolution: {integrity: sha512-M4yMwr6mAnQz76TbJm914+gPpB/nCwvZbJU28cUD6dR004SAxDLOOSUaB1JDRqLtaOV/vi0IC5lEAGFgrjGv/g==}
@@ -7887,14 +7888,14 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@trpc/client@11.4.3(typescript@5.8.3)':
+  '@trpc/client@11.8.1(typescript@5.8.3)':
     dependencies:
       typescript: 5.8.3
 
-  '@trpc/react-query@11.5.0(@tanstack/react-query@5.87.4(react@19.2.0))(@trpc/client@11.4.3(typescript@5.8.3))(react-dom@19.2.3(react@19.2.0))(react@19.2.0)(typescript@5.8.3)':
+  '@trpc/react-query@11.5.0(@tanstack/react-query@5.87.4(react@19.2.0))(@trpc/client@11.8.1(typescript@5.8.3))(react-dom@19.2.3(react@19.2.0))(react@19.2.0)(typescript@5.8.3)':
     dependencies:
       '@tanstack/react-query': 5.87.4(react@19.2.0)
-      '@trpc/client': 11.4.3(typescript@5.8.3)
+      '@trpc/client': 11.8.1(typescript@5.8.3)
       react: 19.2.0
       react-dom: 19.2.3(react@19.2.0)
       typescript: 5.8.3
@@ -11272,7 +11273,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  watchpack@2.4.4:
+  watchpack@2.5.0:
     dependencies:
       glob-to-regexp: 0.4.1
       graceful-fs: 4.2.11
@@ -11317,7 +11318,7 @@ snapshots:
       schema-utils: 3.3.0
       tapable: 2.3.0
       terser-webpack-plugin: 5.3.16(@swc/core@1.12.9)(webpack@5.93.0(@swc/core@1.12.9))
-      watchpack: 2.4.4
+      watchpack: 2.5.0
       webpack-sources: 3.3.3
     transitivePeerDependencies:
       - '@swc/core'
