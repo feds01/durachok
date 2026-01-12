@@ -15,7 +15,7 @@
     "dependencies": {
         "@3xpo/locked": "^0.1.15",
         "@aws-sdk/client-cloudfront": "^3.812.0",
-        "@aws-sdk/client-s3": "^3.826.0",
+        "@aws-sdk/client-s3": "^3.966.0",
         "@aws-sdk/s3-request-presigner": "^3.958.0",
         "@durachok/engine": "file:../../packages/engine",
         "@durachok/transport": "file:../../packages/transport",
