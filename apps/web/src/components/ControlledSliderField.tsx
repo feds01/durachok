@@ -29,8 +29,9 @@ const StyledSlider = styled(Slider)({
     },
 });
 
-interface ControlledSliderInputProps<T extends FieldValues>
-    extends SliderProps {
+interface ControlledSliderInputProps<
+    T extends FieldValues,
+> extends SliderProps {
     legend?: string;
     name: Path<T>;
     control: Control<T>;

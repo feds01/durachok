@@ -10,8 +10,9 @@ import {
     FormHelperText,
 } from "@mui/material";
 
-interface ControlledSwitchInputProps<T extends FieldValues>
-    extends CheckboxProps {
+interface ControlledSwitchInputProps<
+    T extends FieldValues,
+> extends CheckboxProps {
     label: string;
     legend?: string;
     name: Path<T>;
