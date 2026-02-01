@@ -1,7 +1,7 @@
 import { ReactElement } from "react";
 import { Control, FieldValues, Path, useController } from "react-hook-form";
 
-import TextField, { TextFieldProps } from "@mui/material/TextField/TextField";
+import TextField, { TextFieldProps } from "@mui/material/TextField";
 
 interface ControlledTextFieldProps<T extends FieldValues> {
     name: Path<T>;

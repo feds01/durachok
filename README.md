@@ -23,10 +23,10 @@ The repository is structured as follows:
 pnpm install
 ```
 
-2. Configure the `packages/sever` environment, read the [README.md](./packages/server/README.md) for more information.
+2. Configure the `apps/sever` environment, read the [README.md](./apps/server/README.md) for more information.
 
 
-3. Configure the `packages/web` environment, read the [README.md](./packages/web/README.md) for more information.
+3. Configure the `apps/web` environment, read the [README.md](./apps/web/README.md) for more information.
 
 
 4. Run the following command to start the development server:
