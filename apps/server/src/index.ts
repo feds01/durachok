@@ -2,7 +2,7 @@ import { renderTrpcPanel } from "@metamorph/trpc-panel";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import chalk from "chalk";
 import cors from "cors";
-import express from "express";
+import express, { RequestHandler } from "express";
 import helmet from "helmet";
 import { createServer } from "http";
 import { AddressInfo } from "net";
@@ -45,13 +45,14 @@ app.use(
 );
 
 if (ENV === "dev") {
-    app.use("/playground", (_, res) => {
-        return res.send(
+    const playgroundHandler: RequestHandler = (_, res) => {
+        res.send(
             renderTrpcPanel(appRouter, {
                 url: `${APP_URL}/api/trpc`,
             }),
         );
-    });
+    };
+    app.get("/playground", playgroundHandler);
 }
 
 // For accessing uploaded images.

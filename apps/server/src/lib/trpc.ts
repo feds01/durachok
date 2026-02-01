@@ -93,10 +93,9 @@ export const publicProcedure = t.procedure.use(async (opts) => {
     const durationMs = Date.now() - start;
     const meta = { path: opts.path, type: opts.type, durationMs };
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    result.ok
-        ? logger.info("OK request timing:", meta)
-        : logger.error("Non-OK request timing", meta);
+    void (result.ok
+        ? logger.info(meta, "OK request timing:")
+        : logger.error(meta, "Non-OK request timing"));
 
     return result;
 });

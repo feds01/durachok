@@ -1,12 +1,11 @@
 import { GameStatus } from "@durachok/transport";
 import { Message } from "@durachok/transport";
-import mongoose, { Document, Schema } from "mongoose";
+import mongoose, { HydratedDocument, MergeType, Schema, Types } from "mongoose";
 
 import { DBPlayer } from "../schemas/lobby";
-import { IGame } from "./game.model";
 import { IUser } from "./user.model";
 
-export interface ILobby extends Document {
+export interface ILobby {
     pin: string;
     createdAt: Date;
 
@@ -23,13 +22,20 @@ export interface ILobby extends Document {
     players: DBPlayer[];
     status: GameStatus;
     chat: Message[];
-    owner: IUser["_id"];
-    game: IGame["_id"] | null;
+    owner: Types.ObjectId;
+    game: Types.ObjectId | null;
 }
 
-export interface PopulatedLobby extends ILobby {
+export type LobbyDocument = HydratedDocument<ILobby>;
+
+export interface PopulatedLobbyFields {
     owner: IUser;
 }
+
+// Type that matches what Mongoose's .populate<Pick<PopulatedLobbyFields, "owner">>() returns
+export type PopulatedLobbyDocument = HydratedDocument<
+    MergeType<ILobby, PopulatedLobbyFields>
+>;
 
 const LobbySchema = new Schema<ILobby>({
     pin: { type: String, required: true, unique: true },

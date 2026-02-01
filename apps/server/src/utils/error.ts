@@ -3,7 +3,7 @@ import {
     ErrorMessageType,
     ErrorSummary,
 } from "@durachok/transport";
-import { ZodError } from "zod";
+import z, { ZodError } from "zod";
 
 import { expr } from ".";
 
@@ -19,19 +19,19 @@ export function transformZodErrorIntoErrorSummary<T>(
 ): ErrorSummary {
     const errorMap = new Map();
 
-    error.errors.forEach((errorItem) => {
-        const path = errorItem.path.join(".");
+    error.issues.forEach((issue) => {
+        const path = issue.path.join(".");
 
         // Perform some transformation on the ZodError to get into a more readable format
         const responseError = expr(() => {
-            switch (errorItem.code) {
+            switch (issue.code) {
                 case "invalid_type":
                     return {
-                        message: `Expected to receive a '${errorItem.expected}', but got '${errorItem.received}'`,
+                        message: `Expected to receive a '${issue.expected}', but got '${issue.input}'`,
                     };
                 default:
                     return {
-                        message: errorItem.message,
+                        message: issue.message,
                     };
             }
         });
@@ -40,7 +40,8 @@ export function transformZodErrorIntoErrorSummary<T>(
 
         return {
             message: error.message,
-            path: errorItem.path.map((item) => item.toString()),
+            description: z.prettifyError(error),
+            path: issue.path.map((item) => item.toString()),
         };
     });
 

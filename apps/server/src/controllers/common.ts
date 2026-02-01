@@ -1,9 +1,12 @@
 import { TRPCError } from "@trpc/server";
 import { Logger } from "pino";
 
-import Games, { IGame } from "../models/game.model";
-import Lobbies, { PopulatedLobby } from "../models/lobby.model";
-import User, { IUser } from "../models/user.model";
+import Games, { GameDocument } from "../models/game.model";
+import Lobbies, {
+    PopulatedLobbyDocument,
+    PopulatedLobbyFields,
+} from "../models/lobby.model";
+import User, { UserDocument } from "../models/user.model";
 import { DBGameSelectionSchema } from "../schemas/game";
 import { isDef } from "../utils";
 
@@ -58,7 +61,7 @@ export class CommonService {
     public constructor(private readonly logger: Logger) {}
 
     /** Find a user by `ID` and return the underling DB object. */
-    public async getUserDbObject(userId: string): Promise<IUser> {
+    public async getUserDbObject(userId: string): Promise<UserDocument> {
         const user = await User.findById(userId);
 
         if (!isDef(user)) {
@@ -69,9 +72,11 @@ export class CommonService {
     }
 
     /** Find a lobby by `PIN` and return the underling DB object. */
-    public async getLobbyDbObject(pin: string): Promise<PopulatedLobby> {
+    public async getLobbyDbObject(
+        pin: string,
+    ): Promise<PopulatedLobbyDocument> {
         const lobby = await Lobbies.findOne({ pin }).populate<
-            Pick<PopulatedLobby, "owner">
+            Pick<PopulatedLobbyFields, "owner">
         >("owner");
 
         if (!isDef(lobby)) {
@@ -82,7 +87,7 @@ export class CommonService {
     }
 
     /** Find a lobby by `PIN` and return the underling DB object. */
-    public async getGameDbObject(pin: string): Promise<IGame> {
+    public async getGameDbObject(pin: string): Promise<GameDocument> {
         const doc = await Lobbies.findOne({ pin }).select("game");
         if (!isDef(doc)) {
             throw new Error("Lobby not found");

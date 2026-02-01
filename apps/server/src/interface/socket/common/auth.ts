@@ -39,7 +39,10 @@ export async function ensureLobbyAccess(
     const auth = ensureAuth(client);
 
     // Ensure that the current client has access to the lobby.
-    ctx.logger.info("checking client has access to lobby", client.id, pin);
+    ctx.logger.info(
+        { id: client.id, pin },
+        "checking client has access to lobby",
+    );
 
     if (!(await ctx.lobbyService.hasAccess(auth.payload, pin))) {
         throw ApiError.http(401, "Invalid token");
@@ -72,9 +75,8 @@ export async function ensureOwnerAccess(
 
     // Ensure that the current client has access to the lobby.
     ctx.logger.info(
+        { id: client.id, pin },
         "checking client has owner access to lobby",
-        client.id,
-        pin,
     );
 
     if (!(await ctx.lobbyService.hasOwnerAccess(auth.payload, pin))) {
