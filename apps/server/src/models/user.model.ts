@@ -1,7 +1,7 @@
 import { UserStatistics } from "@durachok/transport";
-import mongoose, { Document, Schema } from "mongoose";
+import mongoose, { HydratedDocument, Schema } from "mongoose";
 
-export interface IUser extends Document {
+export interface IUser {
     email: string;
     name: string;
     password: string;
@@ -9,6 +9,8 @@ export interface IUser extends Document {
     createdAt: Date;
     statistics?: UserStatistics;
 }
+
+export type UserDocument = HydratedDocument<IUser>;
 
 const UserSchema = new Schema<IUser>({
     image: { type: Boolean, required: false, default: false },

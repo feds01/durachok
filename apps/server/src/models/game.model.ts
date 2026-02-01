@@ -1,11 +1,13 @@
 import { HistoryState } from "@durachok/engine/src";
 import { GameState } from "@durachok/transport";
-import mongoose, { Document, Schema } from "mongoose";
+import mongoose, { HydratedDocument, Schema } from "mongoose";
 
-export interface IGame extends Document {
+export interface IGame {
     history: HistoryState;
     state: GameState;
 }
+
+export type GameDocument = HydratedDocument<IGame>;
 
 const GameSchema = new Schema<IGame>({
     history: { type: Object, required: false, default: {} },

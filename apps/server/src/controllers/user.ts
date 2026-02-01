@@ -1,8 +1,12 @@
-import { UserInfo, UserRegistration, UserUpdate } from "@durachok/transport";
+import {
+    type UserInfo,
+    type UserRegistration,
+    UserUpdate,
+} from "@durachok/transport";
 import { TRPCError } from "@trpc/server";
 import { Logger } from "pino";
 
-import User, { IUser } from "../models/user.model";
+import User, { UserDocument } from "../models/user.model";
 import { isDef } from "../utils";
 import { AuthService } from "./auth";
 import { CommonService } from "./common";
@@ -32,7 +36,9 @@ export class UserService {
     ) {}
 
     /** Get a user's image  as a URL. */
-    private async getUserImageURL(user: IUser): Promise<string | undefined> {
+    private async getUserImageURL(
+        user: UserDocument,
+    ): Promise<string | undefined> {
         if (!user.image) {
             return;
         }
@@ -120,7 +126,8 @@ export class UserService {
             const saved = await user.save();
             return this.get(saved.id);
         } catch (e: unknown) {
-            this.logger.error("Failed to create user", e);
+            this.logger.error(e, `Failed to create user`);
+
             throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
         }
     }
@@ -145,7 +152,7 @@ export class UserService {
 
             await user.save();
         } catch (e: unknown) {
-            this.logger.error("Failed to update user", e);
+            this.logger.error(e, "Failed to update user");
             throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
         }
     }
@@ -155,7 +162,8 @@ export class UserService {
             await User.deleteOne({ _id: userId });
             await this.imageService.deleteUserImage(userId);
         } catch (e: unknown) {
-            this.logger.warn("Failed to delete user", e);
+            this.logger.error(e, "Failed to delete user");
+            throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
         }
     }
 }

@@ -7,7 +7,10 @@ import { TRPCError } from "@trpc/server";
 import { customAlphabet } from "nanoid";
 import { Logger } from "pino";
 
-import Lobbies, { PopulatedLobby } from "../models/lobby.model";
+import Lobbies, {
+    PopulatedLobbyDocument,
+    PopulatedLobbyFields,
+} from "../models/lobby.model";
 import { TokenPayload } from "../schemas/auth";
 import { DBLobby, DBLobbySchema, DBPlayer } from "../schemas/lobby";
 import { assert, expr, isDef } from "../utils";
@@ -47,7 +50,7 @@ export class LobbyService {
     }
 
     /** Get an enriched Lobby object. */
-    private async enrich(lobby: PopulatedLobby): Promise<DBLobby> {
+    private async enrich(lobby: PopulatedLobbyDocument): Promise<DBLobby> {
         const result = await DBLobbySchema.safeParseAsync(lobby.toObject());
 
         if (result.success) {
@@ -181,7 +184,7 @@ export class LobbyService {
     /** Get a lobby in the "DB" format. */
     private async getRaw(pin: string): Promise<DBLobby | undefined> {
         const game = await Lobbies.findOne({ pin })
-            .populate<Pick<PopulatedLobby, "owner">>("owner")
+            .populate<Pick<PopulatedLobbyFields, "owner">>("owner")
             .exec();
 
         if (!isDef(game)) {
@@ -253,7 +256,7 @@ export class LobbyService {
     /** Get all lobbies by a given user */
     public async getByOwner(userId: string): Promise<LobbyInfo[]> {
         const items = await Lobbies.find({ owner: userId }).populate<
-            Pick<PopulatedLobby, "owner">
+            Pick<PopulatedLobbyFields, "owner">
         >("owner");
         const lobbies = await Promise.all(items.map((i) => this.enrich(i)));
         return lobbies.map(this.lobbyIntoInfo);
@@ -450,7 +453,7 @@ export class LobbyService {
                 pin,
             };
         } catch (e: unknown) {
-            this.logger.error("Failed to create lobby", e);
+            this.logger.error(e, "Failed to create lobby");
             throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
         }
     }
@@ -464,7 +467,7 @@ export class LobbyService {
             // kick everyone from the lobby if any connections are present.
             // emitLobbyEvent(pin, ClientEvents.CLOSE, { reason: "lobby_closed" });
         } catch (e: unknown) {
-            this.logger.error("Failed to delete lobby", e);
+            this.logger.error(e, "Failed to delete lobby");
             throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
         }
     }
@@ -513,7 +516,7 @@ export class LobbyService {
                 },
             );
         } catch (e: unknown) {
-            this.logger.error("Failed to update lobby", e);
+            this.logger.error(e, "Failed to update lobby");
             throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
         }
     }

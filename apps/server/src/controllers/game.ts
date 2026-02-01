@@ -5,7 +5,7 @@ import { TRPCError } from "@trpc/server";
 import { Logger } from "pino";
 
 import { withLock } from "../lib/database";
-import Games, { IGame } from "../models/game.model";
+import Games, { GameDocument } from "../models/game.model";
 import { DBGameSchema } from "../schemas/game";
 import {
     CommonService,
@@ -32,7 +32,7 @@ export class GameService {
     ) {}
 
     /** Get an enriched Lobby object. */
-    private async enrich(game: IGame): Promise<Game> {
+    private async enrich(game: GameDocument): Promise<Game> {
         const result = await DBGameSchema.safeParseAsync(game.toObject());
         if (!result.success) {
             // @@Todo: add logging about why...
@@ -95,7 +95,12 @@ export class GameService {
         try {
             await Games.findByIdAndUpdate(id, raw, { upsert: true });
         } catch (e: unknown) {
-            this.logger.error("Failed to save game", e);
+            if (e instanceof Error) {
+                this.logger.error(
+                    `Failed to save game: ${e.message}\n${e.stack}`,
+                );
+            }
+
             throw new TRPCError({
                 code: "INTERNAL_SERVER_ERROR",
                 message: "Failed to save game",

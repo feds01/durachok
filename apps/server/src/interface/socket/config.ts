@@ -115,7 +115,7 @@ export const config = createSimpleConfig({
          * be able to pass in the same `AuthContext` as we do in the tRPC implementation.
          */
         onConnection: async ({ client, logger }) => {
-            logger.info("connected", client.id, client.getData());
+            logger.info({ id: client.id, data: client.getData() }, "connected");
 
             // Try and read the user.
             const ctx = logger.ctx; // @@Hack!
