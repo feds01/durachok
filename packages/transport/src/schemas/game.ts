@@ -179,9 +179,9 @@ export const GameStateSchema = z.object({
     /** The current trump card of the game. */
     trump: CardSchema,
     /** The players in the game. */
-    players: z.record(GamePlayerSchema),
+    players: z.record(z.string(), GamePlayerSchema),
     /** The playing table top state. */
-    tableTop: z.record(z.string().nullable()),
+    tableTop: z.record(z.string(), z.string().nullable()),
     /** The remaining deck of cards. */
     deck: z.array(z.string()),
 });
@@ -198,7 +198,7 @@ export const PlayerGameStateSchema = z.object({
      */
     players: z.array(OpaquePlayerStateSchema),
     /** The current state of the game. */
-    tableTop: z.record(z.string().nullable()),
+    tableTop: z.record(z.string(), z.string().nullable()),
     /** The size of the deck */
     deckSize: z.number(),
     /** The trump card. */

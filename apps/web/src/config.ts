@@ -10,9 +10,9 @@ export const APP_VERSION_BRANCH = import.meta.env.REACT_APP_BRANCH ?? "";
 
 /** API Endpoint */
 export const API_URL =
-    import.meta.env.REACT_APP_API_URL ?? "http://localhost:5000/api/trpc";
+    import.meta.env.REACT_APP_API_URL ?? "http://localhost:8080/api/trpc";
 export const SOCKET_URL =
-    import.meta.env.REACT_APP_API_URL ?? "http://localhost:5000";
+    import.meta.env.REACT_APP_API_URL ?? "http://localhost:8080";
 
 /** Google ReCAPTCHA v3 secret key. */
 export const RE_CAPTCHA_SECRET =
