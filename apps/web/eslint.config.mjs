@@ -40,4 +40,10 @@ export default [{
             caughtErrorsIgnorePattern: "^_",
         }],
     },
+}, {
+    // TanStack Router route files export Route objects, not components
+    files: ["src/routes/**/*.tsx"],
+    rules: {
+        "react-refresh/only-export-components": "off",
+    },
 }];
