@@ -14,7 +14,7 @@ export const JWT_REFRESH_SECRET =
     process.env.JWT_REFRESH_SECRET_KEY || "secret";
 
 /** Networking configurations */
-export const PORT = process.env.PORT || 5000;
+export const PORT = process.env.PORT || 8080;
 export const ENV = process.env.NODE_ENV || "dev";
 export const APP_URL = process.env.APP_URL || `http://localhost:${PORT}`;
 
