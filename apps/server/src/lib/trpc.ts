@@ -1,6 +1,6 @@
 import { TRPCError, initTRPC } from "@trpc/server";
 import * as trpcExpress from "@trpc/server/adapters/express";
-import superjson from "superjson";
+import superjson, { registerCustom } from "superjson";
 import { ZodError } from "zod";
 
 import { expr } from "../utils";
@@ -10,18 +10,13 @@ import { createContext } from "./context";
 import logger from "./logger";
 
 /** Function to construct the context that we need */
-export const createSessionContext = async ({
-    req,
-    res,
-}: trpcExpress.CreateExpressContextOptions) => {
+export const createSessionContext = async ({ req, res }: trpcExpress.CreateExpressContextOptions) => {
     const hostname = `${req.protocol}://${req.get("host")}`;
     const ctx = createContext(logger, hostname);
 
     // Try and read the user.
-    const tokens = await getTokenFromHeaders(
-        ctx.authService,
-        req.headers,
-        (tokens) => setTokensInResponse(res, tokens),
+    const tokens = await getTokenFromHeaders(ctx.authService, req.headers, (tokens) =>
+        setTokensInResponse(res, tokens),
     );
     if (!tokens) {
         return { ...ctx, token: undefined, rawTokens: undefined };
@@ -34,16 +29,14 @@ export const createSessionContext = async ({
     };
 };
 
-export type AuthenticatedContext = Awaited<
-    ReturnType<typeof createSessionContext>
->;
+export type AuthenticatedContext = Awaited<ReturnType<typeof createSessionContext>>;
 
 /**
  * Register a hook to convert `Buffer`s to base64
  *
  * @@Todo: maybe move this to `packages/transport`?
  */
-superjson.registerCustom<Buffer, string>(
+registerCustom<Buffer, string>(
     {
         isApplicable: (value): value is Buffer => Buffer.isBuffer(value),
         serialize: (value) => value.toString("base64"),
@@ -64,8 +57,7 @@ const t = initTRPC.context<AuthenticatedContext>().create({
             data: {
                 ...shape.data,
                 zodError:
-                    error.code === "BAD_REQUEST" &&
-                    error.cause instanceof ZodError
+                    error.code === "BAD_REQUEST" && error.cause instanceof ZodError
                         ? transformZodErrorIntoErrorSummary(error.cause)
                         : null,
             },
@@ -93,15 +85,13 @@ export const publicProcedure = t.procedure.use(async (opts) => {
     const durationMs = Date.now() - start;
     const meta = { path: opts.path, type: opts.type, durationMs };
 
-    void (result.ok
-        ? logger.info(meta, "OK request timing:")
-        : logger.error(meta, "Non-OK request timing"));
+    void (result.ok ? logger.info(meta, "OK request timing:") : logger.error(meta, "Non-OK request timing"));
 
     return result;
 });
 
 /** A procedure that requires the request to send tokens. */
-export const authProcedure = publicProcedure.use(async function hasToken(opts) {
+export const authProcedure = publicProcedure.use(function hasToken(opts) {
     const { ctx } = opts;
 
     if (!ctx.token || !ctx.rawTokens) {
@@ -135,7 +125,7 @@ export const userProcedure = publicProcedure.use(async function isAuthed(opts) {
     const user = await expr(async () => {
         try {
             return await ctx.userService.get(token.user.id);
-        } catch (_e: unknown) {
+        } catch {
             ctx.logger.warn("user not found");
             throw new TRPCError({ code: "UNAUTHORIZED" });
         }

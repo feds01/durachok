@@ -1,10 +1,6 @@
 import { z } from "zod";
 
-import {
-    UserEmailSchema,
-    UserNameSchema,
-    UserPasswordSchema,
-} from "@durachok/transport";
+import { UserEmailSchema, UserNameSchema, UserPasswordSchema } from "@durachok/transport";
 
 export const LoginFormSchema = z.object({
     /** Either a user email or user name */
@@ -36,9 +32,7 @@ export const RegisterFormSchema = z
                 message: "Passwords do not match",
                 path: ["passwordConfirmation"],
             });
-            return false;
         }
-        return true;
     });
 
 export type RegisterFormData = z.infer<typeof RegisterFormSchema>;

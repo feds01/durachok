@@ -16,11 +16,7 @@ const onMessage = factory.build({
         logger.info(meta, "processing event");
         await ensureLobbyAccess(ctx, client, pin);
 
-        const payload = await ctx.lobbyService.sendMessage(
-            pin,
-            client.id,
-            message,
-        );
+        const payload = await ctx.lobbyService.sendMessage(pin, client.id, message);
 
         withRooms(pin).broadcast("message", payload);
     },

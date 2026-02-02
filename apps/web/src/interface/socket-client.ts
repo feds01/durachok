@@ -105,12 +105,7 @@ export namespace Root {
         }) => void;
         countdown: () => void;
         start: () => void;
-        message: (p1: {
-            name: string;
-            time: number;
-            owner?: string | undefined;
-            message: string;
-        }) => void;
+        message: (p1: { name: string; time: number; owner?: string | undefined; message: string }) => void;
         victory: (p1: {
             players: {
                 name: string;
@@ -218,13 +213,7 @@ export namespace Root {
             };
         }) => void;
         error: (p1: {
-            type:
-                | "internal"
-                | "bad_request"
-                | "not_found"
-                | "unauthorized"
-                | "invalid_move"
-                | "stale_game";
+            type: "internal" | "bad_request" | "not_found" | "unauthorized" | "invalid_move" | "stale_game";
             details?:
                 | Record<
                       string,

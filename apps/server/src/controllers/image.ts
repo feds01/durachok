@@ -24,11 +24,7 @@ export class ImageService {
         }
 
         // Check the first 3 bytes of the image to ensure it is JPG
-        if (
-            (imageType === "jpeg" && buf[0] !== 255) ||
-            buf[1] !== 216 ||
-            buf[2] !== 255
-        ) {
+        if ((imageType === "jpeg" && buf[0] !== 255) || buf[1] !== 216 || buf[2] !== 255) {
             throw new Error("Invalid image buffer.");
         }
 
@@ -54,7 +50,7 @@ export class ImageService {
     }
 
     /** Get an image associated with the user, i.e. their avatar. */
-    public async getUserImage(userId: string): Promise<string | undefined> {
+    public getUserImage(userId: string): Promise<string | undefined> {
         return this.imageRepo.getImage(this.getUserImageKey(userId));
     }
 

@@ -19,9 +19,7 @@ const app = express();
 
 // Various Express middleware.
 
-app.use(
-    helmet({ contentSecurityPolicy: ENV === "production" ? undefined : false }),
-);
+app.use(helmet({ contentSecurityPolicy: ENV === "production" ? undefined : false }));
 app.use(express.json({ limit: "2mb" }));
 app.use((_, res, next) => {
     res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");

@@ -119,10 +119,7 @@ export const config = createSimpleConfig({
 
             // Try and read the user.
             const ctx = logger.ctx; // @@Hack!
-            const tokens = await getTokenFromHeaders(
-                ctx.authService,
-                client.handshake.headers,
-            );
+            const tokens = await getTokenFromHeaders(ctx.authService, client.handshake.headers);
 
             const authCtx = expr(() => {
                 if (!tokens) {

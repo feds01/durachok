@@ -1,10 +1,11 @@
 import { useForm } from "react-hook-form";
+import { z } from "zod";
 
 import ControlledSliderInput from "@/components/ControlledSliderField";
 import ControlledSwitchInput from "@/components/ControlledSwitchField";
 import SubmitButton from "@/components/SubmitButton";
 import trpc from "@/utils/trpc";
-import { GameSettings, GameSettingsSchema } from "@durachok/transport";
+import { GameSettingsSchema } from "@durachok/transport";
 import { css } from "@emotion/css";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -12,9 +13,21 @@ type CreateGameFormProps = {
     onSuccess: () => void;
 };
 
+type GameSettingsFormData = z.output<typeof GameSettingsSchema>;
+
+const TIMEOUT_MARKS = [
+    { value: 100, label: "100" },
+    { value: 600, label: "600" },
+];
+
+const PLAYERS_MARKS = [
+    { value: 2, label: "2" },
+    { value: 8, label: "8" },
+];
+
 export default function CreateGameForm({ onSuccess }: CreateGameFormProps) {
     const createGame = trpc.lobbies.create.useMutation();
-    const form = useForm<GameSettings>({
+    const form = useForm({
         resolver: zodResolver(GameSettingsSchema),
         mode: "onChange",
         reValidateMode: "onChange",
@@ -29,7 +42,7 @@ export default function CreateGameForm({ onSuccess }: CreateGameFormProps) {
         },
     });
 
-    const onSubmit = async (formData: GameSettings) => {
+    const onSubmit = async (formData: GameSettingsFormData) => {
         try {
             await createGame.mutateAsync({ settings: formData });
             onSuccess();
@@ -59,10 +72,7 @@ export default function CreateGameForm({ onSuccess }: CreateGameFormProps) {
                 min={100}
                 max={600}
                 step={50}
-                marks={[
-                    { value: 100, label: "100" },
-                    { value: 600, label: "600" },
-                ]}
+                marks={TIMEOUT_MARKS}
                 valueLabelDisplay="auto"
             />
             <ControlledSliderInput
@@ -71,10 +81,7 @@ export default function CreateGameForm({ onSuccess }: CreateGameFormProps) {
                 legend="Max Players"
                 min={2}
                 max={8}
-                marks={[
-                    { value: 2, label: "2" },
-                    { value: 8, label: "8" },
-                ]}
+                marks={PLAYERS_MARKS}
                 valueLabelDisplay="auto"
             />
             <ControlledSwitchInput

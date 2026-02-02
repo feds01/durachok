@@ -2,17 +2,9 @@ import FieldLabel from "./FieldLabel";
 import { Control, Controller, FieldValues, Path } from "react-hook-form";
 
 import { isDef } from "@/utils";
-import {
-    Checkbox,
-    CheckboxProps,
-    FormControl,
-    FormControlLabel,
-    FormHelperText,
-} from "@mui/material";
+import { Checkbox, CheckboxProps, FormControl, FormControlLabel, FormHelperText } from "@mui/material";
 
-interface ControlledSwitchInputProps<
-    T extends FieldValues,
-> extends CheckboxProps {
+interface ControlledSwitchInputProps<T extends FieldValues> extends CheckboxProps {
     label: string;
     legend?: string;
     name: Path<T>;
@@ -37,26 +29,20 @@ const ControlledSwitchInput = <T extends FieldValues>({
                         error: true,
                     })}
                 >
-                    {legend && (
-                        <FieldLabel sx={{ color: "#dad8ec" }} label={legend} />
-                    )}
+                    {legend && <FieldLabel sx={{ color: "#dad8ec" }} label={legend} />}
                     <FormControlLabel
                         // @@Dumbness: passing with {...field} doesn't work for the initial render...
                         control={
                             <Checkbox
                                 checked={field.value}
-                                onChange={(e) =>
-                                    field.onChange(e.target.checked)
-                                }
+                                onChange={(e) => field.onChange(e.target.checked)}
                                 {...rest}
                             />
                         }
                         sx={{ color: "#dad8ec" }}
                         label={label}
                     />
-                    {isDef(error) && (
-                        <FormHelperText>{error?.message}</FormHelperText>
-                    )}
+                    {isDef(error) && <FormHelperText>{error?.message}</FormHelperText>}
                 </FormControl>
             )}
         />

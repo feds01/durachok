@@ -7,11 +7,7 @@ import { Logger } from "pino";
 import { withLock } from "../lib/database";
 import Games, { GameDocument } from "../models/game.model";
 import { DBGameSchema } from "../schemas/game";
-import {
-    CommonService,
-    InvalidMoveError,
-    PlayerNotInLobbyError,
-} from "./common";
+import { CommonService, InvalidMoveError, PlayerNotInLobbyError } from "./common";
 
 /** An exception that indicates that a game already exists for a certain lobby. */
 export class GameAlreadyExists extends TRPCError {
@@ -61,9 +57,7 @@ export class GameService {
 
     /** Get a game state for a specific player. */
     public async getGameStateFor(player: string): Promise<PlayerGameState> {
-        const gameObject = await this.commonService.getGameDbObject(
-            this.lobby.pin,
-        );
+        const gameObject = await this.commonService.getGameDbObject(this.lobby.pin);
         const game = await this.enrich(gameObject);
         return game.getStateForPlayer(player);
     }
@@ -96,9 +90,7 @@ export class GameService {
             await Games.findByIdAndUpdate(id, raw, { upsert: true });
         } catch (e: unknown) {
             if (e instanceof Error) {
-                this.logger.error(
-                    `Failed to save game: ${e.message}\n${e.stack}`,
-                );
+                this.logger.error(`Failed to save game: ${e.message}\n${e.stack}`);
             }
 
             throw new TRPCError({
@@ -176,12 +168,8 @@ export class GameService {
                             break;
                         }
                         case "cover": {
-                            this.logger.warn(
-                                "Can't cover a card when attacking",
-                            );
-                            throw new InvalidMoveError(
-                                "Can't cover a card when attacking",
-                            );
+                            this.logger.warn("Can't cover a card when attacking");
+                            throw new InvalidMoveError("Can't cover a card when attacking");
                         }
                     }
 
@@ -206,12 +194,11 @@ export class GameService {
                     return game;
                 }
                 case "none": {
-                    this.logger.warn(
-                        "Can't perform action on player with no role",
-                    );
-                    throw new InvalidMoveError(
-                        "Can't perform action on player with no role",
-                    );
+                    this.logger.warn("Can't perform action on player with no role");
+                    throw new InvalidMoveError("Can't perform action on player with no role");
+                }
+                default: {
+                    throw new InvalidMoveError(`Unknown action: ${player.action}`);
                 }
             }
         });

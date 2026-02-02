@@ -35,10 +35,7 @@ export function isDef<T>(o: T | null | undefined): o is T {
  * @param condition - The condition to check.
  * @param message  - The message to throw if the condition is false.
  */
-export function assert(
-    condition: boolean,
-    message?: string,
-): asserts condition {
+export function assert(condition: boolean, message?: string): asserts condition {
     if (!condition) {
         throw new Error(`Assertion failed: ${message ?? "condition failed"}`);
     }

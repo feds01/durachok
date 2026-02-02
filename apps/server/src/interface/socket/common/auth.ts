@@ -39,10 +39,7 @@ export async function ensureLobbyAccess(
     const auth = ensureAuth(client);
 
     // Ensure that the current client has access to the lobby.
-    ctx.logger.info(
-        { id: client.id, pin },
-        "checking client has access to lobby",
-    );
+    ctx.logger.info({ id: client.id, pin }, "checking client has access to lobby");
 
     if (!(await ctx.lobbyService.hasAccess(auth.payload, pin))) {
         throw ApiError.http(401, "Invalid token");
@@ -51,9 +48,8 @@ export async function ensureLobbyAccess(
     // @@Todo: perhaps we should return the player since the information might be useful?
     if (auth.payload.kind === "anonymous") {
         return { name: auth.payload.name, isRegistered: false };
-    } else {
-        return { name: auth.payload.user.name, isRegistered: true };
     }
+    return { name: auth.payload.user.name, isRegistered: true };
 }
 
 /**
@@ -66,18 +62,11 @@ export async function ensureLobbyAccess(
  *
  * @returns Whether the client is the owner of the lobby.
  */
-export async function ensureOwnerAccess(
-    ctx: Context,
-    client: Client,
-    pin: string,
-): Promise<void> {
+export async function ensureOwnerAccess(ctx: Context, client: Client, pin: string): Promise<void> {
     const auth = ensureAuth(client);
 
     // Ensure that the current client has access to the lobby.
-    ctx.logger.info(
-        { id: client.id, pin },
-        "checking client has owner access to lobby",
-    );
+    ctx.logger.info({ id: client.id, pin }, "checking client has owner access to lobby");
 
     if (!(await ctx.lobbyService.hasOwnerAccess(auth.payload, pin))) {
         throw ApiError.http(401, "Invalid token");

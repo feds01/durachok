@@ -2,11 +2,7 @@ import { create } from "zustand";
 
 import { Root } from "@/interface/socket-client";
 import { assert, isDef } from "@/utils";
-import {
-    OpaquePlayerState,
-    PlayerGameState,
-    PlayerMove,
-} from "@durachok/transport";
+import { OpaquePlayerState, PlayerGameState, PlayerMove } from "@durachok/transport";
 
 /**
  * A store that represents a wrapper around the current player's game state.
@@ -96,9 +92,7 @@ const usePlayerGameStore = create<PlayerGameStateStore>((set, get) => ({
         assert(isDef(state), "Game state is not initialized");
 
         // get the visible deck of the current player
-        const currentPlayer = state.players.find(
-            (player) => player.deck.type === "visible",
-        );
+        const currentPlayer = state.players.find((player) => player.deck.type === "visible");
 
         if (currentPlayer && currentPlayer.deck.type === "visible") {
             return currentPlayer.deck.cards;

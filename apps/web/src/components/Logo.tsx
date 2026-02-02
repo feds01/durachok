@@ -10,19 +10,14 @@ const Logo = ({ size }: { size: number }) => (
                 font-weight: 900;
                 font-style: italic;
                 color: #dad8ec;
-
+                
                 @media (max-width: 600px) {
                     font-size: 40px !important;
                 }
             `}
             style={{ fontSize: size }}
         >
-            <img
-                src={PlayingCards}
-                width={size * 0.75}
-                height={size * 0.75}
-                alt={""}
-            />
+            <img src={PlayingCards} width={size * 0.75} height={size * 0.75} alt={""} />
             Durachok
         </h2>
     </div>

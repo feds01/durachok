@@ -19,7 +19,7 @@ const submitStyle = css`
     font-size: 2em !important;
     background-color: #3f51b5 !important;
     margin-top: 19px !important;
-
+    
     &:hover {
         background-color: #3f51b5 !important;
     }
@@ -42,9 +42,9 @@ export default function Login({ onSuccess }: Props) {
                 const maybeEmail = UserEmailSchema.safeParse(login.credential);
                 if (maybeEmail.success) {
                     return { email: login.credential };
-                } else {
-                    return { name: login.credential };
                 }
+
+                return { name: login.credential };
             });
 
             const result = await loginWith.mutateAsync({

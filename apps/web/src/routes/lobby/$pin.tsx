@@ -4,7 +4,7 @@ import { trpcNativeClient } from "@/utils/trpc";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/lobby/$pin")({
-    beforeLoad: async ({ context, location }) => {
+    beforeLoad: ({ context, location }) => {
         if (context.auth.kind === "logged-out") {
             throw redirect({
                 to: "/login",

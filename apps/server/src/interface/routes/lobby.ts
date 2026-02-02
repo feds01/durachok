@@ -6,57 +6,41 @@ import {
 } from "@durachok/transport";
 import { TRPCError } from "@trpc/server";
 
-import {
-    authProcedure,
-    publicProcedure,
-    router,
-    userProcedure,
-} from "../../lib/trpc";
+import { authProcedure, publicProcedure, router, userProcedure } from "../../lib/trpc";
 import { DBPlayer } from "../../schemas/lobby";
 import { expr } from "../../utils";
 
 export const lobbyRouter = router({
-    getInfo: publicProcedure.input(ByPinRequestSchema).query(async (req) => {
+    getInfo: publicProcedure.input(ByPinRequestSchema).query((req) => {
         const { ctx, input } = req;
         return ctx.lobbyService.getInfo(input.pin);
     }),
 
-    nameFreeInLobby: publicProcedure
-        .input(NameFreeInLobbyRequestSchema)
-        .query(async (req) => {
-            const { ctx, input } = req;
-            const token = ctx.token;
-            const registered = token?.kind === "registered";
+    nameFreeInLobby: publicProcedure.input(NameFreeInLobbyRequestSchema).query(async (req) => {
+        const { ctx, input } = req;
+        const token = ctx.token;
+        const registered = token?.kind === "registered";
 
-            return !(await ctx.lobbyService.isUserInLobby(
-                input.pin,
-                input.name,
-                registered ? token.user.id : undefined,
-            ));
-        }),
+        return !(await ctx.lobbyService.isUserInLobby(input.pin, input.name, registered ? token.user.id : undefined));
+    }),
 
-    create: userProcedure
-        .input(GameCreateRequestSchema)
-        .mutation(async (req) => {
-            const {
-                ctx,
-                input: { settings },
-            } = req;
+    create: userProcedure.input(GameCreateRequestSchema).mutation(async (req) => {
+        const {
+            ctx,
+            input: { settings },
+        } = req;
 
-            // @@Hack: we should just return the lobby and then we can
-            // constraint into ` { pin }`.
-            const { pin } = await ctx.lobbyService.create(
-                ctx.user.id,
-                settings,
-            );
-            const lobby = await ctx.lobbyService.get(pin);
+        // @@Hack: we should just return the lobby and then we can
+        // constraint into ` { pin }`.
+        const { pin } = await ctx.lobbyService.create(ctx.user.id, settings);
+        const lobby = await ctx.lobbyService.get(pin);
 
-            // We also need to create the lobby and then create the actual
-            // game instance.
-            await ctx.gameService(lobby).create(ctx.user.name);
+        // We also need to create the lobby and then create the actual
+        // game instance.
+        await ctx.gameService(lobby).create(ctx.user.name);
 
-            return { pin };
-        }),
+        return { pin };
+    }),
 
     get: authProcedure.input(ByPinRequestSchema).query(async (req) => {
         const {
@@ -115,10 +99,7 @@ export const lobbyRouter = router({
         }
 
         // Check that the lobby is in the waiting state and has free slots.
-        if (
-            lobby.status !== "waiting" ||
-            lobby.players.length >= lobby.maxPlayers
-        ) {
+        if (lobby.status !== "waiting" || lobby.players.length >= lobby.maxPlayers) {
             throw new TRPCError({ code: "BAD_REQUEST" });
         }
 
@@ -135,17 +116,12 @@ export const lobbyRouter = router({
                     registered: ctx.token.user.id,
                     confirmed: false,
                 };
-            } else {
-                return { name: input.name, socket: null, confirmed: false };
             }
+            return { name: input.name, socket: null, confirmed: false };
         });
 
         // We need to determine whether the `name` is taken or not.
-        const isUserInLobby = await ctx.lobbyService.isUserInLobby(
-            input.pin,
-            input.name,
-            player.registered,
-        );
+        const isUserInLobby = await ctx.lobbyService.isUserInLobby(input.pin, input.name, player.registered);
         if (isUserInLobby) {
             throw new TRPCError({
                 code: "BAD_REQUEST",
@@ -160,10 +136,10 @@ export const lobbyRouter = router({
         // to the lobby, otherwise we need to generate a token for them.
         return {
             ...(!player.registered && {
-                ...(await ctx.authService.createTokens({
+                ...ctx.authService.createTokens({
                     pin: input.pin,
                     name: input.name,
-                })),
+                }),
             }),
         };
     }),

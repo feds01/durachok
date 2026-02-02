@@ -10,22 +10,17 @@ import UpdateUserProfileImageForm from "@/forms/UpdateUserProfileImageForm";
 import { css } from "@emotion/css";
 import { Typography } from "@mui/material";
 import Button from "@mui/material/Button";
-import {
-    Link,
-    createFileRoute,
-    redirect,
-    useNavigate,
-} from "@tanstack/react-router";
+import { Link, createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 
 const dashboard = css`
     text-align: center;
     padding: 0 2em;
-
+    
     h1 {
         font-size: 48px;
         font-style: italic;
         font-family: "Playfair Display", serif;
-
+    
         @media (max-width: 600px) {
             font-size: 30px;
         }
@@ -45,17 +40,17 @@ const settings = css`
     max-width: 700px;
     display: flex;
     flex-direction: column;
-
+    
     & section {
         margin-bottom: 2em;
     }
-
+    
     & h2 {
         font-size: 24px;
         text-align: left;
         margin: 1em 0 0.3em 0;
     }
-
+    
     & p {
         margin: 0.3em 0 0.3em;
     }
@@ -71,11 +66,8 @@ const details = css`
 `;
 
 export const Route = createFileRoute("/user/settings")({
-    beforeLoad: async ({ context, location }) => {
-        if (
-            context.auth.kind === "logged-out" ||
-            context.auth.user.kind === "anonymous"
-        ) {
+    beforeLoad: ({ context, location }) => {
+        if (context.auth.kind === "logged-out" || context.auth.user.kind === "anonymous") {
             throw redirect({
                 to: "/login",
                 search: {
@@ -130,11 +122,7 @@ function UserSettingsRoute() {
                     Logout
                 </Button>
             </div>
-            <PlayerAvatar
-                avatarUri={user.image}
-                avatarSize={128}
-                name={user.name}
-            />
+            <PlayerAvatar avatarUri={user.image} avatarSize={128} name={user.name} />
             <Divider />
             <div className={settings}>
                 {event && (
@@ -150,10 +138,8 @@ function UserSettingsRoute() {
                     <h2>Profile Picture</h2>
                     <Divider />
                     <p>
-                        You can upload a JPG file that will be used a as a
-                        profile picture. The maximum file size is 1MB. To get
-                        the best profile image fit, try to use an image that has
-                        square dimensions.
+                        You can upload a JPG file that will be used a as a profile picture. The maximum file size is
+                        1MB. To get the best profile image fit, try to use an image that has square dimensions.
                     </p>
                     <UpdateUserProfileImageForm onResponse={handleOutcome} />
                 </section>
@@ -161,10 +147,8 @@ function UserSettingsRoute() {
                     <h2>Update User Details</h2>
                     <Divider />
                     <p>
-                        Update your user account details by replacing the
-                        current information in the fields. You will not be able
-                        to update your name or email to one that is already
-                        taken by another user.
+                        Update your user account details by replacing the current information in the fields. You will
+                        not be able to update your name or email to one that is already taken by another user.
                     </p>
                     <UpdateUserForm onResponse={handleOutcome} user={user} />
                 </section>
@@ -172,11 +156,9 @@ function UserSettingsRoute() {
                     <h2 style={{ color: "red" }}>Danger Zone</h2>
                     <Divider />
                     <Typography component={"p"} sx={{ mb: "0.6em" }}>
-                        Deleting your account will remove any and all
-                        information on your account. This includes any games
-                        that you have played, are playing, and all of your
-                        statistics. Once your account is deleted, this
-                        information will be unrecoverable.
+                        Deleting your account will remove any and all information on your account. This includes any
+                        games that you have played, are playing, and all of your statistics. Once your account is
+                        deleted, this information will be unrecoverable.
                     </Typography>
                     <DeleteUserForm onResponse={handleOutcome} />
                 </section>
