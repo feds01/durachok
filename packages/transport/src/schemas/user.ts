@@ -9,10 +9,7 @@ import { z } from "zod";
  */
 export const UserNameSchema = z
     .string()
-    .regex(
-        /^[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$/i,
-        "User name must be alphanumeric and can contain hyphens.",
-    );
+    .regex(/^[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$/i, "User name must be alphanumeric and can contain hyphens.");
 
 export type UserName = z.infer<typeof UserNameSchema>;
 

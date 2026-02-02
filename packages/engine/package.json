@@ -2,32 +2,29 @@
     "name": "@durachok/engine",
     "version": "1.0.0",
     "description": "Shared code between durak cards API and clients.",
+    "license": "MIT",
+    "author": "Alexander. E. Fedotov",
+    "repository": "https://github.com/feds01/durachok",
+    "type": "module",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
-    "type": "module",
     "exports": {
         ".": {
-            "import": "./dist/index.js",
-            "types": "./dist/index.d.ts"
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js"
         }
     },
     "scripts": {
         "prepare": "npm run build",
         "build": "tsc --declaration",
         "check": "tsc --noEmit",
-        "fmt": "prettier --write .",
         "test": "vitest run"
     },
-    "repository": "https://github.com/feds01/durachok",
-    "author": "Alexander. E. Fedotov",
-    "license": "MIT",
     "dependencies": {
         "@durachok/transport": "file:./../transport"
     },
     "devDependencies": {
-        "@trivago/prettier-plugin-sort-imports": "^6.0.2",
         "@types/node": "^25.2.0",
-        "prettier": "^3.8.1",
         "typescript": "^5.9.3",
         "vitest": "^4.0.18"
     }

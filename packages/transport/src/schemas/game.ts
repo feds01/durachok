@@ -2,11 +2,7 @@ import { UserNameSchema } from "./user";
 import { z } from "zod";
 
 /** What state the game is currently in. */
-export const GameStatusSchema = z.union([
-    z.literal("waiting"),
-    z.literal("playing"),
-    z.literal("finished"),
-]);
+export const GameStatusSchema = z.union([z.literal("waiting"), z.literal("playing"), z.literal("finished")]);
 
 export type GameStatus = z.infer<typeof GameStatusSchema>;
 
@@ -76,10 +72,7 @@ export const AutonomousActionSchema = z.union([
 export type AutonomousAction = z.infer<typeof AutonomousActionSchema>;
 
 /** The combination of either `AutonomousAction` or `PlayerAction` */
-export const ActionSchema = z.union([
-    PlayerActionSchema,
-    AutonomousActionSchema,
-]);
+export const ActionSchema = z.union([PlayerActionSchema, AutonomousActionSchema]);
 
 export type Action = z.infer<typeof ActionSchema>;
 
