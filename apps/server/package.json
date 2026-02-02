@@ -1,16 +1,14 @@
 {
     "name": "@durachok/server",
-    "author": "Alexander. E. Fedotov",
     "version": "1.0.0",
     "private": true,
+    "author": "Alexander. E. Fedotov",
     "type": "module",
     "scripts": {
         "dev": "tsx watch src/index",
-        "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
         "check": "tsc",
         "build": "esbuild src/index.ts --bundle --packages=external --platform=node --format=esm --outdir=dist --sourcemap",
-        "build:client": "tsx src/interface/socket/generate-client.ts",
-        "fmt": "prettier --write ."
+        "build:client": "tsx src/interface/socket/generate-client.ts"
     },
     "dependencies": {
         "@3xpo/locked": "^0.1.15",
@@ -41,20 +39,13 @@
         "zod-sockets": "^5.0.1"
     },
     "devDependencies": {
-        "@eslint/eslintrc": "^3.3.3",
-        "@eslint/js": "^9.39.2",
-        "@trivago/prettier-plugin-sort-imports": "^6.0.2",
         "@types/cors": "^2.8.19",
         "@types/express": "^5.0.6",
         "@types/fs-extra": "^11.0.4",
         "@types/jsonwebtoken": "^9.0.10",
         "@types/node": "^25.2.0",
         "@types/node-fetch": "^2.6.13",
-        "@typescript-eslint/eslint-plugin": "8.54.0",
         "esbuild": "^0.27.2",
-        "eslint": "^9.39.2",
-        "globals": "^17.3.0",
-        "prettier": "^3.8.1",
         "tsx": "^4.21.0",
         "typescript": "^5.9.3",
         "wait-port": "^1.1.0"

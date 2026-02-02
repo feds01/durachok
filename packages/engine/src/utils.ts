@@ -26,7 +26,7 @@ export function shuffleArray(array: Array<any>): Array<any> {
 /**
  * Get a random key a Map.
  * */
-export function getRandomKey(collection: Map<string, Object>): string {
+export function getRandomKey(collection: Map<string, object>): string {
     let keys = Array.from(collection.keys());
     return keys[Math.floor(Math.random() * keys.length)];
 }
