@@ -22,13 +22,7 @@ type AlertProps = {
     timeout?: number;
 };
 
-const AlertWrapper = ({
-    kind,
-    message,
-    sx,
-    shouldDisappear = true,
-    timeout = 5000,
-}: AlertProps) => {
+const AlertWrapper = ({ kind, message, sx, shouldDisappear = true, timeout = 5000 }: AlertProps) => {
     const [open, setOpen] = useState(true);
 
     const hide = () => {
@@ -40,7 +34,7 @@ const AlertWrapper = ({
     useTimeout(hide, timeout);
 
     return (
-        <Box sx={{ width: "100%", ...(sx && sx) }}>
+        <Box sx={{ width: "100%", ...sx }}>
             <Collapse in={open}>
                 <Alert severity={kind}>{message}</Alert>
             </Collapse>

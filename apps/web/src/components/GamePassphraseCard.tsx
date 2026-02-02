@@ -1,4 +1,4 @@
-import clsx from "clsx";
+import { clsx } from "clsx";
 
 import { css } from "@emotion/css";
 
@@ -28,7 +28,7 @@ const card = css`
     border-radius: 8px;
     outline: none;
     transition: 0.3s;
-
+    
     &:hover {
         cursor: pointer;
         color: #3f51b5;
@@ -36,23 +36,22 @@ const card = css`
     }
 `;
 
-export default function GamePassphraseCard({
-    onClick,
-    selected,
-    symbol,
-}: Props) {
+export default function GamePassphraseCard({ onClick, selected, symbol }: Props) {
+    const handleClick = () => {
+        if (!selected) {
+            onClick();
+        }
+    };
+
     return (
-        <span
+        <button
+            type="button"
             className={clsx(card, {
                 [cardSelected]: selected,
             })}
-            onClick={() => {
-                if (!selected) {
-                    onClick();
-                }
-            }}
+            onClick={handleClick}
         >
             {symbol}
-        </span>
+        </button>
     );
 }

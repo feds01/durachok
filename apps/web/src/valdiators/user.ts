@@ -1,10 +1,6 @@
 import { z } from "zod";
 
-import {
-    UserEmailSchema,
-    UserNameSchema,
-    UserPasswordSchema,
-} from "@durachok/transport";
+import { UserEmailSchema, UserNameSchema, UserPasswordSchema } from "@durachok/transport";
 
 export const UserRegistrationSchema = z.object({
     email: UserEmailSchema,

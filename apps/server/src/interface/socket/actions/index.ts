@@ -7,12 +7,4 @@ import onSettingsUpdate from "./settings";
 import onStart from "./start";
 
 /** Export all of the actions. */
-export const actions = [
-    onJoin,
-    onLeave,
-    onKick,
-    onMessage,
-    onMove,
-    onStart,
-    onSettingsUpdate,
-];
+export const actions = [onJoin, onLeave, onKick, onMessage, onMove, onStart, onSettingsUpdate];

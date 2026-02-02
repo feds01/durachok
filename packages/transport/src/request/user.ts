@@ -1,9 +1,4 @@
-import {
-    UserEmailSchema,
-    UserNameSchema,
-    UserSchema,
-    UserStatisticsSchema,
-} from "../schemas/user";
+import { UserEmailSchema, UserNameSchema, UserSchema, UserStatisticsSchema } from "../schemas/user";
 import { LobbyInfoSchema } from "./lobby";
 import { Buffer } from "buffer";
 import { z } from "zod";

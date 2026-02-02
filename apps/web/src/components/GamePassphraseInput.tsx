@@ -1,5 +1,5 @@
 import GamePassphraseCard from "./GamePassphraseCard";
-import clsx from "clsx";
+import { clsx } from "clsx";
 import { useEffect, useState } from "react";
 import { Control, FieldValues, Path, useController } from "react-hook-form";
 
@@ -27,7 +27,7 @@ const shake = keyframes`
 const label = css`
     font-family: "Noto Sans", sans-serif;
     font-size: 32px;
-
+    
     code {
         letter-spacing: 1px;
     }
@@ -53,11 +53,7 @@ interface Props<T extends FieldValues> {
     name: Path<T>;
 }
 
-export default function GamePassphraseInput<T extends FieldValues>({
-    pin,
-    name,
-    control,
-}: Props<T>) {
+export default function GamePassphraseInput<T extends FieldValues>({ pin, name, control }: Props<T>) {
     const symbols = ["♡", "♢", "♣", "♤"] as const;
     const [order, setOrder] = useState("");
     const {
@@ -79,9 +75,9 @@ export default function GamePassphraseInput<T extends FieldValues>({
                     Passphrase for <code>{pin}</code>
                 </p>
                 <div className={clsx(selector, { [incorrect]: isDef(error) })}>
-                    {symbols.map((symbol, index) => (
+                    {symbols.map((symbol) => (
                         <GamePassphraseCard
-                            key={index}
+                            key={symbol}
                             symbol={symbol}
                             selected={order.indexOf(symbol) !== -1}
                             onClick={() => setOrder(order + symbol)}
@@ -89,11 +85,7 @@ export default function GamePassphraseInput<T extends FieldValues>({
                     ))}
                 </div>
             </div>
-            <div>
-                {!isSubmitting && !isDirty && error && (
-                    <p>{error.message?.toString()}</p>
-                )}
-            </div>
+            <div>{!isSubmitting && !isDirty && error && <p>{error.message?.toString()}</p>}</div>
         </div>
     );
 }

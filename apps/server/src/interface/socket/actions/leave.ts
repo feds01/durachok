@@ -30,10 +30,7 @@ const onLeave = factory.build({
         }
 
         try {
-            const player = await ctx.lobbyService.getPlayerByConnectionId(
-                pin,
-                client.id,
-            );
+            const player = await ctx.lobbyService.getPlayerByConnectionId(pin, client.id);
 
             logger.info(meta, "removing player from lobby");
             await ctx.lobbyService.removePlayerByConnectionId(pin, client.id);

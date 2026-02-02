@@ -1,6 +1,6 @@
 import { CardNumerics, CardSuits } from "./consts";
 
-import { Card } from "@durachok/transport/src/schemas/game";
+import { Card } from "@durachok/transport";
 
 /**
  * Converts the card to a string.
@@ -35,11 +35,9 @@ export function cardFromString(card: string): Card {
  * @param {boolean} short - Whether the deck is short or not
  * */
 export function generateCardDeck(short = false): string[] {
-    return CardNumerics.slice(short ? 4 : 0, CardNumerics.length)
-        .map((label) => {
-            return Object.keys(CardSuits).map((suit) => {
-                return `${label}${suit}`;
-            });
-        })
-        .flat();
+    return CardNumerics.slice(short ? 4 : 0, CardNumerics.length).flatMap((label) => {
+        return Object.keys(CardSuits).map((suit) => {
+            return `${label}${suit}`;
+        });
+    });
 }

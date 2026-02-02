@@ -27,14 +27,11 @@ const theme = () =>
                     },
                     root: {
                         [`&:hover .${outlinedInputClasses.notchedOutline}`]: {
-                            borderColor:
-                                "var(--TextField-brandBorderHoverColor)",
+                            borderColor: "var(--TextField-brandBorderHoverColor)",
                         },
-                        [`&.Mui-focused .${outlinedInputClasses.notchedOutline}`]:
-                            {
-                                borderColor:
-                                    "var(--TextField-brandBorderFocusedColor)",
-                            },
+                        [`&.Mui-focused .${outlinedInputClasses.notchedOutline}`]: {
+                            borderColor: "var(--TextField-brandBorderFocusedColor)",
+                        },
                     },
                 },
             },
@@ -42,16 +39,13 @@ const theme = () =>
                 styleOverrides: {
                     root: {
                         "&::before, &::after": {
-                            borderBottom:
-                                "2px solid var(--TextField-brandBorderColor)",
+                            borderBottom: "2px solid var(--TextField-brandBorderColor)",
                         },
                         "&:hover:not(.Mui-disabled, .Mui-error):before": {
-                            borderBottom:
-                                "2px solid var(--TextField-brandBorderHoverColor)",
+                            borderBottom: "2px solid var(--TextField-brandBorderHoverColor)",
                         },
                         "&.Mui-focused:after": {
-                            borderBottom:
-                                "2px solid var(--TextField-brandBorderFocusedColor)",
+                            borderBottom: "2px solid var(--TextField-brandBorderFocusedColor)",
                         },
                     },
                 },

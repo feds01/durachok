@@ -1,0 +1,51 @@
+{
+    "$schema": "./node_modules/oxlint/configuration_schema.json",
+    "plugins": ["typescript", "react", "react-perf", "import", "unicorn", "oxc", "jsx-a11y", "promise"],
+    "categories": {
+        "correctness": "error",
+        "suspicious": "warn",
+        "perf": "warn"
+    },
+    "env": {
+        "browser": true,
+        "node": true,
+        "es2024": true
+    },
+    "rules": {
+        "no-unused-vars": ["error", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }],
+        "react-hooks/rules-of-hooks": "error",
+        "react-hooks/exhaustive-deps": "warn",
+
+        // Disable - React 17+ doesn't require React in scope
+        "react/react-in-jsx-scope": "off",
+
+        // Disable overly strict pedantic rules
+        "max-lines-per-function": "off",
+        "max-lines": "off",
+        "max-classes-per-file": "off",
+        "import/max-dependencies": "off",
+        "no-inline-comments": "off",
+
+        // Disable noisy react-perf rules for now
+        "react-perf/jsx-no-new-object-as-prop": "off",
+        "react-perf/jsx-no-new-function-as-prop": "off",
+        // Disable - remaining cases are API requirements (socket handlers, lock callbacks)
+        "require-await": "off",
+        "no-else-return": "warn",
+
+        // Accessibility - important but start as warnings
+        "jsx-a11y/click-events-have-key-events": "warn",
+        "jsx-a11y/no-static-element-interactions": "warn",
+
+        // Disable rules that conflict with valid patterns
+        // JSX-as-prop is standard pattern for MUI FormControlLabel
+        "react-perf/jsx-no-jsx-as-prop": "off",
+        // CSS imports are intentionally unassigned (side-effect imports)
+        "import/no-unassigned-import": "off",
+        // Map spread is intentional to avoid mutating original objects
+        "oxc/no-map-spread": "off",
+        // Await in loop is sometimes intentional (e.g., retry loops)
+        "no-await-in-loop": "off"
+    },
+    "ignorePatterns": ["dist", "node_modules", "*.gen.ts"]
+}

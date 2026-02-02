@@ -9,12 +9,7 @@ interface Props extends ButtonProps {
     label?: string;
 }
 
-export default function SubmitButton({
-    disabled,
-    label,
-    isSubmitting,
-    ...rest
-}: Props) {
+export default function SubmitButton({ disabled, label, isSubmitting, ...rest }: Props) {
     return (
         <Button
             variant={"contained"}
@@ -24,11 +19,7 @@ export default function SubmitButton({
             color={"primary"}
             {...rest}
         >
-            {isSubmitting ? (
-                <ThreeDots color="#FFFFFF" height={20} width={40} />
-            ) : (
-                (label ?? "Enter")
-            )}
+            {isSubmitting ? <ThreeDots color="#FFFFFF" height={20} width={40} /> : (label ?? "Enter")}
         </Button>
     );
 }

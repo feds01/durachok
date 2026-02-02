@@ -63,10 +63,7 @@ export async function getTokenFromHeaders(
  * @param res - The response object.
  * @param tokens - The tokens to set.
  */
-export function setTokensInResponse(
-    res: express.Response,
-    tokens: UserTokensResponse,
-): void {
+export function setTokensInResponse(res: express.Response, tokens: UserTokensResponse): void {
     res.set("Access-Control-Expose-Headers", "x-token, x-refresh-token");
     res.set("x-token", tokens.rawTokens.token);
     res.set("x-refresh-token", tokens.rawTokens.refreshToken ?? "");
@@ -78,9 +75,7 @@ export function setTokensInResponse(
  * @param payload - The payload to check.
  * @returns - The payload if it is valid, otherwise null.
  */
-export function ensurePayloadIsTokens(
-    payload: unknown,
-): UserTokensResponse | null {
+export function ensurePayloadIsTokens(payload: unknown): UserTokensResponse | null {
     const parsed = UserTokensResponseSchema.safeParse(payload);
 
     if (parsed.success) {

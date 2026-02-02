@@ -1,14 +1,12 @@
 {
     "name": "@durachok/web",
-    "private": true,
     "version": "0.0.0",
+    "private": true,
     "type": "module",
     "scripts": {
         "dev": "vite",
         "build": "tsc -b && vite build",
-        "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
-        "preview": "vite preview",
-        "fmt": "prettier --write src package.json"
+        "preview": "vite preview"
     },
     "dependencies": {
         "@durachok/engine": "file:./../../packages/engine",
@@ -42,30 +40,21 @@
         "superjson": "^2.2.6",
         "use-sound": "^5.0.0",
         "usehooks-ts": "^3.1.1",
-        "zod": "^4.3.6"
+        "zod": "^4.3.6",
+        "zustand": "^5.0.11"
     },
     "devDependencies": {
-        "@eslint/compat": "^2.0.2",
-        "@eslint/eslintrc": "^3.3.3",
-        "@eslint/js": "^9.39.2",
         "@tanstack/router-plugin": "^1.157.18",
-        "@trivago/prettier-plugin-sort-imports": "^6.0.2",
         "@types/node": "^25.2.0",
         "@types/react": "^19.2.10",
         "@types/react-dom": "^19.2.3",
-        "@typescript-eslint/eslint-plugin": "^8.54.0",
-        "@typescript-eslint/parser": "^8.54.0",
         "@vitejs/plugin-react": "^5.1.2",
         "@vitejs/plugin-react-swc": "^4.2.2",
         "dotenv": "^17.2.3",
-        "eslint": "^9.39.2",
-        "eslint-plugin-react-hooks": "^7.0.1",
-        "eslint-plugin-react-refresh": "^0.5.0",
-        "prettier": "^3.8.1",
         "ts-node": "^10.9.2",
         "typescript": "^5.9.3",
         "vite": "^7.3.1",
-        "vite-tsconfig-paths": "6.0.5",
-        "vite-plugin-svgr": "^4.5.0"
+        "vite-plugin-svgr": "^4.5.0",
+        "vite-tsconfig-paths": "6.0.5"
     }
 }

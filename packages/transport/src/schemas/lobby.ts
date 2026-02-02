@@ -3,16 +3,12 @@ import { PlayerSchema } from "./user";
 import { z } from "zod";
 
 /** A Game PIN consists of 6 digits. */
-export const GamePinSchema = z
-    .string()
-    .regex(/^\d{6}$/, "Game PIN is 6 digits long.");
+export const GamePinSchema = z.string().regex(/^\d{6}$/, "Game PIN is 6 digits long.");
 
 export type GamePin = z.infer<typeof GamePinSchema>;
 
 /** Represents a game passphrase, composed of the card suits. */
-export const GamePassPhraseSchema = z
-    .string()
-    .regex(/^[♡♢♣♤]{4}$/, "Game passphrase must be 4 playing card symbols.");
+export const GamePassPhraseSchema = z.string().regex(/^[♡♢♣♤]{4}$/, "Game passphrase must be 4 playing card symbols.");
 
 export type GamePassPhrase = z.infer<typeof GamePassPhraseSchema>;
 

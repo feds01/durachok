@@ -1,18 +1,18 @@
 import { HistoryState } from "@durachok/engine/src";
 import { GameState } from "@durachok/transport";
-import mongoose, { Document, Schema } from "mongoose";
+import mongoose, { HydratedDocument, Schema, Types } from "mongoose";
 
-import { IUser } from "./user.model";
-
-export interface IArchivedGame extends Document {
+export interface IArchivedGame {
     maxPlayers: number;
     randomisePlayerOrder: boolean;
-    owner: IUser["_id"];
+    owner: Types.ObjectId;
     game: {
         history: HistoryState;
         state: GameState;
     };
 }
+
+export type ArchivedGameDocument = HydratedDocument<IArchivedGame>;
 
 const ArchivedGameSchema = new Schema<IArchivedGame>({
     // game preferences need to be preserved

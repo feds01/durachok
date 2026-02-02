@@ -1,4 +1,4 @@
-import ReCAPTCHA from "react-google-recaptcha";
+import { ReCAPTCHA } from "react-google-recaptcha";
 import { useForm } from "react-hook-form";
 
 import ControlledPasswordField from "@/components/ControlledPasswordField";
@@ -19,7 +19,7 @@ const submitStyle = css`
     font-size: 2em !important;
     background-color: #3f51b5 !important;
     margin-top: 19px !important;
-
+    
     &:hover {
         background-color: #3f51b5 !important;
     }

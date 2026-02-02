@@ -68,27 +68,20 @@ const UpdateUserForm = ({ user, onResponse }: UpdateUserFormProps) => {
             `}
         >
             <Grid container maxWidth={"md"}>
-                <Grid item xs={12} sx={{ pt: 1 }}>
+                <Grid size={12} sx={{ pt: 1 }}>
                     <FieldLabel label="Name" />
                     <ControlledTextField name="name" control={form.control} />
                 </Grid>
-                <Grid item xs={12} sx={{ pt: 1 }}>
+                <Grid size={12} sx={{ pt: 1 }}>
                     <FieldLabel label="Email" />
                     <ControlledTextField name="email" control={form.control} />
                 </Grid>
-                <Grid item xs={12} sx={{ pt: 1 }}>
+                <Grid size={12} sx={{ pt: 1 }}>
                     <FieldLabel label="Password" />
-                    <ControlledPasswordField
-                        name="password"
-                        control={form.control}
-                    />
+                    <ControlledPasswordField name="password" control={form.control} />
                 </Grid>
-                <Grid item xs={12}>
-                    <SubmitButton
-                        label="Update"
-                        type="submit"
-                        isSubmitting={form.formState.isSubmitting}
-                    />
+                <Grid size={12}>
+                    <SubmitButton label="Update" type="submit" isSubmitting={form.formState.isSubmitting} />
                 </Grid>
             </Grid>
         </form>

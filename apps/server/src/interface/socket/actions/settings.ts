@@ -23,10 +23,7 @@ const onSettingsUpdate = factory.build({
         // Ensure that the lobby is not in "playing" state when
         // players are locked in.
         if (lobbyStatus !== "waiting") {
-            logger.info(
-                meta,
-                "cannot change settings when game is not waiting",
-            );
+            logger.info(meta, "cannot change settings when game is not waiting");
             client.emit("error", {
                 type: "bad_request",
                 message: "can't change settings when playing.",
