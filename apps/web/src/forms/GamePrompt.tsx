@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -46,7 +46,7 @@ const submitStyle = css`
     font-size: 2em !important;
     background-color: #3f51b5 !important;
     margin-top: 19px !important;
-
+    
     &:hover {
         background-color: #3f51b5 !important;
     }
@@ -66,104 +66,106 @@ export default function GamePrompt({ startPin, onSuccess }: Props) {
         },
     });
 
-    const onSubmit = async (info: GamePromptInput) => {
-        try {
-            const { token, refreshToken } =
-                await joinLobbyMutation.mutateAsync(info);
+    const onSubmit = useCallback(
+        async (info: GamePromptInput) => {
+            try {
+                const { token, refreshToken } = await joinLobbyMutation.mutateAsync(info);
 
-            const tokens = expr(() => {
-                if (isDef(token) && isDef(refreshToken)) {
-                    return { token, refreshToken };
-                } else {
+                const tokens = expr(() => {
+                    if (isDef(token) && isDef(refreshToken)) {
+                        return { token, refreshToken };
+                    }
+                });
+
+                onSuccess({ pin: info.pin, ...(tokens && { tokens }) });
+            } catch (e: unknown) {
+                // @@Todo: handle errors better.
+                if (e instanceof Error) {
+                    form.setError(stage.kind, {
+                        type: "manual",
+                        message: e.message,
+                    });
+                }
+            }
+        },
+        [joinLobbyMutation, onSuccess, form, stage.kind],
+    );
+
+    const next = useMemo(
+        () => async () => {
+            // We always enter the name after the `pin` stage.
+            if (stage.kind === "pin") {
+                const result = await form.trigger("pin", { shouldFocus: true });
+                if (!result) {
                     return;
                 }
-            });
 
-            onSuccess({ pin: info.pin, ...(tokens && { tokens }) });
-        } catch (e: unknown) {
-            // @@Todo: handle errors better.
-            if (e instanceof Error) {
-                form.setError(stage.kind, {
-                    type: "manual",
-                    message: e.message,
+                const info = await expr(async () => {
+                    try {
+                        return await trpcNativeClient.lobbies.getInfo.query({
+                            pin: form.getValues().pin,
+                        });
+                    } catch (e: unknown) {
+                        // @@Todo: handle errors better.
+                        if (e instanceof Error) {
+                            form.setError(stage.kind, {
+                                type: "manual",
+                                message: e.message,
+                            });
+                        }
+                        return;
+                    }
                 });
-            }
-        }
-    };
 
-    const next = async () => {
-        // We always enter the name after the `pin` stage.
-        if (stage.kind === "pin") {
-            const result = await form.trigger("pin", { shouldFocus: true });
-            if (!result) {
-                return;
-            }
-
-            const info = await expr(async () => {
-                try {
-                    return await trpcNativeClient.lobbies.getInfo.query({
-                        pin: form.getValues().pin,
-                    });
-                } catch (e: unknown) {
-                    // @@Todo: handle errors better.
-                    if (e instanceof Error) {
-                        form.setError(stage.kind, {
+                if (info) {
+                    if (info.joinable) {
+                        setStage({ kind: "name", info });
+                    } else {
+                        form.setError("pin", {
                             type: "manual",
-                            message: e.message,
+                            message: "This lobby is not joinable.",
                         });
                     }
-                    return;
-                }
-            });
-
-            if (info) {
-                if (info.joinable) {
-                    setStage({ kind: "name", info });
                 } else {
                     form.setError("pin", {
                         type: "manual",
-                        message: "This lobby is not joinable.",
+                        message: "This lobby does not exist.",
                     });
                 }
             } else {
-                form.setError("pin", {
-                    type: "manual",
-                    message: "This lobby does not exist.",
-                });
-            }
-        } else {
-            const { kind, info } = stage;
-            const { name, pin } = form.getValues();
-            const result = await form.trigger(kind, { shouldFocus: true });
-            if (!result) {
-                return;
-            }
+                const { kind, info } = stage;
+                const { name, pin } = form.getValues();
+                const result = await form.trigger(kind, { shouldFocus: true });
+                if (!result) {
+                    return;
+                }
 
-            if (kind === "name") {
-                const free =
-                    await trpcNativeClient.lobbies.nameFreeInLobby.query({
+                if (kind === "name") {
+                    const free = await trpcNativeClient.lobbies.nameFreeInLobby.query({
                         pin,
                         name,
                     });
 
-                if (!free) {
-                    form.setError("name", {
-                        type: "manual",
-                        message: "Name is already taken.",
-                    });
-                    return;
-                }
+                    if (!free) {
+                        form.setError("name", {
+                            type: "manual",
+                            message: "Name is already taken.",
+                        });
+                        return;
+                    }
 
-                if (info.passphrase) {
-                    setStage({ kind: "security", info });
+                    if (info.passphrase) {
+                        setStage({ kind: "security", info });
+                    } else {
+                        await form.handleSubmit(onSubmit)();
+                    }
                 } else {
                     await form.handleSubmit(onSubmit)();
                 }
-            } else {
-                await form.handleSubmit(onSubmit)();
             }
-        }
-    };
+        },
+        [form, onSubmit, stage],
+    );
 
     return (
         <form
@@ -231,11 +233,7 @@ export default function GamePrompt({ startPin, onSuccess }: Props) {
                     initial={{ opacity: 0, scale: 0.5 }}
                     animate={{ opacity: 1, scale: 1 }}
                 >
-                    <GamePassphraseInput
-                        pin={form.getValues().pin}
-                        control={form.control}
-                        name="security"
-                    />
+                    <GamePassphraseInput pin={form.getValues().pin} control={form.control} name="security" />
                 </motion.div>
             )}
             <SubmitButton

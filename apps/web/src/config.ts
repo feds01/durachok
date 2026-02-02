@@ -4,19 +4,15 @@ import packageJson from "../../../package.json";
 export const APP_ENV = import.meta.env.NODE_ENV ?? "dev";
 export const APP_NAME = import.meta.env.REACT_APP_NAME ?? packageJson.name;
 export const APP_DEV_VERSION = import.meta.env.REACT_APP_DEV_VERSION ?? "";
-export const APP_VERSION =
-    import.meta.env.REACT_APP_VERSION ?? packageJson.version;
+export const APP_VERSION = import.meta.env.REACT_APP_VERSION ?? packageJson.version;
 export const APP_VERSION_BRANCH = import.meta.env.REACT_APP_BRANCH ?? "";
 
 /** API Endpoint */
-export const API_URL =
-    import.meta.env.REACT_APP_API_URL ?? "http://localhost:8080/api/trpc";
-export const SOCKET_URL =
-    import.meta.env.REACT_APP_API_URL ?? "http://localhost:8080";
+export const API_URL = import.meta.env.REACT_APP_API_URL ?? "http://localhost:8080/api/trpc";
+export const SOCKET_URL = import.meta.env.REACT_APP_API_URL ?? "http://localhost:8080";
 
 /** Google ReCAPTCHA v3 secret key. */
-export const RE_CAPTCHA_SECRET =
-    import.meta.env.REACT_APP_RE_CAPTCHA_SECRET ?? "";
+export const RE_CAPTCHA_SECRET = import.meta.env.REACT_APP_RE_CAPTCHA_SECRET ?? "";
 
 /** The configuration of the application. */
 export const config = {

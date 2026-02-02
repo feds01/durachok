@@ -7,19 +7,11 @@ import { TRPCError } from "@trpc/server";
 import { customAlphabet } from "nanoid";
 import { Logger } from "pino";
 
-import Lobbies, {
-    PopulatedLobbyDocument,
-    PopulatedLobbyFields,
-} from "../models/lobby.model";
+import Lobbies, { PopulatedLobbyDocument, PopulatedLobbyFields } from "../models/lobby.model";
 import { TokenPayload } from "../schemas/auth";
 import { DBLobby, DBLobbySchema, DBPlayer } from "../schemas/lobby";
 import { assert, expr, isDef } from "../utils";
-import {
-    CommonService,
-    InvalidLobbySettingsError,
-    LobbyNotFoundError,
-    PlayerNotInLobbyError,
-} from "./common";
+import { CommonService, InvalidLobbySettingsError, LobbyNotFoundError, PlayerNotInLobbyError } from "./common";
 import { ImageService } from "./image";
 
 export class LobbyService {
@@ -65,9 +57,7 @@ export class LobbyService {
     private lobbyIntoInfo(lobby: DBLobby): LobbyInfo {
         return {
             pin: lobby.pin,
-            joinable:
-                lobby.status === "waiting" &&
-                lobby.players.length < lobby.maxPlayers,
+            joinable: lobby.status === "waiting" && lobby.players.length < lobby.maxPlayers,
             passphrase: isDef(lobby.passphrase),
             players: lobby.players.length,
             maxPlayers: lobby.maxPlayers,
@@ -107,16 +97,15 @@ export class LobbyService {
             players: await Promise.all(
                 lobby.players
                     .filter((p) => p.socket)
-                    .map(async (p) => {
+                    .map((p) => {
                         if (p.registered) {
                             return this.getUserAsPlayer(p.registered);
-                        } else {
-                            return {
-                                name: p.name,
-                                registered: null,
-                                id: p.name,
-                            };
                         }
+                        return {
+                            name: p.name,
+                            registered: null,
+                            id: p.name,
+                        };
                     }),
             ),
             owner: await this.getUserAsPlayer(lobby.owner.id),
@@ -127,14 +116,13 @@ export class LobbyService {
     public async hasAccess(token: TokenPayload, pin: string): Promise<boolean> {
         if (token.kind === "registered") {
             return await this.isUserInLobby(pin, token.user.name);
-        } else {
-            // @@Todo: There is a potential problem, if a lobby pin is re-used within
-            // the expiration time of the token, then the user could join the new
-            // lobby without the owner's permission or without going through the standard
-            // join process. Mitigation is to parametrise the token over the `id` of the
-            // lobby which should be unique.
-            return token.pin === pin;
         }
+        // @@Todo: There is a potential problem, if a lobby pin is re-used within
+        // the expiration time of the token, then the user could join the new
+        // lobby without the owner's permission or without going through the standard
+        // join process. Mitigation is to parametrise the token over the `id` of the
+        // lobby which should be unique.
+        return token.pin === pin;
     }
 
     /**
@@ -145,15 +133,11 @@ export class LobbyService {
      *
      * @returns Whether the user has owner access to the lobby.
      */
-    public async hasOwnerAccess(
-        token: TokenPayload,
-        pin: string,
-    ): Promise<boolean> {
+    public async hasOwnerAccess(token: TokenPayload, pin: string): Promise<boolean> {
         if (token.kind === "registered") {
             return isDef(await Lobbies.findOne({ pin, owner: token.user.id }));
-        } else {
-            return false;
         }
+        return false;
     }
 
     /**
@@ -165,27 +149,18 @@ export class LobbyService {
      *
      * @returns Whether the user is in the lobby.
      * */
-    public async isUserInLobby(
-        pin: string,
-        name: string,
-        userId?: string,
-    ): Promise<boolean> {
+    public async isUserInLobby(pin: string, name: string, userId?: string): Promise<boolean> {
         return isDef(
             await Lobbies.findOne({
                 pin,
-                $or: [
-                    { "players.name": name },
-                    ...(userId ? [{ "players.registered": userId }] : []),
-                ],
+                $or: [{ "players.name": name }, ...(userId ? [{ "players.registered": userId }] : [])],
             }),
         );
     }
 
     /** Get a lobby in the "DB" format. */
     private async getRaw(pin: string): Promise<DBLobby | undefined> {
-        const game = await Lobbies.findOne({ pin })
-            .populate<Pick<PopulatedLobbyFields, "owner">>("owner")
-            .exec();
+        const game = await Lobbies.findOne({ pin }).populate<Pick<PopulatedLobbyFields, "owner">>("owner").exec();
 
         if (!isDef(game)) {
             this.logger.warn("Failed to find lobby with pin: " + pin);
@@ -236,10 +211,7 @@ export class LobbyService {
     }
 
     /** Get a player by their connection id. */
-    public async getPlayerByConnectionId(
-        pin: string,
-        socket: string,
-    ): Promise<DBPlayer> {
+    public async getPlayerByConnectionId(pin: string, socket: string): Promise<DBPlayer> {
         const lobby = await this.getRaw(pin);
         if (!isDef(lobby)) {
             throw new LobbyNotFoundError();
@@ -255,9 +227,7 @@ export class LobbyService {
 
     /** Get all lobbies by a given user */
     public async getByOwner(userId: string): Promise<LobbyInfo[]> {
-        const items = await Lobbies.find({ owner: userId }).populate<
-            Pick<PopulatedLobbyFields, "owner">
-        >("owner");
+        const items = await Lobbies.find({ owner: userId }).populate<Pick<PopulatedLobbyFields, "owner">>("owner");
         const lobbies = await Promise.all(items.map((i) => this.enrich(i)));
         return lobbies.map(this.lobbyIntoInfo);
     }
@@ -288,11 +258,7 @@ export class LobbyService {
     }
 
     /** Confirm that the user is playing in the lobby. */
-    public async confirmUser(
-        pin: string,
-        name: string,
-        socket: string,
-    ): Promise<void> {
+    public async confirmUser(pin: string, name: string, socket: string): Promise<void> {
         const lobby = await this.getRaw(pin);
         assert(isDef(lobby), "modifying non-existant lobby.");
 
@@ -323,10 +289,7 @@ export class LobbyService {
     }
 
     /** Remove a player from the lobby by their connection id. */
-    public async removePlayerByConnectionId(
-        pin: string,
-        socket: string,
-    ): Promise<void> {
+    public async removePlayerByConnectionId(pin: string, socket: string): Promise<void> {
         const lobby = await this.getRaw(pin);
         assert(isDef(lobby), "modifying non-existant lobby.");
 
@@ -363,11 +326,7 @@ export class LobbyService {
      * @param socket - The socket of the player.
      * @param message - The message to send.
      */
-    public async sendMessage(
-        pin: string,
-        socket: string,
-        message: string,
-    ): Promise<Message> {
+    public async sendMessage(pin: string, socket: string, message: string): Promise<Message> {
         const lobby = await this.getRaw(pin);
         assert(isDef(lobby), "modifying non-existant lobby.");
 
@@ -407,19 +366,9 @@ export class LobbyService {
     /**
      * Create a new lobby with the given `user` as the owner and the provided game settings.
      * */
-    public async create(
-        userId: string,
-        settings: GameSettings,
-    ): Promise<{ pin: string }> {
-        const {
-            maxPlayers,
-            passphrase,
-            shortGameDeck,
-            freeForAll,
-            disableChat,
-            randomisePlayerOrder,
-            roundTimeout,
-        } = settings;
+    public async create(userId: string, settings: GameSettings): Promise<{ pin: string }> {
+        const { maxPlayers, passphrase, shortGameDeck, freeForAll, disableChat, randomisePlayerOrder, roundTimeout } =
+            settings;
 
         const pin = await this.newGamePin();
         const owner = await this.commonService.getUserDbObject(userId);
@@ -473,29 +422,19 @@ export class LobbyService {
     }
 
     /** Update the settings of a particular lobby. */
-    public async update(
-        pin: string,
-        settings: Partial<GameSettings>,
-    ): Promise<void> {
+    public async update(pin: string, settings: Partial<GameSettings>): Promise<void> {
         const lobby = await this.getInfo(pin);
         assert(isDef(lobby), "modifying non-existant lobby.");
 
-        const {
-            maxPlayers,
-            passphrase,
-            shortGameDeck,
-            freeForAll,
-            disableChat,
-            randomisePlayerOrder,
-            roundTimeout,
-        } = { ...lobby, ...settings };
+        const { maxPlayers, passphrase, shortGameDeck, freeForAll, disableChat, randomisePlayerOrder, roundTimeout } = {
+            ...lobby,
+            ...settings,
+        };
 
         // If the user tries to update the max players to be less than the current
         // player count, then we should throw an error.
         if (lobby.players > maxPlayers) {
-            throw new InvalidLobbySettingsError(
-                "Cannot reduce the max players below the current player count.",
-            );
+            throw new InvalidLobbySettingsError("Cannot reduce the max players below the current player count.");
         }
 
         try {
@@ -504,9 +443,7 @@ export class LobbyService {
                 {
                     $set: {
                         maxPlayers,
-                        ...(passphrase
-                            ? { passphrase: this.newGamePassphrase() }
-                            : {}),
+                        ...(passphrase ? { passphrase: this.newGamePassphrase() } : {}),
                         shortGameDeck,
                         freeForAll,
                         disableChat,

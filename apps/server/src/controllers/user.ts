@@ -1,8 +1,4 @@
-import {
-    type UserInfo,
-    type UserRegistration,
-    UserUpdate,
-} from "@durachok/transport";
+import { type UserInfo, type UserRegistration, UserUpdate } from "@durachok/transport";
 import { TRPCError } from "@trpc/server";
 import { Logger } from "pino";
 
@@ -36,11 +32,9 @@ export class UserService {
     ) {}
 
     /** Get a user's image  as a URL. */
-    private async getUserImageURL(
-        user: UserDocument,
-    ): Promise<string | undefined> {
+    private getUserImageURL(user: UserDocument): Promise<string | undefined> {
         if (!user.image) {
-            return;
+            return Promise.resolve(undefined);
         }
 
         return this.imageService.getUserImage(user.id);
@@ -49,10 +43,7 @@ export class UserService {
     /**
      * Get the user's credentials based on either email or username.
      */
-    public async getCredentials(input: {
-        email?: string;
-        name?: string;
-    }): Promise<Credentials | undefined> {
+    public async getCredentials(input: { email?: string; name?: string }): Promise<Credentials | undefined> {
         const { name, email } = input;
 
         const searchQuery = {
@@ -93,9 +84,7 @@ export class UserService {
     }
 
     /** Create a new user. */
-    public async create(
-        details: Omit<UserRegistration, "reCaptchaToken">,
-    ): Promise<UserInfo> {
+    public async create(details: Omit<UserRegistration, "reCaptchaToken">): Promise<UserInfo> {
         const { name, email, password, image } = details;
 
         // Check if the username or email is already taken.

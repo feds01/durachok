@@ -13,10 +13,7 @@ const FieldLabel = ({ label, sx, required = false }: FieldLabelProps) => {
         <Typography variant={"body2"} sx={{ fontWeight: "bold", ...sx }}>
             {label}
             {required && (
-                <Box
-                    component={"span"}
-                    sx={{ color: (t) => t.palette.error.main }}
-                >
+                <Box component={"span"} sx={{ color: (t) => t.palette.error.main }}>
                     *
                 </Box>
             )}

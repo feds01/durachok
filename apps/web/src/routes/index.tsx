@@ -88,8 +88,8 @@ function Index() {
                 perspective-origin: 50% 50%;
             `}
         >
-            {[...Array(12)].map((_, i) => (
-                <PlayingCardIcon index={i} key={i} />
+            {[...Array(12)].map((v, i) => (
+                <PlayingCardIcon index={i} key={v} />
             ))}
             <div
                 className={css`
@@ -101,7 +101,7 @@ function Index() {
                     height: 100%;
                     border-radius: 3px;
                     text-align: center;
-
+                    
                     @media (max-width: 600px) {
                         padding-top: 4em;
                         margin: 0 2em;

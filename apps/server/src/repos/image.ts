@@ -1,7 +1,4 @@
-import {
-    CloudFrontClient,
-    CreateInvalidationCommand,
-} from "@aws-sdk/client-cloudfront";
+import { CloudFrontClient, CreateInvalidationCommand } from "@aws-sdk/client-cloudfront";
 import {
     DeleteObjectCommand,
     GetObjectCommand,
@@ -14,13 +11,7 @@ import fs from "fs-extra";
 import { dirname } from "node:path";
 import { Logger } from "pino";
 
-import {
-    AWS_ACCESS_KEY,
-    AWS_BUCKET_NAME,
-    AWS_REGION,
-    AWS_SECRET_ACCESS_KEY,
-    UPLOAD_FOLDER,
-} from "../config";
+import { AWS_ACCESS_KEY, AWS_BUCKET_NAME, AWS_REGION, AWS_SECRET_ACCESS_KEY, UPLOAD_FOLDER } from "../config";
 import { expr } from "../utils";
 
 /** Image repository interface. */
@@ -65,13 +56,10 @@ export class S3ImageRepo implements ImageRepo {
         });
 
         try {
-            await Promise.all([
-                this.s3.send(putRequest),
-                this.cloudfront.send(invalidationRequest),
-            ]);
+            await Promise.all([this.s3.send(putRequest), this.cloudfront.send(invalidationRequest)]);
         } catch (e: unknown) {
             this.logger.warn(`Error updating user image: ${e}`);
-            throw new Error("Failed to update user image.");
+            throw new Error("Failed to update user image.", { cause: e });
         }
     }
 
@@ -84,10 +72,7 @@ export class S3ImageRepo implements ImageRepo {
         return await expr(async () => {
             try {
                 await this.s3.send(new HeadObjectCommand(params));
-                return await getSignedUrl(
-                    this.s3,
-                    new GetObjectCommand(params),
-                );
+                return await getSignedUrl(this.s3, new GetObjectCommand(params));
             } catch (e) {
                 this.logger.warn(`Error fetching user image: ${e}`);
                 return;
@@ -131,19 +116,19 @@ export class LocalImageRepo implements ImageRepo {
             await fs.ensureDir(dirname(savePath));
         } catch (e: unknown) {
             this.logger.warn(`Error creating directory: ${e}`);
-            throw new Error("Failed to save image.");
+            throw new Error("Failed to save image.", { cause: e });
         }
 
         try {
             await fs.writeFile(savePath, image);
         } catch (e: unknown) {
             this.logger.warn(`Error saving image: ${e}`);
-            throw new Error("Failed to save image.");
+            throw new Error("Failed to save image.", { cause: e });
         }
     }
 
-    async getImage(path: string): Promise<string | undefined> {
-        return `${this.hostInfo.hostname}/${this.constructPath(path)}`;
+    getImage(path: string): Promise<string | undefined> {
+        return Promise.resolve(`${this.hostInfo.hostname}/${this.constructPath(path)}`);
     }
 
     async deleteImage(path: string): Promise<void> {
@@ -153,7 +138,7 @@ export class LocalImageRepo implements ImageRepo {
             await fs.remove(deletePath);
         } catch (e: unknown) {
             this.logger.warn(`Error deleting image: ${e}`);
-            throw new Error("Failed to delete image.");
+            throw new Error("Failed to delete image.", { cause: e });
         }
     }
 }

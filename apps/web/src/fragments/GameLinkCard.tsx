@@ -17,9 +17,9 @@ const card = css`
     box-shadow:
         0 10px 20px rgba(0, 0, 0, 0.19),
         0 6px 6px rgba(0, 0, 0, 0.23);
-
+    
     color: white;
-
+    
     &:hover {
         cursor: pointer;
     }
@@ -35,12 +35,7 @@ type Props = {
     maxPlayers: number;
 };
 
-export default function GameLinkCard({
-    pin,
-    status,
-    players,
-    maxPlayers,
-}: Props) {
+export default function GameLinkCard({ pin, status, players, maxPlayers }: Props) {
     const navigator = useNavigate();
     const deleteGame = trpc.lobbies.delete.useMutation();
 
@@ -51,10 +46,7 @@ export default function GameLinkCard({
     };
 
     return (
-        <Box
-            className={card}
-            onClick={() => navigator({ to: `/lobby/$pin`, params: { pin } })}
-        >
+        <Box className={card} onClick={() => navigator({ to: `/lobby/$pin`, params: { pin } })}>
             <Box sx={{ flex: 1 }}>
                 <Box
                     sx={{
@@ -82,12 +74,7 @@ export default function GameLinkCard({
                         justify-content: center;
                     `}
                 >
-                    <Button
-                        variant="contained"
-                        onClick={onDelete}
-                        disableElevation
-                        color="secondary"
-                    >
+                    <Button variant="contained" onClick={onDelete} disableElevation color="secondary">
                         Delete
                     </Button>
                 </Box>

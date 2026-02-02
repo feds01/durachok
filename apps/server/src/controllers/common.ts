@@ -2,10 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { Logger } from "pino";
 
 import Games, { GameDocument } from "../models/game.model";
-import Lobbies, {
-    PopulatedLobbyDocument,
-    PopulatedLobbyFields,
-} from "../models/lobby.model";
+import Lobbies, { PopulatedLobbyDocument, PopulatedLobbyFields } from "../models/lobby.model";
 import User, { UserDocument } from "../models/user.model";
 import { DBGameSelectionSchema } from "../schemas/game";
 import { isDef } from "../utils";
@@ -72,12 +69,8 @@ export class CommonService {
     }
 
     /** Find a lobby by `PIN` and return the underling DB object. */
-    public async getLobbyDbObject(
-        pin: string,
-    ): Promise<PopulatedLobbyDocument> {
-        const lobby = await Lobbies.findOne({ pin }).populate<
-            Pick<PopulatedLobbyFields, "owner">
-        >("owner");
+    public async getLobbyDbObject(pin: string): Promise<PopulatedLobbyDocument> {
+        const lobby = await Lobbies.findOne({ pin }).populate<Pick<PopulatedLobbyFields, "owner">>("owner");
 
         if (!isDef(lobby)) {
             throw new LobbyNotFoundError();
@@ -93,14 +86,10 @@ export class CommonService {
             throw new Error("Lobby not found");
         }
 
-        const parsedDoc = await DBGameSelectionSchema.safeParseAsync(
-            doc.toObject(),
-        );
+        const parsedDoc = await DBGameSelectionSchema.safeParseAsync(doc.toObject());
 
         if (!parsedDoc.success) {
-            this.logger.error(
-                "Failed to parse game selection:\n" + parsedDoc.error,
-            );
+            this.logger.error("Failed to parse game selection:\n" + parsedDoc.error);
             throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
         }
 

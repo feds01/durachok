@@ -33,9 +33,7 @@ export interface PopulatedLobbyFields {
 }
 
 // Type that matches what Mongoose's .populate<Pick<PopulatedLobbyFields, "owner">>() returns
-export type PopulatedLobbyDocument = HydratedDocument<
-    MergeType<ILobby, PopulatedLobbyFields>
->;
+export type PopulatedLobbyDocument = HydratedDocument<MergeType<ILobby, PopulatedLobbyFields>>;
 
 const LobbySchema = new Schema<ILobby>({
     pin: { type: String, required: true, unique: true },

@@ -1,9 +1,5 @@
-import {
-    ErrorMessage,
-    ErrorMessageType,
-    ErrorSummary,
-} from "@durachok/transport";
-import z, { ZodError } from "zod";
+import { ErrorMessage, ErrorMessageType, ErrorSummary } from "@durachok/transport";
+import { z, ZodError } from "zod";
 
 import { expr } from ".";
 
@@ -14,9 +10,7 @@ import { expr } from ".";
  * @param error - Any ZodError from a schema
  * @returns A transformed readable error map
  */
-export function transformZodErrorIntoErrorSummary<T>(
-    error: ZodError<T>,
-): ErrorSummary {
+export function transformZodErrorIntoErrorSummary<T>(error: ZodError<T>): ErrorSummary {
     const errorMap = new Map();
 
     error.issues.forEach((issue) => {
@@ -92,12 +86,7 @@ export class ApiError extends Error {
      * @param message - The error message that will be returned to the client.
      * @param errors - The error summary that will be returned to the client.
      */
-    constructor(
-        code: number,
-        internal: InternalApiErrorCode,
-        message: string,
-        errors?: ErrorSummary,
-    ) {
+    constructor(code: number, internal: InternalApiErrorCode, message: string, errors?: ErrorSummary) {
         super(message);
 
         this.internalCode = internal;
@@ -105,11 +94,7 @@ export class ApiError extends Error {
         this.errors = errors;
     }
 
-    static internal(
-        code: InternalApiErrorCode,
-        message: string,
-        errors?: ErrorSummary,
-    ) {
+    static internal(code: InternalApiErrorCode, message: string, errors?: ErrorSummary) {
         return new ApiError(500, code, message, errors);
     }
 
@@ -122,10 +107,7 @@ export class ApiError extends Error {
      * account if the error is an internal error or an HTTP error.
      */
     private get errorCode(): ErrorMessageType {
-        if (
-            this.internalCode &&
-            this.internalCode !== InternalApiErrorCode.None
-        ) {
+        if (this.internalCode && this.internalCode !== InternalApiErrorCode.None) {
             switch (this.internalCode) {
                 case InternalApiErrorCode.NotFound:
                     return "not_found";

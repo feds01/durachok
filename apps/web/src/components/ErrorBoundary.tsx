@@ -23,9 +23,8 @@ function stateFromError(error: Error, info?: React.ErrorInfo) {
     const message = expr(() => {
         if (typeof error === "string") {
             return error;
-        } else {
-            return error.stack ?? error.message;
         }
+        return error.stack ?? error.message;
     });
 
     return {
@@ -34,10 +33,7 @@ function stateFromError(error: Error, info?: React.ErrorInfo) {
     };
 }
 
-class ErrorContainer extends React.Component<
-    ErrorContainerProps,
-    ErrorContainerState
-> {
+class ErrorContainer extends React.Component<ErrorContainerProps, ErrorContainerState> {
     constructor(props: ErrorContainerProps) {
         super(props);
         this.state = stateFromError(props.error, props.info);
@@ -53,10 +49,7 @@ class ErrorContainer extends React.Component<
         // ignore ResizeObserver loop limit exceeded
         // this is ok in several scenarios according to
         // https://github.com/WICG/resize-observer/issues/38
-        if (
-            event.message === "Script error." ||
-            event.message === "ResizeObserver loop limit exceeded"
-        ) {
+        if (event.message === "Script error." || event.message === "ResizeObserver loop limit exceeded") {
             // @Cleanup
             return;
         }
@@ -64,13 +57,13 @@ class ErrorContainer extends React.Component<
         const message = expr(() => {
             if (typeof event.error === "string") {
                 return event.error;
-            } else {
-                if (isDef(event.error) && event.error instanceof Error) {
-                    return event.error.stack ?? event.error.message;
-                }
-
-                return JSON.stringify(event);
             }
+
+            if (isDef(event.error) && event.error instanceof Error) {
+                return event.error.stack ?? event.error.message;
+            }
+
+            return JSON.stringify(event);
         });
 
         this.setState({
@@ -102,7 +95,7 @@ class ErrorContainer extends React.Component<
                         flex-direction: column;
                         justify-content: center;
                         align-items: center;
-
+                        
                         height: 100%;
                         width: 100%;
                     `}
@@ -118,22 +111,17 @@ class ErrorContainer extends React.Component<
                                 display: flex;
                                 flex-direction: row;
                                 align-items: center;
-
+                                
                                 & h1 {
                                     margin: 0 0 0 8px;
                                     font-size: 40px;
                                 }
                             `}
                         >
-                            <SentimentVeryDissatisfiedIcon
-                                style={{ fontSize: 40 }}
-                            />
+                            <SentimentVeryDissatisfiedIcon style={{ fontSize: 40 }} />
                             <h1>Something went wrong!</h1>
                         </div>
-                        <h2>
-                            Please help out and email or send me this bug
-                            string.
-                        </h2>
+                        <h2>Please help out and email or send me this bug string.</h2>
                         <Divider />
                         <b
                             className={css`
@@ -144,8 +132,7 @@ class ErrorContainer extends React.Component<
                         </b>
                         <Divider />
                         <p>
-                            Version: Durachok@{APP_VERSION}/{APP_DEV_VERSION} on
-                            branch {APP_VERSION_BRANCH}
+                            Version: Durachok@{APP_VERSION}/{APP_DEV_VERSION} on branch {APP_VERSION_BRANCH}
                             <br />
                         </p>
                     </div>

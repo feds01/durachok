@@ -1,6 +1,6 @@
 import { Buffer } from "buffer";
 import { useEffect, useState } from "react";
-import superjson from "superjson";
+import { registerCustom } from "superjson";
 
 import { useAuthDispatch, useAuthState } from "@/contexts/auth";
 import { routeTree } from "@/routeTree.gen";
@@ -31,7 +31,7 @@ declare module "@tanstack/react-router" {
  *
  * @@Todo: maybe move this to `packages/transport`?
  */
-superjson.registerCustom<Buffer, string>(
+registerCustom<Buffer, string>(
     {
         isApplicable: (value): value is Buffer => Buffer.isBuffer(value),
         serialize: (value) => value.toString("base64"),

@@ -17,9 +17,7 @@ const UserProfileImageUpdateSchema = z.object({
     image: z.instanceof(Buffer),
 });
 
-export type UserProfileImageUpdate = z.infer<
-    typeof UserProfileImageUpdateSchema
->;
+export type UserProfileImageUpdate = z.infer<typeof UserProfileImageUpdateSchema>;
 
 export default function UpdateUserProfileImageForm({ onResponse }: Props) {
     const updateWith = trpc.users.update.useMutation();
@@ -62,17 +60,10 @@ export default function UpdateUserProfileImageForm({ onResponse }: Props) {
                         form.handleSubmit(onSubmit)();
                     }}
                 />
-                {form.formState.errors.image && (
-                    <div>{form.formState.errors.image.message}</div>
-                )}
+                {form.formState.errors.image && <div>{form.formState.errors.image.message}</div>}
 
                 <label htmlFor="upload-profile">
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        component="span"
-                        sx={{ mt: 1 }}
-                    >
+                    <Button variant="contained" color="primary" component="span" sx={{ mt: 1 }}>
                         Upload
                     </Button>
                 </label>

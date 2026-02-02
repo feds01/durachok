@@ -1,6 +1,6 @@
 import type { AppRouter } from "../../../server/src/interface/routes";
 import { Buffer } from "buffer";
-import superjson from "superjson";
+import { SuperJSON, registerCustom } from "superjson";
 
 import { API_URL } from "@/config";
 import { getAuthHeader } from "@/utils/auth";
@@ -15,7 +15,7 @@ const trpc = rq.createTRPCReact<AppRouter>();
  *
  * @@Todo: maybe move this to `packages/transport`?
  */
-superjson.registerCustom<Buffer, string>(
+registerCustom<Buffer, string>(
     {
         isApplicable: (value): value is Buffer => Buffer.isBuffer(value),
         serialize: (value) => value.toString("base64"),
@@ -32,7 +32,7 @@ export const trpcNativeClient = native.createTRPCClient<AppRouter>({
             headers() {
                 return getAuthHeader();
             },
-            transformer: superjson,
+            transformer: SuperJSON,
         }),
     ],
 });
@@ -46,7 +46,7 @@ export const createReactQueryTRPClient = () => {
                 headers() {
                     return getAuthHeader();
                 },
-                transformer: superjson,
+                transformer: SuperJSON,
             }),
         ],
     });
