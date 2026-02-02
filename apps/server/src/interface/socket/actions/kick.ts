@@ -31,10 +31,7 @@ const onKick = factory.build({
         }
 
         try {
-            const player = await ctx.lobbyService.getPlayerByConnectionId(
-                pin,
-                id,
-            );
+            const player = await ctx.lobbyService.getPlayerByConnectionId(pin, id);
 
             logger.info(meta, "removing player from lobby");
             await ctx.lobbyService.removePlayerByConnectionId(pin, id);
@@ -47,11 +44,7 @@ const onKick = factory.build({
             logger.info(meta, "player removed");
         } catch (err: unknown) {
             if (err instanceof PlayerNotInLobbyError) {
-                logger.warn(
-                    meta,
-                    "failed to kick player from lobby because they don't exist",
-                    err,
-                );
+                logger.warn(meta, "failed to kick player from lobby because they don't exist", err);
                 client.emit("error", {
                     type: "bad_request",
                     message: "invalid player.",

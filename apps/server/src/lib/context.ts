@@ -32,15 +32,8 @@ export const createContext = (logger: Logger, hostname: string = "") => {
     const commonService = new CommonService(logger);
     const imageService = new ImageService(logger, imageRepo);
     const lobbyService = new LobbyService(logger, commonService, imageService);
-    const userService = new UserService(
-        logger,
-        commonService,
-        authService,
-        imageService,
-        lobbyService,
-    );
-    const gameService = (lobby: Lobby) =>
-        new GameService(lobby, logger, commonService);
+    const userService = new UserService(logger, commonService, authService, imageService, lobbyService);
+    const gameService = (lobby: Lobby) => new GameService(lobby, logger, commonService);
 
     return {
         logger,

@@ -1,9 +1,5 @@
-import {
-    ErrorMessage,
-    ErrorMessageType,
-    ErrorSummary,
-} from "@durachok/transport";
-import { ZodError } from "zod";
+import { ErrorMessage, ErrorMessageType, ErrorSummary } from "@durachok/transport";
+import { z, ZodError } from "zod";
 
 import { expr } from ".";
 
@@ -14,24 +10,22 @@ import { expr } from ".";
  * @param error - Any ZodError from a schema
  * @returns A transformed readable error map
  */
-export function transformZodErrorIntoErrorSummary<T>(
-    error: ZodError<T>,
-): ErrorSummary {
+export function transformZodErrorIntoErrorSummary<T>(error: ZodError<T>): ErrorSummary {
     const errorMap = new Map();
 
-    error.errors.forEach((errorItem) => {
-        const path = errorItem.path.join(".");
+    error.issues.forEach((issue) => {
+        const path = issue.path.join(".");
 
         // Perform some transformation on the ZodError to get into a more readable format
         const responseError = expr(() => {
-            switch (errorItem.code) {
+            switch (issue.code) {
                 case "invalid_type":
                     return {
-                        message: `Expected to receive a '${errorItem.expected}', but got '${errorItem.received}'`,
+                        message: `Expected to receive a '${issue.expected}', but got '${issue.input}'`,
                     };
                 default:
                     return {
-                        message: errorItem.message,
+                        message: issue.message,
                     };
             }
         });
@@ -40,7 +34,8 @@ export function transformZodErrorIntoErrorSummary<T>(
 
         return {
             message: error.message,
-            path: errorItem.path.map((item) => item.toString()),
+            description: z.prettifyError(error),
+            path: issue.path.map((item) => item.toString()),
         };
     });
 
@@ -91,12 +86,7 @@ export class ApiError extends Error {
      * @param message - The error message that will be returned to the client.
      * @param errors - The error summary that will be returned to the client.
      */
-    constructor(
-        code: number,
-        internal: InternalApiErrorCode,
-        message: string,
-        errors?: ErrorSummary,
-    ) {
+    constructor(code: number, internal: InternalApiErrorCode, message: string, errors?: ErrorSummary) {
         super(message);
 
         this.internalCode = internal;
@@ -104,11 +94,7 @@ export class ApiError extends Error {
         this.errors = errors;
     }
 
-    static internal(
-        code: InternalApiErrorCode,
-        message: string,
-        errors?: ErrorSummary,
-    ) {
+    static internal(code: InternalApiErrorCode, message: string, errors?: ErrorSummary) {
         return new ApiError(500, code, message, errors);
     }
 
@@ -121,10 +107,7 @@ export class ApiError extends Error {
      * account if the error is an internal error or an HTTP error.
      */
     private get errorCode(): ErrorMessageType {
-        if (
-            this.internalCode &&
-            this.internalCode !== InternalApiErrorCode.None
-        ) {
+        if (this.internalCode && this.internalCode !== InternalApiErrorCode.None) {
             switch (this.internalCode) {
                 case InternalApiErrorCode.NotFound:
                     return "not_found";

@@ -18,9 +18,7 @@ describe("Game tests", () => {
         const game = new Game(["player1", "player2"], null, DEFAULT_SETTINGS);
         const save = game.serialize();
 
-        expect(
-            Game.fromState(save.state, save.history, DEFAULT_SETTINGS),
-        ).toStrictEqual(game);
+        expect(Game.fromState(save.state, save.history, DEFAULT_SETTINGS)).toStrictEqual(game);
     });
 
     test("Game.fromState re-creates correct state after move", () => {
@@ -31,8 +29,6 @@ describe("Game tests", () => {
         game.addCardToTableTop(attacker, game.getPlayer(attacker).deck[0]);
 
         const save = game.serialize();
-        expect(
-            Game.fromState(save.state, save.history, DEFAULT_SETTINGS),
-        ).toStrictEqual(game);
+        expect(Game.fromState(save.state, save.history, DEFAULT_SETTINGS)).toStrictEqual(game);
     });
 });

@@ -15,7 +15,7 @@ const ControlledTextField = <T extends FieldValues>({
     textFieldProps,
 }: ControlledTextFieldProps<T>): ReactElement => {
     const {
-        field: { ref: _, ...inputProps },
+        field: { ref: _ref, ...inputProps },
         fieldState: { error },
     } = useController({
         name,

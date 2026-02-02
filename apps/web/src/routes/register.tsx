@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { z } from "zod";
 
 import Logo from "@/components/Logo";
@@ -25,10 +25,10 @@ const container = css`
     justify-content: center;
     height: 100%;
     align-items: center;
-
+    
     @media (max-width: 500px) {
         justify-content: flex-start;
-
+    
         & > div {
             display: flex;
             flex-direction: column;
@@ -45,22 +45,22 @@ const login = css`
         0 6px 6px rgba(0, 0, 0, 0.23);
     padding: 5em 2em;
     border-radius: 12px;
-
+    
     width: 480px;
     display: flex;
     flex-direction: column;
     flex-wrap: wrap;
     margin: 0 auto;
-
+    
     & input {
         background: #3b3d54;
     }
-
+    
     & h2 {
         font-size: 28px;
         font-family: "Cabin", sans-serif;
     }
-
+    
     @media (max-width: 500px) {
         flex-grow: 1;
         width: 100% !important;
@@ -75,18 +75,21 @@ export default function Login() {
     const { redirect } = Route.useSearch();
     const [state, dispatch] = useAuth();
 
-    const onSuccess = (result: AuthResult) => {
-        const { token, refreshToken, ...user } = result;
+    const onSuccess = useMemo(
+        () => (result: AuthResult) => {
+            const { token, refreshToken, ...user } = result;
 
-        dispatch({
-            type: "login",
-            payload: {
-                token,
-                refreshToken,
-                user: { kind: "registered", ...user },
-            },
-        });
-    };
+            dispatch({
+                type: "login",
+                payload: {
+                    token,
+                    refreshToken,
+                    user: { kind: "registered", ...user },
+                },
+            });
+        },
+        [dispatch],
+    );
 
     // @@Hack: we should be able to rely on `router.invalidate()` which
     // should reset the context of the router, and hence re-direct use to
@@ -113,14 +116,13 @@ export default function Login() {
                         className={css`
                             color: white;
                             font-size: 15px;
-
+                            
                             & a {
                                 color: dodgerblue;
                             }
                         `}
                     >
-                        Already registered? Login{" "}
-                        <Link to={"/login"}>here</Link>
+                        Already registered? Login <Link to={"/login"}>here</Link>
                     </p>
                 </div>
             </motion.div>

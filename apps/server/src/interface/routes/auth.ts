@@ -1,8 +1,4 @@
-import {
-    UserAuthResponseSchema,
-    UserLoginSchema,
-    UserRegistrationSchema,
-} from "@durachok/transport";
+import { UserAuthResponseSchema, UserLoginSchema, UserRegistrationSchema } from "@durachok/transport";
 import { TRPCError } from "@trpc/server";
 
 import { ENV } from "../../config";
@@ -55,10 +51,7 @@ export const authRouter = router({
             }
 
             // Now check with auth service to see if the credentials are valid.
-            const valid = await ctx.authService.verify(
-                credentials.password,
-                input.password,
-            );
+            const valid = await ctx.authService.verify(credentials.password, input.password);
             if (!valid) {
                 throw new TRPCError({
                     code: "UNAUTHORIZED",
@@ -79,29 +72,25 @@ export const authRouter = router({
             };
         }),
 
-    refresh: authProcedure
-        .output(UserTokensResponseSchema)
-        .mutation(async (req) => {
-            const { ctx } = req;
+    refresh: authProcedure.output(UserTokensResponseSchema).mutation(async (req) => {
+        const { ctx } = req;
 
-            if (!req.ctx.rawTokens.refreshToken) {
-                throw new TRPCError({
-                    code: "UNAUTHORIZED",
-                    message: "No refresh token provided",
-                });
-            }
+        if (!req.ctx.rawTokens.refreshToken) {
+            throw new TRPCError({
+                code: "UNAUTHORIZED",
+                message: "No refresh token provided",
+            });
+        }
 
-            const tokens = await ctx.authService.refreshTokens(
-                req.ctx.rawTokens.refreshToken,
-            );
+        const tokens = await ctx.authService.refreshTokens(req.ctx.rawTokens.refreshToken);
 
-            if (!tokens) {
-                throw new TRPCError({
-                    code: "UNAUTHORIZED",
-                    message: "Invalid refresh token",
-                });
-            }
+        if (!tokens) {
+            throw new TRPCError({
+                code: "UNAUTHORIZED",
+                message: "Invalid refresh token",
+            });
+        }
 
-            return tokens;
-        }),
+        return tokens;
+    }),
 });

@@ -74,7 +74,7 @@ export const reducer = (state: AuthState, action: AuthAction): AuthState => {
             localStorage.setItem("token", action.payload.token);
             localStorage.setItem("refreshToken", action.payload.refreshToken);
             localStorage.setItem("user", JSON.stringify(action.payload.user));
-            return { "kind": "logged-in", ...action.payload };
+            return { kind: "logged-in", ...action.payload };
         case "update":
             assert(state.kind === "logged-in");
             localStorage.setItem("user", JSON.stringify(action.payload));

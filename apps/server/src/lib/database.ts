@@ -1,4 +1,4 @@
-import Locked from "@3xpo/locked";
+import { Locked } from "@3xpo/locked";
 import mongoose from "mongoose";
 
 import { MONGO_URI } from "../config";
@@ -42,10 +42,7 @@ const LOCK = new Locked();
  * @param key The key to lock.
  * @param func The function to run.
  */
-export const withLock = async <T>(
-    key: string,
-    func: () => Promise<T>,
-): Promise<T> => {
+export const withLock = async <T>(key: string, func: () => Promise<T>): Promise<T> => {
     const unlock = await LOCK.lock(key);
 
     try {

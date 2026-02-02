@@ -40,9 +40,7 @@ export const NameFreeInLobbyRequestSchema = ByPinRequestSchema.extend({
     name: UserNameSchema,
 });
 
-export type NameFreeInLobbyRequest = z.infer<
-    typeof NameFreeInLobbyRequestSchema
->;
+export type NameFreeInLobbyRequest = z.infer<typeof NameFreeInLobbyRequestSchema>;
 
 /**
  * A simplified Lobby object containing only information

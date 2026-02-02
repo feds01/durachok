@@ -19,7 +19,7 @@ const io = new Server({
 /**
  * Attach the socket server to the HTTP server.
  */
-export async function connectSocket(server: HTTPServer) {
+export function connectSocket(server: HTTPServer) {
     logger.info("Attempting to connect socket server to HTTP server");
 
     // Create the context, and prepare it for being passed into

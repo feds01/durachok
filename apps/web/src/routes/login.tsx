@@ -16,11 +16,8 @@ const LoginSearchSchema = z.object({
 
 export const Route = createFileRoute("/login")({
     validateSearch: (search) => LoginSearchSchema.parse(search),
-    beforeLoad: async ({ context, search }) => {
-        if (
-            context.auth.kind === "logged-in" &&
-            context.auth.user.kind === "registered"
-        ) {
+    beforeLoad: ({ context, search }) => {
+        if (context.auth.kind === "logged-in" && context.auth.user.kind === "registered") {
             throw redirect({
                 to: search.redirect ?? "/user",
             });
@@ -35,10 +32,10 @@ const container = css`
     justify-content: center;
     height: 100%;
     align-items: center;
-
+    
     @media (max-width: 500px) {
         justify-content: flex-start;
-
+    
         & > div {
             display: flex;
             flex-direction: column;
@@ -55,22 +52,22 @@ const login = css`
         0 6px 6px rgba(0, 0, 0, 0.23);
     padding: 5em 2em;
     border-radius: 12px;
-
+    
     width: 480px;
     display: flex;
     flex-direction: column;
     flex-wrap: wrap;
     margin: 0 auto;
-
+    
     & input {
         background: #3b3d54;
     }
-
+    
     & h2 {
         font-size: 28px;
         font-family: "Cabin", sans-serif;
     }
-
+    
     @media (max-width: 500px) {
         flex-grow: 1;
         width: 100% !important;
@@ -123,14 +120,13 @@ export default function Login() {
                         className={css`
                             color: white;
                             font-size: 15px;
-
+                            
                             & a {
                                 color: dodgerblue;
                             }
                         `}
                     >
-                        New User? Create account{" "}
-                        <Link to={"/register"}>here</Link>
+                        New User? Create account <Link to={"/register"}>here</Link>
                     </p>
                 </div>
             </motion.div>

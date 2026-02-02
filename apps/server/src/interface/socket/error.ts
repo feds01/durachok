@@ -15,7 +15,7 @@ export function transformErrorIntoMessage(error: Error): ErrorMessage {
         return {
             type: "bad_request",
             message: `invalid event ${error.name} sent`,
-            details: transformZodErrorIntoErrorSummary(error.originalError),
+            details: transformZodErrorIntoErrorSummary(error.cause),
         };
     } else if (error instanceof ApiError) {
         return error.toMessage();

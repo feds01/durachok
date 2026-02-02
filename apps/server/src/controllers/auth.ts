@@ -3,11 +3,7 @@ import jwt from "jsonwebtoken";
 import { Logger } from "pino";
 
 import { JWT_REFRESH_SECRET, JWT_SECRET } from "../config";
-import {
-    RawTokenPayload,
-    TokenPayload,
-    UserTokensResponse,
-} from "../schemas/auth";
+import { RawTokenPayload, TokenPayload, UserTokensResponse } from "../schemas/auth";
 import { expr, isDef } from "../utils";
 
 type Tokens = {
@@ -26,9 +22,7 @@ export class AuthService {
      * @param token - The token to verify.
      * @returns The token payload if the token is valid, otherwise undefined.
      */
-    public verifyTokenPayload(
-        rawPayload: string | jwt.JwtPayload | undefined,
-    ): TokenPayload | undefined {
+    public verifyTokenPayload(rawPayload: string | jwt.JwtPayload | undefined): TokenPayload | undefined {
         if (!isDef(rawPayload)) {
             return undefined;
         }
@@ -40,7 +34,7 @@ export class AuthService {
                 }
 
                 return RawTokenPayload.parse(rawPayload);
-            } catch (_e: unknown) {
+            } catch {
                 return null;
             }
         });
@@ -60,13 +54,12 @@ export class AuthService {
                     id: data.id,
                 },
             };
-        } else {
-            return {
-                kind: "anonymous",
-                name: data.name,
-                pin: data.pin,
-            };
         }
+        return {
+            kind: "anonymous",
+            name: data.name,
+            pin: data.pin,
+        };
     }
 
     /**
@@ -74,23 +67,21 @@ export class AuthService {
      *
      * This will use a hashing algorithm to create a new password.
      */
-    public async hashPassword(password: string): Promise<string> {
+    public hashPassword(password: string): Promise<string> {
         return hash(password);
     }
 
     /**
      * Verify a password.
      */
-    public async verify(hash: string, password: string): Promise<boolean> {
+    public verify(hash: string, password: string): Promise<boolean> {
         return verify(hash, password);
     }
 
     /**
      * Create a new set of tokens.
      */
-    public async createTokens(
-        payload: RawTokenPayload["data"],
-    ): Promise<Tokens> {
+    public createTokens(payload: RawTokenPayload["data"]): Tokens {
         const token = jwt.sign({ data: payload }, JWT_SECRET, {
             expiresIn: "1h",
         });
@@ -111,13 +102,8 @@ export class AuthService {
      *
      * @@Todo: don't refresh if the user was deleted.
      */
-    public async refreshTokens(
-        refreshToken: string,
-    ): Promise<UserTokensResponse | undefined> {
-        const decodedToken = await this.verifyToken(
-            refreshToken,
-            JWT_REFRESH_SECRET,
-        );
+    public refreshTokens(refreshToken: string): UserTokensResponse | undefined {
+        const decodedToken = this.verifyToken(refreshToken, JWT_REFRESH_SECRET);
 
         if (!isDef(decodedToken)) {
             return undefined;
@@ -130,16 +116,15 @@ export class AuthService {
                     name: decodedToken.name,
                     pin: decodedToken.pin,
                 };
-            } else {
-                return {
-                    name: decodedToken.user.name,
-                    email: decodedToken.user.email,
-                    id: decodedToken.user.id,
-                };
             }
+            return {
+                name: decodedToken.user.name,
+                email: decodedToken.user.email,
+                id: decodedToken.user.id,
+            };
         });
 
-        const newTokens = await this.createTokens(rawPayload);
+        const newTokens = this.createTokens(rawPayload);
 
         return {
             rawTokens: {
@@ -150,7 +135,7 @@ export class AuthService {
         };
     }
 
-    async verifyToken(token: unknown, secret: string = JWT_SECRET) {
+    verifyToken(token: unknown, secret: string = JWT_SECRET) {
         // @@Todo: perhaps we should throw an error?
         if (typeof token !== "string") {
             return undefined;

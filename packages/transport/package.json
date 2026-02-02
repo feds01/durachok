@@ -2,32 +2,29 @@
     "name": "@durachok/transport",
     "version": "1.0.0",
     "description": "Transport and communication utilities for Durachok",
+    "license": "MIT",
+    "author": "Alexander. E. Fedotov",
+    "repository": "https://github.com/feds01/durachok",
+    "type": "module",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
-    "type": "module",
     "exports": {
         ".": {
-            "import": "./dist/index.js",
-            "types": "./dist/index.d.ts"
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js"
         }
     },
     "scripts": {
         "prepare": "npm run build",
         "build": "tsc --declaration",
-        "check": "tsc --noEmit",
-        "fmt": "prettier --write ."
+        "check": "tsc --noEmit"
     },
-    "repository": "https://github.com/feds01/durachok",
-    "author": "Alexander. E. Fedotov",
-    "license": "MIT",
     "dependencies": {
         "buffer": "^6.0.3",
         "zod": "^4.2.1"
     },
     "devDependencies": {
-        "@trivago/prettier-plugin-sort-imports": "^6.0.1",
-        "@types/node": "^24.0.15",
-        "prettier": "^3.7.4",
-        "typescript": "^5.8.3"
+        "@types/node": "^25.2.0",
+        "typescript": "^5.9.3"
     }
 }

@@ -5,13 +5,11 @@ import { expr } from "./utils";
 config();
 
 /** Database configurations */
-export const MONGO_URI =
-    process.env.MONGODB_URI || "mongodb://localhost:27017/db";
+export const MONGO_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/db";
 
 /** JWT keys and configurations */
 export const JWT_SECRET = process.env.JWT_SECRET_KEY || "secret";
-export const JWT_REFRESH_SECRET =
-    process.env.JWT_REFRESH_SECRET_KEY || "secret";
+export const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET_KEY || "secret";
 
 /** Networking configurations */
 export const PORT = process.env.PORT || 8080;
@@ -29,12 +27,7 @@ export const UPLOAD_FOLDER = process.env.UPLOAD_FOLDER || "uploads";
 
 export const IMAGE_STORAGE = expr(() => {
     if (process.env.IMAGE_STORAGE === "s3") {
-        if (
-            !AWS_ACCESS_KEY ||
-            !AWS_SECRET_ACCESS_KEY ||
-            !AWS_REGION ||
-            !AWS_BUCKET_NAME
-        ) {
+        if (!AWS_ACCESS_KEY || !AWS_SECRET_ACCESS_KEY || !AWS_REGION || !AWS_BUCKET_NAME) {
             return "local";
         }
     }

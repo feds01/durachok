@@ -1,13 +1,21 @@
 # Editor configs
-
 .vscode/
 
-# Node installations
+# Claude Code local settings
+.claude/
 
+# Node installations
 node_modules/
 .turbo
 
+# Build output
+dist/
+build/
+
+# Environment files
+.env
+.env.local
+.env.*.local
 
 # Old sources
-
 old/

@@ -39,10 +39,7 @@ const onJoin = factory.build({
             await game.addPlayer(name);
         } catch (e: unknown) {
             if (e instanceof LobbyNotFoundError) {
-                logger.warn(
-                    { ...meta, name },
-                    "User tried to connect to lobby, but their entry couldn't be found.",
-                );
+                logger.warn({ ...meta, name }, "User tried to connect to lobby, but their entry couldn't be found.");
             } else {
                 logger.warn(meta, "Error confirming user", e);
             }

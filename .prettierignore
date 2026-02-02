@@ -1,0 +1,9 @@
+# Generated files
+**/routeTree.gen.ts
+
+# Build output
+dist/
+build/
+
+# Dependencies
+node_modules/

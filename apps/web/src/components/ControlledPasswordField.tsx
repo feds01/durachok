@@ -19,7 +19,7 @@ export default function ControlledPasswordField<T extends FieldValues>({
 }: Props<T>): ReactElement {
     const [showPassword, setShowPassword] = useState<boolean>(false);
     const {
-        field: { ref: _, ...inputProps },
+        field: { ref: _ref, ...inputProps },
         fieldState: { error },
     } = useController({
         name,

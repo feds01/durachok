@@ -1,4 +1,3 @@
-import { Game } from "./game";
 import { History } from "./history";
 import { describe, expect, test } from "vitest";
 
