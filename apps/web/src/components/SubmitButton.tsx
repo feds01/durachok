@@ -1,24 +1,16 @@
 import { ThreeDots } from "react-loader-spinner";
 
-import Button, { ButtonProps } from "@mui/material/Button";
+import { Button, ButtonProps } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface Props extends ButtonProps {
-    /** Whether the button is in a submitting state. */
     isSubmitting: boolean;
-    /** The text to display on the button. */
     label?: string;
 }
 
-export default function SubmitButton({ disabled, label, isSubmitting, ...rest }: Props) {
+export default function SubmitButton({ disabled, label, isSubmitting, className, ...rest }: Props) {
     return (
-        <Button
-            variant={"contained"}
-            disableElevation
-            disableRipple
-            disabled={disabled || isSubmitting}
-            color={"primary"}
-            {...rest}
-        >
+        <Button type="submit" disabled={disabled || isSubmitting} className={cn("w-full", className)} {...rest}>
             {isSubmitting ? <ThreeDots color="#FFFFFF" height={20} width={40} /> : (label ?? "Enter")}
         </Button>
     );

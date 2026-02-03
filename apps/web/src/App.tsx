@@ -4,13 +4,10 @@ import { registerCustom } from "superjson";
 
 import { useAuthDispatch, useAuthState } from "@/contexts/auth";
 import { routeTree } from "@/routeTree.gen";
-import theme from "@/theme";
 import trpc, { createReactQueryTRPClient } from "@/utils/trpc";
-import { ThemeProvider } from "@emotion/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Navigate, RouterProvider, createRouter } from "@tanstack/react-router";
 
-// Create a new router instance
 const router = createRouter({
     routeTree,
     defaultNotFoundComponent: () => {
@@ -19,18 +16,12 @@ const router = createRouter({
     context: null!,
 });
 
-// Register the router instance for type safety
 declare module "@tanstack/react-router" {
     interface Register {
         router: typeof router;
     }
 }
 
-/**
- * Register a hook to convert `Buffer`s to base64
- *
- * @@Todo: maybe move this to `packages/transport`?
- */
 registerCustom<Buffer, string>(
     {
         isApplicable: (value): value is Buffer => Buffer.isBuffer(value),
@@ -53,15 +44,13 @@ const App = () => {
     return (
         <trpc.Provider client={trpcClient} queryClient={queryClient}>
             <QueryClientProvider client={queryClient}>
-                <ThemeProvider theme={theme()}>
-                    <RouterProvider
-                        router={router}
-                        context={{
-                            auth: state,
-                            logout: () => auth({ type: "logout" }),
-                        }}
-                    />
-                </ThemeProvider>
+                <RouterProvider
+                    router={router}
+                    context={{
+                        auth: state,
+                        logout: () => auth({ type: "logout" }),
+                    }}
+                />
             </QueryClientProvider>
         </trpc.Provider>
     );

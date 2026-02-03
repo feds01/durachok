@@ -1,8 +1,6 @@
 import Divider from "@/components/Divider";
 import CreateGameForm from "@/forms/CreateGameForm";
-import { css } from "@emotion/css";
-import { Typography } from "@mui/material";
-import Dialog from "@mui/material/Dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 type Props = {
     open: boolean;
@@ -11,27 +9,14 @@ type Props = {
 
 export default function CreateGameDialog({ open, onClose }: Props) {
     return (
-        <Dialog open={open} onClose={onClose}>
-            <div
-                className={css`
-                    padding: 1em 2em;
-                    background: #3b3d54;
-                `}
-            >
-                <Typography
-                    component={"h2"}
-                    className={css`
-                        font-size: 28px !important;
-                        color: #dad8ec;
-                        margin: 0;
-                    `}
-                >
-                    Create new game
-                </Typography>
+        <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
+            <DialogContent className="bg-background border-border">
+                <DialogHeader>
+                    <DialogTitle className="text-2xl text-foreground">Create new game</DialogTitle>
+                </DialogHeader>
                 <Divider />
-
                 <CreateGameForm onSuccess={onClose} />
-            </div>
+            </DialogContent>
         </Dialog>
     );
 }
