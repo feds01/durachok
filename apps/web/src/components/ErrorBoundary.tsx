@@ -1,10 +1,9 @@
 import React from "react";
+import { Frown } from "lucide-react";
 
 import Divider from "@/components/Divider";
 import { APP_DEV_VERSION, APP_VERSION, APP_VERSION_BRANCH } from "@/config";
 import { expr, isDef } from "@/utils";
-import { css } from "@emotion/css";
-import SentimentVeryDissatisfiedIcon from "@mui/icons-material/SentimentVeryDissatisfied";
 
 type ErrorContainerProps = {
     children?: React.ReactNode;
@@ -44,13 +43,8 @@ class ErrorContainer extends React.Component<ErrorContainerProps, ErrorContainer
         return { hasError: true };
     }
 
-    /** A error event handler for window-level errors. */
     private handleErrorEvent(event: ErrorEvent) {
-        // ignore ResizeObserver loop limit exceeded
-        // this is ok in several scenarios according to
-        // https://github.com/WICG/resize-observer/issues/38
         if (event.message === "Script error." || event.message === "ResizeObserver loop limit exceeded") {
-            // @Cleanup
             return;
         }
 
@@ -89,47 +83,15 @@ class ErrorContainer extends React.Component<ErrorContainerProps, ErrorContainer
 
         if (hasError) {
             return (
-                <div
-                    className={css`
-                        display: flex;
-                        flex-direction: column;
-                        justify-content: center;
-                        align-items: center;
-                        
-                        height: 100%;
-                        width: 100%;
-                    `}
-                >
-                    <div
-                        style={{
-                            margin: "2em",
-                        }}
-                    >
-                        <div
-                            className={css`
-                                user-select: none;
-                                display: flex;
-                                flex-direction: row;
-                                align-items: center;
-                                
-                                & h1 {
-                                    margin: 0 0 0 8px;
-                                    font-size: 40px;
-                                }
-                            `}
-                        >
-                            <SentimentVeryDissatisfiedIcon style={{ fontSize: 40 }} />
-                            <h1>Something went wrong!</h1>
+                <div className="flex flex-col justify-center items-center h-full w-full">
+                    <div className="m-8">
+                        <div className="select-none flex flex-row items-center">
+                            <Frown className="w-10 h-10" />
+                            <h1 className="m-0 ml-2 text-4xl">Something went wrong!</h1>
                         </div>
                         <h2>Please help out and email or send me this bug string.</h2>
                         <Divider />
-                        <b
-                            className={css`
-                                word-break: break-all;
-                            `}
-                        >
-                            {message}
-                        </b>
+                        <b className="break-all">{message}</b>
                         <Divider />
                         <p>
                             Version: Durachok@{APP_VERSION}/{APP_DEV_VERSION} on branch {APP_VERSION_BRANCH}

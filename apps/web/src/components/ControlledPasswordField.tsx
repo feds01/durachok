@@ -1,21 +1,28 @@
 import { ReactElement, useState } from "react";
 import { Control, FieldValues, Path, useController } from "react-hook-form";
+import { Eye, EyeOff } from "lucide-react";
 
-import { Visibility, VisibilityOff } from "@mui/icons-material";
-import IconButton from "@mui/material/IconButton";
-import InputAdornment from "@mui/material/InputAdornment";
-import TextField, { TextFieldProps } from "@mui/material/TextField";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface Props<T extends FieldValues> {
     name: Path<T>;
     control: Control<T>;
-    textFieldProps?: TextFieldProps;
+    label?: string;
+    placeholder?: string;
+    className?: string;
+    required?: boolean;
 }
 
 export default function ControlledPasswordField<T extends FieldValues>({
     name,
     control,
-    textFieldProps,
+    label,
+    placeholder,
+    className,
+    required,
 }: Props<T>): ReactElement {
     const [showPassword, setShowPassword] = useState<boolean>(false);
     const {
@@ -24,43 +31,41 @@ export default function ControlledPasswordField<T extends FieldValues>({
     } = useController({
         name,
         control,
-        rules: { required: true },
+        rules: { required },
     });
 
     return (
-        <TextField
-            {...inputProps}
-            fullWidth
-            sx={{
-                marginTop: 1,
-                marginBottom: 1,
-                ...(!error && !textFieldProps?.helperText && { pb: "20px" }),
-            }}
-            {...textFieldProps}
-            {...(typeof error !== "undefined" && {
-                error: true,
-                helperText: error.message,
-            })}
-            InputProps={{
-                // @@Todo: this should be decided by the `TextFieldBackground` in `theme.ts`
-                sx: {
-                    backgroundColor: "#3b3d54",
-                },
-                endAdornment: (
-                    <InputAdornment position="end">
-                        <IconButton
-                            sx={{ color: "rgba(172, 170, 190, 1)" }}
-                            aria-label="toggle password visibility"
-                            onClick={() => setShowPassword(!showPassword)}
-                            onMouseDown={(e) => e.preventDefault()}
-                            edge="end"
-                        >
-                            {showPassword ? <VisibilityOff /> : <Visibility />}
-                        </IconButton>
-                    </InputAdornment>
-                ),
-            }}
-            type={showPassword ? "text" : "password"}
-        />
+        <div className={cn("space-y-2", className)}>
+            {label && (
+                <Label htmlFor={name}>
+                    {label}
+                    {required && <span className="text-destructive ml-1">*</span>}
+                </Label>
+            )}
+            <div className="relative">
+                <Input
+                    {...inputProps}
+                    id={name}
+                    type={showPassword ? "text" : "password"}
+                    placeholder={placeholder}
+                    className={cn("pr-10", error && "border-destructive")}
+                />
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                    onClick={() => setShowPassword(!showPassword)}
+                    aria-label="toggle password visibility"
+                >
+                    {showPassword ? (
+                        <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                        <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
+                </Button>
+            </div>
+            {error && <p className="text-sm text-destructive">{error.message}</p>}
+        </div>
     );
 }

@@ -1,11 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { Home } from "lucide-react";
 
 import PlayingCard from "@/assets/image/playing-card.svg?react";
 import Logo from "@/components/Logo";
+import { Button } from "@/components/ui/button";
 import { useAuthDispatch, useAuthState } from "@/contexts/auth";
 import GamePrompt, { LobbyAuthInfo } from "@/forms/GamePrompt";
 import { isDef } from "@/utils";
-import { css, keyframes } from "@emotion/css";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/")({
@@ -15,34 +16,50 @@ export const Route = createFileRoute("/")({
 const random = (max: number) => Math.floor(Math.random() * max);
 
 const PlayingCardIcon = ({ index }: { index: number }) => {
-    const raise = keyframes`
-        to {
-            bottom: 150vh;
-            transform: scale(.3 * ${index} - .6) rotate(${random(360)} + deg);
+    const animationData = useMemo(
+        () => ({
+            left: `calc(${random(120) - 20}% - 20px)`,
+            duration: `${6 + random(15)}s`,
+            delay: `${random(5) - 5}s`,
+            scale: 0.3 * index - 0.6,
+            rotation: random(360),
+            zIndex: index - 7,
+            blur: index - 6,
+            keyframeName: `raise-${index}-${random(10000)}`,
+        }),
+        [index],
+    );
+
+    useEffect(() => {
+        const styleId = `playing-card-animation-${animationData.keyframeName}`;
+        if (!document.getElementById(styleId)) {
+            const style = document.createElement("style");
+            style.id = styleId;
+            style.textContent = `
+                @keyframes ${animationData.keyframeName} {
+                    to {
+                        bottom: 150vh;
+                        transform: scale(${animationData.scale}) rotate(${animationData.rotation + 180}deg);
+                    }
+                }
+            `;
+            document.head.appendChild(style);
         }
-    `;
+    }, [animationData]);
 
     return (
         <PlayingCard
-            className={css`
-                width: 64px;
-                height: 64px;
-                position: absolute;
-                bottom: -100vh;
-                transform-style: preserve-3d;
-
-                left: calc(${random(120) - 20}% - 20px);
-                animation: ${raise} ${6 + random(15)}s linear infinite;
-                animation-delay: ${random(5) - 5}s;
-                transform: scale(${0.3 * index - 0.6}) rotate(${random(360)}deg);
-                z-index: ${index - 7};
-                filter: blur(${index - 6}px);
-
-                @media (max-width: 600px) {
-                    width: 32px;
-                    height: 32px;
-                }
-            `}
+            className="w-16 h-16 max-sm:w-8 max-sm:h-8 absolute"
+            style={{
+                bottom: "-100vh",
+                transformStyle: "preserve-3d",
+                left: animationData.left,
+                animation: `${animationData.keyframeName} ${animationData.duration} linear infinite`,
+                animationDelay: animationData.delay,
+                transform: `scale(${animationData.scale}) rotate(${animationData.rotation}deg)`,
+                zIndex: animationData.zIndex,
+                filter: `blur(${animationData.blur}px)`,
+            }}
         />
     );
 };
@@ -68,14 +85,7 @@ function Index() {
     };
 
     useEffect(() => {
-        // set body overflow property to hidden to prevent the animation overflow, when user
-        // navigates off the page, reset this to normal.
         document.getElementsByTagName("body")[0].style.overflow = "hidden";
-
-        //    if (location?.state?.pin) {
-        //        setPin(location.state.pin);
-        //        navigate('', { replace: true, state: null });
-        //    }
 
         return () => {
             document.getElementsByTagName("body")[0].style.overflow = "auto";
@@ -83,42 +93,33 @@ function Index() {
     }, []);
 
     return (
-        <div
-            className={css`
-                perspective-origin: 50% 50%;
-            `}
-        >
-            {[...Array(12)].map((v, i) => (
-                <PlayingCardIcon index={i} key={v} />
-            ))}
-            <div
-                className={css`
-                    max-width: 600px;
-                    margin: 0 auto;
-                    padding-top: 1em;
-                    display: flex;
-                    flex-direction: column;
-                    height: 100%;
-                    border-radius: 3px;
-                    text-align: center;
-                    
-                    @media (max-width: 600px) {
-                        padding-top: 4em;
-                        margin: 0 2em;
-                    }
-                `}
-            >
+        <div className="perspective-origin-center">
+            {isRegistered() && (
+                <Button variant="ghost" size="icon" className="absolute top-4 left-4 z-10" asChild>
+                    <Link to="/user">
+                        <Home className="h-6 w-6" />
+                    </Link>
+                </Button>
+            )}
+            {[...Array(12)]
+                .map((_, i) => i)
+                .map((k, i) => (
+                    <PlayingCardIcon index={i} key={k} />
+                ))}
+            <div className="max-w-150 mx-auto pt-4 flex flex-col h-full rounded text-center max-sm:pt-16 max-sm:mx-8">
                 <Logo size={64} />
                 <GamePrompt startPin={pin} onSuccess={redirectToLobby} />
-                {!isRegistered() && (
+                {isRegistered() ? (
+                    <p>
+                        Go to your{" "}
+                        <Link className="text-primary" to={"/user"}>
+                            dashboard
+                        </Link>
+                    </p>
+                ) : (
                     <p>
                         Got an account? Login{" "}
-                        <Link
-                            className={css`
-                                color: #3f51b5;
-                            `}
-                            to={"/login"}
-                        >
+                        <Link className="text-primary" to={"/login"}>
                             here
                         </Link>
                     </p>

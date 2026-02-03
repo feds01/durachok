@@ -1,46 +1,25 @@
-import { css } from "@emotion/css";
-import PersonIcon from "@mui/icons-material/Person";
-import { Typography } from "@mui/material";
-import Avatar from "@mui/material/Avatar";
+import { User } from "lucide-react";
+
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
 
 type Props = {
     avatarUri?: string;
     avatarSize?: number;
     name: string;
+    className?: string;
 };
 
-export default function PlayerAvatar({ name, avatarUri, avatarSize }: Props) {
+export default function PlayerAvatar({ name, avatarUri, avatarSize = 64, className }: Props) {
     return (
-        <div
-            className={css`
-                padding-top: 8px;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-            `}
-        >
-            <Avatar
-                src={avatarUri}
-                sx={{
-                    width: avatarSize ?? 64,
-                    height: avatarSize ?? 64,
-                    color: "white",
-                    background: "#1a1d3d",
-                    b: "2px solid #3f51b5",
-                }}
-                alt={name}
-            >
-                <PersonIcon
-                    sx={{
-                        width: (avatarSize ?? 64) * 0.8,
-                        height: (avatarSize ?? 64) * 0.8,
-                    }}
-                    fontSize={"large"}
-                />
+        <div className={cn("pt-2 flex flex-col items-center gap-2", className)}>
+            <Avatar className="border-2 border-primary" style={{ width: avatarSize, height: avatarSize }}>
+                <AvatarImage src={avatarUri} alt={name} />
+                <AvatarFallback className="bg-card text-white">
+                    <User style={{ width: avatarSize * 0.6, height: avatarSize * 0.6 }} />
+                </AvatarFallback>
             </Avatar>
-            <Typography component={"h1"} sx={{ m: 0 }}>
-                {name}
-            </Typography>
+            <h1 className="text-lg font-medium m-0">{name}</h1>
         </div>
     );
 }
