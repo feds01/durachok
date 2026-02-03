@@ -3,16 +3,16 @@ import { useCallback, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import ControlledTextField from "@/components/ControlledTextField";
 import GamePassphraseInput from "@/components/GamePassphraseInput";
 import SubmitButton from "@/components/SubmitButton";
+import { Input } from "@/components/ui/input";
 import { expr, isDef } from "@/utils";
 import trpc, { trpcNativeClient } from "@/utils/trpc";
 import { GamePassPhraseSchema, GamePinSchema } from "@/valdiators/lobby";
 import { LobbyInfo } from "@durachok/transport";
 import { UserNameSchema } from "@durachok/transport";
-import { css } from "@emotion/css";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useController } from "react-hook-form";
 
 export type LobbyAuthInfo = {
     pin: string;
@@ -41,17 +41,6 @@ const GamePromptFormInputSchema = z.object({
 
 type GamePromptInput = z.infer<typeof GamePromptFormInputSchema>;
 
-const submitStyle = css`
-    height: 60px;
-    font-size: 2em !important;
-    background-color: #3f51b5 !important;
-    margin-top: 19px !important;
-    
-    &:hover {
-        background-color: #3f51b5 !important;
-    }
-`;
-
 export default function GamePrompt({ startPin, onSuccess }: Props) {
     const [stage, setStage] = useState<StageKind>({ kind: "pin" });
 
@@ -66,6 +55,9 @@ export default function GamePrompt({ startPin, onSuccess }: Props) {
         },
     });
 
+    const pinField = useController({ name: "pin", control: form.control });
+    const nameField = useController({ name: "name", control: form.control });
+
     const onSubmit = useCallback(
         async (info: GamePromptInput) => {
             try {
@@ -79,7 +71,6 @@ export default function GamePrompt({ startPin, onSuccess }: Props) {
 
                 onSuccess({ pin: info.pin, ...(tokens && { tokens }) });
             } catch (e: unknown) {
-                // @@Todo: handle errors better.
                 if (e instanceof Error) {
                     form.setError(stage.kind, {
                         type: "manual",
@@ -93,7 +84,6 @@ export default function GamePrompt({ startPin, onSuccess }: Props) {
 
     const next = useMemo(
         () => async () => {
-            // We always enter the name after the `pin` stage.
             if (stage.kind === "pin") {
                 const result = await form.trigger("pin", { shouldFocus: true });
                 if (!result) {
@@ -106,7 +96,6 @@ export default function GamePrompt({ startPin, onSuccess }: Props) {
                             pin: form.getValues().pin,
                         });
                     } catch (e: unknown) {
-                        // @@Todo: handle errors better.
                         if (e instanceof Error) {
                             form.setError(stage.kind, {
                                 type: "manual",
@@ -168,63 +157,38 @@ export default function GamePrompt({ startPin, onSuccess }: Props) {
     );
 
     return (
-        <form
-            className={css`
-                flex-grow: 1;
-                display: flex;
-                flex-direction: column;
-                margin: 0 auto;
-                max-width: 400px;
-            `}
-            onSubmit={form.handleSubmit(onSubmit)}
-        >
+        <form className="grow flex flex-col mx-auto max-w-100" onSubmit={form.handleSubmit(onSubmit)}>
             {stage.kind === "pin" && (
-                <ControlledTextField
-                    name="pin"
-                    control={form.control}
-                    textFieldProps={{
-                        placeholder: "Game PIN",
-                        autoFocus: true,
-                        autoComplete: "off",
-                        sx: {
-                            pt: "4em",
-                        },
-                        inputProps: {
-                            maxLength: 6,
-                            style: {
-                                textAlign: "center",
-                                fontSize: "2em",
-                            },
-                        },
-                    }}
-                />
+                <div className="pt-16 space-y-2">
+                    <Input
+                        {...pinField.field}
+                        placeholder="Game PIN"
+                        autoComplete="off"
+                        maxLength={6}
+                        className="text-center text-2xl h-14"
+                    />
+                    {pinField.fieldState.error && (
+                        <p className="text-sm text-destructive text-center">{pinField.fieldState.error.message}</p>
+                    )}
+                </div>
             )}
             {stage.kind === "name" && (
                 <motion.div
                     transition={{ duration: 0.3 }}
                     initial={{ opacity: 0, scale: 0.5 }}
                     animate={{ opacity: 1, scale: 1 }}
+                    className="pt-16 space-y-2"
                 >
-                    <ControlledTextField
-                        name="name"
-                        control={form.control}
-                        textFieldProps={{
-                            placeholder: "Name",
-                            autoFocus: true,
-                            autoComplete: "off",
-                            sx: {
-                                pt: "4em",
-                            },
-                            inputProps: {
-                                maxLength: 39,
-                                style: {
-                                    textAlign: "center",
-                                    width: "400px",
-                                    fontSize: "2em",
-                                },
-                            },
-                        }}
+                    <Input
+                        {...nameField.field}
+                        placeholder="Name"
+                        autoComplete="off"
+                        maxLength={39}
+                        className="text-center text-2xl h-14 w-100"
                     />
+                    {nameField.fieldState.error && (
+                        <p className="text-sm text-destructive text-center">{nameField.fieldState.error.message}</p>
+                    )}
                 </motion.div>
             )}
             {stage.kind === "security" && (
@@ -239,7 +203,7 @@ export default function GamePrompt({ startPin, onSuccess }: Props) {
             <SubmitButton
                 disabled={!isDef(form.formState.dirtyFields[stage.kind])}
                 isSubmitting={form.formState.isSubmitting}
-                className={submitStyle}
+                className="h-15 text-2xl mt-4"
                 onClick={next}
             />
         </form>

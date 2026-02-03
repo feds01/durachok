@@ -1,23 +1,18 @@
-import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
-import { SxProps } from "@mui/system";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 interface FieldLabelProps {
     label: string;
     required?: boolean;
-    sx?: SxProps;
+    className?: string;
 }
 
-const FieldLabel = ({ label, sx, required = false }: FieldLabelProps) => {
+const FieldLabel = ({ label, className, required = false }: FieldLabelProps) => {
     return (
-        <Typography variant={"body2"} sx={{ fontWeight: "bold", ...sx }}>
+        <Label className={cn("font-bold", className)}>
             {label}
-            {required && (
-                <Box component={"span"} sx={{ color: (t) => t.palette.error.main }}>
-                    *
-                </Box>
-            )}
-        </Typography>
+            {required && <span className="text-destructive ml-1">*</span>}
+        </Label>
     );
 };
 

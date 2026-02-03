@@ -1,31 +1,7 @@
 import trpc from "@/utils/trpc";
-import { css } from "@emotion/css";
-import { Typography } from "@mui/material";
-import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
+import { Button } from "@/components/ui/button";
 import { useNavigate } from "@tanstack/react-router";
 
-const card = css`
-    display: flex;
-    flex-direction: row;
-    padding: 1em;
-    margin-bottom: 0.5em;
-    margin-top: 0.5em;
-    border-radius: 12px;
-    max-width: 300px;
-    background: #3f51b5;
-    box-shadow:
-        0 10px 20px rgba(0, 0, 0, 0.19),
-        0 6px 6px rgba(0, 0, 0, 0.23);
-    
-    color: white;
-    
-    &:hover {
-        cursor: pointer;
-    }
-`;
-
-// @@Todo: move this into `common`
 type GameStatus = "waiting" | "playing" | "finished";
 
 type Props = {
@@ -42,43 +18,31 @@ export default function GameLinkCard({ pin, status, players, maxPlayers }: Props
     const onDelete = async (e: React.MouseEvent) => {
         e.stopPropagation();
         await deleteGame.mutateAsync({ pin });
-        // @@Todo: force the `user` to be re-fetched.
     };
 
     return (
-        <Box className={card} onClick={() => navigator({ to: `/lobby/$pin`, params: { pin } })}>
-            <Box sx={{ flex: 1 }}>
-                <Box
-                    sx={{
-                        flex: 1,
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        display: "flex",
-                        flexDirection: "row",
-                    }}
-                >
-                    <Typography fontSize={24} component={"code"}>
-                        {pin}
-                    </Typography>
-                    <Typography>{status}</Typography>
-                </Box>
-                <Box sx={{ textAlign: "center", mt: 2, mb: 2 }}>
-                    <Typography component={"h1"}>
+        <div
+            role="option"
+            aria-selected="false"
+            className="flex flex-row p-4 my-2 rounded-xl max-w-75 bg-primary text-white shadow-lg hover:cursor-pointer"
+            onClick={() => navigator({ to: `/lobby/$pin`, params: { pin } })}
+        >
+            <div className="flex-1">
+                <div className="flex-1 flex flex-row justify-between items-center">
+                    <code className="text-2xl">{pin}</code>
+                    <span>{status}</span>
+                </div>
+                <div className="text-center my-4">
+                    <h1 className="text-xl font-bold">
                         {players} / {maxPlayers}
-                    </Typography>
-                </Box>
-                <Box
-                    className={css`
-                        display: flex;
-                        flex-direction: column;
-                        justify-content: center;
-                    `}
-                >
-                    <Button variant="contained" onClick={onDelete} disableElevation color="secondary">
+                    </h1>
+                </div>
+                <div className="flex flex-col justify-center">
+                    <Button variant="secondary" onClick={onDelete}>
                         Delete
                     </Button>
-                </Box>
-            </Box>
-        </Box>
+                </div>
+            </div>
+        </div>
     );
 }

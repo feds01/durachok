@@ -1,11 +1,10 @@
 import { AlertKind } from "@/components/Alert";
+import { Button } from "@/components/ui/button";
 import { useAuthDispatch } from "@/contexts/auth";
 import trpc from "@/utils/trpc";
-import Button from "@mui/material/Button";
 import { useNavigate } from "@tanstack/react-router";
 
 type DeleteUserFormProps = {
-    /** Used to determine what happens in the event of a failure. */
     onResponse?: (severity: AlertKind, message: string) => void;
 };
 
@@ -27,7 +26,7 @@ const DeleteUserForm = ({ onResponse }: DeleteUserFormProps) => {
     };
 
     return (
-        <Button fullWidth={false} color={"error"} onClick={handleDelete} variant={"contained"}>
+        <Button variant="destructive" onClick={handleDelete}>
             Delete
         </Button>
     );

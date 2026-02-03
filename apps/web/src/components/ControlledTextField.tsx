@@ -1,18 +1,28 @@
 import { ReactElement } from "react";
 import { Control, FieldValues, Path, useController } from "react-hook-form";
 
-import TextField, { TextFieldProps } from "@mui/material/TextField";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 interface ControlledTextFieldProps<T extends FieldValues> {
     name: Path<T>;
     control: Control<T>;
-    textFieldProps?: TextFieldProps;
+    label?: string;
+    placeholder?: string;
+    type?: string;
+    className?: string;
+    required?: boolean;
 }
 
 const ControlledTextField = <T extends FieldValues>({
     name,
     control,
-    textFieldProps,
+    label,
+    placeholder,
+    type = "text",
+    className,
+    required,
 }: ControlledTextFieldProps<T>): ReactElement => {
     const {
         field: { ref: _ref, ...inputProps },
@@ -20,22 +30,26 @@ const ControlledTextField = <T extends FieldValues>({
     } = useController({
         name,
         control,
-        rules: { required: true },
+        rules: { required },
     });
 
     return (
-        <TextField
-            {...inputProps}
-            fullWidth
-            sx={{
-                marginTop: 1,
-            }}
-            {...textFieldProps}
-            {...(typeof error !== "undefined" && {
-                error: true,
-                helperText: error.message,
-            })}
-        />
+        <div className={cn("space-y-2", className)}>
+            {label && (
+                <Label htmlFor={name}>
+                    {label}
+                    {required && <span className="text-destructive ml-1">*</span>}
+                </Label>
+            )}
+            <Input
+                {...inputProps}
+                id={name}
+                type={type}
+                placeholder={placeholder}
+                className={cn(error && "border-destructive")}
+            />
+            {error && <p className="text-sm text-destructive">{error.message}</p>}
+        </div>
     );
 };
 

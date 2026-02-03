@@ -3,13 +3,12 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { AlertKind } from "@/components/Alert";
+import { Button } from "@/components/ui/button";
 import trpc from "@/utils/trpc";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "@mui/material";
 import { TRPCClientError } from "@trpc/client";
 
 type Props = {
-    /** Used to determine what happens in the event of a failure. */
     onResponse?: (severity: AlertKind, message: string) => void;
 };
 
@@ -51,7 +50,7 @@ export default function UpdateUserProfileImageForm({ onResponse }: Props) {
                     accept="image/jpeg"
                     type="file"
                     id="upload-profile"
-                    style={{ display: "none" }}
+                    className="hidden"
                     {...form.register("image")}
                     onChange={async (e) => {
                         const file = e.target.files![0];
@@ -60,13 +59,15 @@ export default function UpdateUserProfileImageForm({ onResponse }: Props) {
                         form.handleSubmit(onSubmit)();
                     }}
                 />
-                {form.formState.errors.image && <div>{form.formState.errors.image.message}</div>}
+                {form.formState.errors.image && (
+                    <div className="text-sm text-destructive">{form.formState.errors.image.message}</div>
+                )}
 
-                <label htmlFor="upload-profile">
-                    <Button variant="contained" color="primary" component="span" sx={{ mt: 1 }}>
+                <Button type="button" className="mt-2" asChild>
+                    <label htmlFor="upload-profile" className="cursor-pointer">
                         Upload
-                    </Button>
-                </label>
+                    </label>
+                </Button>
             </div>
         </form>
     );

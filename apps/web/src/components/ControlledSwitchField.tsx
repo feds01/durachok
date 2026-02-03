@@ -1,14 +1,16 @@
-import FieldLabel from "./FieldLabel";
 import { Control, Controller, FieldValues, Path } from "react-hook-form";
 
 import { isDef } from "@/utils";
-import { Checkbox, CheckboxProps, FormControl, FormControlLabel, FormHelperText } from "@mui/material";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
-interface ControlledSwitchInputProps<T extends FieldValues> extends CheckboxProps {
+interface ControlledSwitchInputProps<T extends FieldValues> {
     label: string;
     legend?: string;
     name: Path<T>;
     control: Control<T>;
+    className?: string;
 }
 
 const ControlledSwitchInput = <T extends FieldValues>({
@@ -16,34 +18,23 @@ const ControlledSwitchInput = <T extends FieldValues>({
     legend,
     name,
     control,
-    ...rest
+    className,
 }: ControlledSwitchInputProps<T>) => {
     return (
         <Controller
             name={name}
             control={control}
             render={({ field, fieldState: { error } }) => (
-                <FormControl
-                    sx={{ pt: "1em" }}
-                    {...(isDef(error) && {
-                        error: true,
-                    })}
-                >
-                    {legend && <FieldLabel sx={{ color: "#dad8ec" }} label={legend} />}
-                    <FormControlLabel
-                        // @@Dumbness: passing with {...field} doesn't work for the initial render...
-                        control={
-                            <Checkbox
-                                checked={field.value}
-                                onChange={(e) => field.onChange(e.target.checked)}
-                                {...rest}
-                            />
-                        }
-                        sx={{ color: "#dad8ec" }}
-                        label={label}
-                    />
-                    {isDef(error) && <FormHelperText>{error?.message}</FormHelperText>}
-                </FormControl>
+                <div className={cn("space-y-2 pt-4", className)}>
+                    {legend && <Label className="text-lg text-foreground">{legend}</Label>}
+                    <div className="flex items-center space-x-2">
+                        <Checkbox id={name} checked={field.value} onCheckedChange={field.onChange} />
+                        <Label htmlFor={name} className="text-md font-normal text-foreground cursor-pointer">
+                            {label}
+                        </Label>
+                    </div>
+                    {isDef(error) && <p className="text-md text-destructive">{error?.message}</p>}
+                </div>
             )}
         />
     );
