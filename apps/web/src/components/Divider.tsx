@@ -1,6 +1,10 @@
-import { Divider } from "@mui/material";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 
-export default function DividerWrapper() {
-    // @@Todo: use colour from theme.
-    return <Divider sx={{ width: "100%", backgroundColor: "#E0E3E7" }} />;
+interface Props {
+    className?: string;
+}
+
+export default function DividerWrapper({ className }: Props) {
+    return <Separator className={cn("w-full bg-border", className)} />;
 }

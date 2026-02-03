@@ -1,32 +1,16 @@
-// type Props = {}
 import { Bars } from "react-loader-spinner";
 
-import { css } from "@emotion/css";
-import Box from "@mui/material/Box";
+import { cn } from "@/lib/utils";
 
-const Loader = (/* props: Props */) => {
+interface Props {
+    className?: string;
+}
+
+const Loader = ({ className }: Props) => {
     return (
-        <Box
-            sx={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                flexDirection: "column",
-                height: "100%",
-            }}
-        >
-            <Bars
-                wrapperClass={css`
-                    & svg {
-                        margin: 0 auto;
-                        width: 100%;
-                    }
-                `}
-                color="#FFFFFF"
-                height={80}
-                width={80}
-            />
-        </Box>
+        <div className={cn("flex justify-center items-center flex-col h-full", className)}>
+            <Bars wrapperClass="[&_svg]:mx-auto [&_svg]:w-full" color="#FFFFFF" height={80} width={80} />
+        </div>
     );
 };
 

@@ -9,15 +9,11 @@ import SubmitButton from "@/components/SubmitButton";
 import { RegisteredUser, useAuthDispatch } from "@/contexts/auth";
 import trpc from "@/utils/trpc";
 import { UserUpdate, UserUpdateSchema } from "@/valdiators/user";
-import { css } from "@emotion/css";
 import { zodResolver } from "@hookform/resolvers/zod";
-import Grid from "@mui/material/Grid";
 import { TRPCClientError } from "@trpc/client";
 
 type UpdateUserFormProps = {
-    /** The user to update. */
     user: RegisteredUser;
-    /** Used to determine what happens in the event of a failure. */
     onResponse?: (severity: AlertKind, message: string) => void;
 };
 
@@ -38,8 +34,6 @@ const UpdateUserForm = ({ user, onResponse }: UpdateUserFormProps) => {
         try {
             await updateWith.mutateAsync(update);
 
-            // We want to invalidate the user query so that the user's data is
-            // refreshed.
             if (onResponse) {
                 onResponse("success", "User updated.");
             }
@@ -61,29 +55,22 @@ const UpdateUserForm = ({ user, onResponse }: UpdateUserFormProps) => {
     }, [user, form]);
 
     return (
-        <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className={css`
-                width: 100%;
-            `}
-        >
-            <Grid container maxWidth={"md"}>
-                <Grid size={12} sx={{ pt: 1 }}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="w-full">
+            <div className="grid gap-4 max-w-md">
+                <div className="space-y-2">
                     <FieldLabel label="Name" />
                     <ControlledTextField name="name" control={form.control} />
-                </Grid>
-                <Grid size={12} sx={{ pt: 1 }}>
+                </div>
+                <div className="space-y-2">
                     <FieldLabel label="Email" />
                     <ControlledTextField name="email" control={form.control} />
-                </Grid>
-                <Grid size={12} sx={{ pt: 1 }}>
+                </div>
+                <div className="space-y-2">
                     <FieldLabel label="Password" />
                     <ControlledPasswordField name="password" control={form.control} />
-                </Grid>
-                <Grid size={12}>
-                    <SubmitButton label="Update" type="submit" isSubmitting={form.formState.isSubmitting} />
-                </Grid>
-            </Grid>
+                </div>
+                <SubmitButton label="Update" isSubmitting={form.formState.isSubmitting} />
+            </div>
         </form>
     );
 };

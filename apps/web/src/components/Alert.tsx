@@ -1,28 +1,35 @@
 import { useState } from "react";
 import { useTimeout } from "usehooks-ts";
+import { AlertCircle, CheckCircle, Info, AlertTriangle } from "lucide-react";
 
-import { SxProps } from "@mui/material";
-import Alert from "@mui/material/Alert";
-import Box from "@mui/material/Box";
-import Collapse from "@mui/material/Collapse";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { cn } from "@/lib/utils";
 
-/** The kind of alert that we should display */
 export type AlertKind = "success" | "info" | "warning" | "error";
 
 type AlertProps = {
-    /** The kind of alert that we should display */
     kind: AlertKind;
-    /** The message to display */
     message: string;
-    /** Any additional styling overrides */
-    sx?: SxProps;
-    /** Whether the alert should disappear from view after a certain time.  */
+    className?: string;
     shouldDisappear?: boolean;
-    /** The time in milliseconds after which the alert should disappear. */
     timeout?: number;
 };
 
-const AlertWrapper = ({ kind, message, sx, shouldDisappear = true, timeout = 5000 }: AlertProps) => {
+const icons = {
+    success: CheckCircle,
+    info: Info,
+    warning: AlertTriangle,
+    error: AlertCircle,
+};
+
+const variants = {
+    success: "success" as const,
+    info: "default" as const,
+    warning: "warning" as const,
+    error: "destructive" as const,
+};
+
+const AlertWrapper = ({ kind, message, className, shouldDisappear = true, timeout = 5000 }: AlertProps) => {
     const [open, setOpen] = useState(true);
 
     const hide = () => {
@@ -33,12 +40,17 @@ const AlertWrapper = ({ kind, message, sx, shouldDisappear = true, timeout = 500
 
     useTimeout(hide, timeout);
 
+    if (!open) return null;
+
+    const Icon = icons[kind];
+
     return (
-        <Box sx={{ width: "100%", ...sx }}>
-            <Collapse in={open}>
-                <Alert severity={kind}>{message}</Alert>
-            </Collapse>
-        </Box>
+        <div className={cn("w-full transition-all duration-300", !open && "opacity-0 h-0", className)}>
+            <Alert variant={variants[kind]}>
+                <Icon className="h-4 w-4" />
+                <AlertDescription>{message}</AlertDescription>
+            </Alert>
+        </div>
     );
 };
 

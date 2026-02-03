@@ -6,7 +6,6 @@ import ControlledSwitchInput from "@/components/ControlledSwitchField";
 import SubmitButton from "@/components/SubmitButton";
 import trpc from "@/utils/trpc";
 import { GameSettingsSchema } from "@durachok/transport";
-import { css } from "@emotion/css";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 type CreateGameFormProps = {
@@ -57,14 +56,7 @@ export default function CreateGameForm({ onSuccess }: CreateGameFormProps) {
     };
 
     return (
-        <form
-            className={css`
-                flex-grow: 1;
-                display: flex;
-                flex-direction: column;
-            `}
-            onSubmit={form.handleSubmit(onSubmit)}
-        >
+        <form className="grow flex flex-col" onSubmit={form.handleSubmit(onSubmit)}>
             <ControlledSliderInput
                 name="roundTimeout"
                 control={form.control}
@@ -73,7 +65,6 @@ export default function CreateGameForm({ onSuccess }: CreateGameFormProps) {
                 max={600}
                 step={50}
                 marks={TIMEOUT_MARKS}
-                valueLabelDisplay="auto"
             />
             <ControlledSliderInput
                 name="maxPlayers"
@@ -82,7 +73,6 @@ export default function CreateGameForm({ onSuccess }: CreateGameFormProps) {
                 min={2}
                 max={8}
                 marks={PLAYERS_MARKS}
-                valueLabelDisplay="auto"
             />
             <ControlledSwitchInput
                 name="passphrase"
@@ -114,12 +104,7 @@ export default function CreateGameForm({ onSuccess }: CreateGameFormProps) {
                 legend="Disable chat"
                 label="Disable the chat in the game."
             />
-            <SubmitButton
-                sx={{ mt: "1em" }}
-                type="submit"
-                label={"Create"}
-                isSubmitting={form.formState.isSubmitting}
-            />
+            <SubmitButton className="mt-4" label="Create" isSubmitting={form.formState.isSubmitting} />
         </form>
     );
 }
