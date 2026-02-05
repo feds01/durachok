@@ -16,15 +16,15 @@
     },
     "scripts": {
         "prepare": "npm run build",
-        "build": "tsc --declaration",
-        "check": "tsc --noEmit"
+        "build": "tsgo --declaration",
+        "check": "tsgo --noEmit"
     },
     "dependencies": {
         "buffer": "^6.0.3",
         "zod": "^4.3.6"
     },
     "devDependencies": {
-        "@types/node": "^25.2.0",
+        "@types/node": "^25.2.1",
         "typescript": "^5.9.3"
     }
 }
