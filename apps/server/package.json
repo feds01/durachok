@@ -6,7 +6,7 @@
     "type": "module",
     "scripts": {
         "dev": "tsx watch src/index",
-        "check": "tsc",
+        "check": "tsgo --noEmit",
         "build": "esbuild src/index.ts --bundle --packages=external --platform=node --format=esm --outdir=dist --sourcemap",
         "build:client": "tsx src/interface/socket/generate-client.ts"
     },
