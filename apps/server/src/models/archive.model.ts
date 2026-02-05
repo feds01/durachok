@@ -1,4 +1,4 @@
-import { HistoryState } from "@durachok/engine/src";
+import { HistoryState } from "@durachok/engine";
 import { GameState } from "@durachok/transport";
 import mongoose, { HydratedDocument, Schema, Types } from "mongoose";
 
