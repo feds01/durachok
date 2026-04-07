@@ -18,7 +18,7 @@
         "@durachok/engine": "file:../../packages/engine",
         "@durachok/transport": "file:../../packages/transport",
         "@metamorph/trpc-panel": "^1.0.5",
-        "@trpc/server": "11.9.0",
+        "@trpc/server": "11.16.0",
         "argon2": "^0.44.0",
         "chalk": "^5.6.2",
         "cors": "2.8.6",
