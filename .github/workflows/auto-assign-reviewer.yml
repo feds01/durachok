@@ -1,0 +1,16 @@
+name: Auto-assign reviewer
+on:
+  pull_request:
+    types: [opened]
+
+jobs:
+  assign-reviewer:
+    if: github.event.pull_request.user.login != 'feds01'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Request review from feds01
+        run: gh pr edit ${{ github.event.pull_request.number }} --add-reviewer feds01
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
