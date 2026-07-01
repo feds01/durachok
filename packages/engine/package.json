@@ -24,7 +24,7 @@
         "@durachok/transport": "file:./../transport"
     },
     "devDependencies": {
-        "@types/node": "^25.2.2",
+        "@types/node": "^26.1.0",
         "typescript": "^6.0.3",
         "vitest": "^4.1.0"
     }
