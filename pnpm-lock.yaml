@@ -242,8 +242,8 @@ importers:
         specifier: ^4.4.5
         version: 4.4.5(react-dom@19.2.7(react@19.2.4))(react@19.2.4)
       react-virtuoso:
-        specifier: ^4.18.4
-        version: 4.18.4(react-dom@19.2.7(react@19.2.4))(react@19.2.4)
+        specifier: ^4.18.10
+        version: 4.18.10(react-dom@19.2.7(react@19.2.4))(react@19.2.4)
       socket.io-client:
         specifier: 4.8.3
         version: 4.8.3
@@ -3946,8 +3946,8 @@ packages:
       react: '>=16.6.0'
       react-dom: '>=16.6.0'
 
-  react-virtuoso@4.18.4:
-    resolution: {integrity: sha512-DNM4Wy2tMA/J6ejMaDdqecOug31rOwgSRg4C/Dw6Iox4dJe9qwcx32M8HdhkE5uHEVVZh7h0koYwAsCSNdxGfQ==}
+  react-virtuoso@4.18.10:
+    resolution: {integrity: sha512-P6GIZ7kWAPOYB2H16yRQNgy+VF9pJOuTFw1EUc1EAtCj5WxVSAF1Sql3x3fbLwaLeBFsiPnu+3U9o6sIOyTdFw==}
     peerDependencies:
       react: '>=16 || >=17 || >= 18 || >= 19'
       react-dom: '>=16 || >=17 || >= 18 || >=19'
@@ -8423,7 +8423,7 @@ snapshots:
       react: 19.2.4
       react-dom: 19.2.7(react@19.2.4)
 
-  react-virtuoso@4.18.4(react-dom@19.2.7(react@19.2.4))(react@19.2.4):
+  react-virtuoso@4.18.10(react-dom@19.2.7(react@19.2.4))(react@19.2.4):
     dependencies:
       react: 19.2.4
       react-dom: 19.2.7(react@19.2.4)
