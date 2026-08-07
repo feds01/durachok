@@ -198,10 +198,10 @@ importers:
         version: 1.166.11(@tanstack/react-router@1.157.18(react-dom@19.2.7(react@19.2.4))(react@19.2.4))(@tanstack/router-core@1.168.9)(csstype@3.2.3)(react-dom@19.2.7(react@19.2.4))(react@19.2.4)
       '@trpc/client':
         specifier: 11.17.0
-        version: 11.17.0(@trpc/server@11.16.0(typescript@7.0.2))(typescript@7.0.2)
+        version: 11.17.0(typescript@7.0.2)
       '@trpc/react-query':
-        specifier: 11.17.0
-        version: 11.17.0(@tanstack/react-query@5.101.2(react@19.2.4))(@trpc/client@11.17.0(@trpc/server@11.16.0(typescript@7.0.2))(typescript@7.0.2))(@trpc/server@11.16.0(typescript@7.0.2))(react@19.2.4)(typescript@7.0.2)
+        specifier: 11.18.0
+        version: 11.18.0(@tanstack/react-query@5.101.2(react@19.2.4))(@trpc/client@11.17.0(typescript@7.0.2))(react@19.2.4)(typescript@7.0.2)
       '@types/react-google-recaptcha':
         specifier: ^2.1.9
         version: 2.1.9
@@ -2395,12 +2395,12 @@ packages:
       '@trpc/server': 11.17.0
       typescript: '>=5.7.2'
 
-  '@trpc/react-query@11.17.0':
-    resolution: {integrity: sha512-AGcl5YAF8NnhBmyJ6PqJqKb1M5VTGSoNRNqJ3orct4o4epdcg0GWhW+qT9q6gPzs/2ImIwYCdfFpgNGdZ9yLHA==}
+  '@trpc/react-query@11.18.0':
+    resolution: {integrity: sha512-C1+Wwm2pCeUJucI+bnFpxGYjNuvV+ko1BC1T9tUxBVdrhHRCdn9ubxdevdLSAa49XRJRJiZnSuzl3Ys/yvs1vg==}
     peerDependencies:
       '@tanstack/react-query': ^5.80.3
-      '@trpc/client': 11.17.0
-      '@trpc/server': 11.17.0
+      '@trpc/client': 11.18.0
+      '@trpc/server': 11.18.0
       react: '>=18.2.0'
       typescript: '>=5.7.2'
 
@@ -2794,8 +2794,8 @@ packages:
     engines: {node: '>=0.4.0'}
     hasBin: true
 
-  acorn@8.17.0:
-    resolution: {integrity: sha512-xRQbDb9BnwDafYNn6Vwl839DYVjqXYb1XVGtWAZ1kcDc6iwAL4hg3B1dZlRiuENFeO2H53gFG3in621AdERVAg==}
+  acorn@8.18.0:
+    resolution: {integrity: sha512-lGq+9yr1/GuAWaVYIHRjvvySG5/4VfKIvC8EWxStPdcDh/Ka7FG3twP6v4d5BkravUilhIAsG4Qj83t02LWUPQ==}
     engines: {node: '>=0.4.0'}
     hasBin: true
 
@@ -4694,6 +4694,7 @@ packages:
   zod-sockets@5.2.0:
     resolution: {integrity: sha512-QVRvEIcvVsfgnlxvUQn1s00V5LP+/oTlEy0c/wfGVtsymMD3IPIkpc3np0Ialj/Qqd49sqL0zsNlZEXKvFkbCw==}
     engines: {node: ^20.19.0 || ^22.12.0 || ^24.0.0}
+    deprecated: The version is no longer supported. Please upgrade to @latest.
     peerDependencies:
       socket.io: ^4.7.4
       typescript: ^5.3.3 || ^6.0.2
@@ -6959,16 +6960,14 @@ snapshots:
 
   '@total-typescript/ts-reset@0.6.1': {}
 
-  '@trpc/client@11.17.0(@trpc/server@11.16.0(typescript@7.0.2))(typescript@7.0.2)':
+  '@trpc/client@11.17.0(typescript@7.0.2)':
     dependencies:
-      '@trpc/server': 11.16.0(typescript@7.0.2)
       typescript: 7.0.2
 
-  '@trpc/react-query@11.17.0(@tanstack/react-query@5.101.2(react@19.2.4))(@trpc/client@11.17.0(@trpc/server@11.16.0(typescript@7.0.2))(typescript@7.0.2))(@trpc/server@11.16.0(typescript@7.0.2))(react@19.2.4)(typescript@7.0.2)':
+  '@trpc/react-query@11.18.0(@tanstack/react-query@5.101.2(react@19.2.4))(@trpc/client@11.17.0(typescript@7.0.2))(react@19.2.4)(typescript@7.0.2)':
     dependencies:
       '@tanstack/react-query': 5.101.2(react@19.2.4)
-      '@trpc/client': 11.17.0(@trpc/server@11.16.0(typescript@7.0.2))(typescript@7.0.2)
-      '@trpc/server': 11.16.0(typescript@7.0.2)
+      '@trpc/client': 11.17.0(typescript@7.0.2)
       react: 19.2.4
       typescript: 7.0.2
 
@@ -7322,7 +7321,7 @@ snapshots:
 
   acorn@8.16.0: {}
 
-  acorn@8.17.0:
+  acorn@8.18.0:
     optional: true
 
   agent-base@6.0.2:
@@ -8053,7 +8052,7 @@ snapshots:
   jsdom@16.7.0:
     dependencies:
       abab: 2.0.6
-      acorn: 8.17.0
+      acorn: 8.18.0
       acorn-globals: 6.0.0
       cssom: 0.4.4
       cssstyle: 2.3.0
@@ -8887,7 +8886,7 @@ snapshots:
   terser@5.31.3:
     dependencies:
       '@jridgewell/source-map': 0.3.11
-      acorn: 8.17.0
+      acorn: 8.18.0
       commander: 2.20.3
       source-map-support: 0.5.21
     optional: true
