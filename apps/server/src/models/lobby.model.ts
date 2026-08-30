@@ -1,6 +1,6 @@
 import { GameStatus } from "@durachok/transport";
 import { Message } from "@durachok/transport";
-import mongoose, { HydratedDocument, MergeType, Schema, Types } from "mongoose";
+import mongoose, { HydratedDocument, MergeType, PopulateDocumentResult, Schema, Types } from "mongoose";
 
 import { DBPlayer } from "../schemas/lobby";
 import { IUser } from "./user.model";
@@ -33,7 +33,12 @@ export interface PopulatedLobbyFields {
 }
 
 // Type that matches what Mongoose's .populate<Pick<PopulatedLobbyFields, "owner">>() returns
-export type PopulatedLobbyDocument = HydratedDocument<MergeType<ILobby, PopulatedLobbyFields>>;
+export type PopulatedLobbyDocument = PopulateDocumentResult<
+    LobbyDocument,
+    Pick<PopulatedLobbyFields, "owner">,
+    MergeType<ILobby, PopulatedLobbyFields>,
+    ILobby
+>;
 
 const LobbySchema = new Schema<ILobby>({
     pin: { type: String, required: true, unique: true },
