@@ -35,5 +35,14 @@
     "engines": {
         "node": ">=22"
     },
-    "packageManager": "pnpm@10.28.2"
+    "packageManager": "pnpm@10.28.2",
+    "pnpm": {
+        "overrides": {
+            "@tootallnate/once": "^2.0.1",
+            "engine.io-client": "^6.6.6",
+            "esbuild": "^0.28.1",
+            "postcss": "^8.5.23",
+            "socket.io-adapter": "^2.5.8"
+        }
+    }
 }
