@@ -7,7 +7,7 @@ import { expr, isDef } from "@/utils";
 
 type ErrorContainerProps = {
     children?: React.ReactNode;
-    error: Error;
+    error: unknown;
     info?: React.ErrorInfo;
 };
 
@@ -16,14 +16,19 @@ type ErrorContainerState = {
     message?: string;
 };
 
-function stateFromError(error: Error, info?: React.ErrorInfo) {
+function stateFromError(error: unknown, info?: React.ErrorInfo) {
     const { componentStack } = info ?? { componentStack: "" };
 
     const message = expr(() => {
         if (typeof error === "string") {
             return error;
         }
-        return error.stack ?? error.message;
+
+        if (error instanceof Error) {
+            return error.stack ?? error.message;
+        }
+
+        return JSON.stringify(error);
     });
 
     return {
