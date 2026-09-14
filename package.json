@@ -39,6 +39,8 @@
     "pnpm": {
         "overrides": {
             "@tootallnate/once": "^2.0.1",
+            "baseline-browser-mapping": "^2.11.0",
+            "browserslist": "^4.28.7",
             "engine.io-client": "^6.6.6",
             "esbuild": "^0.28.1",
             "postcss": "^8.5.23",
