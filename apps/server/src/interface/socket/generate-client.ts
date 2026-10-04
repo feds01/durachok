@@ -1,5 +1,5 @@
 import { writeFile } from "node:fs/promises";
-import { Integration } from "zod-sockets";
+import { Integration } from "zod-sockets/integration";
 
 import { actions } from "./actions";
 import { config } from "./config";

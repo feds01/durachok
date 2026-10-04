@@ -118,8 +118,8 @@ importers:
         specifier: ^4.3.6
         version: 4.3.6
       zod-sockets:
-        specifier: ^5.2.0
-        version: 5.2.0(socket.io@4.8.3)(typescript@7.0.2)(zod@4.3.6)
+        specifier: ^7.0.1
+        version: 7.0.1(socket.io@4.8.3)(typescript@7.0.2)(zod@4.3.6)
     devDependencies:
       '@types/cors':
         specifier: ^2.8.19
@@ -2291,10 +2291,6 @@ packages:
     resolution: {integrity: sha512-zbB9rCJAT1rbjiVDb2hqKFHNYLxgtk8NURxZ3IZwD3F6NtxbXZQCnnSi1Lkx+IDohdPlFp222wVALIheZJQSEg==}
     engines: {node: '>=8'}
 
-  ansis@4.2.0:
-    resolution: {integrity: sha512-HqZ5rWlFjGiV0tDm3UxxgNRqsOTniqoKZu0pIAfh7TZQMGuZK+hH0drySty0si0QXj1ieop4+SkSfPZBPPkHig==}
-    engines: {node: '>=14'}
-
   ansis@4.4.0:
     resolution: {integrity: sha512-9k3v7xcHwgdO/DruxGIg4HtjvlAZlcnsX/mzqUb1t3NkYnl9kK2UJ+Gq0io+vQf7iT//BD/HB/NBkUR1LWxoeA==}
     engines: {node: '>=14'}
@@ -4102,14 +4098,16 @@ packages:
     resolution: {integrity: sha512-Ux4ygGWsu2c7isFWe8Yu1YluJmqVhxqK2cLXNQA5AcC3QfbGNpM7fu0Y8b/z16pXLnFxZYvWhd3fhBY9DLmC6Q==}
     engines: {node: '>=6'}
 
-  zod-sockets@5.2.0:
-    resolution: {integrity: sha512-QVRvEIcvVsfgnlxvUQn1s00V5LP+/oTlEy0c/wfGVtsymMD3IPIkpc3np0Ialj/Qqd49sqL0zsNlZEXKvFkbCw==}
-    engines: {node: ^20.19.0 || ^22.12.0 || ^24.0.0}
-    deprecated: The version is no longer supported. Please upgrade to @latest.
+  zod-sockets@7.0.1:
+    resolution: {integrity: sha512-ohf5D2biHDFm3NaHcJ8mnu2vlaEv1oGUJ1LWxBfqAh1na90hUn8vgCshrbo8C5bUDJbrPizBS1xhC0+45V235Q==}
+    engines: {node: ^22.19.0 || ^24.11.0 || ^26.0.0}
     peerDependencies:
       socket.io: ^4.7.4
       typescript: ^5.3.3 || ^6.0.2
-      zod: ^4.1.0
+      zod: ^4.3.4
+    peerDependenciesMeta:
+      typescript:
+        optional: true
 
   zod-to-json-schema@3.23.1:
     resolution: {integrity: sha512-oT9INvydob1XV0v1d2IadrR74rLtDInLvDFfAa1CG0Pmg/vxATk7I2gSelfj271mbzeM4Da0uuDQE/Nkj3DWNw==}
@@ -5873,8 +5871,6 @@ snapshots:
   ansi-styles@4.3.0:
     dependencies:
       color-convert: 2.0.1
-
-  ansis@4.2.0: {}
 
   ansis@4.4.0: {}
 
@@ -7661,14 +7657,15 @@ snapshots:
 
   yn@3.1.1: {}
 
-  zod-sockets@5.2.0(socket.io@4.8.3)(typescript@7.0.2)(zod@4.3.6):
+  zod-sockets@7.0.1(socket.io@4.8.3)(typescript@7.0.2)(zod@4.3.6):
     dependencies:
-      ansis: 4.2.0
+      ansis: 4.4.0
       ramda: 0.32.0
       socket.io: 4.8.3
-      typescript: 7.0.2
       yaml: 2.8.3
       zod: 4.3.6
+    optionalDependencies:
+      typescript: 7.0.2
 
   zod-to-json-schema@3.23.1(zod@4.3.6):
     dependencies:
