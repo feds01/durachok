@@ -9,8 +9,8 @@
         "preview": "vite preview"
     },
     "dependencies": {
-        "@durachok/engine": "file:./../../packages/engine",
-        "@durachok/transport": "file:./../../packages/transport",
+        "@durachok/engine": "workspace:*",
+        "@durachok/transport": "workspace:*",
         "@hookform/resolvers": "^5.2.2",
         "@mars/heroku-js-runtime-env": "^3.0.2",
         "@radix-ui/react-avatar": "^1.2.0",
@@ -24,7 +24,7 @@
         "@tanstack/react-router": "^1.170.36",
         "@tanstack/router-devtools": "^1.167.2",
         "@trpc/client": "11.19.0",
-        "@trpc/react-query": "11.18.0",
+        "@trpc/react-query": "11.19.0",
         "@types/react-google-recaptcha": "^2.1.9",
         "buffer": "^6.0.3",
         "class-variance-authority": "^0.7.1",
