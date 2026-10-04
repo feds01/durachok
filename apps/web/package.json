@@ -9,8 +9,8 @@
         "preview": "vite preview"
     },
     "dependencies": {
-        "@durachok/engine": "file:./../../packages/engine",
-        "@durachok/transport": "file:./../../packages/transport",
+        "@durachok/engine": "workspace:*",
+        "@durachok/transport": "workspace:*",
         "@hookform/resolvers": "^5.2.2",
         "@mars/heroku-js-runtime-env": "^3.0.2",
         "@radix-ui/react-avatar": "^1.2.0",

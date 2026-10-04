@@ -21,7 +21,7 @@
         "test": "vitest run"
     },
     "dependencies": {
-        "@durachok/transport": "file:./../transport"
+        "@durachok/transport": "workspace:*"
     },
     "devDependencies": {
         "@types/node": "^26.1.1",
