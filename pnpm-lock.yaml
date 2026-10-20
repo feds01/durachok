@@ -64,7 +64,7 @@ importers:
         version: link:../../packages/transport
       '@metamorph/trpc-panel':
         specifier: ^1.0.5
-        version: 1.0.5(@trpc/server@11.19.0(typescript@7.0.2))(zod@4.3.6)
+        version: 1.0.5(@trpc/server@11.19.0(typescript@7.0.2))(zod@4.6.7)
       '@trpc/server':
         specifier: 11.19.0
         version: 11.19.0(typescript@7.0.2)
@@ -117,11 +117,11 @@ importers:
         specifier: ^2.2.6
         version: 2.2.6
       zod:
-        specifier: ^4.3.6
-        version: 4.3.6
+        specifier: ^4.6.7
+        version: 4.6.7
       zod-sockets:
         specifier: ^7.0.1
-        version: 7.0.1(socket.io@4.8.4)(typescript@7.0.2)(zod@4.3.6)
+        version: 7.0.1(socket.io@4.8.4)(typescript@7.0.2)(zod@4.6.7)
     devDependencies:
       '@types/cors':
         specifier: ^2.8.19
@@ -262,8 +262,8 @@ importers:
         specifier: ^3.1.1
         version: 3.1.1(react@19.3.0)
       zod:
-        specifier: ^4.3.6
-        version: 4.3.6
+        specifier: ^4.6.7
+        version: 4.6.7
       zustand:
         specifier: ^5.0.11
         version: 5.0.11(@types/react@19.3.0)(react@19.3.0)(use-sync-external-store@1.6.0(react@19.3.0))
@@ -333,8 +333,8 @@ importers:
         specifier: ^6.0.3
         version: 6.0.3
       zod:
-        specifier: ^4.3.6
-        version: 4.3.6
+        specifier: ^4.6.7
+        version: 4.6.7
     devDependencies:
       '@types/node':
         specifier: ^26.1.1
@@ -4149,11 +4149,8 @@ packages:
     peerDependencies:
       zod: ^3.23.3
 
-  zod@4.3.6:
-    resolution: {integrity: sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg==}
-
-  zod@4.6.5:
-    resolution: {integrity: sha512-v5l/aFXZQeai4awLbOpSoHecE9UiMrnfx75tEXLjNonXVARxQ5mOeipTjROUchszUNCqnE+hqAMujRsRHsut2Q==}
+  zod@4.6.7:
+    resolution: {integrity: sha512-g8W2D2kU6a8untc053fX1uVBKzM7yqAxW/3zwk83+6RyF2+SKOuV+c0wBDhUwzV1PaGapmZH+rmcUzPf+3CGwg==}
 
   zustand@5.0.11:
     resolution: {integrity: sha512-fdZY+dk7zn/vbWNCYmzZULHRrss0jx5pPFiOuMZ/5HJN6Yv3u+1Wswy/4MpZEkEGhtNH+pwxZB8OKgUBPzYAGg==}
@@ -4632,14 +4629,14 @@ snapshots:
 
   '@mars/heroku-js-runtime-env@3.0.2': {}
 
-  '@metamorph/trpc-panel@1.0.5(@trpc/server@11.19.0(typescript@7.0.2))(zod@4.3.6)':
+  '@metamorph/trpc-panel@1.0.5(@trpc/server@11.19.0(typescript@7.0.2))(zod@4.6.7)':
     dependencies:
       '@trpc/server': 11.19.0(typescript@7.0.2)
       fuzzysort: 2.0.4
       path: 0.12.7
       url: 0.11.3
-      zod: 4.3.6
-      zod-to-json-schema: 3.23.1(zod@4.3.6)
+      zod: 4.6.7
+      zod-to-json-schema: 3.23.1(zod@4.6.7)
 
   '@mongodb-js/saslprep@1.5.5':
     dependencies:
@@ -5513,7 +5510,7 @@ snapshots:
       jiti: 2.7.0
       magic-string: 0.30.21
       prettier: 3.9.6
-      zod: 4.6.5
+      zod: 4.6.7
     transitivePeerDependencies:
       - supports-color
 
@@ -5527,7 +5524,7 @@ snapshots:
       '@tanstack/router-utils': 1.162.3
       chokidar: 5.0.0
       unplugin: 3.3.0(esbuild@0.28.1)(rollup@4.62.2)(vite@7.3.5(@types/node@26.1.1)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.31.3)(tsx@4.23.12)(yaml@2.8.3))
-      zod: 4.6.5
+      zod: 4.6.7
     optionalDependencies:
       '@tanstack/react-router': 1.170.36(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       vite: 7.3.5(@types/node@26.1.1)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.31.3)(tsx@4.23.12)(yaml@2.8.3)
@@ -7719,23 +7716,21 @@ snapshots:
 
   yn@3.1.1: {}
 
-  zod-sockets@7.0.1(socket.io@4.8.4)(typescript@7.0.2)(zod@4.3.6):
+  zod-sockets@7.0.1(socket.io@4.8.4)(typescript@7.0.2)(zod@4.6.7):
     dependencies:
       ansis: 4.4.0
       ramda: 0.32.0
       socket.io: 4.8.4
       yaml: 2.8.3
-      zod: 4.3.6
+      zod: 4.6.7
     optionalDependencies:
       typescript: 7.0.2
 
-  zod-to-json-schema@3.23.1(zod@4.3.6):
+  zod-to-json-schema@3.23.1(zod@4.6.7):
     dependencies:
-      zod: 4.3.6
+      zod: 4.6.7
 
-  zod@4.3.6: {}
-
-  zod@4.6.5: {}
+  zod@4.6.7: {}
 
   zustand@5.0.11(@types/react@19.3.0)(react@19.3.0)(use-sync-external-store@1.6.0(react@19.3.0)):
     optionalDependencies:
