@@ -45,7 +45,8 @@
             "engine.io-client": "^6.6.6",
             "esbuild": "^0.28.1",
             "postcss": "^8.5.23",
-            "socket.io-adapter": "^2.5.8"
+            "socket.io-adapter": "^2.5.8",
+            "tinypool": "^2.1.2"
         }
     }
 }
