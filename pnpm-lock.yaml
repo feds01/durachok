@@ -164,7 +164,7 @@ importers:
         version: link:../../packages/transport
       '@hookform/resolvers':
         specifier: ^5.2.2
-        version: 5.2.2(react-hook-form@7.71.1(react@19.3.0))
+        version: 5.2.2(react-hook-form@7.91.0(@types/react@19.3.0)(react@19.3.0))
       '@mars/heroku-js-runtime-env':
         specifier: ^3.0.2
         version: 3.0.2
@@ -235,8 +235,8 @@ importers:
         specifier: ^3.1.0
         version: 3.1.0(react@19.3.0)
       react-hook-form:
-        specifier: ^7.71.1
-        version: 7.71.1(react@19.3.0)
+        specifier: ^7.91.0
+        version: 7.91.0(@types/react@19.3.0)(react@19.3.0)
       react-loader-spinner:
         specifier: 8.0.2
         version: 8.0.2(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -3688,11 +3688,15 @@ packages:
     peerDependencies:
       react: '>=16.4.1'
 
-  react-hook-form@7.71.1:
-    resolution: {integrity: sha512-9SUJKCGKo8HUSsCO+y0CtqkqI5nNuaDqTxyqPsZPqIwudpj4rCrAz/jZV+jn57bx5gtZKOh3neQu94DXMc+w5w==}
+  react-hook-form@7.91.0:
+    resolution: {integrity: sha512-5BEBUnCBwa28AFXYTYmOaB/+CSpJ/+CWVASHEvIGUzFdHyUiPHeRhG7r5hOZ8nZi0yP7pbHdFNXO/p31EKTJFQ==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
+      '@types/react': '*'
       react: ^16.8.0 || ^17 || ^18 || ^19
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
 
   react-is@16.13.1:
     resolution: {integrity: sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==}
@@ -5043,10 +5047,10 @@ snapshots:
   '@esbuild/win32-x64@0.28.2':
     optional: true
 
-  '@hookform/resolvers@5.2.2(react-hook-form@7.71.1(react@19.3.0))':
+  '@hookform/resolvers@5.2.2(react-hook-form@7.91.0(@types/react@19.3.0)(react@19.3.0))':
     dependencies:
       '@standard-schema/utils': 0.3.0
-      react-hook-form: 7.71.1(react@19.3.0)
+      react-hook-form: 7.91.0(@types/react@19.3.0)(react@19.3.0)
 
   '@jridgewell/gen-mapping@0.3.13':
     dependencies:
@@ -7542,9 +7546,11 @@ snapshots:
       react: 19.3.0
       react-async-script: 1.2.0(react@19.3.0)
 
-  react-hook-form@7.71.1(react@19.3.0):
+  react-hook-form@7.91.0(@types/react@19.3.0)(react@19.3.0):
     dependencies:
       react: 19.3.0
+    optionalDependencies:
+      '@types/react': 19.3.0
 
   react-is@16.13.1: {}
 
