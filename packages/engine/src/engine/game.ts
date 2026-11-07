@@ -5,7 +5,7 @@ import { GameInitError } from "./errors/GameInitError";
 import { InvalidGameState } from "./errors/InvalidGameState";
 import { History, HistoryState } from "./history";
 
-import { Card, GamePlayer, GameState, GameStatus, PlayerGameState } from "@durachok/transport";
+import { Card, GamePlayer, GameState, GameStatus, PlayerGameState, SpectatorGameState } from "@durachok/transport";
 
 /** Options for the game. */
 export interface GameSettings {
@@ -948,7 +948,7 @@ export class Game {
         const playerOrder = this.getPlayerOrderFrom(playerName);
 
         return {
-            ...player,
+            player: { ...player, deck: [...player.deck] },
             trump: this.trump,
             deckSize: this.deck.length,
             tableTop: Object.fromEntries(this.tableTop),
@@ -981,10 +981,10 @@ export class Game {
      * information on particular player, they only need information on the tableTop, deckSize, and generic information
      * about players in the game.
      *
-     * @returns {Partial<PlayerGameState>} A game state from the spectators viewpoint which redacts player
+     * @returns {SpectatorGameState} A game state from the spectators viewpoint which redacts player
      * state and information on player decks.
      * */
-    public getStateForSpectator(): PlayerGameState {
+    public getStateForSpectator(): SpectatorGameState {
         // transpose the array to match the position of the player on the table
         const playerOrder = [this.getDefendingPlayerName(), ...this.getPlayerOrderFrom(this.getDefendingPlayerName())];
 

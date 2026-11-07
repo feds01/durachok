@@ -183,6 +183,8 @@ export type GameState = z.infer<typeof GameStateSchema>;
 
 /** The state of the game for each player. */
 export const PlayerGameStateSchema = z.object({
+    /** The player's own state, including the cards that they hold. */
+    player: GamePlayerSchema,
     /**
      * The state of each player in the current game, from the
      * perspective of the current player. This is relevant because
@@ -199,6 +201,11 @@ export const PlayerGameStateSchema = z.object({
 });
 
 export type PlayerGameState = z.infer<typeof PlayerGameStateSchema>;
+
+/** The state of the game for a spectator, which doesn't reveal anyone's cards. */
+export const SpectatorGameStateSchema = PlayerGameStateSchema.omit({ player: true });
+
+export type SpectatorGameState = z.infer<typeof SpectatorGameStateSchema>;
 
 export const GameHistorySchema = z.object({
     /** The game history. */

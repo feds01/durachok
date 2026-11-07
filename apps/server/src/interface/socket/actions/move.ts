@@ -72,11 +72,8 @@ const onMove = factory.build({
             // Find the specific player that this client represents.
             const player = players.find((p) => p.socket === c.id);
 
-            // This must ne a spectator.
+            // Spectators aren't supported yet, and `playerState` carries the player's own state.
             if (!player) {
-                c.emit("playerState", {
-                    update: state.getStateForSpectator(),
-                });
                 return;
             }
 
