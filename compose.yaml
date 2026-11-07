@@ -1,0 +1,20 @@
+# The MongoDB that the server uses in development, which `just db` starts.
+# The fixed name lets every worktree share one database, on one port.
+name: durachok
+
+services:
+    mongo:
+        image: mongo:8
+        restart: unless-stopped
+        ports:
+            - "127.0.0.1:27017:27017"
+        volumes:
+            - mongo-data:/data/db
+        healthcheck:
+            test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+            interval: 2s
+            timeout: 5s
+            retries: 30
+
+volumes:
+    mongo-data:
