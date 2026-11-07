@@ -5,27 +5,41 @@ import {
     LobbyMessageSchema,
     PlayerJoinSchema,
     StateUpdateMessageSchema,
+    TokensMessageSchema,
     VictoryMessageSchema,
 } from "@durachok/transport";
 import { MessageSchema } from "@durachok/transport";
 import { z } from "zod";
 import { createSimpleConfig } from "zod-sockets";
 
-import { getTokenFromHeaders } from "../../lib/authentication";
-import { expr } from "../../utils";
+import { UserTokensResponseSchema } from "../../schemas/auth";
 import { transformErrorIntoMessage } from "./error";
 
 export const config = createSimpleConfig({
     startupLogo: false,
     security: [
         {
-            type: "httpApiKey",
-            description: "Server security schema",
-            in: "header",
-            name: "x-token",
+            type: "apiKey",
+            description: "The access and refresh tokens, sent as `token` and `refreshToken` in the handshake's `auth`",
+            in: "user",
         },
     ],
+    /** What the connection middleware learnt about the client, @see connectSocket. */
+    metadata: z.object({
+        /** The client's verified tokens and their payload. */
+        auth: UserTokensResponseSchema,
+        /** Whether the client's tokens had expired, and new ones were created. */
+        refreshed: z.boolean(),
+    }),
     emission: {
+        /**
+         * New tokens for the client, sent when it connects if its tokens had
+         * expired, so that it can use them from now on.
+         */
+        tokens: {
+            schema: z.tuple([TokensMessageSchema]),
+        },
+
         /**
          * An event that is emitted to the joining player of the
          * lobby, this is the first message that the player will
@@ -110,31 +124,19 @@ export const config = createSimpleConfig({
     },
     hooks: {
         /**
-         * On `onConnection` we perform the first step of authentication, which
-         * is to extract and validate the provided `x-token` header. We should
-         * be able to pass in the same `AuthContext` as we do in the tRPC implementation.
+         * The connection middleware has already authenticated the client, @see connectSocket.
+         * If it had to refresh the client's tokens, hand the new ones back to it.
          */
         onConnection: async ({ client, logger }) => {
-            logger.info({ id: client.id, data: client.getData() }, "connected");
+            const { auth, refreshed } = client.getData();
+            logger.info({ id: client.id, kind: auth?.payload.kind }, "connected");
 
-            // Try and read the user.
-            const ctx = logger.ctx; // @@Hack!
-            const tokens = await getTokenFromHeaders(ctx.authService, client.handshake.headers);
-
-            const authCtx = expr(() => {
-                if (!tokens) {
-                    logger.info("failed to authorise", { clientId: client.id });
-                    return { token: undefined, rawTokens: undefined };
-                }
-
-                logger.info("successfully authorised", { clientId: client.id });
-                return tokens;
-            });
-
-            // @@Hack: we pass the `authCtx` into all of the handlers, and
-            // then expect the handlers to determine what the handling of
-            // a particular authentication state is.
-            client.handshake.auth = authCtx;
+            if (refreshed && auth?.rawTokens.refreshToken) {
+                await client.emit("tokens", {
+                    token: auth.rawTokens.token,
+                    refreshToken: auth.rawTokens.refreshToken,
+                });
+            }
         },
         onError: async ({ client, error, logger }) => {
             // Log the problem (@@Todo: sentry) and then emit the error
@@ -146,7 +148,7 @@ export const config = createSimpleConfig({
             }
         },
         onDisconnect: async ({ client, logger }) => {
-            logger.info("disconnected", client.id);
+            logger.info({ id: client.id }, "disconnected");
         },
     },
 });

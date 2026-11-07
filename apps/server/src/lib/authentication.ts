@@ -2,18 +2,52 @@ import type * as express from "express";
 
 import { AuthService } from "../controllers/auth";
 import { UserTokensResponse, UserTokensResponseSchema } from "../schemas/auth";
-import { assert, expr, isDef } from "../utils";
+import { assert, isDef } from "../utils";
 
 type Headers = { [key: string]: string | string[] | undefined };
 
 /**
- * This function will attempt to extract the token from the request headers. If the token
- * is not present, it will return null. If the token is present, it will attempt to verify
- * the token. If the token is invalid, it will attempt to refresh the token using the
- * refresh token. If the refresh token is invalid, it will return null.
+ * Authenticate a pair of tokens. If the access token is valid, it is used. Otherwise,
+ * the refresh token is used to create new tokens, which the caller must hand back to
+ * the client. If neither is valid, it returns null.
  *
- * @param req - The request object.
- * @param res - The response object.
+ * @param authService - The service that verifies and creates tokens.
+ * @param token - The access token, if one was sent.
+ * @param refreshToken - The refresh token, if one was sent.
+ * @returns - The tokens and their payload, and whether they were refreshed, otherwise null.
+ */
+export async function authenticate(
+    authService: AuthService,
+    token: unknown,
+    refreshToken: unknown,
+): Promise<{ tokens: UserTokensResponse; refreshed: boolean } | null> {
+    const refresh = typeof refreshToken === "string" && refreshToken !== "" ? refreshToken : null;
+    const verifiedToken = await authService.verifyToken(token);
+
+    // Fast path, we have a valid token.
+    if (verifiedToken) {
+        assert(isDef(token) && typeof token === "string");
+        return { tokens: { payload: verifiedToken, rawTokens: { token, refreshToken: refresh } }, refreshed: false };
+    }
+
+    // Since we don't have a refresh token, we can't try to
+    // refresh the token.
+    if (!refresh) {
+        return null;
+    }
+
+    const newTokens = await authService.refreshTokens(refresh);
+    return isDef(newTokens) ? { tokens: newTokens, refreshed: true } : null;
+}
+
+/**
+ * This function will attempt to extract the token from the request headers, and
+ * authenticate it, @see authenticate. New tokens are passed to `onNewTokens`, and
+ * without it, an expired token isn't refreshed.
+ *
+ * @param authService - The service that verifies and creates tokens.
+ * @param headers - The request headers.
+ * @param onNewTokens - Receives the new tokens, if the expired ones were refreshed.
  * @returns - The token payload if the token is valid, otherwise null.
  */
 export async function getTokenFromHeaders(
@@ -21,40 +55,17 @@ export async function getTokenFromHeaders(
     headers: Headers,
     onNewTokens?: (tokens: UserTokensResponse) => void,
 ): Promise<UserTokensResponse | null> {
-    const token = headers["x-token"];
-    const refreshToken = expr(() => {
-        const raw = headers["x-refresh-token"];
-        if (!isDef(raw) || typeof raw !== "string") {
-            return null;
-        }
+    const result = await authenticate(
+        authService,
+        headers["x-token"],
+        onNewTokens ? headers["x-refresh-token"] : undefined,
+    );
 
-        return raw;
-    });
-
-    const verifiedToken = await authService.verifyToken(token);
-
-    // Fast path, we have a valid token.
-    if (verifiedToken) {
-        assert(isDef(token) && typeof token === "string");
-        return { payload: verifiedToken, rawTokens: { token, refreshToken } };
+    if (result?.refreshed) {
+        onNewTokens?.(result.tokens);
     }
 
-    // Since we don't have a refresh token, we can't try to
-    // refresh the token.
-    if (!refreshToken) {
-        return null;
-    }
-
-    const newTokens = await authService.refreshTokens(refreshToken);
-
-    // Send back new tokens if they were generated.
-    if (isDef(newTokens) && onNewTokens) {
-        onNewTokens(newTokens);
-        return newTokens;
-    }
-
-    // We failed to refresh the token, so we return null.
-    return null;
+    return result?.tokens ?? null;
 }
 
 /**

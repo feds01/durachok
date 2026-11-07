@@ -1,23 +1,20 @@
-import { ensurePayloadIsTokens } from "../../../lib/authentication";
 import { Context } from "../../../lib/context";
 import { UserTokensResponse } from "../../../schemas/auth";
 import { ApiError } from "../../../utils/error";
 import { Client } from "../actions/ctx";
 
 /**
- * Utility function to ensure that a given socket connection request is authenticated.
+ * Get the tokens that the connection middleware verified for a client.
  *
  * @param client - The client that sent the message.
  *
- * @returns Extract the authentication tokens from the client's handshake.
+ * @returns The client's tokens and their payload.
  */
 export function ensureAuth(client: Client): UserTokensResponse {
-    const auth = ensurePayloadIsTokens(client.handshake.auth);
+    const { auth } = client.getData();
     if (!auth) {
         throw ApiError.http(401, "Invalid token");
     }
-
-    // Ensure that the current client has access to the lobby.
 
     return auth;
 }

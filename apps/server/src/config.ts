@@ -16,6 +16,9 @@ export const PORT = process.env.PORT || 8080;
 export const ENV = process.env.NODE_ENV || "dev";
 export const APP_URL = process.env.APP_URL || `http://localhost:${PORT}`;
 
+/** The origins of the web app, which may call the API and connect to the sockets. */
+export const WEB_ORIGINS = process.env.WEB_ORIGINS?.split(",") ?? ["http://localhost:5173", "http://localhost:4173"];
+
 /** AWS configurations */
 export const AWS_ACCESS_KEY = process.env.AWS_ACCESS_KEY || "";
 export const AWS_SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY || "";
