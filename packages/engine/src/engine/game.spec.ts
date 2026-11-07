@@ -24,6 +24,14 @@ function setUpRound(game: Game, { hands, attacker, defender, deck }: Round) {
     game.tableTop.clear();
 }
 
+/** A round between two players, a attacking b, with hearts as trumps and a card left in the deck. */
+function twoPlayers(hands: Record<string, string[]>): Game {
+    const game = new Game(["a", "b"], null, { ...DEFAULT_SETTINGS, randomisePlayerOrder: false });
+    game.trump = cardFromString("2H");
+    setUpRound(game, { hands, attacker: "a", defender: "b", deck: ["9C"] });
+    return game;
+}
+
 describe("Game tests", () => {
     test("should create a new game without crashing", () =>
         expect(() => new Game(["player1", "player2"], null)).not.toThrow());
@@ -105,5 +113,97 @@ describe("Game tests", () => {
         expect(game.getPlayer("c").out).not.toBeNull();
         expect(game.getDefendingPlayerName()).toBe("a");
         expect(game.getAttackingPlayerName()).toBe("b");
+    });
+
+    test("a beaten card can't be beaten again, so the card that beat it isn't lost", () => {
+        const game = new Game(["a", "b"], null, { ...DEFAULT_SETTINGS, randomisePlayerOrder: false });
+        game.trump = cardFromString("2H");
+        setUpRound(game, {
+            hands: { a: ["7S", "7C"], b: ["8S", "9S", "AC"] },
+            attacker: "a",
+            defender: "b",
+            deck: ["9C"],
+        });
+        game.addCardToTableTop("a", "7S");
+        game.addCardToTableTop("a", "7C");
+        game.coverCardOnTableTop("8S", 0);
+
+        expect(() => game.coverCardOnTableTop("9S", 0)).toThrow("already covered");
+        expect(game.tableTop.get("7S")).toBe("8S");
+        expect(game.getPlayer("b").deck).toContain("9S");
+    });
+
+    test("the defender can't pass the attack on before a card is played", () => {
+        const game = new Game(["a", "b", "c"], null, { ...DEFAULT_SETTINGS, randomisePlayerOrder: false });
+        game.trump = cardFromString("2H");
+        setUpRound(game, {
+            hands: { a: ["7S"], b: ["7D", "8D"], c: ["9C", "10C"] },
+            attacker: "a",
+            defender: "b",
+            deck: ["9D"],
+        });
+
+        expect(() => game.addCardToTableTop("b", "7D")).toThrow("Improper card for the transfer");
+        expect(game.getDefendingPlayerName()).toBe("b");
+    });
+
+    describe("an attacker who is done", () => {
+        test("is asked again when the defender beats a card, even with a rank already on the table", () => {
+            const game = twoPlayers({ a: ["7S", "7D", "8C", "QC"], b: ["8D", "8S", "AC", "KC"] });
+            game.addCardToTableTop("a", "7S");
+            game.addCardToTableTop("a", "7D");
+            game.coverCardOnTableTop("8D", 1);
+            game.addCardToTableTop("a", "8C");
+            game.finalisePlayerTurn("a");
+
+            // Eights are on the table already, and the eight of clubs is still to beat.
+            game.coverCardOnTableTop("8S", 0);
+            expect(game.getPlayer("a").turned).toBe(false);
+        });
+
+        test("is asked again when another attacker adds a card", () => {
+            const game = new Game(["a", "b", "c"], null, { ...DEFAULT_SETTINGS, randomisePlayerOrder: false });
+            game.trump = cardFromString("2H");
+            setUpRound(game, {
+                hands: { a: ["7S", "QC"], b: ["8S", "9D", "AC"], c: ["7D", "KC"] },
+                attacker: "a",
+                defender: "b",
+                deck: ["9C"],
+            });
+            game.addCardToTableTop("a", "7S");
+            game.finalisePlayerTurn("a");
+            game.addCardToTableTop("c", "7D");
+
+            expect(game.getPlayer("a").turned).toBe(false);
+        });
+
+        test("ends the round with the last cover, when it brings no new rank", () => {
+            const game = twoPlayers({ a: ["7S", "7D", "QC"], b: ["8S", "8D", "AC"] });
+            game.addCardToTableTop("a", "7S");
+            game.addCardToTableTop("a", "7D");
+            game.finalisePlayerTurn("a");
+            game.coverCardOnTableTop("8S", 0);
+            game.finalisePlayerTurn("a");
+            game.coverCardOnTableTop("8D", 1);
+
+            expect(game.tableTop.size).toBe(0);
+            expect(game.getDefendingPlayerName()).toBe("a");
+        });
+    });
+
+    test("a defender who takes the cards can't beat them, or pass them on", () => {
+        const game = new Game(["a", "b", "c"], null, { ...DEFAULT_SETTINGS, randomisePlayerOrder: false });
+        game.trump = cardFromString("2H");
+        setUpRound(game, {
+            hands: { a: ["7S", "QC"], b: ["8S", "7D", "AC"], c: ["9C", "10C", "JC"] },
+            attacker: "a",
+            defender: "b",
+            deck: ["9D"],
+        });
+        game.addCardToTableTop("a", "7S");
+        game.finalisePlayerTurn("b");
+
+        expect(() => game.coverCardOnTableTop("8S", 0)).toThrow("taking the cards");
+        expect(() => game.addCardToTableTop("b", "7D")).toThrow("taking the cards");
     });
 });
