@@ -6,7 +6,7 @@ import { factory } from "./ctx";
 
 const onMessage = factory.build({
     event: "message",
-    input: z.tuple([GamePinSchema, z.object({ message: z.string() })]),
+    input: z.tuple([GamePinSchema, z.object({ message: z.string().trim().min(1).max(200) })]),
     handler: async ({ withRooms, input, client, logger: $ctx }) => {
         const { ctx } = $ctx;
         const logger = $ctx;

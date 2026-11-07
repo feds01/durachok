@@ -33,7 +33,21 @@ export class LobbyNotFoundError extends TRPCError {
 
 export class PlayerNotInLobbyError extends TRPCError {
     public constructor() {
-        super({ code: "BAD_REQUEST" });
+        super({ code: "BAD_REQUEST", message: "Player isn't in the lobby" });
+    }
+}
+
+/** Error to be thrown when a player tries to join a lobby that has no free place. */
+export class LobbyFullError extends TRPCError {
+    public constructor() {
+        super({ code: "BAD_REQUEST", message: "Lobby is full" });
+    }
+}
+
+/** Error to be thrown when an action needs the lobby to be in another state, e.g. waiting. */
+export class InvalidLobbyStateError extends TRPCError {
+    public constructor(message: string) {
+        super({ code: "BAD_REQUEST", message });
     }
 }
 

@@ -1,7 +1,7 @@
 import { GamePinSchema } from "@durachok/transport";
 import { z } from "zod";
 
-import { LobbyNotFoundError } from "../../../controllers/common";
+import { PlayerNotInLobbyError } from "../../../controllers/common";
 import { ensureLobbyAccess } from "../common/auth";
 import { factory } from "./ctx";
 
@@ -19,51 +19,38 @@ const onJoin = factory.build({
         // @@Todo: support spectators, if we the game allows for spectators, and
         // if the game is currently in progress, we can send the specific connection
         // the spectator version of the game.
-        const { name } = await ensureLobbyAccess(ctx, client, pin);
+        const { name, isOwner } = await ensureLobbyAccess(ctx, client, pin);
 
         logger.info({ ...meta, name }, "user joining lobby");
 
-        const lobby = await ctx.lobbyService.get(pin);
-
-        // @@Todo: make these automatic.
-        if (!lobby) {
-            client.emit("close", {
-                reason: "stale_game",
-            });
-            return;
-        }
-        const game = await ctx.gameService(lobby);
-
         try {
             await ctx.lobbyService.confirmUser(pin, name, client.id);
-            await game.addPlayer(name);
         } catch (e: unknown) {
-            if (e instanceof LobbyNotFoundError) {
-                logger.warn({ ...meta, name }, "User tried to connect to lobby, but their entry couldn't be found.");
-            } else {
-                logger.warn(meta, "Error confirming user", e);
+            if (!(e instanceof PlayerNotInLobbyError)) {
+                throw e;
             }
 
-            client.emit("close", {
-                reason: "stale_token",
-            });
+            logger.warn({ ...meta, name }, "User tried to connect to lobby, but their entry couldn't be found.");
+            await client.emit("close", { reason: "stale_token" });
             return;
         }
 
-        // Specify that this client is now within the "lobby" room.
-        client.join(lobby.pin);
+        // Specify that this client is now within the lobby's room.
+        await client.join(pin);
 
-        // Emit to the current player, the game state.
-        client.emit("join", {
+        // Send the player the lobby, and the game if one is being played, e.g. when
+        // they rejoin. Only the owner sees the passphrase.
+        const lobby = await ctx.lobbyService.get(pin, { withPassphrase: isOwner });
+        await client.emit("join", {
             lobby,
-            game: await game.getGameStateFor(name),
+            game: lobby.status === "playing" ? await ctx.gameService(lobby).getGameStateFor(name) : undefined,
         });
 
-        withRooms("lobby").broadcast("lobbyState", {
+        await withRooms(pin).broadcast("lobbyState", {
             update: {
                 type: "new_player",
             },
-            lobby,
+            lobby: await ctx.lobbyService.get(pin),
         });
     },
 });

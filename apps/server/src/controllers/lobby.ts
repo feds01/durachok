@@ -7,12 +7,26 @@ import { TRPCError } from "@trpc/server";
 import { customAlphabet } from "nanoid";
 import { Logger } from "pino";
 
+import { withLock } from "../lib/database";
 import Lobbies, { PopulatedLobbyDocument, PopulatedLobbyFields } from "../models/lobby.model";
 import { TokenPayload } from "../schemas/auth";
 import { DBLobby, DBLobbySchema, DBPlayer } from "../schemas/lobby";
 import { assert, expr, isDef } from "../utils";
-import { CommonService, InvalidLobbySettingsError, LobbyNotFoundError, PlayerNotInLobbyError } from "./common";
+import {
+    CommonService,
+    InvalidLobbySettingsError,
+    InvalidLobbyStateError,
+    LobbyFullError,
+    LobbyNotFoundError,
+    PlayerNotInLobbyError,
+} from "./common";
 import { ImageService } from "./image";
+
+/** Options for reading a lobby's state. */
+interface LobbyStateOptions {
+    /** Whether to include the passphrase, which only the owner may see. */
+    withPassphrase?: boolean;
+}
 
 export class LobbyService {
     public constructor(
@@ -80,10 +94,11 @@ export class LobbyService {
      *
      * @@Todo: perhaps unify the `LobbyInfo` and the `LobbyState` objects.
      */
-    private async lobbyIntoState(lobby: DBLobby): Promise<Lobby> {
+    private async lobbyIntoState(lobby: DBLobby, { withPassphrase = false }: LobbyStateOptions = {}): Promise<Lobby> {
         return {
             pin: lobby.pin,
             /** Settings */
+            ...(withPassphrase && isDef(lobby.passphrase) ? { passphrase: lobby.passphrase } : {}),
             maxPlayers: lobby.maxPlayers,
             shortGameDeck: lobby.shortGameDeck,
             freeForAll: lobby.freeForAll,
@@ -94,9 +109,10 @@ export class LobbyService {
             /** State */
             status: lobby.status,
             chat: lobby.chat,
+            // The players who confirmed their place: the owner, and everyone who connected.
             players: await Promise.all(
                 lobby.players
-                    .filter((p) => p.socket)
+                    .filter((p) => p.confirmed)
                     .map((p) => {
                         if (p.registered) {
                             return this.getUserAsPlayer(p.registered);
@@ -112,17 +128,32 @@ export class LobbyService {
         };
     }
 
-    /** Check if a user has access to a lobby. */
-    public async hasAccess(token: TokenPayload, pin: string): Promise<boolean> {
-        if (token.kind === "registered") {
-            return await this.isUserInLobby(pin, token.user.name);
-        }
+    /**
+     * Find the player that a token belongs to in a lobby: a registered user by their
+     * account, and an anonymous player by the name and lobby that their token is for.
+     */
+    public async findPlayer(token: TokenPayload, pin: string): Promise<DBPlayer | undefined> {
         // @@Todo: There is a potential problem, if a lobby pin is re-used within
         // the expiration time of the token, then the user could join the new
         // lobby without the owner's permission or without going through the standard
         // join process. Mitigation is to parametrise the token over the `id` of the
         // lobby which should be unique.
-        return token.pin === pin;
+        if (token.kind === "anonymous" && token.pin !== pin) {
+            return undefined;
+        }
+
+        const lobby = await this.getRaw(pin);
+        return lobby?.players.find((player) => {
+            if (token.kind === "registered") {
+                return player.registered === token.user.id;
+            }
+            return !isDef(player.registered) && player.name === token.name;
+        });
+    }
+
+    /** Check if a user has access to a lobby, i.e. they are one of its players. */
+    public async hasAccess(token: TokenPayload, pin: string): Promise<boolean> {
+        return isDef(await this.findPlayer(token, pin));
     }
 
     /**
@@ -171,13 +202,23 @@ export class LobbyService {
     }
 
     /** Get a lobby state. */
-    public async get(pin: string): Promise<Lobby> {
+    public async get(pin: string, options: LobbyStateOptions = {}): Promise<Lobby> {
         const lobby = await this.getRaw(pin);
         if (!isDef(lobby)) {
             throw new LobbyNotFoundError();
         }
 
-        return this.lobbyIntoState(lobby);
+        return this.lobbyIntoState(lobby, options);
+    }
+
+    /** Check a passphrase against a lobby's, which is correct if the lobby has none. */
+    public async checkPassphrase(pin: string, passphrase: string | undefined): Promise<boolean> {
+        const lobby = await this.getRaw(pin);
+        if (!isDef(lobby)) {
+            throw new LobbyNotFoundError();
+        }
+
+        return !isDef(lobby.passphrase) || lobby.passphrase === passphrase;
     }
 
     /** Get the status of a lobby. */
@@ -210,21 +251,6 @@ export class LobbyService {
         return lobby.players;
     }
 
-    /** Get a player by their connection id. */
-    public async getPlayerByConnectionId(pin: string, socket: string): Promise<DBPlayer> {
-        const lobby = await this.getRaw(pin);
-        if (!isDef(lobby)) {
-            throw new LobbyNotFoundError();
-        }
-
-        const player = lobby.players.find((player) => player.socket === socket);
-        if (!isDef(player)) {
-            throw new PlayerNotInLobbyError();
-        }
-
-        return player;
-    }
-
     /** Get all lobbies by a given user */
     public async getByOwner(userId: string): Promise<LobbyInfo[]> {
         const items = await Lobbies.find({ owner: userId }).populate<Pick<PopulatedLobbyFields, "owner">>("owner");
@@ -232,91 +258,116 @@ export class LobbyService {
         return lobbies.map(this.lobbyIntoInfo);
     }
 
-    /** Add a user to the current lobby. */
+    /** Add a user to a waiting lobby, if it has a free place. */
     public async addUserTo(pin: string, player: DBPlayer): Promise<void> {
-        const lobby = await this.getRaw(pin);
-        assert(isDef(lobby), "modifying non-existant lobby.");
-
-        // find an un-honoured connection entry and overwrite it, otherwise we
-        // can just append the connection
-        if (lobby.players.length === lobby.maxPlayers) {
-            const idx = lobby.players.findIndex((player) => !player.confirmed);
-            lobby.players[idx] = player;
-        } else {
-            lobby.players.push(player);
-        }
-
-        // We need to update the lobby in the database.
-        await Lobbies.updateOne(
-            { pin },
-            {
-                $set: {
-                    players: lobby.players,
-                },
-            },
+        // Check and add in one update, so that two players can't take the last place.
+        const { matchedCount } = await Lobbies.updateOne(
+            { pin, status: "waiting", $expr: { $lt: [{ $size: "$players" }, "$maxPlayers"] } },
+            { $push: { players: player } },
         );
+
+        if (matchedCount === 0) {
+            throw new LobbyFullError();
+        }
     }
 
-    /** Confirm that the user is playing in the lobby. */
+    /** Confirm that the user is playing in the lobby, from the given connection. */
     public async confirmUser(pin: string, name: string, socket: string): Promise<void> {
+        const { matchedCount } = await Lobbies.updateOne(
+            { pin, "players.name": name },
+            { $set: { "players.$.socket": socket, "players.$.confirmed": true } },
+        );
+
+        if (matchedCount === 0) {
+            throw new PlayerNotInLobbyError();
+        }
+    }
+
+    /**
+     * Remove a player from a waiting lobby. The owner can't be removed.
+     *
+     * @returns The removed player, e.g. to notify their connection.
+     */
+    public async removePlayer(pin: string, name: string): Promise<DBPlayer> {
         const lobby = await this.getRaw(pin);
-        assert(isDef(lobby), "modifying non-existant lobby.");
-
-        const players = lobby.players;
-        const idx = players.findIndex((player) => player.name === name);
-
-        if (idx < 0) {
+        if (!isDef(lobby)) {
             throw new LobbyNotFoundError();
         }
 
-        // Now, we should update the player's entry to say that they've confirmed
-        // their connection to the lobby.
-        players[idx] = {
-            ...players[idx],
-            socket,
-            confirmed: true,
-        };
+        if (lobby.status !== "waiting") {
+            throw new InvalidLobbyStateError("Players can only leave a lobby before the game starts");
+        }
 
-        // We need to update the lobby in the database.
-        await Lobbies.updateOne(
-            { pin },
-            {
-                $set: {
-                    players: lobby.players,
-                },
-            },
-        );
-    }
-
-    /** Remove a player from the lobby by their connection id. */
-    public async removePlayerByConnectionId(pin: string, socket: string): Promise<void> {
-        const lobby = await this.getRaw(pin);
-        assert(isDef(lobby), "modifying non-existant lobby.");
-
-        const players = lobby.players;
-        const idx = players.findIndex((player) => player.socket === socket);
-
-        if (idx < 0) {
+        const player = lobby.players.find((p) => p.name === name);
+        if (!isDef(player)) {
             throw new PlayerNotInLobbyError();
         }
 
-        // Ensure that the owner isn't being removed.
-        if (players[idx].registered === lobby.owner.id) {
-            this.logger.warn("Attempted to remove the owner from the lobby.");
-            throw new TRPCError({ code: "BAD_REQUEST" });
+        if (player.registered === lobby.owner.id) {
+            throw new InvalidLobbyStateError("The owner can't leave their lobby");
         }
 
-        players.splice(idx, 1);
+        await Lobbies.updateOne({ pin }, { $pull: { players: { name } } });
+        return player;
+    }
 
-        // We need to update the lobby in the database.
-        await Lobbies.updateOne(
-            { pin },
-            {
-                $set: {
-                    players,
-                },
-            },
-        );
+    /**
+     * Handle a connection closing. A player in a waiting lobby gives up their place,
+     * except the owner, but a player in a game keeps it, so that they can rejoin.
+     *
+     * @returns The pin of the lobby that the connection was in, if any.
+     */
+    public async disconnect(socket: string): Promise<string | undefined> {
+        const lobby = await Lobbies.findOne({ "players.socket": socket });
+        if (!isDef(lobby)) {
+            return undefined;
+        }
+
+        const player = lobby.players.find((p) => p.socket === socket);
+        const isOwner = player?.registered === lobby.owner.toString();
+
+        if (lobby.status === "waiting" && !isOwner) {
+            await Lobbies.updateOne({ pin: lobby.pin }, { $pull: { players: { socket } } });
+        } else {
+            await Lobbies.updateOne(
+                { pin: lobby.pin, "players.socket": socket },
+                { $set: { "players.$.socket": null } },
+            );
+        }
+
+        return lobby.pin;
+    }
+
+    /**
+     * Mark a waiting lobby as playing. Only the players who are connected take part,
+     * so everyone else loses their place.
+     *
+     * @returns The names of the players in the game.
+     */
+    public async startGame(pin: string): Promise<string[]> {
+        return withLock(`lobby:${pin}`, async () => {
+            const lobby = await this.getRaw(pin);
+            if (!isDef(lobby)) {
+                throw new LobbyNotFoundError();
+            }
+
+            if (lobby.status !== "waiting") {
+                throw new InvalidLobbyStateError("The game has already started");
+            }
+
+            const players = lobby.players.filter((p) => p.confirmed && isDef(p.socket));
+            if (players.length < 2) {
+                throw new InvalidLobbyStateError("A game needs at least two connected players");
+            }
+
+            await Lobbies.updateOne({ pin }, { $set: { status: "playing", players } });
+            return players.map((p) => p.name);
+        });
+    }
+
+    /** Mark a lobby as waiting again, after its game finished, so that its players can play another. */
+    public async finishGame(pin: string): Promise<void> {
+        await Lobbies.updateOne({ pin }, { $set: { status: "waiting" } });
     }
 
     /**
@@ -329,6 +380,10 @@ export class LobbyService {
     public async sendMessage(pin: string, socket: string, message: string): Promise<Message> {
         const lobby = await this.getRaw(pin);
         assert(isDef(lobby), "modifying non-existant lobby.");
+
+        if (lobby.disableChat) {
+            throw new InvalidLobbyStateError("Chat is disabled in this lobby");
+        }
 
         const players = lobby.players;
         const idx = players.findIndex((player) => player.socket === socket);

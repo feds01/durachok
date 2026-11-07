@@ -7,7 +7,7 @@ import helmet from "helmet";
 import { createServer } from "http";
 import { AddressInfo } from "net";
 
-import { APP_URL, ENV, IMAGE_STORAGE, PORT, UPLOAD_FOLDER } from "./config";
+import { APP_URL, ENV, IMAGE_STORAGE, PORT, UPLOAD_FOLDER, WEB_ORIGINS } from "./config";
 import { appRouter } from "./interface/routes";
 import { connectSocket } from "./interface/socket";
 import { connectDB } from "./lib/database";
@@ -27,7 +27,7 @@ app.use((_, res, next) => {
 });
 app.use(
     cors({
-        origin: ["http://localhost:5173", "http://localhost:4173"],
+        origin: WEB_ORIGINS,
     }),
 );
 app.use(express.urlencoded({ extended: false }));
@@ -64,6 +64,11 @@ app.use((_req, res) => {
 });
 
 const server = createServer(app);
+
+// A failure in a background task shouldn't take the whole server down with it.
+process.on("unhandledRejection", (reason) => {
+    logger.error({ err: reason }, "unhandled promise rejection");
+});
 
 server.listen(PORT, async () => {
     await connectDB();

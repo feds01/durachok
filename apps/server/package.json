@@ -7,6 +7,7 @@
     "scripts": {
         "dev": "bun --watch src/index.ts",
         "check": "tsc --noEmit",
+        "test": "bun test",
         "build": "bun build src/index.ts --target=bun --packages=external --format=esm --outdir=dist --sourcemap=linked",
         "build:client": "bun src/interface/socket/generate-client.ts"
     },
@@ -39,12 +40,14 @@
         "zod-sockets": "^7.0.1"
     },
     "devDependencies": {
+        "@types/bun": "^1.4.4",
         "@types/cors": "^2.8.19",
         "@types/express": "^5.0.6",
         "@types/fs-extra": "^11.0.4",
         "@types/jsonwebtoken": "^9.0.10",
         "@types/node": "^26.6.6",
         "@types/node-fetch": "^2.6.13",
+        "socket.io-client": "4.8.4",
         "typescript": "^6.0.3",
         "wait-port": "^1.1.0"
     }

@@ -1,4 +1,4 @@
-import { ActionSchema, GameStateSchema, PlayerGameStateSchema } from "../schemas/game";
+import { ActionSchema, PlayerGameStateSchema } from "../schemas/game";
 import { LobbySchema } from "../schemas/lobby";
 import { z } from "zod";
 
@@ -53,15 +53,22 @@ export const PlayerJoinSchema = z
         },
     );
 
+/** A player at the end of a game, and when they went out of it. */
 const PlayerExitSchema = z.object({
     name: z.string(),
-    at: z.date(),
+    /** When the player went out, as a timestamp, or null for the player who lost. */
+    out: z.number().nullable(),
 });
 
-/** Indicate to the client that the lobby has reached a victory. */
+/**
+ * Indicate to the client that the game has finished. The players are in the order
+ * they went out of the game, so the first is the winner and the last is the durak.
+ */
 export const VictoryMessageSchema = z.object({
     players: z.array(PlayerExitSchema),
 });
+
+export type VictoryMessage = z.infer<typeof VictoryMessageSchema>;
 
 /** Indicate to the client that the game was closed. */
 export const CloseGameMessageSchema = z.object({
@@ -74,16 +81,24 @@ export const StateUpdateMessageSchema = z.object({
     update: PlayerGameStateSchema,
 });
 
-export const ActionWithTimeSchema = z.object({
-    action: ActionSchema,
-    occurred_at: z.date(),
+/**
+ * Indicate to the player that actions have occurred, with the game state that
+ * they led to, from the player's perspective.
+ */
+export const ActionMessageSchema = z.object({
+    actions: z.array(ActionSchema),
+    update: PlayerGameStateSchema,
 });
 
-/** Indicate to the player that an action has occurred. */
-export const ActionMessageSchema = z.object({
-    actions: z.array(ActionWithTimeSchema),
-    update: GameStateSchema,
+export type ActionMessage = z.infer<typeof ActionMessageSchema>;
+
+/** New tokens for the client, after the server refreshed its expired ones. */
+export const TokensMessageSchema = z.object({
+    token: z.string(),
+    refreshToken: z.string(),
 });
+
+export type TokensMessage = z.infer<typeof TokensMessageSchema>;
 
 /** Various types of errors that can occur. */
 export const ErrorMessageTypeSchema = z.union([

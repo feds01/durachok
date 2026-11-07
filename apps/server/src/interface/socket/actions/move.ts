@@ -4,8 +4,8 @@ import { GamePinSchema } from "@durachok/transport";
 import { z } from "zod";
 
 import { InvalidMoveError } from "../../../controllers/common";
-import { assert, expr, isDef } from "../../../utils";
 import { ensureLobbyAccess } from "../common/auth";
+import { emitActions, emitVictory } from "../common/game";
 import { factory } from "./ctx";
 
 const onMove = factory.build({
@@ -27,63 +27,38 @@ const onMove = factory.build({
 
         const lobby = await ctx.lobbyService.get(pin);
 
-        // We can't send a move whilst the game is finished.
-        if (lobby.status === "finished") {
-            logger.warn(meta, "game has finished");
-            client.emit("error", {
+        // We can only make moves in a game that's being played.
+        if (lobby.status !== "playing") {
+            logger.warn(meta, "no game is being played");
+            await client.emit("error", {
                 type: "stale_game",
-                message: "Game has finished.",
+                message: "No game is being played.",
             });
+            return;
         }
 
-        // @@Todo: we should be able to acquire a lock here to ensure that the
-        // move can be made atomically in the game state.
-        const state = await expr(async () => {
-            try {
-                return await ctx.gameService(lobby).makeMove(name, move);
-            } catch (e: unknown) {
-                if (e instanceof InvalidGameState) {
-                    logger.warn(meta, "invalid move");
-                    client.emit("error", {
-                        type: "invalid_move",
-                        message: "Invalid move.",
-                    });
-                } else if (e instanceof InvalidMoveError) {
-                    logger.warn(meta, "invalid move");
-                    client.emit("error", {
-                        type: "invalid_move",
-                        message: e.message,
-                    });
-                }
+        const gameService = ctx.gameService(lobby);
 
-                // We should return the current game state so that we reset the
-                // clients anyway.
-                return await ctx.gameService(lobby).get();
+        try {
+            const { game, actions } = await gameService.makeMove(name, move);
+            await emitActions(ctx, withRooms, pin, game, actions);
+
+            if (game.isFinished()) {
+                logger.info(meta, "game finished");
+                await ctx.lobbyService.finishGame(pin);
+                await emitVictory(withRooms, pin, game);
             }
-        });
-
-        // We need to send the game state to all players.
-        const players = await ctx.lobbyService.getPlayers(pin);
-        assert(isDef(players));
-
-        const clients = await withRooms(pin).getClients();
-
-        clients.forEach(async (c) => {
-            // Find the specific player that this client represents.
-            const player = players.find((p) => p.socket === c.id);
-
-            // This must ne a spectator.
-            if (!player) {
-                c.emit("playerState", {
-                    update: state.getStateForSpectator(),
-                });
-                return;
+        } catch (e: unknown) {
+            if (!(e instanceof InvalidGameState || e instanceof InvalidMoveError)) {
+                throw e;
             }
 
-            await c.emit("playerState", {
-                update: state.getStateForPlayer(player.name),
-            });
-        });
+            // Tell the player why, and send them the game state so that they can
+            // undo whatever they showed before the server answered.
+            logger.warn({ ...meta, reason: e.message }, "invalid move");
+            await client.emit("error", { type: "invalid_move", message: e.message });
+            await client.emit("playerState", { update: await gameService.getGameStateFor(name) });
+        }
     },
 });
 
