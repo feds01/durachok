@@ -6,7 +6,8 @@
     "scripts": {
         "dev": "vite",
         "build": "tsc -b && vite build",
-        "preview": "vite preview"
+        "preview": "vite preview",
+        "test": "bun test src"
     },
     "dependencies": {
         "@durachok/engine": "workspace:*",
@@ -50,6 +51,7 @@
     "devDependencies": {
         "@tailwindcss/vite": "^4.3.5",
         "@tanstack/router-plugin": "^1.168.48",
+        "@types/bun": "^1.4.4",
         "@types/node": "^26.6.6",
         "@types/react": "^19.3.0",
         "@types/react-dom": "^19.3.0",
