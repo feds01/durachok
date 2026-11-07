@@ -1,3 +1,4 @@
+import FloatingCards from "../components/FloatingCards";
 import { AuthState } from "../contexts/auth/reducer";
 import "../index.css";
 
@@ -19,6 +20,7 @@ interface RouterContext {
 export const Route = createRootRouteWithContext<RouterContext>()({
     component: () => (
         <>
+            <FloatingCards />
             <Outlet />
             <TanStackRouterDevtools />
         </>

@@ -7,6 +7,7 @@ import { LobbyEvent, LobbyState, initialLobbyState, reduceLobby } from "./state"
 const lobby: Lobby = {
     pin: "123456",
     owner: { id: "owner-id", name: "owner" },
+    hasPassphrase: false,
     maxPlayers: 4,
     shortGameDeck: false,
     freeForAll: false,
@@ -32,11 +33,11 @@ describe("lobby state", () => {
     });
 
     test("the owner keeps the passphrase when an update for the room leaves it out", () => {
-        const withPassphrase = { ...lobby, passphrase: "♡♢♣♤" };
+        const withPassphrase = { ...lobby, hasPassphrase: true, passphrase: "♡♢♣♤" };
         const guest = { id: "guest", name: "guest" };
         const state = reduceAll([
             { type: "join", lobby: withPassphrase },
-            { type: "lobby", lobby: { ...lobby, players: [...lobby.players, guest] } },
+            { type: "lobby", lobby: { ...lobby, hasPassphrase: true, players: [...lobby.players, guest] } },
         ]);
 
         expect(state.lobby?.passphrase).toBe("♡♢♣♤");
@@ -45,11 +46,20 @@ describe("lobby state", () => {
 
     test("a new passphrase replaces the old one", () => {
         const state = reduceAll([
-            { type: "join", lobby: { ...lobby, passphrase: "♡♢♣♤" } },
-            { type: "lobby", lobby: { ...lobby, passphrase: "♤♣♢♡" } },
+            { type: "join", lobby: { ...lobby, hasPassphrase: true, passphrase: "♡♢♣♤" } },
+            { type: "lobby", lobby: { ...lobby, hasPassphrase: true, passphrase: "♤♣♢♡" } },
         ]);
 
         expect(state.lobby?.passphrase).toBe("♤♣♢♡");
+    });
+
+    test("the owner's passphrase goes once the lobby no longer has one", () => {
+        const state = reduceAll([
+            { type: "join", lobby: { ...lobby, hasPassphrase: true, passphrase: "♡♢♣♤" } },
+            { type: "lobby", lobby: { ...lobby, hasPassphrase: false } },
+        ]);
+
+        expect(state.lobby).not.toHaveProperty("passphrase");
     });
 
     test("players who never had the passphrase don't get one", () => {

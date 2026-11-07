@@ -12,6 +12,8 @@ interface ControlledSliderInputProps<T extends FieldValues> {
     max?: number;
     step?: number;
     marks?: { value: number; label: string }[];
+    /** Show the chosen value beside the legend, formatted, e.g. as "300s". */
+    format?: (value: number) => string;
     className?: string;
 }
 
@@ -23,22 +25,30 @@ const ControlledSliderInput = <T extends FieldValues>({
     max = 100,
     step = 1,
     marks,
+    format,
     className,
 }: ControlledSliderInputProps<T>) => {
     return (
-        <div className={cn("space-y-4 pt-4", className)}>
+        <div className={cn("space-y-3", className)}>
             <Controller
                 name={name}
                 control={control}
                 render={({ field }) => (
                     <>
                         {legend && (
-                            <Label className="text-lg text-foreground" htmlFor={name}>
-                                {legend}
-                            </Label>
+                            <div className="flex items-center justify-between">
+                                <Label className="text-base text-foreground" htmlFor={name}>
+                                    {legend}
+                                </Label>
+                                {format && (
+                                    <span className="rounded-full bg-secondary px-2.5 py-0.5 text-sm text-foreground">
+                                        {format(field.value)}
+                                    </span>
+                                )}
+                            </div>
                         )}
 
-                        <div className="py-2">
+                        <div className="space-y-2">
                             <Slider
                                 value={[field.value]}
                                 onValueChange={(value) => field.onChange(value[0])}
@@ -47,7 +57,7 @@ const ControlledSliderInput = <T extends FieldValues>({
                                 step={step}
                             />
                             {marks && (
-                                <div className="flex justify-between text-md text-muted-foreground">
+                                <div className="flex justify-between text-xs text-muted-foreground">
                                     {marks.map((mark) => (
                                         <span key={mark.value}>{mark.label}</span>
                                     ))}

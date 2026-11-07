@@ -98,6 +98,7 @@ export class LobbyService {
         return {
             pin: lobby.pin,
             /** Settings */
+            hasPassphrase: isDef(lobby.passphrase),
             ...(withPassphrase && isDef(lobby.passphrase) ? { passphrase: lobby.passphrase } : {}),
             maxPlayers: lobby.maxPlayers,
             shortGameDeck: lobby.shortGameDeck,
@@ -476,40 +477,45 @@ export class LobbyService {
         }
     }
 
-    /** Update the settings of a particular lobby. */
-    public async update(pin: string, settings: Partial<GameSettings>): Promise<void> {
-        const lobby = await this.getInfo(pin);
-        assert(isDef(lobby), "modifying non-existant lobby.");
+    /**
+     * Change the settings of a lobby that is waiting for its game. Turning the passphrase on
+     * gives the lobby one, or keeps the one it has, and turning it off removes it.
+     */
+    public async updateSettings(pin: string, settings: GameSettings): Promise<void> {
+        // The same lock as starting the game, so that the settings can't change as it starts.
+        await withLock(`lobby:${pin}`, async () => {
+            const lobby = await this.getRaw(pin);
+            if (!isDef(lobby)) {
+                throw new LobbyNotFoundError();
+            }
 
-        const { maxPlayers, passphrase, shortGameDeck, freeForAll, disableChat, randomisePlayerOrder, roundTimeout } = {
-            ...lobby,
-            ...settings,
-        };
+            if (lobby.status !== "waiting") {
+                throw new InvalidLobbyStateError("The settings can only change before the game starts");
+            }
 
-        // If the user tries to update the max players to be less than the current
-        // player count, then we should throw an error.
-        if (lobby.players > maxPlayers) {
-            throw new InvalidLobbySettingsError("Cannot reduce the max players below the current player count.");
-        }
+            if (lobby.players.length > settings.maxPlayers) {
+                throw new InvalidLobbySettingsError("The lobby already has more players than that");
+            }
 
-        try {
+            const { passphrase, ...rest } = settings;
             await Lobbies.updateOne(
                 { pin },
-                {
-                    $set: {
-                        maxPlayers,
-                        ...(passphrase ? { passphrase: this.newGamePassphrase() } : {}),
-                        shortGameDeck,
-                        freeForAll,
-                        disableChat,
-                        randomisePlayerOrder,
-                        roundTimeout,
-                    },
-                },
+                passphrase
+                    ? { $set: { ...rest, passphrase: lobby.passphrase ?? this.newGamePassphrase() } }
+                    : { $set: rest, $unset: { passphrase: 1 } },
             );
-        } catch (e: unknown) {
-            this.logger.error(e, "Failed to update lobby");
-            throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        });
+    }
+
+    /** Give a lobby a new passphrase, if it has one and is waiting for its game. */
+    public async rotatePassphrase(pin: string): Promise<void> {
+        const result = await Lobbies.updateOne(
+            { pin, status: "waiting", passphrase: { $exists: true } },
+            { $set: { passphrase: this.newGamePassphrase() } },
+        );
+
+        if (result.matchedCount === 0) {
+            throw new InvalidLobbyStateError("The lobby has no passphrase, or its game has started");
         }
     }
 }

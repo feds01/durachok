@@ -1,52 +1,35 @@
-import { GamePinSchema } from "@durachok/transport";
+import { GamePinSchema, GameSettingsSchema } from "@durachok/transport";
 import { z } from "zod";
 
 import { ensureOwnerAccess } from "../common/auth";
 import { factory } from "./ctx";
 
-const onSettingsUpdate = factory.build({
-    event: "passphrase",
-    // @@Todo: perhaps support more settings in the future, i.e. changing game settings
-    // directly?
-    input: z.tuple([GamePinSchema]),
-    handler: async ({ input, client, logger: $ctx }) => {
+/** Change the lobby's settings, which only its owner can, before the game starts. */
+const onSettings = factory.build({
+    event: "settings",
+    input: z.tuple([GamePinSchema, GameSettingsSchema]),
+    handler: async ({ input, client, withRooms, logger: $ctx }) => {
         const { ctx } = $ctx;
         const logger = $ctx;
-        const [pin] = input;
+        const [pin, settings] = input;
         const meta = { event: "settings", pin, clientId: client.id };
 
         logger.info(meta, "processing event");
         await ensureOwnerAccess(ctx, client, pin);
-
-        const lobbyStatus = await ctx.lobbyService.getStatus(pin);
-
-        // Ensure that the lobby is not in "playing" state when
-        // players are locked in.
-        if (lobbyStatus !== "waiting") {
-            logger.info(meta, "cannot change settings when game is not waiting");
-            await client.emit("error", {
-                type: "bad_request",
-                message: "can't change settings when playing.",
-            });
-            return;
-        }
-
-        await ctx.lobbyService.update(pin, {
-            passphrase: true,
-        });
-
+        await ctx.lobbyService.updateSettings(pin, settings);
         logger.info(meta, "settings updated");
 
-        // Re-fetch the lobby and send it to the owner, who alone sees the new passphrase.
-        const lobby = await ctx.lobbyService.get(pin, { withPassphrase: true });
-
+        // Everyone sees the new settings, and the owner the passphrase too, after the
+        // update for the room, so that theirs is the one that sticks.
+        await withRooms(pin).broadcast("lobbyState", {
+            update: { type: "settings_update" },
+            lobby: await ctx.lobbyService.get(pin),
+        });
         await client.emit("lobbyState", {
-            update: {
-                type: "settings_update",
-            },
-            lobby,
+            update: { type: "settings_update" },
+            lobby: await ctx.lobbyService.get(pin, { withPassphrase: true }),
         });
     },
 });
 
-export default onSettingsUpdate;
+export default onSettings;

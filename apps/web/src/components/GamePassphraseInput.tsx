@@ -1,51 +1,112 @@
-import GamePassphraseCard from "./GamePassphraseCard";
-import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+import { RotateCcw } from "lucide-react";
+import { useState } from "react";
 import { Control, FieldValues, Path, useController } from "react-hook-form";
 
-import { isDef } from "@/utils";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { isDef } from "@/utils";
+
+/** The suits that make up a passphrase, and what to call them. */
+const SUITS = { "♡": "hearts", "♢": "diamonds", "♣": "clubs", "♤": "spades" } as const;
+
+type Suit = keyof typeof SUITS;
 
 interface Props<T extends FieldValues> {
     pin: string;
     control: Control<T>;
     name: Path<T>;
+    /** Called once all four suits are picked. */
+    onComplete?: () => void;
 }
 
-export default function GamePassphraseInput<T extends FieldValues>({ pin, name, control }: Props<T>) {
-    const symbols = ["♡", "♢", "♣", "♤"] as const;
-    const [order, setOrder] = useState("");
+/** The passphrase, picked as the four suits in the order that the lobby's owner sees them. */
+export default function GamePassphraseInput<T extends FieldValues>({ pin, name, control, onComplete }: Props<T>) {
+    const [order, setOrder] = useState<Suit[]>([]);
     const {
         field: { onChange },
-        fieldState: { isDirty, error },
-        formState: { isSubmitting },
+        fieldState: { error },
     } = useController({ name, control });
+    const suits = Object.keys(SUITS) as Suit[];
 
-    useEffect(() => {
-        if (order.length === 4) {
-            onChange(order);
+    // A wrong passphrase starts the picking again, since the owner's has likely changed.
+    const [lastError, setLastError] = useState(error);
+    if (error !== lastError) {
+        setLastError(error);
+        if (isDef(error)) {
+            setOrder([]);
         }
-    }, [order, onChange]);
+    }
+
+    const pick = (suit: Suit) => {
+        const picked = [...order, suit];
+        setOrder(picked);
+
+        if (picked.length === suits.length) {
+            onChange(picked.join(""));
+            onComplete?.();
+        }
+    };
 
     return (
-        <div>
-            <div>
-                <p className="font-sans text-3xl">
-                    Passphrase for <code className="tracking-wide">{pin}</code>
-                </p>
-                <div className={cn("flex flex-row justify-center flex-nowrap", isDef(error) && "animate-shake")}>
-                    {symbols.map((symbol) => (
-                        <GamePassphraseCard
-                            key={symbol}
-                            symbol={symbol}
-                            selected={order.indexOf(symbol) !== -1}
-                            onClick={() => setOrder(order + symbol)}
-                        />
-                    ))}
-                </div>
+        <div className="flex flex-col items-center gap-5">
+            <p className="m-0 text-muted-foreground">
+                Pick the suits in the order that the owner of{" "}
+                <span className="font-display font-black italic lining-nums text-foreground">{pin}</span> sees them.
+            </p>
+            <div className={cn("flex gap-2", isDef(error) && "animate-shake")} aria-label="Your passphrase">
+                {suits.map((_, index) => {
+                    const symbol = order[index];
+                    return (
+                        <div
+                            // eslint-disable-next-line react/no-array-index-key -- each slot is a fixed position
+                            key={index}
+                            className={cn(
+                                "flex h-16 w-12 items-center justify-center rounded-lg border-2 text-3xl",
+                                symbol
+                                    ? "border-primary text-primary"
+                                    : "border-dashed border-border text-sm text-muted-foreground/40",
+                            )}
+                        >
+                            {symbol ?? index + 1}
+                        </div>
+                    );
+                })}
             </div>
-            <div>
-                {!isSubmitting && !isDirty && error && <p className="text-destructive">{error.message?.toString()}</p>}
+            <div className="flex items-center gap-3">
+                {suits.map((suit) => {
+                    const isPicked = order.includes(suit);
+                    return (
+                        <motion.button
+                            type="button"
+                            key={suit}
+                            disabled={isPicked}
+                            onClick={() => pick(suit)}
+                            whileHover={isPicked ? {} : { y: -4 }}
+                            whileTap={{ scale: 0.95 }}
+                            aria-label={`Pick ${SUITS[suit]}`}
+                            className={cn(
+                                "flex h-20 w-16 cursor-pointer select-none items-center justify-center rounded-lg border-2 border-primary bg-card text-5xl text-primary shadow-md transition-opacity max-sm:h-16 max-sm:w-12 max-sm:text-4xl",
+                                isPicked && "cursor-default opacity-30",
+                            )}
+                        >
+                            {suit}
+                        </motion.button>
+                    );
+                })}
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setOrder([])}
+                    disabled={order.length === 0}
+                    aria-label="Start again"
+                    title="Start again"
+                >
+                    <RotateCcw />
+                </Button>
             </div>
+            {error && <p className="m-0 text-sm text-destructive">{error.message?.toString()}</p>}
         </div>
     );
 }

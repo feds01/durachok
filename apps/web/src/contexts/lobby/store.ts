@@ -5,7 +5,7 @@ import { create } from "zustand";
 import { SOCKET_URL } from "@/config";
 import { Root } from "@/interface/socket-client";
 import { getAuthTokens, saveRefreshedTokens } from "@/utils/auth";
-import { PlayerMove } from "@durachok/transport";
+import { GameSettings, PlayerMove } from "@durachok/transport";
 
 import { LobbyEvent, LobbyState, initialLobbyState, reduceLobby } from "./state";
 
@@ -34,6 +34,9 @@ interface LobbyStore extends LobbyState {
 
     /** Give the lobby a new passphrase, which only the owner can do. */
     rotatePassphrase: () => void;
+
+    /** Change the lobby's settings, which only the owner can do, before the game starts. */
+    updateSettings: (settings: GameSettings) => void;
 
     /** Send a message to the lobby. */
     sendMessage: (message: string) => void;
@@ -102,6 +105,7 @@ export const useLobbyStore = create<LobbyStore>((set, get) => {
                 dispatch({ type: "left" });
             }),
         rotatePassphrase: () => withSocket((socket, pin) => socket.emit("passphrase", pin)),
+        updateSettings: (settings) => withSocket((socket, pin) => socket.emit("settings", pin, settings)),
         sendMessage: (message) => withSocket((socket, pin) => socket.emit("message", pin, { message })),
         dispatchMove: (move) => withSocket((socket, pin) => socket.emit("move", pin, move)),
     };

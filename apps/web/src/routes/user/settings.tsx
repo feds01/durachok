@@ -1,14 +1,18 @@
 import { useState } from "react";
 
+import { LayoutDashboard } from "lucide-react";
+
 import Alert, { AlertKind } from "@/components/Alert";
-import Divider from "@/components/Divider";
-import PlayerAvatar from "@/components/PlayerAvatar";
+import AppHeader from "@/components/AppHeader";
+import UserAvatar from "@/components/UserAvatar";
+import UserMenu from "@/components/UserMenu";
 import { Button } from "@/components/ui/button";
-import { useAuthDispatch } from "@/contexts/auth";
 import DeleteUserForm from "@/forms/DeleteUserForm";
 import UpdateUserForm from "@/forms/UpdateUserForm";
 import UpdateUserProfileImageForm from "@/forms/UpdateUserProfileImageForm";
-import { Link, createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
+import { PANEL } from "@/lib/styles";
+import { cn } from "@/lib/utils";
+import { Link, createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/user/settings")({
     beforeLoad: ({ context, location }) => {
@@ -36,57 +40,46 @@ type SettingsEvent = {
 function UserSettingsRoute() {
     const [event, setEvent] = useState<SettingsEvent | null>(null);
     const { user } = Route.useRouteContext();
-    const auth = useAuthDispatch();
-    const navigator = useNavigate();
-
-    const logout = () => {
-        auth({ type: "logout" });
-        navigator({ to: "/" });
-    };
 
     const handleOutcome = (severity: AlertKind, message: string) => {
         setEvent({ severity, message });
     };
 
     return (
-        <div className="text-center px-8 [&_h1]:text-5xl [&_h1]:italic [&_h1]:font-display max-sm:[&_h1]:text-3xl">
-            <div className="flex-0 flex flex-row justify-between my-2">
+        <div className="flex w-full flex-col px-4 pb-10">
+            <AppHeader>
                 <Button variant="secondary" asChild>
-                    <Link to={"/user"}>Home</Link>
+                    <Link to="/user">
+                        <LayoutDashboard />
+                        Dashboard
+                    </Link>
                 </Button>
-                <Button variant="secondary" onClick={logout}>
-                    Logout
-                </Button>
-            </div>
-            <PlayerAvatar avatarUri={user.image} avatarSize={128} name={user.name} />
-            <Divider />
-            <div className="mx-auto max-w-175 flex flex-col [&_section]:mb-8 [&_h2]:text-2xl [&_h2]:text-left [&_h2]:mt-4 [&_h2]:mb-1 [&_p]:my-1">
-                {event && <Alert kind={event.severity} message={event.message} className="pt-2" />}
-                <section className="flex-1 items-start text-left flex flex-col w-inherit">
-                    <h2>Profile Picture</h2>
-                    <Divider />
-                    <p>
-                        You can upload a JPG file that will be used a as a profile picture. The maximum file size is
-                        1MB. To get the best profile image fit, try to use an image that has square dimensions.
-                    </p>
-                    <UpdateUserProfileImageForm onResponse={handleOutcome} />
+                <UserMenu />
+            </AppHeader>
+            <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
+                <h1 className="m-0 text-3xl">Account settings</h1>
+                {event && <Alert kind={event.severity} message={event.message} />}
+                <section className={cn(PANEL, "flex items-center gap-5 max-sm:flex-col max-sm:items-start")}>
+                    <UserAvatar image={user.image} size={88} alt="Your profile picture" />
+                    <div className="flex flex-col items-start gap-3">
+                        <h2 className="m-0 text-2xl">Profile picture</h2>
+                        <p className="m-0 text-muted-foreground">
+                            Upload a JPG of up to 1MB to use as your profile picture. A square image fits best.
+                        </p>
+                        <UpdateUserProfileImageForm onResponse={handleOutcome} />
+                    </div>
                 </section>
-                <section className="flex-1 items-start text-left flex flex-col w-inherit">
-                    <h2>Update User Details</h2>
-                    <Divider />
-                    <p>
-                        Update your user account details by replacing the current information in the fields. You will
-                        not be able to update your name or email to one that is already taken by another user.
+                <section className={cn(PANEL, "flex flex-col gap-3")}>
+                    <h2 className="m-0 text-2xl">Account details</h2>
+                    <p className="m-0 text-muted-foreground">
+                        Change your name, email or password. A name or email that another player has is taken.
                     </p>
                     <UpdateUserForm onResponse={handleOutcome} user={user} />
                 </section>
-                <section className="flex-1 items-start text-left flex flex-col w-inherit">
-                    <h2 className="text-destructive!">Danger Zone</h2>
-                    <Divider />
-                    <p className="mb-2">
-                        Deleting your account will remove any and all information on your account. This includes any
-                        games that you have played, are playing, and all of your statistics. Once your account is
-                        deleted, this information will be unrecoverable.
+                <section className={cn(PANEL, "flex flex-col items-start gap-3 border-destructive/40")}>
+                    <h2 className="m-0 text-2xl text-destructive">Danger zone</h2>
+                    <p className="m-0 text-muted-foreground">
+                        Deleting your account removes everything on it, including your games and statistics, for good.
                     </p>
                     <DeleteUserForm onResponse={handleOutcome} />
                 </section>

@@ -4,9 +4,13 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import GamePassphraseInput from "@/components/GamePassphraseInput";
+import PinInput from "@/components/PinInput";
 import SubmitButton from "@/components/SubmitButton";
 import { Input } from "@/components/ui/input";
 import { useAuthState } from "@/contexts/auth";
+import { fadeUp } from "@/lib/motion";
+import { PANEL } from "@/lib/styles";
+import { cn } from "@/lib/utils";
 import { expr, isDef } from "@/utils";
 import trpc, { trpcNativeClient } from "@/utils/trpc";
 import { GamePassPhraseSchema, GamePinSchema } from "@/valdiators/lobby";
@@ -43,6 +47,13 @@ const GamePromptFormInputSchema = z.object({
 });
 
 type GamePromptInput = z.infer<typeof GamePromptFormInputSchema>;
+
+/** The heading for each step of joining. */
+const STAGE_TITLES: Record<StageKind["kind"], string> = {
+    pin: "Join a lobby",
+    name: "Choose a name",
+    security: "Passphrase",
+};
 
 export default function GamePrompt({ startPin, onSuccess }: Props) {
     const [stage, setStage] = useState<StageKind>({ kind: "pin" });
@@ -199,59 +210,57 @@ export default function GamePrompt({ startPin, onSuccess }: Props) {
 
     return (
         <form
-            className="grow flex flex-col mx-auto max-w-100"
+            className={cn(PANEL, "flex w-full flex-col gap-5 text-center")}
             // Each submission moves on a stage, and only the last stage joins the lobby.
             onSubmit={(event) => {
                 event.preventDefault();
                 void next();
             }}
         >
+            <h2 className="m-0 text-2xl">{STAGE_TITLES[stage.kind]}</h2>
             {stage.kind === "pin" && (
-                <div className="pt-16 space-y-2">
-                    <Input
-                        {...pinField.field}
-                        placeholder="Game PIN"
-                        autoComplete="off"
-                        maxLength={6}
-                        className="text-center text-2xl h-14"
+                <div className="flex flex-col items-center gap-2">
+                    <PinInput
+                        value={pinField.field.value}
+                        onChange={pinField.field.onChange}
+                        // The lobby is looked up as soon as the pin is complete.
+                        onComplete={() => void next()}
+                        invalid={isDef(pinField.fieldState.error)}
                     />
                     {pinField.fieldState.error && (
-                        <p className="text-sm text-destructive text-center">{pinField.fieldState.error.message}</p>
+                        <p className="m-0 text-sm text-destructive">{pinField.fieldState.error.message}</p>
                     )}
                 </div>
             )}
             {stage.kind === "name" && (
-                <motion.div
-                    transition={{ duration: 0.3 }}
-                    initial={{ opacity: 0, scale: 0.5 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="pt-16 space-y-2"
-                >
+                <motion.div variants={fadeUp} initial="hidden" animate="visible" className="space-y-2">
                     <Input
                         {...nameField.field}
-                        placeholder="Name"
+                        placeholder="Your name"
                         autoComplete="off"
                         maxLength={39}
-                        className="text-center text-2xl h-14 w-100"
+                        className="h-16 text-center text-3xl md:text-3xl"
                     />
                     {nameField.fieldState.error && (
-                        <p className="text-sm text-destructive text-center">{nameField.fieldState.error.message}</p>
+                        <p className="m-0 text-sm text-destructive">{nameField.fieldState.error.message}</p>
                     )}
                 </motion.div>
             )}
             {stage.kind === "security" && (
-                <motion.div
-                    transition={{ duration: 0.3 }}
-                    initial={{ opacity: 0, scale: 0.5 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                >
-                    <GamePassphraseInput pin={form.getValues().pin} control={form.control} name="security" />
+                <motion.div variants={fadeUp} initial="hidden" animate="visible">
+                    <GamePassphraseInput
+                        pin={form.getValues().pin}
+                        control={form.control}
+                        name="security"
+                        // The passphrase changes often, so the join goes as soon as it is picked.
+                        onComplete={() => void next()}
+                    />
                 </motion.div>
             )}
             <SubmitButton
                 disabled={!isDef(form.formState.dirtyFields[stage.kind])}
                 isSubmitting={form.formState.isSubmitting}
-                className="h-15 text-2xl mt-4"
+                className="h-16 text-2xl"
             />
         </form>
     );

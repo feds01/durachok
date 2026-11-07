@@ -1,9 +1,8 @@
 import { motion } from "framer-motion";
-import { useEffect, useMemo } from "react";
-import { Home } from "lucide-react";
+import { LayoutDashboard, LogIn, UserPlus } from "lucide-react";
 
-import PlayingCard from "@/assets/image/playing-card.svg?react";
 import Logo from "@/components/Logo";
+import OrDivider from "@/components/OrDivider";
 import { Button } from "@/components/ui/button";
 import { useAuthDispatch, useAuthState } from "@/contexts/auth";
 import GamePrompt, { LobbyAuthInfo } from "@/forms/GamePrompt";
@@ -17,57 +16,6 @@ export const Route = createFileRoute("/")({
         isDef(search.startPin) ? { startPin: String(search.startPin) } : {},
     component: Index,
 });
-
-const random = (max: number) => Math.floor(Math.random() * max);
-
-const PlayingCardIcon = ({ index }: { index: number }) => {
-    const animationData = useMemo(
-        () => ({
-            left: `calc(${random(120) - 20}% - 20px)`,
-            duration: `${6 + random(15)}s`,
-            delay: `${random(5) - 5}s`,
-            scale: 0.3 * index - 0.6,
-            rotation: random(360),
-            zIndex: index - 7,
-            blur: index - 6,
-            keyframeName: `raise-${index}-${random(10000)}`,
-        }),
-        [index],
-    );
-
-    useEffect(() => {
-        const styleId = `playing-card-animation-${animationData.keyframeName}`;
-        if (!document.getElementById(styleId)) {
-            const style = document.createElement("style");
-            style.id = styleId;
-            style.textContent = `
-                @keyframes ${animationData.keyframeName} {
-                    to {
-                        bottom: 150vh;
-                        transform: scale(${animationData.scale}) rotate(${animationData.rotation + 180}deg);
-                    }
-                }
-            `;
-            document.head.appendChild(style);
-        }
-    }, [animationData]);
-
-    return (
-        <PlayingCard
-            className="w-16 h-16 max-sm:w-8 max-sm:h-8 absolute"
-            style={{
-                bottom: "-100vh",
-                transformStyle: "preserve-3d",
-                left: animationData.left,
-                animation: `${animationData.keyframeName} ${animationData.duration} linear infinite`,
-                animationDelay: animationData.delay,
-                transform: `scale(${animationData.scale}) rotate(${animationData.rotation}deg)`,
-                zIndex: animationData.zIndex,
-                filter: `blur(${animationData.blur}px)`,
-            }}
-        />
-    );
-};
 
 function Index() {
     const { startPin } = Route.useSearch();
@@ -90,51 +38,40 @@ function Index() {
         });
     };
 
-    useEffect(() => {
-        document.getElementsByTagName("body")[0].style.overflow = "hidden";
-
-        return () => {
-            document.getElementsByTagName("body")[0].style.overflow = "auto";
-        };
-    }, []);
-
     return (
-        <div className="perspective-origin-center">
-            {isRegistered() && (
-                <Button variant="ghost" size="icon" className="absolute top-4 left-4 z-10" asChild>
-                    <Link to="/user">
-                        <Home className="h-6 w-6" />
-                    </Link>
-                </Button>
-            )}
-            {[...Array(12)]
-                .map((_, i) => i)
-                .map((k, i) => (
-                    <PlayingCardIcon index={i} key={k} />
-                ))}
+        <div className="relative flex min-h-full flex-col items-center justify-center px-4 py-12">
             {/* Fades in, e.g. as the user arrives from logging out. */}
             <motion.div
                 variants={fadeUp}
                 initial="hidden"
                 animate="visible"
-                className="max-w-150 mx-auto pt-4 flex flex-col h-full rounded text-center max-sm:pt-16 max-sm:mx-8"
+                className="flex w-full max-w-md flex-col items-center gap-6 text-center"
             >
-                <Logo size={64} />
+                <Logo size={72} />
                 <GamePrompt startPin={startPin} onSuccess={redirectToLobby} />
+                <OrDivider />
                 {isRegistered() ? (
-                    <p>
-                        Go to your{" "}
-                        <Link className="text-primary" to={"/user"}>
-                            dashboard
+                    <Button variant="secondary" size="lg" className="w-full" asChild>
+                        <Link to="/user">
+                            <LayoutDashboard />
+                            Go to your dashboard
                         </Link>
-                    </p>
+                    </Button>
                 ) : (
-                    <p>
-                        Got an account? Login{" "}
-                        <Link className="text-primary" to={"/login"}>
-                            here
-                        </Link>
-                    </p>
+                    <div className="grid w-full grid-cols-2 gap-3">
+                        <Button variant="secondary" size="lg" asChild>
+                            <Link to="/login">
+                                <LogIn />
+                                Log in
+                            </Link>
+                        </Button>
+                        <Button variant="secondary" size="lg" asChild>
+                            <Link to="/register">
+                                <UserPlus />
+                                Register
+                            </Link>
+                        </Button>
+                    </div>
                 )}
             </motion.div>
         </div>

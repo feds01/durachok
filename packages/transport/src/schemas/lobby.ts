@@ -63,6 +63,8 @@ export const LobbySchema = z
         pin: GamePinSchema,
         /** The owner of the current lobby. */
         owner: PlayerSchema,
+        /** Whether players need the passphrase to join. Only the owner is sent the passphrase itself. */
+        hasPassphrase: z.boolean(),
     })
     .merge(LobbySettingsSchema)
     .merge(LobbyStateSchema);
