@@ -36,11 +36,8 @@
     },
     "devDependencies": {
         "@feds01/zenith": "^0.7.0",
-        "oxfmt": "^0.28.0",
+        "oxfmt": "^0.77.0",
         "oxlint": "^1.92.0"
-    },
-    "overrides": {
-        "tinypool": "^2.1.2"
     },
     "engines": {
         "node": ">=22"

@@ -7,12 +7,7 @@ modules = ["pkg:*"]
 # These workspace packages stack in layers: each depends only on the layers below it.
 [contracts.packages-layers]
 type = "layers"
-layers = [
-    "pkg:@durachok/web",
-    "pkg:@durachok/server",
-    "pkg:@durachok/engine",
-    "pkg:@durachok/transport",
-]
+layers = ["pkg:@durachok/web", "pkg:@durachok/server", "pkg:@durachok/engine", "pkg:@durachok/transport"]
 
 [contracts.web-imports-server-types-only]
 type = "forbidden"

@@ -12,7 +12,7 @@ repos:
             name: oxfmt
             entry: bunx oxfmt
             language: system
-            types_or: [javascript, jsx, ts, tsx, json]
+            types_or: [javascript, jsx, ts, tsx, json, toml]
             pass_filenames: true
 
           - id: zenith
