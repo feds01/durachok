@@ -1,10 +1,10 @@
 import { useShallow } from "zustand/react/shallow";
 
-import Alert from "@/components/Alert";
 import CountdownOverlay from "@/components/CountdownOverlay";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import Loader from "@/components/Loader";
 import LobbyChat from "@/components/LobbyChat";
+import LobbyNotices from "@/components/LobbyNotices";
 import { useAuthDispatch, useAuthState } from "@/contexts/auth";
 import { useLobbyConnection, useLobbyStore } from "@/contexts/lobby";
 import GameResults from "@/fragments/GameResults";
@@ -89,16 +89,7 @@ function LobbyPage() {
 
     return (
         <>
-            {connection.kind === "reconnecting" && (
-                <p className="fixed left-1/2 top-4 z-40 m-0 -translate-x-1/2 rounded-full bg-secondary px-4 py-1 font-body">
-                    Reconnecting…
-                </p>
-            )}
-            {error && (
-                <div className="fixed left-1/2 top-4 z-40 w-full max-w-md -translate-x-1/2 px-4">
-                    <Alert key={error.at} kind="error" message={error.message} />
-                </div>
-            )}
+            <LobbyNotices reconnecting={connection.kind === "reconnecting"} error={error} />
             {lobby.status === "waiting" ? (
                 <WaitingRoom
                     lobby={lobby}
