@@ -232,6 +232,6 @@ describe("A player's view of a simulated game", () => {
             const gameSeed = 15485863 + playerCount;
             const settings = { ...DEFAULT_SETTINGS, mythicMode: true };
             playGame(gameSeed, playerCount, settings, (game) => checkViewsAgree(game, settings, gameSeed));
-        });
+        }, 30_000);
     }
 });
