@@ -8,8 +8,10 @@ export const APP_VERSION = import.meta.env.REACT_APP_VERSION ?? packageJson.vers
 export const APP_VERSION_BRANCH = import.meta.env.REACT_APP_BRANCH ?? "";
 
 /** API Endpoint */
-export const API_URL = import.meta.env.REACT_APP_API_URL ?? "http://localhost:8080/api/trpc";
-export const SOCKET_URL = import.meta.env.REACT_APP_API_URL ?? "http://localhost:8080";
+// An empty value, as `.env.sample` has, means the default.
+export const API_URL = import.meta.env.REACT_APP_API_URL || "http://localhost:8080/api/trpc";
+/** The socket server, which serves the API too, at the root of its origin. */
+export const SOCKET_URL = new URL(API_URL).origin;
 
 /** Google ReCAPTCHA v3 secret key. */
 export const RE_CAPTCHA_SECRET = import.meta.env.REACT_APP_RE_CAPTCHA_SECRET ?? "";
