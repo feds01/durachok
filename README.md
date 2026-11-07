@@ -10,7 +10,7 @@ library that is shared between the two.
 The repository is structured as follows:
 
 - `apps/web` - The client for the game, a React application that serves as the client for the game.
-- `apps/server` - The server for the game, a Node.js application that serves as the server for the game.
+- `apps/server` - The server for the game, a Bun application that serves as the server for the game.
 - `packages/engine` - The shared library for the game, a TypeScript library that contains the shared code between the client and the server.
 - `packages/transport` - Shared data transport types used for communication between client and server.
 
@@ -18,8 +18,7 @@ The repository is structured as follows:
 
 Before you begin, ensure you have the following installed:
 
-- [Node.js](https://nodejs.org/) (v22 or later recommended)
-- [pnpm](https://pnpm.io/) (v10 or later)
+- [Bun](https://bun.sh/) (v1.4 or later)
 - [MongoDB](https://www.mongodb.com/try/download/community) (see [server README](./apps/server/README.md) for details)
 
 ## Installation
@@ -27,7 +26,7 @@ Before you begin, ensure you have the following installed:
 1. Install the dependencies for the repository:
 
 ```bash
-pnpm install
+bun install
 ```
 
 2. Set up pre-commit hooks (see [Pre-commit Setup](#pre-commit-setup) below).
@@ -39,7 +38,7 @@ pnpm install
 5. Run the following command to start the development server:
 
 ```bash
-pnpm run dev
+bun run dev
 ```
 
 This will start the server and the client in development mode.
@@ -78,11 +77,12 @@ pre-commit install
 
 ### What the hooks do
 
-The pre-commit configuration runs three checks on staged files:
+The pre-commit configuration runs four checks on staged files:
 
 1. **oxlint** - Lints JavaScript/TypeScript files and auto-fixes issues where possible
 2. **oxfmt** - Formats JavaScript/TypeScript/JSON files
-3. **typecheck** - Runs TypeScript type checking via `pnpm turbo check`
+3. **zenith** - Checks the architecture contracts in [`zenith.toml`](./zenith.toml) with [zenith](https://github.com/feds01/zenith)
+4. **typecheck** - Runs TypeScript type checking via `bun run check`
 
 ### Running hooks manually
 
@@ -97,6 +97,7 @@ Or run a specific hook:
 ```bash
 pre-commit run oxlint --all-files
 pre-commit run oxfmt --all-files
+pre-commit run zenith --all-files
 pre-commit run typecheck --all-files
 ```
 
@@ -110,9 +111,10 @@ git commit --no-verify -m "your message"
 
 ## Available Scripts
 
-- `pnpm dev` - Start all applications in development mode
-- `pnpm build` - Build all applications
-- `pnpm lint` - Run linting across all packages
-- `pnpm fmt` - Format code across all packages
-- `pnpm check` - Run TypeScript type checking
-- `pnpm test` - Run tests across all packages
+- `bun run dev` - Start all applications in development mode
+- `bun run build` - Build all applications
+- `bun run lint` - Run linting across all packages
+- `bun run arch` - Check the architecture contracts in `zenith.toml`
+- `bun run fmt` - Format code across all packages
+- `bun run check` - Run TypeScript type checking
+- `bun run test` - Run tests across all packages

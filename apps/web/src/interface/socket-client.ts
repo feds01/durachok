@@ -1,9 +1,9 @@
 import type { Socket as SocketBase } from "socket.io-client";
 
-// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Root {
     /** @desc The actual path of the Root namespace */
     export const path = "/";
+
     export interface Emission {
         join: (p1: {
             lobby: {
@@ -109,7 +109,7 @@ export namespace Root {
         victory: (p1: {
             players: {
                 name: string;
-                at: Date;
+                at: unknown;
             }[];
         }) => void;
         close: (p1: { reason: string; extra?: string | undefined }) => void;
@@ -188,7 +188,7 @@ export namespace Root {
                                 };
                             }
                       );
-                occurred_at: Date;
+                occurred_at: unknown;
             }[];
             update: {
                 status: "waiting" | "playing" | "finished";
@@ -226,6 +226,7 @@ export namespace Root {
             message?: string | undefined;
         }) => void;
     }
+
     export interface Actions {
         join: (p1: string) => void;
         leave: (p1: string) => void;
@@ -260,6 +261,7 @@ export namespace Root {
         start: (p1: string) => void;
         passphrase: (p1: string) => void;
     }
+
     /** @example const socket: Root.Socket = io(Root.path) */
     export type Socket = SocketBase<Emission, Actions>;
 }

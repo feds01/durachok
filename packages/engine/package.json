@@ -15,17 +15,16 @@
         }
     },
     "scripts": {
-        "prepare": "npm run build",
-        "build": "tsgo --declaration",
-        "check": "tsgo --noEmit",
-        "test": "vitest run"
+        "build": "tsc --declaration",
+        "check": "tsc --noEmit",
+        "test": "bun test src"
     },
     "dependencies": {
         "@durachok/transport": "workspace:*"
     },
     "devDependencies": {
-        "@types/node": "^26.1.1",
-        "typescript": "^7.0.2",
-        "vitest": "^4.1.11"
+        "@types/bun": "^1.4.4",
+        "@types/node": "^26.6.6",
+        "typescript": "^7.0.2"
     }
 }

@@ -25,7 +25,7 @@ REACT_APP_RE_CAPTCHA_SECRET=""
 2. Run the following command to start the development server:
 
 ```bash
-npm run dev
+bun run dev
 ```
 
 🎉 Congratulations! You have successfully started the development server.
@@ -35,7 +35,7 @@ npm run dev
 1. Run the following command to build the application:
 
 ```bash
-npm run build
+bun run build
 ```
 
 2. The build artifacts will be available in the `dist` directory.
