@@ -967,6 +967,18 @@ export class Game {
     }
 
     /**
+     * How many cards were beaten and put aside, as the players are told it: the cards that
+     * aren't in the deck, a hand or on the table. In mythic mode, they only see whether any are.
+     */
+    private getDiscardSizeForPlayers(): number | null {
+        const hands = Array.from(this.players.values()).reduce((total, { deck }) => total + deck.length, 0);
+        const inPlay = this.deck.length + hands + this.getTableTopDeck().length;
+        const discarded = generateCardDeck(this.settings.shortGameDeck).length - inPlay;
+
+        return this.settings.mythicMode && discarded > 0 ? null : discarded;
+    }
+
+    /**
      * Method used to generate a game state from the perspective of a player. Using the player
      * name, a game state is constructed; notifying the given player with how many cards are in the
      * deck, how many other cards players hold, who has turned, etc.
@@ -985,6 +997,7 @@ export class Game {
             player: { ...player, deck: [...player.deck] },
             trump: this.trump,
             deckSize: this.getDeckSizeForPlayers(),
+            discardSize: this.getDiscardSizeForPlayers(),
             tableTop: Object.fromEntries(this.tableTop),
 
             // information about other players, including how many cards they
@@ -1025,6 +1038,7 @@ export class Game {
         return {
             trump: this.trump,
             deckSize: this.getDeckSizeForPlayers(),
+            discardSize: this.getDiscardSizeForPlayers(),
             tableTop: Object.fromEntries(this.tableTop),
             // information about other players, including how many cards they
             // are holding, if they have turned, and if they are defending...

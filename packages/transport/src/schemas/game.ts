@@ -200,6 +200,11 @@ export const PlayerGameStateSchema = z.object({
      * players only see that the deck isn't empty.
      */
     deckSize: z.number().nullable(),
+    /**
+     * How many cards were beaten and put aside, or null in mythic mode once some are, where
+     * the players only see that the pile isn't empty.
+     */
+    discardSize: z.number().nullable(),
     /** The trump card. */
     trump: CardSchema,
 });

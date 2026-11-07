@@ -163,6 +163,24 @@ describe("Game tests", () => {
         expect(game.getStateForPlayer("a").deckSize).toBe(0);
     });
 
+    test("the players are told how many cards were discarded, and in mythic mode only whether any were", () => {
+        for (const mythicMode of [false, true]) {
+            const game = new Game(["a", "b"], null, { ...DEFAULT_SETTINGS, randomisePlayerOrder: false, mythicMode });
+            game.trump = cardFromString("2H");
+            setUpRound(game, {
+                hands: { a: ["7S", "QC"], b: ["8S", "AC"] },
+                attacker: "a",
+                defender: "b",
+                deck: ["9C"],
+            });
+            expect(game.getStateForPlayer("a").discardSize).toBe(mythicMode ? null : 52 - 5);
+
+            // Nothing has been beaten in a new game, which every player can see.
+            const fresh = new Game(["a", "b"], null, { ...DEFAULT_SETTINGS, mythicMode });
+            expect(fresh.getStateForPlayer("a").discardSize).toBe(0);
+        }
+    });
+
     describe("an attacker who is done", () => {
         test("is asked again when the defender beats a card, even with a rank already on the table", () => {
             const game = twoPlayers({ a: ["7S", "7D", "8C", "QC"], b: ["8D", "8S", "AC", "KC"] });

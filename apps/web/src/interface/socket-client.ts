@@ -64,6 +64,7 @@ export namespace Root {
                       }[];
                       tableTop: Record<string, string | null>;
                       deckSize: number | null;
+                      discardSize: number | null;
                       trump: {
                           suit: string;
                           card: string;
@@ -157,6 +158,7 @@ export namespace Root {
                 }[];
                 tableTop: Record<string, string | null>;
                 deckSize: number | null;
+                discardSize: number | null;
                 trump: {
                     suit: string;
                     card: string;
@@ -239,6 +241,7 @@ export namespace Root {
                 }[];
                 tableTop: Record<string, string | null>;
                 deckSize: number | null;
+                discardSize: number | null;
                 trump: {
                     suit: string;
                     card: string;
