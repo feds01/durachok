@@ -1,5 +1,5 @@
 import { Game } from "@durachok/engine";
-import { PlayerGameState, PlayerMove } from "@durachok/transport";
+import { Action, PlayerGameState, PlayerMove } from "@durachok/transport";
 import { Lobby } from "@durachok/transport";
 import { TRPCError } from "@trpc/server";
 import { Logger } from "pino";
@@ -9,14 +9,10 @@ import Games, { GameDocument } from "../models/game.model";
 import { DBGameSchema } from "../schemas/game";
 import { CommonService, InvalidMoveError, PlayerNotInLobbyError } from "./common";
 
-/** An exception that indicates that a game already exists for a certain lobby. */
-export class GameAlreadyExists extends TRPCError {
-    public constructor() {
-        super({
-            code: "BAD_REQUEST",
-            message: "A game already exists for this lobby",
-        });
-    }
+/** The result of a move: the game after it, and the actions that it caused. */
+export interface MoveResult {
+    game: Game;
+    actions: Action[];
 }
 
 /** Service to orchestrate and manage a game.  */
@@ -57,21 +53,22 @@ export class GameService {
 
     /** Get a game state for a specific player. */
     public async getGameStateFor(player: string): Promise<PlayerGameState> {
-        const gameObject = await this.commonService.getGameDbObject(this.lobby.pin);
-        const game = await this.enrich(gameObject);
+        const game = await this.get();
         return game.getStateForPlayer(player);
     }
 
-    /** Create a new game for the given lobby. */
-    public async create(owner: string): Promise<Game> {
-        const lobby = await this.commonService.getLobbyDbObject(this.lobby.pin);
-
-        // Games can only be created if the lobby is in a "waiting" state.
-        if (lobby.status !== "waiting") {
-            throw new GameAlreadyExists();
+    /**
+     * Create the game for the lobby, with the given players and the lobby's settings,
+     * replacing any game that it played before.
+     */
+    public async create(players: string[]): Promise<Game> {
+        const [first, ...rest] = players;
+        if (!first) {
+            throw new TRPCError({ code: "BAD_REQUEST", message: "A game needs players" });
         }
 
-        const game = new Game([owner], null);
+        const lobby = await this.commonService.getLobbyDbObject(this.lobby.pin);
+        const game = new Game([first, ...rest], null, this.lobby);
         await this.save(lobby.id, game);
 
         return game;
@@ -101,118 +98,64 @@ export class GameService {
     }
 
     /**
-     * Add a player to the current game.
-     *
-     * @param player The player to add.
-     * */
-    public async addPlayer(player: string): Promise<void> {
-        const raw = await this.commonService.getGameDbObject(this.lobby.pin);
-        const game = await this.enrich(raw);
-
-        // Add the player to the game.
-        withLock(this.lobby.pin, async () => {
-            game.addPlayer(player);
-
-            // Finally, save the game.
-            await this.save(raw.id, game);
-        });
-    }
-
-    /**
-     * Remove a player from the current game.
-     *
-     * @param player The player to remove.
-     * */
-    public async removePlayer(player: string): Promise<void> {
-        const raw = await this.commonService.getGameDbObject(this.lobby.pin);
-        const game = await this.enrich(raw);
-
-        // Remove the player from the game.
-        withLock(this.lobby.pin, async () => {
-            game.removePlayer(player);
-
-            // Finally, save the game.
-            await this.save(raw.id, game);
-        });
-    }
-
-    /**
-     * Make a move on the player.
+     * Make a move for a player, and save the game. The game is read, changed and saved
+     * under the lobby's lock, so that moves from several players apply one at a time.
      *
      * @param name The player to make the move for.
      * @param move The move to make.
      *
-     * @returns The updated game state.
+     * @returns The updated game, and the actions that the move caused.
      * */
-    public async makeMove(name: string, move: PlayerMove): Promise<Game> {
-        const raw = await this.commonService.getGameDbObject(this.lobby.pin);
-        const game = await this.enrich(raw);
+    public async makeMove(name: string, move: PlayerMove): Promise<MoveResult> {
+        return withLock(`game:${this.lobby.pin}`, async () => {
+            const raw = await this.commonService.getGameDbObject(this.lobby.pin);
+            const game = await this.enrich(raw);
 
-        const player = game.getPlayer(name);
+            if (game.isFinished()) {
+                throw new InvalidMoveError("The game has finished");
+            }
 
-        if (!player) {
-            throw new PlayerNotInLobbyError();
-        }
+            if (!game.players.has(name)) {
+                throw new PlayerNotInLobbyError();
+            }
 
-        // Perform the game move
-        return await withLock(this.lobby.pin, async () => {
+            const player = game.getPlayer(name);
+            const before = game.history.serialize().nodes.length;
+
             switch (player.action) {
                 case "attack": {
                     switch (move.type) {
-                        case "place": {
+                        case "place":
                             game.addCardToTableTop(name, move.card);
                             break;
-                        }
-                        case "forfeit": {
+                        case "forfeit":
                             game.finalisePlayerTurn(name);
                             break;
-                        }
-                        case "cover": {
-                            this.logger.warn("Can't cover a card when attacking");
+                        case "cover":
                             throw new InvalidMoveError("Can't cover a card when attacking");
-                        }
                     }
-
-                    return game;
+                    break;
                 }
                 case "defend": {
                     switch (move.type) {
-                        case "forfeit": {
+                        case "forfeit":
                             game.finalisePlayerTurn(name);
                             break;
-                        }
-                        case "place": {
+                        case "place":
                             game.addCardToTableTop(name, move.card);
                             break;
-                        }
-                        case "cover": {
+                        case "cover":
                             game.coverCardOnTableTop(move.card, move.position);
                             break;
-                        }
                     }
-
-                    return game;
+                    break;
                 }
-                case "none": {
-                    this.logger.warn("Can't perform action on player with no role");
-                    throw new InvalidMoveError("Can't perform action on player with no role");
-                }
-                default: {
-                    throw new InvalidMoveError(`Unknown action: ${player.action}`);
-                }
+                case "none":
+                    throw new InvalidMoveError("Can't make a move yet");
             }
+
+            await this.save(raw.id, game);
+            return { game, actions: game.history.serialize().nodes.slice(before) };
         });
-    }
-
-    /** Start a game. */
-    public async start(): Promise<void> {
-        const raw = await this.commonService.getGameDbObject(this.lobby.pin);
-
-        // Start the game.
-        const game = await this.enrich(raw);
-        game.status = "playing";
-
-        // Finally, save the game.
-        await this.save(raw.id, game);
     }
 }

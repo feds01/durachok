@@ -147,8 +147,20 @@ export const config = createSimpleConfig({
                 await client.emit("error", transformErrorIntoMessage(error));
             }
         },
-        onDisconnect: async ({ client, logger }) => {
+        /**
+         * A player who leaves a waiting lobby gives up their place in it, but a
+         * player in a game, or the owner, keeps theirs, so that they can rejoin.
+         */
+        onDisconnect: async ({ client, withRooms, logger }) => {
             logger.info({ id: client.id }, "disconnected");
+
+            const pin = await logger.ctx.lobbyService.disconnect(client.id);
+            if (pin) {
+                await withRooms(pin).broadcast("lobbyState", {
+                    update: { type: "player_exit" },
+                    lobby: await logger.ctx.lobbyService.get(pin),
+                });
+            }
         },
     },
 });

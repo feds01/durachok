@@ -24,7 +24,7 @@ const onSettingsUpdate = factory.build({
         // players are locked in.
         if (lobbyStatus !== "waiting") {
             logger.info(meta, "cannot change settings when game is not waiting");
-            client.emit("error", {
+            await client.emit("error", {
                 type: "bad_request",
                 message: "can't change settings when playing.",
             });
@@ -37,12 +37,10 @@ const onSettingsUpdate = factory.build({
 
         logger.info(meta, "settings updated");
 
-        // Re-fetch the lobby and send an update to the client.
-        const lobby = await ctx.lobbyService.get(pin);
+        // Re-fetch the lobby and send it to the owner, who alone sees the new passphrase.
+        const lobby = await ctx.lobbyService.get(pin, { withPassphrase: true });
 
-        // @@Future: we might want to send a more general update, but perhaps
-        // omitting the passphrase?
-        client.emit("lobbyState", {
+        await client.emit("lobbyState", {
             update: {
                 type: "settings_update",
             },

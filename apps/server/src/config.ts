@@ -16,6 +16,9 @@ export const PORT = process.env.PORT || 8080;
 export const ENV = process.env.NODE_ENV || "dev";
 export const APP_URL = process.env.APP_URL || `http://localhost:${PORT}`;
 
+/** How long the countdown before a game starts lasts, in milliseconds. */
+export const GAME_COUNTDOWN_MS = Number(process.env.GAME_COUNTDOWN_MS ?? 5000);
+
 /** The origins of the web app, which may call the API and connect to the sockets. */
 export const WEB_ORIGINS = process.env.WEB_ORIGINS?.split(",") ?? ["http://localhost:5173", "http://localhost:4173"];
 

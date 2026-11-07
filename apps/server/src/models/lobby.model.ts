@@ -76,11 +76,8 @@ const LobbySchema = new Schema<ILobby>({
                 name: { type: String, required: true, default: "Anonymous" },
                 time: { type: Number, required: true, default: Date.now },
                 message: { type: String, required: true },
-                owner: {
-                    type: mongoose.Schema.Types.ObjectId,
-                    required: false,
-                    ref: "user",
-                },
+                // The id of the registered user who sent it, a string as in `players.registered`.
+                owner: { type: String, required: false },
             },
         ],
     },

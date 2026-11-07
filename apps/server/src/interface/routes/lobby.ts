@@ -30,15 +30,8 @@ export const lobbyRouter = router({
             input: { settings },
         } = req;
 
-        // @@Hack: we should just return the lobby and then we can
-        // constraint into ` { pin }`.
+        // The game is created when the owner starts it, with the players who joined.
         const { pin } = await ctx.lobbyService.create(ctx.user.id, settings);
-        const lobby = await ctx.lobbyService.get(pin);
-
-        // We also need to create the lobby and then create the actual
-        // game instance.
-        await ctx.gameService(lobby).create(ctx.user.name);
-
         return { pin };
     }),
 
@@ -93,19 +86,20 @@ export const lobbyRouter = router({
         // - Must have the correct passphrase if it is enabled.
         // - Provided name must not be taken.
 
-        const lobby = await ctx.lobbyService.get(input.pin);
-        if (!lobby) {
+        const info = await ctx.lobbyService.getInfo(input.pin);
+        if (!info) {
             throw new TRPCError({ code: "NOT_FOUND" });
         }
 
-        // Check that the lobby is in the waiting state and has free slots.
-        if (lobby.status !== "waiting" || lobby.players.length >= lobby.maxPlayers) {
-            throw new TRPCError({ code: "BAD_REQUEST" });
+        // Check that the lobby is in the waiting state and has free slots, counting
+        // everyone who joined, whether or not they have connected yet.
+        if (!info.joinable) {
+            throw new TRPCError({ code: "BAD_REQUEST", message: "Lobby isn't joinable" });
         }
 
         // Check that the passphrase is correct.
-        if (lobby.passphrase && lobby.passphrase !== input.passphrase) {
-            throw new TRPCError({ code: "UNAUTHORIZED" });
+        if (!(await ctx.lobbyService.checkPassphrase(input.pin, input.passphrase))) {
+            throw new TRPCError({ code: "UNAUTHORIZED", message: "Incorrect passphrase" });
         }
 
         const player: DBPlayer = expr(() => {

@@ -1,7 +1,6 @@
 import { GamePinSchema } from "@durachok/transport";
 import { z } from "zod";
 
-import { PlayerNotInLobbyError } from "../../../controllers/common";
 import { ensureLobbyAccess } from "../common/auth";
 import { factory } from "./ctx";
 
@@ -15,52 +14,18 @@ const onLeave = factory.build({
         const meta = { event: "leave", pin, clientId: client.id };
 
         logger.info(meta, "processing event");
-        ensureLobbyAccess(ctx, client, pin);
+        const { name } = await ensureLobbyAccess(ctx, client, pin);
 
-        const status = await ctx.lobbyService.getStatus(pin);
+        // Only possible before the game starts, and not for the owner.
+        await ctx.lobbyService.removePlayer(pin, name);
+        await client.leave(pin);
+        logger.info(meta, "player left");
 
-        // Ensure that the lobby is not in "playing" state when
-        // players are locked in.
-        if (status !== "waiting") {
-            logger.warn(meta, "unable to process event due to in-game lobby");
-            client.emit("error", {
-                type: "bad_request",
-            });
-            return;
-        }
-
-        try {
-            const player = await ctx.lobbyService.getPlayerByConnectionId(pin, client.id);
-
-            logger.info(meta, "removing player from lobby");
-            await ctx.lobbyService.removePlayerByConnectionId(pin, client.id);
-
-            const lobby = await ctx.lobbyService.get(pin);
-
-            logger.info(meta, "removing player from game state");
-            ctx.gameService(lobby).removePlayer(player.name);
-
-            logger.info(meta, "player removed");
-        } catch (err: unknown) {
-            if (err instanceof PlayerNotInLobbyError) {
-                logger.warn(meta, "failed to process event", err);
-                client.emit("error", {
-                    type: "bad_request",
-                    message: "invalid player.",
-                });
-                return;
-            }
-
-            throw err;
-        }
-
-        const lobby = await ctx.lobbyService.get(pin);
-
-        withRooms("lobby").broadcast("lobbyState", {
+        await withRooms(pin).broadcast("lobbyState", {
             update: {
                 type: "player_exit",
             },
-            lobby,
+            lobby: await ctx.lobbyService.get(pin),
         });
     },
 });

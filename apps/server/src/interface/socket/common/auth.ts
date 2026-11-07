@@ -20,55 +20,46 @@ export function ensureAuth(client: Client): UserTokensResponse {
 }
 
 /**
- * Utility function to ensure that a given socket connection request is authenticated.
+ * Ensure that a client is one of the players of a lobby.
  *
  * @param context - The context of the current server execution.
  * @param client - The client that sent the message.
  * @param pin - The pin of the lobby.
  *
- * @returns Whether the client is within the lobby.
+ * @returns The player's name in the lobby, whether they are registered, and whether they own it.
  */
 export async function ensureLobbyAccess(
     ctx: Context,
     client: Client,
     pin: string,
-): Promise<{ name: string; isRegistered: boolean }> {
-    const auth = ensureAuth(client);
-
-    // Ensure that the current client has access to the lobby.
+): Promise<{ name: string; isRegistered: boolean; isOwner: boolean }> {
+    const { payload } = ensureAuth(client);
     ctx.logger.info({ id: client.id, pin }, "checking client has access to lobby");
 
-    if (!(await ctx.lobbyService.hasAccess(auth.payload, pin))) {
+    const player = await ctx.lobbyService.findPlayer(payload, pin);
+    if (!player) {
         throw ApiError.http(401, "Invalid token");
     }
 
-    // @@Todo: perhaps we should return the player since the information might be useful?
-    if (auth.payload.kind === "anonymous") {
-        return { name: auth.payload.name, isRegistered: false };
-    }
-    return { name: auth.payload.user.name, isRegistered: true };
+    return {
+        name: player.name,
+        isRegistered: payload.kind === "registered",
+        isOwner: await ctx.lobbyService.hasOwnerAccess(payload, pin),
+    };
 }
 
 /**
- * Utility function to ensure that a given client is the owner of a lobby, meaning
- * that they can perform actions such as kicking players.
+ * Ensure that a client owns a lobby, so that they can perform actions such as kicking players.
  *
  * @param context - The context of the current server execution
  * @param client - The client that sent the message.
  * @param pin - The pin of the lobby.
- *
- * @returns Whether the client is the owner of the lobby.
  */
 export async function ensureOwnerAccess(ctx: Context, client: Client, pin: string): Promise<void> {
-    const auth = ensureAuth(client);
-
-    // Ensure that the current client has access to the lobby.
+    const { payload } = ensureAuth(client);
     ctx.logger.info({ id: client.id, pin }, "checking client has owner access to lobby");
 
-    if (!(await ctx.lobbyService.hasOwnerAccess(auth.payload, pin))) {
+    if (!(await ctx.lobbyService.hasOwnerAccess(payload, pin))) {
         throw ApiError.http(401, "Invalid token");
     }
-
-    // @@Todo: perhaps we should return the player since the information might be useful?
-    return;
 }
