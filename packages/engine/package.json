@@ -15,8 +15,8 @@
         }
     },
     "scripts": {
-        "build": "tsgo --declaration",
-        "check": "tsgo --noEmit",
+        "build": "tsc --declaration",
+        "check": "tsc --noEmit",
         "test": "bun test src"
     },
     "dependencies": {

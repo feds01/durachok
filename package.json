@@ -36,7 +36,6 @@
     },
     "devDependencies": {
         "@feds01/zenith": "^0.7.0",
-        "@typescript/native-preview": "7.0.0-dev.20260205.1",
         "oxfmt": "^0.28.0",
         "oxlint": "^1.92.0"
     },

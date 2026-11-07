@@ -5,7 +5,7 @@
         "target": "esnext",
         "esModuleInterop": true,
         "strict": true,
-        "moduleResolution": "node",
+        "moduleResolution": "bundler",
         "noEmit": true,
         "skipLibCheck": true
     },

@@ -6,7 +6,7 @@
     "type": "module",
     "scripts": {
         "dev": "bun --watch src/index.ts",
-        "check": "tsgo --noEmit",
+        "check": "tsc --noEmit",
         "build": "bun build src/index.ts --target=bun --packages=external --format=esm --outdir=dist --sourcemap=linked",
         "build:client": "bun src/interface/socket/generate-client.ts"
     },
@@ -45,7 +45,7 @@
         "@types/jsonwebtoken": "^9.0.10",
         "@types/node": "^26.6.6",
         "@types/node-fetch": "^2.6.13",
-        "typescript": "^7.0.2",
+        "typescript": "^6.0.3",
         "wait-port": "^1.1.0"
     }
 }
