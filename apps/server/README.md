@@ -3,9 +3,21 @@
 ## Prerequisites
 
 - Bun (v1.4 or later)
-- MongoDB (v6 or later)
+- MongoDB (v6 or later), which `just db` can run in Docker for you (see below)
 
 ## MongoDB Installation
+
+### Using Docker (recommended)
+
+From the repository root, run:
+
+```bash
+just db
+```
+
+It checks that the server can reach MongoDB at `MONGODB_URI`. When that is a local address and nothing answers, it starts MongoDB 8 in Docker on `localhost:27017`, from [`compose.yaml`](../../compose.yaml), and checks again. `just setup` runs it too. The data lives in a Docker volume, and the container restarts with Docker.
+
+To install MongoDB yourself instead, follow the steps for your platform.
 
 ### macOS (using Homebrew)
 
@@ -56,14 +68,6 @@ Alternatively, using winget:
 
 ```powershell
 winget install MongoDB.Server
-```
-
-### Using Docker (Alternative)
-
-If you prefer using Docker:
-
-```bash
-docker run -d --name mongodb -p 27017:27017 mongo:7
 ```
 
 ## Installation

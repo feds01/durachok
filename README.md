@@ -20,11 +20,11 @@ Before you begin, ensure you have the following installed:
 
 - [Bun](https://bun.sh/) (v1.4 or later)
 - [just](https://just.systems/), which runs the project's commands
-- [MongoDB](https://www.mongodb.com/try/download/community) (see [server README](./apps/server/README.md) for details)
+- [Docker](https://www.docker.com/), for the MongoDB that `just setup` starts, or your own [MongoDB](https://www.mongodb.com/try/download/community) (see the [server README](./apps/server/README.md))
 
 ## Installation
 
-1. Install the dependencies and the pre-commit hooks (see [Pre-commit Setup](#pre-commit-setup) below):
+1. Install the dependencies and the pre-commit hooks (see [Pre-commit Setup](#pre-commit-setup) below), and make sure MongoDB is running:
 
 ```bash
 just setup
@@ -113,6 +113,7 @@ git commit --no-verify -m "your message"
 The project's commands are recipes in the [`justfile`](./justfile). Run `just` to list them:
 
 - `just dev` - Start all applications in development mode
+- `just db` - Make sure the server can reach MongoDB, starting it in Docker if needed
 - `just build` - Build all applications
 - `just test` - Run tests across all packages
 - `just typecheck` - Run TypeScript type checking
