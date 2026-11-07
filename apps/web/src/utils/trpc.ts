@@ -3,7 +3,7 @@ import { Buffer } from "buffer";
 import { SuperJSON, registerCustom } from "superjson";
 
 import { API_URL } from "@/config";
-import { getAuthHeader } from "@/utils/auth";
+import { getAuthHeader, saveRefreshedTokens } from "@/utils/auth";
 import * as native from "@trpc/client";
 import * as rq from "@trpc/react-query";
 
@@ -24,6 +24,22 @@ registerCustom<Buffer, string>(
     "buffer",
 );
 
+/**
+ * Fetch for the tRPC links, which keeps the tokens that the server sends back in the
+ * response headers when it refreshed expired ones.
+ */
+async function fetchKeepingRefreshedTokens(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+    const response = await fetch(input, init);
+    const token = response.headers.get("x-token");
+    const refreshToken = response.headers.get("x-refresh-token");
+
+    if (token && refreshToken) {
+        saveRefreshedTokens({ token, refreshToken });
+    }
+
+    return response;
+}
+
 /** Define the non-query router kind. */
 export const trpcNativeClient = native.createTRPCClient<AppRouter>({
     links: [
@@ -32,6 +48,7 @@ export const trpcNativeClient = native.createTRPCClient<AppRouter>({
             headers() {
                 return getAuthHeader();
             },
+            fetch: fetchKeepingRefreshedTokens,
             transformer: SuperJSON,
         }),
     ],
@@ -46,6 +63,7 @@ export const createReactQueryTRPClient = () => {
                 headers() {
                     return getAuthHeader();
                 },
+                fetch: fetchKeepingRefreshedTokens,
                 transformer: SuperJSON,
             }),
         ],

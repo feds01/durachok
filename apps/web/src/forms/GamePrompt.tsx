@@ -1,11 +1,12 @@
 import { motion } from "framer-motion";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import GamePassphraseInput from "@/components/GamePassphraseInput";
 import SubmitButton from "@/components/SubmitButton";
 import { Input } from "@/components/ui/input";
+import { useAuthState } from "@/contexts/auth";
 import { expr, isDef } from "@/utils";
 import trpc, { trpcNativeClient } from "@/utils/trpc";
 import { GamePassPhraseSchema, GamePinSchema } from "@/valdiators/lobby";
@@ -16,6 +17,8 @@ import { useController } from "react-hook-form";
 
 export type LobbyAuthInfo = {
     pin: string;
+    /** The name that the player is in the lobby under. */
+    name: string;
     tokens?: {
         token: string;
         refreshToken: string;
@@ -43,6 +46,7 @@ type GamePromptInput = z.infer<typeof GamePromptFormInputSchema>;
 
 export default function GamePrompt({ startPin, onSuccess }: Props) {
     const [stage, setStage] = useState<StageKind>({ kind: "pin" });
+    const { state: auth } = useAuthState();
 
     const joinLobbyMutation = trpc.lobbies.join.useMutation();
 
@@ -73,7 +77,7 @@ export default function GamePrompt({ startPin, onSuccess }: Props) {
                     }
                 });
 
-                onSuccess({ pin: info.pin, ...(tokens && { tokens }) });
+                onSuccess({ pin: info.pin, name: info.name, ...(tokens && { tokens }) });
             } catch (e: unknown) {
                 if (e instanceof Error) {
                     form.setError(stage.kind, {
@@ -111,13 +115,37 @@ export default function GamePrompt({ startPin, onSuccess }: Props) {
                 });
 
                 if (info) {
-                    if (info.joinable) {
-                        setStage({ kind: "name", info });
-                    } else {
+                    const { pin } = form.getValues();
+
+                    // A player who is already in the lobby, such as its owner, goes straight in.
+                    if (auth.kind === "logged-in") {
+                        const isMember = await trpcNativeClient.lobbies.get.query({ pin }).then(
+                            () => true,
+                            () => false,
+                        );
+
+                        if (isMember) {
+                            onSuccess({ pin, name: auth.user.name });
+                            return;
+                        }
+                    }
+
+                    if (!info.joinable) {
                         form.setError("pin", {
                             type: "manual",
-                            message: "This lobby is not joinable.",
+                            message: "This lobby is full, or its game has started.",
                         });
+                    } else if (auth.kind === "logged-in" && auth.user.kind === "registered") {
+                        // Registered users play under their account's name.
+                        form.setValue("name", auth.user.name);
+
+                        if (info.passphrase) {
+                            setStage({ kind: "security", info });
+                        } else {
+                            await form.handleSubmit(onSubmit)();
+                        }
+                    } else {
+                        setStage({ kind: "name", info });
                     }
                 } else {
                     form.setError("pin", {
@@ -157,11 +185,27 @@ export default function GamePrompt({ startPin, onSuccess }: Props) {
                 }
             }
         },
-        [form, onSubmit, stage],
+        [auth, form, onSubmit, onSuccess, stage],
     );
 
+    // A pin from a shared link is checked straight away, once.
+    const checkedStartPin = useRef(false);
+    useEffect(() => {
+        if (isDef(startPin) && !checkedStartPin.current) {
+            checkedStartPin.current = true;
+            void next();
+        }
+    }, [startPin, next]);
+
     return (
-        <form className="grow flex flex-col mx-auto max-w-100" onSubmit={form.handleSubmit(onSubmit)}>
+        <form
+            className="grow flex flex-col mx-auto max-w-100"
+            // Each submission moves on a stage, and only the last stage joins the lobby.
+            onSubmit={(event) => {
+                event.preventDefault();
+                void next();
+            }}
+        >
             {stage.kind === "pin" && (
                 <div className="pt-16 space-y-2">
                     <Input
@@ -208,7 +252,6 @@ export default function GamePrompt({ startPin, onSuccess }: Props) {
                 disabled={!isDef(form.formState.dirtyFields[stage.kind])}
                 isSubmitting={form.formState.isSubmitting}
                 className="h-15 text-2xl mt-4"
-                onClick={next}
             />
         </form>
     );
