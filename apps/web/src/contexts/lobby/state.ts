@@ -80,8 +80,10 @@ export function reduceLobby(state: LobbyState, event: LobbyEvent): LobbyState {
             };
         case "lobby": {
             // Updates for the whole room leave out the passphrase, which only the owner was
-            // sent, so keep the one they have.
-            const passphrase = event.lobby.passphrase ?? state.lobby?.passphrase;
+            // sent, so keep the one they have, unless the lobby no longer has one.
+            const passphrase = event.lobby.hasPassphrase
+                ? (event.lobby.passphrase ?? state.lobby?.passphrase)
+                : undefined;
             return { ...state, lobby: { ...event.lobby, ...(passphrase && { passphrase }) } };
         }
         case "countdown":

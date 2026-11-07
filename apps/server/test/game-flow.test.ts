@@ -73,6 +73,23 @@ function connect(tokens?: Tokens): Promise<Socket> {
     });
 }
 
+/** Wait for a socket to receive an event whose payload passes a check. */
+function waitFor<T>(socket: Socket, event: string, check: (payload: T) => boolean, timeout = 5000): Promise<T> {
+    return new Promise((resolve, reject) => {
+        const listener = (payload: T) => {
+            if (!check(payload)) return;
+            clearTimeout(timer);
+            socket.off(event, listener);
+            resolve(payload);
+        };
+        const timer = setTimeout(() => {
+            socket.off(event, listener);
+            reject(new Error(`No matching '${event}' within ${timeout}ms`));
+        }, timeout);
+        socket.on(event, listener);
+    });
+}
+
 /** Wait for the next time a socket receives an event. */
 function next<T>(socket: Socket, event: string, timeout = 5000): Promise<T> {
     return new Promise((resolve, reject) => {
@@ -298,4 +315,78 @@ describe.skipIf(!available)("Game flow", () => {
         expect(after.status).toBe("waiting");
         expect(after.players).toHaveLength(2);
     }, 60_000);
+
+    test("the owner changes the lobby's settings before the game", async () => {
+        type LobbyUpdate = {
+            lobby: { maxPlayers: number; hasPassphrase: boolean; passphrase?: string; disableChat: boolean };
+        };
+        const settings = {
+            maxPlayers: 3,
+            passphrase: true,
+            shortGameDeck: true,
+            freeForAll: false,
+            disableChat: true,
+            randomisePlayerOrder: false,
+            roundTimeout: 200,
+        };
+
+        const id = crypto.randomUUID().slice(0, 8);
+        const ownerTokens = await trpc<Tokens>("auth.register", {
+            name: `host-${id}`,
+            email: `host-${id}@example.com`,
+            password: "Password123!",
+            reCaptchaToken: "test",
+        });
+        const { pin } = await trpc<{ pin: string }>(
+            "lobbies.create",
+            { settings: { maxPlayers: 4, passphrase: false, roundTimeout: 120 } },
+            ownerTokens,
+        );
+
+        const owner = await connect(ownerTokens);
+        sockets.push(owner);
+        const ownerJoin = next(owner, "join");
+        owner.emit("join", pin);
+        await ownerJoin;
+
+        const guestTokens = await trpc<Tokens>("lobbies.join", { pin, name: "guest" });
+        const guest = await connect(guestTokens);
+        sockets.push(guest);
+        const guestJoin = next(guest, "join");
+        guest.emit("join", pin);
+        await guestJoin;
+
+        // Everyone sees the new settings, and only the owner the new passphrase.
+        const guestSees = waitFor<LobbyUpdate>(guest, "lobbyState", ({ lobby }) => lobby.maxPlayers === 3);
+        const ownerSees = waitFor<LobbyUpdate>(owner, "lobbyState", ({ lobby }) => lobby.passphrase !== undefined);
+        owner.emit("settings", pin, settings);
+        const { lobby: forGuest } = await guestSees;
+        expect(forGuest).toMatchObject({ hasPassphrase: true, disableChat: true });
+        expect(forGuest.passphrase).toBeUndefined();
+        const { passphrase } = (await ownerSees).lobby;
+        expect(passphrase).toMatch(/^[♡♢♣♤]{4}$/);
+
+        // Saving the settings again keeps the passphrase.
+        const ownerSeesAgain = waitFor<LobbyUpdate>(owner, "lobbyState", ({ lobby }) => lobby.passphrase !== undefined);
+        owner.emit("settings", pin, { ...settings, roundTimeout: 300 });
+        expect((await ownerSeesAgain).lobby.passphrase).toBe(passphrase);
+
+        // Turning the passphrase off lets players join without one.
+        const passphraseOff = waitFor<LobbyUpdate>(guest, "lobbyState", ({ lobby }) => !lobby.hasPassphrase);
+        owner.emit("settings", pin, { ...settings, passphrase: false });
+        await passphraseOff;
+        await trpc<Tokens>("lobbies.join", { pin, name: "late" });
+
+        // The lobby can't shrink below the players in it, and only the owner can change it.
+        const tooSmall = next<{ type: string; message?: string }>(owner, "error");
+        owner.emit("settings", pin, { ...settings, maxPlayers: 2 });
+        expect(await tooSmall).toMatchObject({
+            type: "bad_request",
+            message: "The lobby already has more players than that",
+        });
+
+        const notOwner = next<{ type: string }>(guest, "error");
+        guest.emit("settings", pin, settings);
+        expect((await notOwner).type).toBe("unauthorized");
+    }, 30_000);
 });

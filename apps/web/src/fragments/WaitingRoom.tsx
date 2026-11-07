@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, Check, Crown, Link2, LogOut, User, X } from "lucide-react";
+import { ArrowRight, Check, Crown, Link2, LogOut, Settings, User, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import LobbyPassphrase from "@/components/LobbyPassphrase";
@@ -7,6 +7,7 @@ import Logo from "@/components/Logo";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useLobbyStore } from "@/contexts/lobby";
+import LobbySettingsDialog from "@/fragments/LobbySettingsDialog";
 import { fadeUp, popIn, stagger } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { Lobby } from "@durachok/transport";
@@ -30,6 +31,7 @@ export default function WaitingRoom({ lobby, isOwner, isMe, onLeave }: Props) {
     const kick = useLobbyStore((state) => state.kick);
     const rotatePassphrase = useLobbyStore((state) => state.rotatePassphrase);
     const canStart = lobby.players.length >= 2;
+    const [settingsOpen, setSettingsOpen] = useState(false);
 
     return (
         <motion.div
@@ -42,6 +44,12 @@ export default function WaitingRoom({ lobby, isOwner, isMe, onLeave }: Props) {
                 <Logo size={32} />
                 <div className="flex items-center gap-2">
                     <CopyInviteLinkButton pin={lobby.pin} />
+                    {isOwner && (
+                        <Button variant="secondary" onClick={() => setSettingsOpen(true)}>
+                            <Settings />
+                            Settings
+                        </Button>
+                    )}
                     {isOwner ? (
                         <Button variant="ghost" asChild>
                             <Link to="/user">Dashboard</Link>
@@ -60,6 +68,7 @@ export default function WaitingRoom({ lobby, isOwner, isMe, onLeave }: Props) {
                 <h1 className="m-0 text-6xl tracking-widest">
                     <code>{lobby.pin}</code>
                 </h1>
+                <SettingsSummary lobby={lobby} />
             </motion.div>
 
             {isOwner && lobby.passphrase && (
@@ -107,8 +116,26 @@ export default function WaitingRoom({ lobby, isOwner, isMe, onLeave }: Props) {
                         : `Waiting for ${lobby.owner.name} to start the game…`}
                 </p>
             </motion.section>
+
+            {isOwner && (
+                <LobbySettingsDialog lobby={lobby} open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+            )}
         </motion.div>
     );
+}
+
+/** The lobby's settings at a glance, which change as the owner changes them. */
+function SettingsSummary({ lobby }: { lobby: Lobby }) {
+    const settings = [
+        lobby.shortGameDeck ? "Short deck (36 cards)" : "Full deck (52 cards)",
+        `${lobby.roundTimeout}s rounds`,
+        lobby.freeForAll ? "Free for all" : "Attacks in turn",
+        lobby.randomisePlayerOrder && "Random seats",
+        lobby.hasPassphrase && "Passphrase",
+        lobby.disableChat && "Chat off",
+    ].filter(Boolean);
+
+    return <p className="mb-0 mt-2 font-body text-sm text-muted-foreground">{settings.join(" · ")}</p>;
 }
 
 type PlayerItemProps = {

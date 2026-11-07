@@ -14,6 +14,7 @@ export namespace Root {
                     name: string;
                     image?: string | undefined;
                 };
+                hasPassphrase: boolean;
                 maxPlayers: number;
                 shortGameDeck: boolean;
                 freeForAll: boolean;
@@ -91,6 +92,7 @@ export namespace Root {
                     name: string;
                     image?: string | undefined;
                 };
+                hasPassphrase: boolean;
                 maxPlayers: number;
                 shortGameDeck: boolean;
                 freeForAll: boolean;
@@ -287,6 +289,18 @@ export namespace Root {
         ) => void;
         start: (p1: string) => void;
         passphrase: (p1: string) => void;
+        settings: (
+            p1: string,
+            p2: {
+                maxPlayers: number;
+                shortGameDeck?: boolean | undefined;
+                freeForAll?: boolean | undefined;
+                disableChat?: boolean | undefined;
+                passphrase?: boolean | undefined;
+                randomisePlayerOrder?: boolean | undefined;
+                roundTimeout: number;
+            },
+        ) => void;
     }
 
     /** @example const socket: Root.Socket = io(Root.path) */
