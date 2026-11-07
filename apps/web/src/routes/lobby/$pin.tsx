@@ -37,7 +37,7 @@ export const Route = createFileRoute("/lobby/$pin")({
 
         return { pin };
     },
-    pendingComponent: () => <Loader />,
+    pendingComponent: () => <Loader label="Finding the lobby" />,
     errorComponent: (info) => <ErrorBoundary {...info} />,
     component: () => <LobbyPage />,
 });
@@ -64,7 +64,7 @@ function LobbyPage() {
     }
 
     if (!lobby) {
-        return <Loader />;
+        return <Loader label={`Joining lobby ${pin}`} />;
     }
 
     const user = auth.kind === "logged-in" ? auth.user : null;

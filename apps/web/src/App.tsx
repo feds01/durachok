@@ -1,4 +1,5 @@
 import { Buffer } from "buffer";
+import { MotionConfig } from "framer-motion";
 import { useEffect, useState } from "react";
 import { registerCustom } from "superjson";
 
@@ -42,17 +43,20 @@ const App = () => {
     }, [state]);
 
     return (
-        <trpc.Provider client={trpcClient} queryClient={queryClient}>
-            <QueryClientProvider client={queryClient}>
-                <RouterProvider
-                    router={router}
-                    context={{
-                        auth: state,
-                        logout: () => auth({ type: "logout" }),
-                    }}
-                />
-            </QueryClientProvider>
-        </trpc.Provider>
+        // People who ask their system for less motion get fades, without movement.
+        <MotionConfig reducedMotion="user">
+            <trpc.Provider client={trpcClient} queryClient={queryClient}>
+                <QueryClientProvider client={queryClient}>
+                    <RouterProvider
+                        router={router}
+                        context={{
+                            auth: state,
+                            logout: () => auth({ type: "logout" }),
+                        }}
+                    />
+                </QueryClientProvider>
+            </trpc.Provider>
+        </MotionConfig>
     );
 };
 

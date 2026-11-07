@@ -1,3 +1,4 @@
+import { motion, useAnimationControls } from "framer-motion";
 import { useForm } from "react-hook-form";
 
 import ControlledPasswordField from "@/components/ControlledPasswordField";
@@ -15,6 +16,7 @@ type Props = {
 
 export default function Login({ onSuccess }: Props) {
     const loginWith = trpc.auth.login.useMutation();
+    const shake = useAnimationControls();
     const form = useForm<LoginFormData>({
         resolver: zodResolver(LoginFormSchema),
         reValidateMode: "onSubmit",
@@ -47,14 +49,17 @@ export default function Login({ onSuccess }: Props) {
                     message: e.message,
                 });
             }
+
+            // Shake the form, as if shaking its head.
+            void shake.start({ x: [0, -10, 10, -6, 6, 0], transition: { duration: 0.4 } });
         }
     };
 
     return (
-        <form className="grow flex flex-col gap-4" onSubmit={form.handleSubmit(onSubmit)}>
+        <motion.form animate={shake} className="grow flex flex-col gap-4" onSubmit={form.handleSubmit(onSubmit)}>
             <ControlledTextField name="credential" control={form.control} placeholder="Username or Email" />
             <ControlledPasswordField name="password" control={form.control} placeholder="Password" />
             <SubmitButton label="Login" className="h-15 text-2xl mt-4" isSubmitting={form.formState.isSubmitting} />
-        </form>
+        </motion.form>
     );
 }
