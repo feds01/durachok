@@ -210,26 +210,16 @@ export class Game {
 
         // get the round starter before it is overwritten by the 'defense' transfer
         const roundStarter = this.getRoundStarter();
+        const defender = this.getDefendingPlayerName();
 
         // Check that all of the cards have been covered by the defending player...
-        let forfeitRound = Array.from(this.tableTop.values()).some((card) => {
-            return card === null;
-        });
+        const forfeitRound = !resignPlayer && Array.from(this.tableTop.values()).some((card) => card === null);
 
-        if (!resignPlayer && forfeitRound) {
+        if (forfeitRound) {
             // Take the cards from the table top and move them into the players
             // personal deck
-            this.transferTableTop(this.getDefendingPlayerName());
-            this.setDefendingPlayer(this.getPlayerNameByOffset(this.getDefendingPlayerName(), 2));
+            this.transferTableTop(defender);
         } else {
-            const defender = this.getDefendingPlayerName();
-
-            // Use getPlayerOrderFrom here to avoid issue with when the defender gets out of the game
-            // and is no longer part of the rounds.
-            const nextDefender = this.getPlayerOrderFrom(defender).find((p) => !this.getPlayer(p).out);
-
-            // check that all players have declared that they finished the round.
-            this.setDefendingPlayer(nextDefender!);
             this.voidTableTop();
         }
 
@@ -254,34 +244,40 @@ export class Game {
             }
         }
 
-        let hasVictory = true;
+        // Declare the players without cards as 'out', before choosing who plays the next
+        // round, so that a player who is out can't become the defender.
+        if (this.deck.length === 0) {
+            this.getActivePlayers().forEach(([name, player]) => {
+                if (player.deck.length === 0) {
+                    player.out = Date.now();
+                    this.history.addEntry({ type: "exit", player: name });
+                }
+            });
+        }
 
-        // victory condition: check if the defender is the only player who isn't out.
-        this.getActivePlayers().forEach(([name, player]) => {
-            // check if we need to declare someone as 'out' of the game.
-            if (player.deck.length === 0) {
-                player.out = Date.now();
-            }
-
-            if (name !== this.getDefendingPlayerName() && player.out === null) {
-                hasVictory = false;
-            }
-        });
-
-        if (hasVictory) {
+        // victory condition: at most one player is left in the game.
+        if (this.getActivePlayers().length <= 1) {
             // Add history entry for the victory
             this.history.addEntry({ type: "victory" });
             this.status = "finished";
-        } else {
-            // since it's a new round, we need to create a new node.
-            this.history.addEntry({
-                type: "new_round",
-                actors: {
-                    defender: this.getDefendingPlayerName(),
-                    attacker: this.getAttackingPlayerName(),
-                },
-            });
+            return;
         }
+
+        // When the defender picked up the cards, the player after them attacks, so the one
+        // after that defends. Otherwise, the player after the defender defends, so that the
+        // defender attacks next. With two players left, a defender who picked up defends again.
+        const nextPlayers = this.getPlayerOrderFrom(defender).filter((name) => !this.getPlayer(name).out);
+        const nextDefender = forfeitRound ? (nextPlayers[1] ?? defender) : nextPlayers[0];
+        this.setDefendingPlayer(nextDefender);
+
+        // since it's a new round, we need to create a new node.
+        this.history.addEntry({
+            type: "new_round",
+            actors: {
+                defender: this.getDefendingPlayerName(),
+                attacker: this.getAttackingPlayerName(),
+            },
+        });
     }
 
     /**
@@ -409,8 +405,9 @@ export class Game {
                 });
             } // The player may already be out due to the code above
 
-            // now check here if there is only one player remaining in the game.
-            if (this.getActivePlayers().length === 1) {
+            // now check here if there is only one player remaining in the game, unless the
+            // round that finalising the turn ended already declared the victory.
+            if (!this.isFinished() && this.getActivePlayers().length <= 1) {
                 this.status = "finished";
 
                 // Add history entry for the victory
@@ -418,7 +415,7 @@ export class Game {
             }
         }
 
-        if (this.shouldAutoSkipWhenDefenderForfeits()) this.finaliseRound();
+        if (!this.isFinished() && this.shouldAutoSkipWhenDefenderForfeits()) this.finaliseRound();
     }
 
     /**
@@ -1003,6 +1000,14 @@ export class Game {
                 };
             }),
         };
+    }
+
+    /**
+     * Whether the game has finished. A method rather than a comparison, since moves change
+     * the status part way through, which TypeScript's narrowing of `this.status` doesn't see.
+     */
+    public isFinished(): boolean {
+        return this.status === "finished";
     }
 
     /** Get a specific player by name. */
