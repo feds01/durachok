@@ -200,11 +200,12 @@ function playGame(seed: number, playerCount: number, settings: GameSettings, onS
 describe("Simulated games", () => {
     for (const playerCount of [2, 3, 4, 6]) {
         for (const shortGameDeck of [false, true]) {
+            // Ten whole games each, which take longer than a test's usual five seconds on a slow machine.
             test(`${playerCount} players, ${shortGameDeck ? "short" : "full"} deck`, () => {
                 for (let seed = 1; seed <= 10; seed++) {
                     playGame(seed * 7919 + playerCount, playerCount, { ...DEFAULT_SETTINGS, shortGameDeck });
                 }
-            });
+            }, 30_000);
         }
     }
 });

@@ -6,6 +6,8 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import Loader from "@/components/Loader";
 import { useAuthDispatch, useAuthState } from "@/contexts/auth";
 import { useLobbyConnection, useLobbyStore } from "@/contexts/lobby";
+import GameResults from "@/fragments/GameResults";
+import GameTable from "@/fragments/GameTable";
 import LobbyClosed from "@/fragments/LobbyClosed";
 import WaitingRoom from "@/fragments/WaitingRoom";
 import { trpcNativeClient } from "@/utils/trpc";
@@ -46,13 +48,16 @@ function LobbyPage() {
     const { pin } = Route.useLoaderData();
     useLobbyConnection(pin);
 
-    const { connection, lobby, countingDown, error, leave } = useLobbyStore(
+    const { connection, lobby, game, results, countingDown, error, leave, dismissResults } = useLobbyStore(
         useShallow((state) => ({
             connection: state.connection,
             lobby: state.lobby,
+            game: state.game,
+            results: state.results,
             countingDown: state.countingDown,
             error: state.error,
             leave: state.leave,
+            dismissResults: state.dismissResults,
         })),
     );
     const { state: auth } = useAuthState();
@@ -100,12 +105,13 @@ function LobbyPage() {
                     isMe={(player) => (user?.kind === "registered" ? player.id === user.id : player.id === user?.name)}
                     onLeave={onLeave}
                 />
+            ) : game ? (
+                <GameTable lobby={lobby} game={game} />
             ) : (
-                <div className="flex h-full flex-col items-center justify-center gap-2 px-4 text-center">
-                    <h1 className="m-0 text-4xl">The game is on</h1>
-                    <p className="m-0 font-body text-muted-foreground">The card table arrives in the next update.</p>
-                </div>
+                // The game starts once the countdown ends, and its first update deals the cards.
+                <Loader label="Dealing the cards" />
             )}
+            {results && <GameResults results={results} me={user?.name ?? null} onClose={dismissResults} />}
             {countingDown && <CountdownOverlay />}
         </>
     );

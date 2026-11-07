@@ -41,8 +41,11 @@ interface LobbyStore extends LobbyState {
     /** Send a message to the lobby. */
     sendMessage: (message: string) => void;
 
-    /** Make a move in the game. */
+    /** Make a move in the game, which the player sees straight away, until the server answers it. */
     dispatchMove: (move: PlayerMove) => void;
+
+    /** Put away the results of the last game. */
+    dismissResults: () => void;
 }
 
 export const useLobbyStore = create<LobbyStore>((set, get) => {
@@ -78,8 +81,9 @@ export const useLobbyStore = create<LobbyStore>((set, get) => {
             socket.on("lobbyState", ({ lobby }) => dispatch({ type: "lobby", lobby }));
             socket.on("countdown", () => dispatch({ type: "countdown" }));
             socket.on("start", () => dispatch({ type: "start" }));
-            socket.on("action", ({ update }) => dispatch({ type: "game", game: update }));
+            socket.on("action", ({ actions, update }) => dispatch({ type: "game", game: update, actions }));
             socket.on("playerState", ({ update }) => dispatch({ type: "game", game: update }));
+            socket.on("victory", ({ players }) => dispatch({ type: "victory", players }));
             socket.on("close", ({ reason }) => dispatch({ type: "close", reason }));
             socket.on("error", ({ type, message }) =>
                 dispatch({ type: "error", code: type, at: Date.now(), ...(message && { message }) }),
@@ -107,7 +111,12 @@ export const useLobbyStore = create<LobbyStore>((set, get) => {
         rotatePassphrase: () => withSocket((socket, pin) => socket.emit("passphrase", pin)),
         updateSettings: (settings) => withSocket((socket, pin) => socket.emit("settings", pin, settings)),
         sendMessage: (message) => withSocket((socket, pin) => socket.emit("message", pin, { message })),
-        dispatchMove: (move) => withSocket((socket, pin) => socket.emit("move", pin, move)),
+        dispatchMove: (move) =>
+            withSocket((socket, pin) => {
+                dispatch({ type: "move", move });
+                socket.emit("move", pin, move);
+            }),
+        dismissResults: () => dispatch({ type: "dismissResults" }),
     };
 });
 

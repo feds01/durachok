@@ -84,6 +84,9 @@ export namespace Root {
                   }
                 | {
                       type: "new_spectator";
+                  }
+                | {
+                      type: "game_over";
                   };
             lobby: {
                 pin: string;

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { Lobby } from "@durachok/transport";
+import { Lobby, PlayerGameState } from "@durachok/transport";
 
 import { LobbyEvent, LobbyState, initialLobbyState, reduceLobby } from "./state";
 
@@ -17,6 +17,23 @@ const lobby: Lobby = {
     status: "waiting",
     players: [{ id: "owner-id", name: "owner" }],
     chat: [],
+};
+
+const game: PlayerGameState = {
+    player: { name: "owner", deck: ["6S", "7S"], out: null, turned: false, beganRound: true, action: "attack" },
+    players: [
+        {
+            name: "guest",
+            deck: { type: "hidden", size: 6 },
+            out: null,
+            turned: false,
+            beganRound: false,
+            action: "defend",
+        },
+    ],
+    tableTop: {},
+    deckSize: 24,
+    trump: { suit: "H", card: "AH", value: 14 },
 };
 
 function reduceAll(events: LobbyEvent[], state: LobbyState = initialLobbyState): LobbyState {
@@ -132,5 +149,49 @@ describe("lobby state", () => {
         const state = reduceLobby(joined, { type: "error", code: "bad_request", message: "Not enough players", at: 2 });
         expect(state.connection).toEqual({ kind: "joined" });
         expect(state.error).toEqual({ message: "Not enough players", at: 2 });
+    });
+
+    test("a move waits for the server's answer, whether it takes the move or not", () => {
+        const playing = reduceAll([
+            { type: "join", lobby: { ...lobby, status: "playing" }, game },
+            { type: "move", move: { type: "place", card: "6S" } },
+        ]);
+        expect(playing.pending).toEqual({ type: "place", card: "6S" });
+
+        const answered = reduceLobby(playing, {
+            type: "game",
+            game: { ...game, tableTop: { "6S": null } },
+            actions: [{ type: "place", card: "6S", player: "owner" }],
+        });
+        expect(answered.pending).toBeNull();
+        expect(answered.actions).toEqual([{ type: "place", card: "6S", player: "owner" }]);
+
+        const refused = reduceLobby(playing, { type: "error", code: "invalid_move", message: "No", at: 3 });
+        expect(refused.pending).toBeNull();
+    });
+
+    test("a move without a game is ignored", () => {
+        const state = reduceAll([
+            { type: "join", lobby },
+            { type: "move", move: { type: "forfeit" } },
+        ]);
+        expect(state.pending).toBeNull();
+    });
+
+    test("the end of a game shows its results in the lobby, until the next game starts", () => {
+        const players = [
+            { name: "guest", out: 1 },
+            { name: "owner", out: null },
+        ];
+        const finished = reduceAll([
+            { type: "join", lobby: { ...lobby, status: "playing" }, game },
+            { type: "victory", players },
+        ]);
+
+        expect(finished.lobby?.status).toBe("waiting");
+        expect(finished.game).toBeNull();
+        expect(finished.results).toEqual(players);
+        expect(reduceLobby(finished, { type: "dismissResults" }).results).toBeNull();
+        expect(reduceLobby(finished, { type: "countdown" }).results).toBeNull();
     });
 });

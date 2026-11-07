@@ -15,6 +15,10 @@ const LobbyUpdateSchema = z.union([
     z.object({
         type: z.literal("new_spectator"),
     }),
+    /** The game finished, and the lobby is waiting for another. */
+    z.object({
+        type: z.literal("game_over"),
+    }),
 ]);
 
 /**
