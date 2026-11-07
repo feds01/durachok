@@ -1,4 +1,3 @@
-import Divider from "@/components/Divider";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useLobbyStore } from "@/contexts/lobby";
 import GameSettingsForm from "@/forms/GameSettingsForm";
@@ -16,11 +15,10 @@ export default function LobbySettingsDialog({ lobby, open, onClose }: Props) {
 
     return (
         <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-            <DialogContent className="bg-background border-border">
+            <DialogContent className="max-h-[90dvh] overflow-y-auto border-border bg-card">
                 <DialogHeader>
                     <DialogTitle className="text-2xl text-foreground">Lobby settings</DialogTitle>
                 </DialogHeader>
-                <Divider />
                 {/* The server sends the room the new settings, or the owner an error. */}
                 <GameSettingsForm
                     defaultValues={{

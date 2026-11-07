@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# The router's scratch files while it generates the route tree
+.tanstack
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

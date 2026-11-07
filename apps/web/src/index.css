@@ -1,6 +1,8 @@
-@import url("https://fonts.googleapis.com/css?family=Playfair+Display:400,700i,900i");
-@import url("https://fonts.googleapis.com/css2?family=Noto+Sans&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Cabin&display=swap");
+/*
+ * Both families as variable fonts, upright and italic, across every weight the app sets,
+ * so that no weight is faked by the browser thickening a lighter one.
+ */
+@import url("https://fonts.googleapis.com/css2?family=Cabin:ital,wght@0,400..700;1,400..700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap");
 @import "tailwindcss";
 
 @theme {
@@ -31,10 +33,44 @@
     /* Fonts */
     --font-display: "Playfair Display", serif;
     --font-body: "Cabin", sans-serif;
-    --font-sans: "Noto Sans", sans-serif;
+    /* Tailwind's default family, for anything that doesn't inherit the body's. */
+    --font-sans: var(--font-body);
 
     /* Custom animations */
     --animate-shake: shake 0.82s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+    --animate-caret-blink: caret-blink 1.2s ease-out infinite;
+    --animate-menu-in: menu-in 0.15s ease-out;
+}
+
+/* A dropdown menu opening, see `ui/dropdown-menu`. */
+@keyframes menu-in {
+    from {
+        opacity: 0;
+        transform: translateY(-4px) scale(0.97);
+    }
+}
+
+/* A playing card floating up past the page, see `FloatingCards`. */
+@keyframes float-card {
+    from {
+        transform: translateY(0) rotate(var(--card-rotate)) scale(var(--card-scale));
+    }
+    to {
+        transform: translateY(calc(-100vh - 200px)) rotate(calc(var(--card-rotate) + 180deg)) scale(var(--card-scale));
+    }
+}
+
+/* The caret in the pin's boxes, see `PinInput`. */
+@keyframes caret-blink {
+    0%,
+    70%,
+    100% {
+        opacity: 1;
+    }
+    20%,
+    50% {
+        opacity: 0;
+    }
 }
 
 @keyframes shake {
@@ -64,12 +100,11 @@
 
     html,
     body {
-        font-family: var(--font-display);
+        font-family: var(--font-body);
         color: var(--color-foreground);
         text-rendering: optimizeLegibility;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
-        background-color: var(--color-background);
         font-size: 14px;
         display: flex;
         flex-flow: column;
@@ -86,6 +121,9 @@
     h5,
     h6 {
         font-family: var(--font-display);
+        font-weight: 700;
+        /* Playfair's figures are old-style by default, and sit unevenly in a heading. */
+        font-variant-numeric: lining-nums;
     }
 
     p {
@@ -95,6 +133,14 @@
     a:hover,
     a:link {
         text-decoration: none;
+    }
+
+    /*
+     * Only the page's root paints the background, and the body stays clear, so that
+     * decorations behind the page, such as the floating cards, show through it.
+     */
+    html {
+        background-color: var(--color-background);
     }
 
     #root {

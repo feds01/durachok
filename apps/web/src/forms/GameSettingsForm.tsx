@@ -51,11 +51,12 @@ export default function GameSettingsForm({ defaultValues, submitLabel, onSubmit:
     };
 
     return (
-        <form className="grow flex flex-col" onSubmit={form.handleSubmit(onSubmit)}>
+        <form className="flex flex-col gap-4" onSubmit={form.handleSubmit(onSubmit)}>
             <ControlledSliderInput
                 name="roundTimeout"
                 control={form.control}
-                legend="Round Timeout (seconds)"
+                legend="Round time"
+                format={(seconds) => `${seconds}s`}
                 min={100}
                 max={600}
                 step={50}
@@ -64,7 +65,8 @@ export default function GameSettingsForm({ defaultValues, submitLabel, onSubmit:
             <ControlledSliderInput
                 name="maxPlayers"
                 control={form.control}
-                legend="Max Players"
+                legend="Players"
+                format={(players) => `Up to ${players}`}
                 min={2}
                 max={8}
                 marks={PLAYERS_MARKS}
@@ -72,34 +74,38 @@ export default function GameSettingsForm({ defaultValues, submitLabel, onSubmit:
             <ControlledSwitchInput
                 name="passphrase"
                 control={form.control}
-                legend="Use passphrase"
-                label="Enable passphrase step for joining players."
+                legend="Passphrase"
+                label="Players need the passphrase that you see to join."
             />
             <ControlledSwitchInput
                 name="randomisePlayerOrder"
                 control={form.control}
-                legend="Random player order"
-                label="Randomise the player starting order."
+                legend="Random seats"
+                label="Seat the players in a random order."
             />
             <ControlledSwitchInput
                 name="shortGameDeck"
                 control={form.control}
-                legend="Short game deck"
-                label="Use a shorter game deck for the game (36 cards)"
+                legend="Short deck"
+                label="Play with 36 cards, for up to 6 players."
             />
             <ControlledSwitchInput
                 name="freeForAll"
                 control={form.control}
                 legend="Free for all"
-                label="Allow users to play in any order after the first turn."
+                label="Anyone can attack after the first card."
             />
             <ControlledSwitchInput
                 name="disableChat"
                 control={form.control}
-                legend="Disable chat"
-                label="Disable the chat in the game."
+                legend="No chat"
+                label="Turn the lobby's chat off."
             />
-            <SubmitButton className="mt-4" label={submitLabel} isSubmitting={form.formState.isSubmitting} />
+            <SubmitButton
+                className="mt-2 h-11 text-base"
+                label={submitLabel}
+                isSubmitting={form.formState.isSubmitting}
+            />
         </form>
     );
 }

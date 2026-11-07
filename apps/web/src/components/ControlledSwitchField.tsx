@@ -25,15 +25,19 @@ const ControlledSwitchInput = <T extends FieldValues>({
             name={name}
             control={control}
             render={({ field, fieldState: { error } }) => (
-                <div className={cn("space-y-2 pt-4", className)}>
-                    {legend && <Label className="text-lg text-foreground">{legend}</Label>}
-                    <div className="flex items-center space-x-2">
+                <div className={cn("space-y-1", className)}>
+                    {/* The whole row toggles the setting. */}
+                    <Label
+                        htmlFor={name}
+                        className="flex cursor-pointer items-center justify-between gap-4 rounded-xl border bg-background/40 p-3 transition-colors hover:border-primary"
+                    >
+                        <span className="flex flex-col gap-0.5">
+                            {legend && <span className="text-base text-foreground">{legend}</span>}
+                            <span className="text-sm font-normal text-muted-foreground">{label}</span>
+                        </span>
                         <Checkbox id={name} checked={field.value} onCheckedChange={field.onChange} />
-                        <Label htmlFor={name} className="text-md font-normal text-foreground cursor-pointer">
-                            {label}
-                        </Label>
-                    </div>
-                    {isDef(error) && <p className="text-md text-destructive">{error?.message}</p>}
+                    </Label>
+                    {isDef(error) && <p className="m-0 text-sm text-destructive">{error?.message}</p>}
                 </div>
             )}
         />

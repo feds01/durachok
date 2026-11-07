@@ -1,8 +1,14 @@
 import { motion } from "framer-motion";
+import { DoorOpen } from "lucide-react";
 import { useEffect, useMemo } from "react";
 import { z } from "zod";
 
+import OrDivider from "@/components/OrDivider";
+import { Button } from "@/components/ui/button";
 import Logo from "@/components/Logo";
+import { fadeUp } from "@/lib/motion";
+import { PANEL } from "@/lib/styles";
+import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth";
 import RegisterForm from "@/forms/Register";
 import { AuthResult } from "@/types/auth";
@@ -46,21 +52,33 @@ export default function Register() {
     }, [state.kind, redirect, navigate]);
 
     return (
-        <div className="flex flex-col justify-center h-full items-center max-sm:justify-start max-sm:[&>div]:flex max-sm:[&>div]:flex-col max-sm:[&>div]:grow max-sm:[&>div]:overflow-hidden">
+        <div className="flex min-h-full flex-col items-center justify-center px-4 py-12">
             <motion.div
-                transition={{ duration: 0.5 }}
-                initial={{ x: "calc(100vw)" }}
-                animate={{ x: 0 }}
-                exit={{ x: "-100vw" }}
+                className="flex w-full max-w-md flex-col items-center gap-6 text-center"
+                variants={fadeUp}
+                initial="hidden"
+                animate="visible"
             >
-                <div className="bg-card shadow-lg p-8 pt-20 pb-20 rounded-xl w-120 flex flex-col flex-wrap mx-auto [&_input]:bg-background [&_h2]:text-2xl [&_h2]:font-body max-sm:grow max-sm:w-full! max-sm:block! max-sm:rounded-none! max-sm:shadow-none!">
-                    <Logo size={48} />
-                    <h2>Register</h2>
+                <Link to="/" aria-label="Home">
+                    <Logo size={64} />
+                </Link>
+                <Button variant="secondary" size="lg" className="w-full" asChild>
+                    <Link to="/">
+                        <DoorOpen />
+                        Join a lobby
+                    </Link>
+                </Button>
+                <OrDivider />
+                <div className={cn(PANEL, "flex w-full flex-col gap-5 text-left [&_input]:h-12 [&_input]:text-base")}>
+                    <h2 className="m-0 text-center text-2xl">Create an account</h2>
                     <RegisterForm onSuccess={onSuccess} />
-                    <p className="text-white text-sm [&_a]:text-blue-400">
-                        Already registered? Login <Link to={"/login"}>here</Link>
-                    </p>
                 </div>
+                <p className="m-0 text-lg text-muted-foreground">
+                    Already have an account?{" "}
+                    <Link className="text-primary" to="/login">
+                        Log in
+                    </Link>
+                </p>
             </motion.div>
         </div>
     );
