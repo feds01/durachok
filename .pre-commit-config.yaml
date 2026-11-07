@@ -3,28 +3,28 @@ repos:
       hooks:
           - id: oxlint
             name: oxlint
-            entry: bunx oxlint --fix
+            entry: just lint --fix
             language: system
             types_or: [javascript, jsx, ts, tsx]
             pass_filenames: true
 
           - id: oxfmt
             name: oxfmt
-            entry: bunx oxfmt
+            entry: just fmt
             language: system
             types_or: [javascript, jsx, ts, tsx, json, toml]
             pass_filenames: true
 
           - id: zenith
             name: zenith
-            entry: bun run arch --tracked
+            entry: just architecture --tracked
             language: system
             files: (\.(js|jsx|ts|tsx)|package\.json|tsconfig.*\.json|zenith\.toml)$
             pass_filenames: false
 
           - id: typecheck
             name: typecheck
-            entry: bun run check
+            entry: just typecheck
             language: system
             types_or: [ts, tsx]
             pass_filenames: false

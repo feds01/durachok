@@ -21,14 +21,16 @@ jobs:
               with:
                   bun-version-file: package.json
 
+            - uses: extractions/setup-just@v4
+
             - name: Install dependencies
-              run: bun install --frozen-lockfile
+              run: just install
 
             - name: Run oxlint
-              run: bun run lint
+              run: just lint
 
             - name: Check formatting
-              run: bun run fmt:check
+              run: just fmt-check
 
     architecture:
         name: Architecture
@@ -43,9 +45,11 @@ jobs:
               with:
                   bun-version-file: package.json
 
+            - uses: extractions/setup-just@v4
+
             # Installs the zenith version pinned in bun.lock, which the action then runs.
             - name: Install dependencies
-              run: bun install --frozen-lockfile
+              run: just install
 
             - uses: feds01/zenith@v0.7.0
               with:
@@ -63,11 +67,13 @@ jobs:
               with:
                   bun-version-file: package.json
 
+            - uses: extractions/setup-just@v4
+
             - name: Install dependencies
-              run: bun install --frozen-lockfile
+              run: just install
 
             - name: Type check
-              run: bun run check
+              run: just typecheck
 
     test:
         name: Test
@@ -79,11 +85,13 @@ jobs:
               with:
                   bun-version-file: package.json
 
+            - uses: extractions/setup-just@v4
+
             - name: Install dependencies
-              run: bun install --frozen-lockfile
+              run: just install
 
             - name: Run tests
-              run: bun run test
+              run: just test
 
     build:
         name: Build
@@ -96,8 +104,10 @@ jobs:
               with:
                   bun-version-file: package.json
 
+            - uses: extractions/setup-just@v4
+
             - name: Install dependencies
-              run: bun install --frozen-lockfile
+              run: just install
 
             - name: Build
-              run: bun run build
+              run: just build
