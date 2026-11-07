@@ -9,7 +9,8 @@ import { GameSettingsSchema } from "@durachok/transport";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 type CreateGameFormProps = {
-    onSuccess: () => void;
+    /** Called with the new lobby's pin. */
+    onSuccess: (pin: string) => void;
 };
 
 type GameSettingsFormData = z.output<typeof GameSettingsSchema>;
@@ -25,7 +26,9 @@ const PLAYERS_MARKS = [
 ];
 
 export default function CreateGameForm({ onSuccess }: CreateGameFormProps) {
-    const createGame = trpc.lobbies.create.useMutation();
+    const utils = trpc.useUtils();
+    // The new lobby joins the user's lobbies on the dashboard.
+    const createGame = trpc.lobbies.create.useMutation({ onSuccess: () => utils.users.get.invalidate() });
     const form = useForm({
         resolver: zodResolver(GameSettingsSchema),
         mode: "onChange",
@@ -43,8 +46,8 @@ export default function CreateGameForm({ onSuccess }: CreateGameFormProps) {
 
     const onSubmit = async (formData: GameSettingsFormData) => {
         try {
-            await createGame.mutateAsync({ settings: formData });
-            onSuccess();
+            const { pin } = await createGame.mutateAsync({ settings: formData });
+            onSuccess(pin);
         } catch (e: unknown) {
             if (e instanceof Error) {
                 form.setError("maxPlayers", {

@@ -12,7 +12,9 @@ type Props = {
 };
 
 export default function GameLinkCard({ pin, status, players, maxPlayers }: Props) {
-    const deleteGame = trpc.lobbies.delete.useMutation();
+    const utils = trpc.useUtils();
+    // The deleted lobby leaves the user's lobbies on the dashboard.
+    const deleteGame = trpc.lobbies.delete.useMutation({ onSuccess: () => utils.users.get.invalidate() });
 
     const onDelete = async () => {
         await deleteGame.mutateAsync({ pin });
@@ -32,7 +34,7 @@ export default function GameLinkCard({ pin, status, players, maxPlayers }: Props
                 </div>
             </Link>
             <div className="flex flex-col justify-center">
-                <Button variant="secondary" onClick={onDelete}>
+                <Button variant="secondary" onClick={onDelete} disabled={deleteGame.isPending}>
                     Delete
                 </Button>
             </div>
