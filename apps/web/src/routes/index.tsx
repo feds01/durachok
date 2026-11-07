@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { Home } from "lucide-react";
 
 import PlayingCard from "@/assets/image/playing-card.svg?react";
@@ -10,6 +10,9 @@ import { isDef } from "@/utils";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/")({
+    // A pin that a lobby link passed on, which TanStack Router may have parsed as a number.
+    validateSearch: (search: Record<string, unknown>): { startPin?: string } =>
+        isDef(search.startPin) ? { startPin: String(search.startPin) } : {},
     component: Index,
 });
 
@@ -65,16 +68,17 @@ const PlayingCardIcon = ({ index }: { index: number }) => {
 };
 
 function Index() {
-    const [pin] = useState<string | undefined>();
+    const { startPin } = Route.useSearch();
     const { isRegistered } = useAuthState();
     const auth = useAuthDispatch();
     const navigator = useNavigate();
 
-    const redirectToLobby = ({ pin, tokens }: LobbyAuthInfo) => {
+    const redirectToLobby = ({ pin, name, tokens }: LobbyAuthInfo) => {
+        // Anonymous players get tokens for the lobby that they joined.
         if (isDef(tokens)) {
             auth({
                 type: "login",
-                payload: { user: { kind: "anonymous", lobby: pin }, ...tokens },
+                payload: { user: { kind: "anonymous", lobby: pin, name }, ...tokens },
             });
         }
 
@@ -108,7 +112,7 @@ function Index() {
                 ))}
             <div className="max-w-150 mx-auto pt-4 flex flex-col h-full rounded text-center max-sm:pt-16 max-sm:mx-8">
                 <Logo size={64} />
-                <GamePrompt startPin={pin} onSuccess={redirectToLobby} />
+                <GamePrompt startPin={startPin} onSuccess={redirectToLobby} />
                 {isRegistered() ? (
                     <p>
                         Go to your{" "}

@@ -1,40 +1,30 @@
 import ErrorBoundary from "@/components/ErrorBoundary";
 import Loader from "@/components/Loader";
 import { trpcNativeClient } from "@/utils/trpc";
+import { TRPCClientError } from "@trpc/client";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/lobby/$pin")({
-    beforeLoad: ({ context, location }) => {
+    // Visitors without a session join from the home page, with the pin filled in.
+    beforeLoad: ({ context, params }) => {
         if (context.auth.kind === "logged-out") {
-            throw redirect({
-                to: "/login",
-                search: {
-                    redirect: location.href,
-                },
-            });
+            throw redirect({ to: "/", search: { startPin: params.pin } });
         }
     },
-    // We need to make a call to `lobbies.get(id)` and fetch the lobby, if we
-    // fail (i.e.) unauthorized access, then we should re-direct them to home
-    // page where they can re-enter their details.
+    // So do players who aren't in the lobby, e.g. with a session for another lobby.
     loader: async ({ params: { pin } }) => {
-        // Try and load the information about the lobby.
-        const lobby = await trpcNativeClient.lobbies.get.query({ pin });
+        const lobby = await trpcNativeClient.lobbies.get.query({ pin }).catch((error: unknown) => {
+            if (error instanceof TRPCClientError && ["UNAUTHORIZED", "NOT_FOUND"].includes(error.data?.code)) {
+                return null;
+            }
+            throw error;
+        });
 
-        // This user doesn't have access to this lobby.
-        if (lobby instanceof Error) {
-            throw redirect({
-                to: "/",
-                search: {
-                    startPin: pin,
-                },
-            });
+        if (!lobby) {
+            throw redirect({ to: "/", search: { startPin: pin } });
         }
 
-        return {
-            pin,
-            lobby,
-        };
+        return { pin, lobby };
     },
     pendingComponent: () => <Loader />,
     errorComponent: (info) => <ErrorBoundary {...info} />,

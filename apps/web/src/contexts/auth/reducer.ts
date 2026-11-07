@@ -14,6 +14,8 @@ type AnonymousUser = {
     kind: "anonymous";
     // @@Todo: support anonymous users entering multiple lobbies.
     lobby: string;
+    /** The name that they joined the lobby under. */
+    name: string;
 };
 
 /** The state when we have a logged in user, whether that is anonymous or not. */
@@ -61,11 +63,18 @@ export function init(): AuthState {
         return { kind: "logged-out" };
     }
 
+    // Anonymous sessions saved before they kept the player's name can't tell which player
+    // is theirs, and only belong to one lobby, so they are dropped.
+    const parsed: LoggedInAuthState["user"] = JSON.parse(user);
+    if (parsed.kind === "anonymous" && !parsed.name) {
+        return { kind: "logged-out" };
+    }
+
     return {
         kind: "logged-in",
         token,
         refreshToken,
-        user: JSON.parse(user),
+        user: parsed,
     };
 }
 
