@@ -61,7 +61,11 @@ export default function GamePrompt({ startPin, onSuccess }: Props) {
     const onSubmit = useCallback(
         async (info: GamePromptInput) => {
             try {
-                const { token, refreshToken } = await joinLobbyMutation.mutateAsync(info);
+                const { token, refreshToken } = await joinLobbyMutation.mutateAsync({
+                    pin: info.pin,
+                    name: info.name,
+                    passphrase: info.security,
+                });
 
                 const tokens = expr(() => {
                     if (isDef(token) && isDef(refreshToken)) {

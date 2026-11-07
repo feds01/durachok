@@ -9,6 +9,7 @@ import { TRPCError } from "@trpc/server";
 import { authProcedure, publicProcedure, router, userProcedure } from "../../lib/trpc";
 import { DBPlayer } from "../../schemas/lobby";
 import { expr } from "../../utils";
+import { notifyLobbyClosed } from "../socket";
 
 export const lobbyRouter = router({
     getInfo: publicProcedure.input(ByPinRequestSchema).query((req) => {
@@ -42,20 +43,14 @@ export const lobbyRouter = router({
             input,
         } = req;
 
-        // Ensure player can read the lobby
-        const hasAccess = ctx.lobbyService.hasAccess(token, input.pin);
-
-        if (!hasAccess) {
-            return new TRPCError({ code: "UNAUTHORIZED" });
+        // Ensure that the player can read the lobby, i.e. they are one of its players.
+        if (!(await ctx.lobbyService.hasAccess(token, input.pin))) {
+            throw new TRPCError({ code: "UNAUTHORIZED" });
         }
 
-        // Check that the user is the owner of the lobby
-        const lobby = await ctx.lobbyService.get(input.pin);
-        if (!lobby) {
-            throw new TRPCError({ code: "NOT_FOUND" });
-        }
-
-        return lobby;
+        // Only the owner sees the passphrase.
+        const withPassphrase = await ctx.lobbyService.hasOwnerAccess(token, input.pin);
+        return ctx.lobbyService.get(input.pin, { withPassphrase });
     }),
 
     delete: userProcedure.input(ByPinRequestSchema).mutation(async (req) => {
@@ -73,7 +68,8 @@ export const lobbyRouter = router({
             throw new TRPCError({ code: "UNAUTHORIZED" });
         }
 
-        return ctx.lobbyService.delete(input.pin);
+        await ctx.lobbyService.delete(input.pin);
+        await notifyLobbyClosed(input.pin);
     }),
 
     join: publicProcedure.input(GameJoinRequestSchema).mutation(async (req) => {
@@ -102,10 +98,11 @@ export const lobbyRouter = router({
             throw new TRPCError({ code: "UNAUTHORIZED", message: "Incorrect passphrase" });
         }
 
+        // Registered users play under their account's name, anonymous players under the one they chose.
         const player: DBPlayer = expr(() => {
             if (ctx.token?.kind === "registered") {
                 return {
-                    name: input.name,
+                    name: ctx.token.user.name,
                     socket: null,
                     registered: ctx.token.user.id,
                     confirmed: false,
@@ -115,7 +112,7 @@ export const lobbyRouter = router({
         });
 
         // We need to determine whether the `name` is taken or not.
-        const isUserInLobby = await ctx.lobbyService.isUserInLobby(input.pin, input.name, player.registered);
+        const isUserInLobby = await ctx.lobbyService.isUserInLobby(input.pin, player.name, player.registered);
         if (isUserInLobby) {
             throw new TRPCError({
                 code: "BAD_REQUEST",

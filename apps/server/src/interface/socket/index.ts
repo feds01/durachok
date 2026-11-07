@@ -8,6 +8,7 @@ import { authenticate } from "../../lib/authentication";
 import { Context, createContext } from "../../lib/context";
 import logger from "../../lib/logger";
 import { actions } from "./actions";
+import { Rooms } from "./actions/ctx";
 import { config as socketConfig } from "./config";
 
 const io = new Server({
@@ -16,6 +17,9 @@ const io = new Server({
         credentials: true,
     },
 });
+
+/** Emits to the clients outside of a handler, once the sockets are attached. */
+let rootContext: { withRooms: Rooms } | undefined;
 
 /**
  * Attach the socket server to the HTTP server.
@@ -51,13 +55,19 @@ export async function connectSocket(server: HTTPServer) {
         next();
     });
 
-    await attachSockets({
+    const contexts = await attachSockets({
         io,
         target: server,
         config: socketConfig,
         actions,
         logger: loggerWithCtx,
     });
+    rootContext = contexts["/"];
+}
+
+/** Tell the clients in a lobby that it was deleted, so that they leave it. */
+export async function notifyLobbyClosed(pin: string): Promise<void> {
+    await rootContext?.withRooms(pin).broadcast("close", { reason: "lobby_closed" });
 }
 
 declare module "zod-sockets" {
