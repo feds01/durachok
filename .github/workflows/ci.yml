@@ -78,6 +78,12 @@ jobs:
     test:
         name: Test
         runs-on: ubuntu-latest
+        # The server's tests play games through it, against a real MongoDB.
+        services:
+            mongo:
+                image: mongo:8
+                ports:
+                    - 27017:27017
         steps:
             - uses: actions/checkout@v7
 
