@@ -11,6 +11,7 @@
         "typescript": "^7.0.2",
       },
       "devDependencies": {
+        "@feds01/zenith": "^0.7.0",
         "@typescript/native-preview": "7.0.0-dev.20260205.1",
         "oxfmt": "^0.28.0",
         "oxlint": "^1.43.0",
@@ -276,6 +277,18 @@
     "@emotion/unitless": ["@emotion/unitless@0.10.0", "", {}, "sha512-dFoMUuQA20zvtVTuxZww6OHoJYgrzfKM1t52mVySDJnMSEa08ruEvdYQbhvyu6soU+NeLVd3yKfTfT0NeV6qGg=="],
 
     "@epic-web/invariant": ["@epic-web/invariant@1.0.0", "", {}, "sha512-lrTPqgvfFQtR/eY/qkIzp98OGdNJu0m5ji3q/nJI8v3SXkRKEnWiOxMmbvcSoAIzv/cGiuvRy57k4suKQSAdwA=="],
+
+    "@feds01/zenith": ["@feds01/zenith@0.7.0", "", { "optionalDependencies": { "@feds01/zenith-darwin-arm64": "0.7.0", "@feds01/zenith-darwin-x64": "0.7.0", "@feds01/zenith-linux-arm64": "0.7.0", "@feds01/zenith-linux-x64": "0.7.0", "@feds01/zenith-win32-x64": "0.7.0" }, "bin": { "zenith": "bin/zenith.js" } }, "sha512-+n0omi97nYCpfLytrfuORX+LQWl4app0ncEhJZ1AgqOxBx5V1xXoXrVpn6sxD4E1f4adm+rDZCWM2Mo4oz2ITg=="],
+
+    "@feds01/zenith-darwin-arm64": ["@feds01/zenith-darwin-arm64@0.7.0", "", { "os": "darwin", "cpu": "arm64" }, "sha512-QnnDCbQ5yaLasWFm8ez0Yc3Kjm7ry9BTG9H5KmpUXe+9edCIX9fbGIk5L12XWl0K5r+L8NQ4irX8xtpbE6h/Cw=="],
+
+    "@feds01/zenith-darwin-x64": ["@feds01/zenith-darwin-x64@0.7.0", "", { "os": "darwin", "cpu": "x64" }, "sha512-h2we4vlHTOevH5jh9Fiz33Lp7u/CHYUq5bdcxaHlHQkrHTJiwPao9u/UXoluk/7P9fTU1Byb5kT9mRfIYIt8ZQ=="],
+
+    "@feds01/zenith-linux-arm64": ["@feds01/zenith-linux-arm64@0.7.0", "", { "os": "linux", "cpu": "arm64" }, "sha512-i00UKivm7WwGum3l7EV2Ft24/1CiZPvgiP6KZmbr1qMQ5Fba66/CysnretUDPuUdmj53Kl5EEngFA23fQn57aw=="],
+
+    "@feds01/zenith-linux-x64": ["@feds01/zenith-linux-x64@0.7.0", "", { "os": "linux", "cpu": "x64" }, "sha512-hnoxmZpcQl0k+a3xb4RLt/7rYaol2mC/rnafYgRa+1X95n25W7CgBcB0kuTyoD9A2MVKYlcTl+WpgxBzVKnysQ=="],
+
+    "@feds01/zenith-win32-x64": ["@feds01/zenith-win32-x64@0.7.0", "", { "os": "win32", "cpu": "x64" }, "sha512-H4kdbiDN2qtsA1UYrWh26xktWBG8+AHSeUNccXtBhstlVq83ShcL8uV/i98/RS5FjB92BpriemTFZYeeB7fatA=="],
 
     "@hookform/resolvers": ["@hookform/resolvers@5.2.2", "", { "dependencies": { "@standard-schema/utils": "0.3.0" }, "peerDependencies": { "react-hook-form": "^7.55.0" } }, "sha512-A/IxlMLShx3KjV/HeTcTfaMxdwy690+L/ZADoeaTltLx+CVuzkeVIPuybK3jrRfw7YZnmdKsVVHAlEPIAEUNlA=="],
 

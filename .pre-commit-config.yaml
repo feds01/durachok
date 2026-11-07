@@ -15,6 +15,13 @@ repos:
             types_or: [javascript, jsx, ts, tsx, json]
             pass_filenames: true
 
+          - id: zenith
+            name: zenith
+            entry: bun run arch --tracked
+            language: system
+            files: (\.(js|jsx|ts|tsx)|package\.json|tsconfig.*\.json|zenith\.toml)$
+            pass_filenames: false
+
           - id: typecheck
             name: typecheck
             entry: bun run check

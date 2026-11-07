@@ -1,0 +1,33 @@
+#:schema https://raw.githubusercontent.com/feds01/zenith/main/zenith.schema.json
+
+[contracts.packages-acyclic]
+type = "acyclic"
+modules = ["pkg:*"]
+
+# These workspace packages stack in layers: each depends only on the layers below it.
+[contracts.packages-layers]
+type = "layers"
+layers = [
+    "pkg:@durachok/web",
+    "pkg:@durachok/server",
+    "pkg:@durachok/engine",
+    "pkg:@durachok/transport",
+]
+
+[contracts.web-imports-server-types-only]
+type = "forbidden"
+name = "The web client only imports types from the server"
+from = ["pkg:@durachok/web"]
+to = ["pkg:@durachok/server"]
+exclude_kinds = ["type"]
+guidance = "Use `import type` for the tRPC router types, so no server code ends up in the browser bundle."
+
+[contracts.browser-code-avoids-node-builtins]
+type = "forbidden"
+name = "Code that ships to the browser doesn't import Node builtins"
+from = ["apps/web/src", "packages/engine/src", "packages/transport/src"]
+to = ["node:*"]
+exclude_kinds = ["type"]
+# `buffer` is the npm polyfill, which both packages depend on, not the builtin.
+ignore_imports = ["apps/web/src -> node:buffer", "packages/transport/src -> node:buffer"]
+guidance = "The web app bundles the engine and transport packages, so keep Node-only code in the server."

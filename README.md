@@ -77,11 +77,12 @@ pre-commit install
 
 ### What the hooks do
 
-The pre-commit configuration runs three checks on staged files:
+The pre-commit configuration runs four checks on staged files:
 
 1. **oxlint** - Lints JavaScript/TypeScript files and auto-fixes issues where possible
 2. **oxfmt** - Formats JavaScript/TypeScript/JSON files
-3. **typecheck** - Runs TypeScript type checking via `bun run check`
+3. **zenith** - Checks the architecture contracts in [`zenith.toml`](./zenith.toml) with [zenith](https://github.com/feds01/zenith)
+4. **typecheck** - Runs TypeScript type checking via `bun run check`
 
 ### Running hooks manually
 
@@ -96,6 +97,7 @@ Or run a specific hook:
 ```bash
 pre-commit run oxlint --all-files
 pre-commit run oxfmt --all-files
+pre-commit run zenith --all-files
 pre-commit run typecheck --all-files
 ```
 
@@ -112,6 +114,7 @@ git commit --no-verify -m "your message"
 - `bun run dev` - Start all applications in development mode
 - `bun run build` - Build all applications
 - `bun run lint` - Run linting across all packages
+- `bun run arch` - Check the architecture contracts in `zenith.toml`
 - `bun run fmt` - Format code across all packages
 - `bun run check` - Run TypeScript type checking
 - `bun run test` - Run tests across all packages
