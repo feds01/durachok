@@ -39,12 +39,13 @@ function UserRoute() {
         setCreateGameDialogOpen(!createGameDialogOpen);
     };
 
-    if (userQuery.isLoading || !userQuery.data) {
-        return <div>Loading...</div>;
-    }
-
+    // A failed query has no data either, so check for the error first.
     if (userQuery.error) {
         return <div>Error: {userQuery.error.message}</div>;
+    }
+
+    if (!userQuery.data) {
+        return <div>Loading...</div>;
     }
 
     const { data } = userQuery;
