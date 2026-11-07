@@ -5,6 +5,7 @@ export namespace Root {
     export const path = "/";
 
     export interface Emission {
+        tokens: (p1: { token: string; refreshToken: string }) => void;
         join: (p1: {
             lobby: {
                 pin: string;
@@ -35,6 +36,14 @@ export namespace Root {
             };
             game?:
                 | {
+                      player: {
+                          name: string;
+                          out: number | null;
+                          turned: boolean;
+                          beganRound: boolean;
+                          action: "attack" | "defend" | "none";
+                          deck: string[];
+                      };
                       players: {
                           name: string;
                           deck:
@@ -109,12 +118,20 @@ export namespace Root {
         victory: (p1: {
             players: {
                 name: string;
-                at: unknown;
+                out: number | null;
             }[];
         }) => void;
         close: (p1: { reason: string; extra?: string | undefined }) => void;
         playerState: (p1: {
             update: {
+                player: {
+                    name: string;
+                    out: number | null;
+                    turned: boolean;
+                    beganRound: boolean;
+                    action: "attack" | "defend" | "none";
+                    deck: string[];
+                };
                 players: {
                     name: string;
                     deck:
@@ -141,75 +158,85 @@ export namespace Root {
             };
         }) => void;
         action: (p1: {
-            actions: {
-                action:
-                    | (
-                          | {
-                                type: "place";
-                                card: string;
-                                player: string;
-                            }
-                          | {
-                                type: "cover";
-                                card: string;
-                                player: string;
-                                on: number;
-                            }
-                          | {
-                                type: "forfeit";
-                                player: string;
-                            }
-                          | {
-                                type: "pickup";
-                                cards: string[];
-                                player: string;
-                            }
-                      )
-                    | (
-                          | {
-                                type: "exit";
-                                player: string;
-                            }
-                          | {
-                                type: "victory";
-                            }
-                          | {
-                                type: "new_round";
-                                actors: {
-                                    defender: string;
-                                    attacker: string;
-                                };
-                            }
-                          | {
-                                type: "start";
-                                actors: {
-                                    defender: string;
-                                    attacker: string;
-                                };
-                            }
-                      );
-                occurred_at: unknown;
-            }[];
+            actions: (
+                | (
+                      | {
+                            type: "place";
+                            card: string;
+                            player: string;
+                        }
+                      | {
+                            type: "cover";
+                            card: string;
+                            player: string;
+                            on: number;
+                        }
+                      | {
+                            type: "forfeit";
+                            player: string;
+                        }
+                      | {
+                            type: "pickup";
+                            cards: string[];
+                            player: string;
+                        }
+                  )
+                | (
+                      | {
+                            type: "exit";
+                            player: string;
+                        }
+                      | {
+                            type: "victory";
+                        }
+                      | {
+                            type: "new_round";
+                            actors: {
+                                defender: string;
+                                attacker: string;
+                            };
+                        }
+                      | {
+                            type: "start";
+                            actors: {
+                                defender: string;
+                                attacker: string;
+                            };
+                        }
+                  )
+            )[];
             update: {
-                status: "waiting" | "playing" | "finished";
+                player: {
+                    name: string;
+                    out: number | null;
+                    turned: boolean;
+                    beganRound: boolean;
+                    action: "attack" | "defend" | "none";
+                    deck: string[];
+                };
+                players: {
+                    name: string;
+                    deck:
+                        | {
+                              type: "visible";
+                              cards: string[];
+                          }
+                        | {
+                              type: "hidden";
+                              size: number;
+                          };
+                    out: number | null;
+                    turned: boolean;
+                    beganRound: boolean;
+                    action: "attack" | "defend" | "none";
+                }[];
+                tableTop: Record<string, string | null>;
+                deckSize: number;
                 trump: {
                     suit: string;
                     card: string;
                     value: number;
                 };
-                players: Record<
-                    string,
-                    {
-                        name: string;
-                        out: number | null;
-                        turned: boolean;
-                        beganRound: boolean;
-                        action: "attack" | "defend" | "none";
-                        deck: string[];
-                    }
-                >;
-                tableTop: Record<string, string | null>;
-                deck: string[];
             };
         }) => void;
         error: (p1: {
@@ -233,7 +260,7 @@ export namespace Root {
         kick: (
             p1: string,
             p2: {
-                id: string;
+                name: string;
             },
         ) => void;
         message: (
