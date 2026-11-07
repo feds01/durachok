@@ -37,6 +37,16 @@ describe("Game tests", () => {
                 }),
         ).toThrow());
 
+    test("when the deal uses up the deck, the trump is a dealt card that stays in its player's hand", () => {
+        // Six players take all 36 cards of the short deck.
+        const game = new Game(["0", "1", "2", "3", "4", "5"], null, { ...DEFAULT_SETTINGS, shortGameDeck: true });
+
+        expect(game.deck).toHaveLength(0);
+        const hands = Array.from(game.players.values()).flatMap((player) => player.deck);
+        expect(hands).toHaveLength(36);
+        expect(hands).toContain(game.trump.card);
+    });
+
     test("Game.fromState should produce the same object", () => {
         const game = new Game(["player1", "player2"], null, DEFAULT_SETTINGS);
         const save = game.serialize();
