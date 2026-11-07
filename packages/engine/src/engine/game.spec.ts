@@ -31,4 +31,21 @@ describe("Game tests", () => {
         const save = game.serialize();
         expect(Game.fromState(save.state, save.history, DEFAULT_SETTINGS)).toStrictEqual(game);
     });
+
+    test("a defender who picks up the cards stays the defender until the round ends", () => {
+        const game = new Game(["player1", "player2"], null);
+        const attacker = game.getAttackingPlayerName();
+        const defender = game.getDefendingPlayerName();
+
+        game.addCardToTableTop(attacker, game.getPlayer(attacker).deck[0]);
+        game.finalisePlayerTurn(defender);
+        expect(game.getDefendingPlayerName()).toBe(defender);
+
+        // Once the attacker is done too, the defender takes the card, and with two
+        // players they defend again.
+        game.finalisePlayerTurn(attacker);
+        expect(game.tableTop.size).toBe(0);
+        expect(game.getPlayer(defender).deck).toHaveLength(7);
+        expect(game.getDefendingPlayerName()).toBe(defender);
+    });
 });
