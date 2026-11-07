@@ -91,9 +91,16 @@ export class Game {
         this.setDefendingPlayer(chosenDefendingPlayer);
 
         // Select the first remaining card and set the 'suit' of the game and then
-        // shift the first element to the end of the stack.
-        this.trump = cardFromString(this.deck[0]);
-        this.deck.push(this.deck.shift()!);
+        // shift the first element to the end of the stack. When the deal used up the
+        // whole deck, the last card that was dealt sets the trump, and stays in its
+        // player's hand.
+        if (this.deck.length > 0) {
+            this.trump = cardFromString(this.deck[0]);
+            this.deck.push(this.deck.shift()!);
+        } else {
+            const lastDealt = Array.from(this.players.values()).at(-1)!.deck.at(-1)!;
+            this.trump = cardFromString(lastDealt);
+        }
 
         // initialise the history object if this game hasn't initialised a history
         // object yet, otherwise re-use the provided history object
