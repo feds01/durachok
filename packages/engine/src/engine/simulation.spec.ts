@@ -1,6 +1,7 @@
 import { generateCardDeck } from "./card";
 import { InvalidGameState } from "./errors/InvalidGameState";
 import { DEFAULT_SETTINGS, Game, GameSettings } from "./game";
+import { movesFor } from "./view";
 import { afterEach, describe, expect, test } from "bun:test";
 
 /**
@@ -78,6 +79,30 @@ function candidateMoves(game: Game): Move[] {
 }
 
 /**
+ * Make a move on a copy of the game, and return the copy, or null if the engine refuses
+ * the move as illegal. Throws if the move broke the game.
+ */
+function tryMove(game: Game, settings: GameSettings, move: Move): Game | null {
+    const next = clone(game, settings);
+
+    try {
+        apply(next, move);
+        return next;
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        const illegalMove =
+            (error instanceof InvalidGameState && !BROKEN_STATE.some((pattern) => pattern.test(message))) ||
+            // A plain `Error` is only expected when the table is full.
+            (error instanceof Error && message === "Player deck already full.");
+
+        if (!illegalMove) {
+            throw new Error(`${move.type} by ${move.player} broke the game: ${message}`, { cause: error });
+        }
+        return null;
+    }
+}
+
+/**
  * Play a random legal move, on a copy of the game: tries the candidate moves in a random
  * order, and returns the game after the first that the engine accepts, or null if it
  * accepts none of them.
@@ -87,25 +112,48 @@ function playRandomMove(game: Game, settings: GameSettings): Game | null {
 
     while (moves.length > 0) {
         const [move] = moves.splice(Math.floor(Math.random() * moves.length), 1);
-        const next = clone(game, settings);
+        const next = tryMove(game, settings, move);
 
-        try {
-            apply(next, move);
+        if (next) {
             return next;
-        } catch (error: unknown) {
-            const message = error instanceof Error ? error.message : String(error);
-            const illegalMove =
-                (error instanceof InvalidGameState && !BROKEN_STATE.some((pattern) => pattern.test(message))) ||
-                // A plain `Error` is only expected when the table is full.
-                (error instanceof Error && message === "Player deck already full.");
-
-            if (!illegalMove) {
-                throw new Error(`${move.type} by ${move.player} broke the game: ${message}`, { cause: error });
-            }
         }
     }
 
     return null;
+}
+
+/**
+ * Check that each player's view of the game offers them, for each card they hold, exactly
+ * the moves that the engine accepts from them: an attacker places cards, and the defender
+ * places them to pass the attack on, or beats a card at any position.
+ */
+function checkViewsAgree(game: Game, settings: GameSettings, seed: number) {
+    for (const [name, player] of game.players) {
+        if (player.out !== null || player.action === "none") continue;
+
+        const view = game.getStateForPlayer(name);
+        const positions = Array.from({ length: game.tableTop.size }, (_, position) => position);
+
+        for (const card of player.deck) {
+            const moves: Move[] = [
+                { player: name, type: "place", card },
+                ...(player.action === "defend"
+                    ? positions.map((position): Move => ({ player: name, type: "cover", card, position }))
+                    : []),
+            ];
+            const accepted = moves
+                .filter((move) => tryMove(game, settings, move) !== null)
+                .map(({ player: _, ...move }) => move);
+            const offered = movesFor(view, card);
+
+            if (JSON.stringify(offered) !== JSON.stringify(accepted)) {
+                throw new Error(
+                    `Game with seed ${seed}: ${name} (${player.action}) with ${card} is offered ${JSON.stringify(offered)}, ` +
+                        `but the engine accepts ${JSON.stringify(accepted)}.`,
+                );
+            }
+        }
+    }
 }
 
 function countCards(game: Game): string[] {
@@ -116,7 +164,7 @@ function countCards(game: Game): string[] {
     return [...game.deck, ...hands, ...table];
 }
 
-function playGame(seed: number, playerCount: number, settings: GameSettings) {
+function playGame(seed: number, playerCount: number, settings: GameSettings, onStep?: (game: Game) => void) {
     Math.random = mulberry32(seed);
 
     const names = Array.from({ length: playerCount }, (_, i) => `p${i}`) as [string, ...string[]];
@@ -138,6 +186,7 @@ function playGame(seed: number, playerCount: number, settings: GameSettings) {
         }
 
         expect(() => game.getDefendingPlayerName()).not.toThrow();
+        onStep?.(game);
         const next = playRandomMove(game, settings);
         if (!next) {
             throw new Error(`Game with seed ${seed} got stuck: nobody can make a move.`);
@@ -157,5 +206,18 @@ describe("Simulated games", () => {
                 }
             });
         }
+    }
+});
+
+describe("A player's view of a simulated game", () => {
+    for (const playerCount of [2, 3, 4, 6]) {
+        // Trying every move at every step of a whole game takes a while, so two games, one with each deck.
+        test(`offers ${playerCount} players the moves that the engine accepts`, () => {
+            for (let seed = 1; seed <= 2; seed++) {
+                const gameSeed = seed * 104729 + playerCount;
+                const settings = { ...DEFAULT_SETTINGS, shortGameDeck: seed % 2 === 0 };
+                playGame(gameSeed, playerCount, settings, (game) => checkViewsAgree(game, settings, gameSeed));
+            }
+        }, 30_000);
     }
 });

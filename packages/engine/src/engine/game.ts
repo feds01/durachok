@@ -4,6 +4,7 @@ import { TableSize } from "./consts";
 import { GameInitError } from "./errors/GameInitError";
 import { InvalidGameState } from "./errors/InvalidGameState";
 import { History, HistoryState } from "./history";
+import { Table, beats, passesAttack, rankOnTable, roomForAttack } from "./rules";
 
 import { Card, GamePlayer, GameState, GameStatus, PlayerGameState, SpectatorGameState } from "@durachok/transport";
 
@@ -325,40 +326,37 @@ export class Game {
 
         // Also check that the current card is allowed to be added to the deck. To determine this,
         // the cardLabel of the card to be added must be present on the tableTop.
-        const coveringCard = cardFromString(card);
-        const tableTopCards = this.getTableTopDeck();
+        const table = this.getTable();
 
-        if (
-            tableTopCards.length > 0 &&
-            !tableTopCards.map((item) => cardFromString(item).value).includes(coveringCard.value)
-        ) {
+        if (table.length > 0 && !rankOnTable(table, card)) {
             throw new InvalidGameState("Card numerical value isn't present on the table top.");
         }
 
         // Now let's determine if the player is trying to transfer the defensive position
         // to the left hand side player. This can be checked by the fact if the 'card' they
         // are trying to cover is equal to null.
-        if (player.action === "defend") {
-            // the player can't transfer defence if any of the cards are covered...
-            if (this.getCoveredCount() !== 0) {
-                throw new InvalidGameState("Player can't transfer defence since they have covered a card.");
-            }
+        const passing = player.action === "defend";
 
-            const nextPlayer = this.getPlayer(this.getPlayerNameByOffset(name, 1));
-
-            if (this.tableTop.size - this.getCoveredCount() + 1 > nextPlayer.deck.length) {
-                throw new InvalidGameState("Player doesn't have enough cards to cover attack.");
+        if (passing) {
+            if (player.turned) {
+                throw new InvalidGameState("The defender is taking the cards, so they can't pass the attack on.");
             }
 
             // we need to check if the player can transfer the defensive role to the next player. For this to be true,
             // all of the cards in the deck must have the same card label, and, no card must be covered on the deck.
             // Additionally, the role can't be passed if the player to the left has less cards than the length of the deck + 1.
-            if (
-                Array.from(this.tableTop.keys()).some(
-                    (tableCard) => cardFromString(tableCard).value !== coveringCard.value,
-                )
-            ) {
-                throw new InvalidGameState("Improper card for the transfer of defence state to next player.");
+            if (!passesAttack(table, card)) {
+                throw new InvalidGameState(
+                    this.getCoveredCount() !== 0
+                        ? "Player can't transfer defence since they have covered a card."
+                        : "Improper card for the transfer of defence state to next player.",
+                );
+            }
+
+            const nextPlayer = this.getPlayer(this.getPlayerNameByOffset(name, 1));
+
+            if (!roomForAttack(table, nextPlayer.deck.length)) {
+                throw new InvalidGameState("Player doesn't have enough cards to cover attack.");
             }
 
             // edge case here: if the defender puts the last card down and they don't have anymore
@@ -384,13 +382,18 @@ export class Game {
             const defender = this.getPlayer(this.getDefendingPlayerName());
 
             // check here that adding another card is still cover-able by the defender.
-            if (this.tableTop.size - this.getCoveredCount() + 1 > defender.deck.length) {
+            if (!roomForAttack(table, defender.deck.length)) {
                 throw new InvalidGameState("Player doesn't have enough cards to cover attack.");
             }
         }
 
         // add the card to the table top from the player's deck.
         this.transferCardOntoTable(name, card);
+
+        // A new attack asks the attackers again, and passing the attack on starts a new one anyway.
+        if (!passing) {
+            this.askAttackersAgain();
+        }
 
         // check if the player has no cards in the deck and there no cards in the game deck, then the
         // current player has 'won' the game and apply a timestamp to when they exited the round.
@@ -453,6 +456,10 @@ export class Game {
     coverCardOnTableTop(card: string, pos: number) {
         const defendingPlayer = this.getPlayer(this.getDefendingPlayerName());
 
+        if (defendingPlayer.turned) {
+            throw new InvalidGameState("The defender is taking the cards, so they can't beat them.");
+        }
+
         if (this.status === "finished") {
             throw new InvalidGameState("Can't mutate game state after victory.");
         }
@@ -467,8 +474,12 @@ export class Game {
             throw new InvalidGameState("Defending card is not present in the defending players deck.");
         }
 
-        const placedCard = cardFromString(this.getCardOnTableTopAt(pos)!);
-        const coveringCard = cardFromString(card);
+        const attack = this.getCardOnTableTopAt(pos)!;
+
+        // A card that's beaten stays beaten, so that the card that beat it isn't lost.
+        if (this.tableTop.get(attack) !== null) {
+            throw new InvalidGameState("The card on the table at this position is already covered.");
+        }
 
         /*
          * check whether we are dealing with the same suit of card, or if the defending
@@ -484,14 +495,11 @@ export class Game {
          * 3. The defending player attempts to use a different, non-trumping suit card to
          *    cover the card which is an illegal state.
          */
-        if (coveringCard.suit === placedCard.suit) {
-            // The trumping suit doesn't matter here since they are the same
-            if (placedCard.value > coveringCard.value) {
-                throw new InvalidGameState("Covering card must have a higher value.");
-            }
-        } else if (coveringCard.suit !== this.trump.suit) {
+        if (!beats(card, attack, this.trump.suit)) {
             throw new InvalidGameState(
-                `Covering card suit must be the same suit as the table card and have a higher numerical value.`,
+                cardFromString(card).suit === cardFromString(attack).suit
+                    ? "Covering card must have a higher value."
+                    : "Covering card suit must be the same suit as the table card and have a higher numerical value.",
             );
         }
 
@@ -499,7 +507,7 @@ export class Game {
         const oldTableNumerics = this.getTableTopNumerics();
 
         // Transfer the player card from their deck to the the table top.
-        this.tableTop.set(this.getCardOnTableTopAt(pos)!, card);
+        this.tableTop.set(attack, card);
         defendingPlayer.deck = defendingPlayer.deck.filter((playerCard: string) => playerCard !== card);
 
         const newTableNumerics = this.getTableTopNumerics();
@@ -532,14 +540,21 @@ export class Game {
 
             this.finaliseRound();
         } else {
-            // reset (only if the card numerics changed) everybody's (except defender) 'turned' value since
-            // the tableTop state changed.
-            if (oldTableNumerics.size !== newTableNumerics.size && this.tableTop.size < 6) {
-                this.getActivePlayers().forEach(([_name, player]) => {
-                    player.turned = false;
-                });
-            }
+            this.askAttackersAgain();
         }
+    }
+
+    /**
+     * Ask the attackers again whether they're done, as a change on the table may give them
+     * something to add: being done holds until the next card. A full table takes nothing
+     * more, so it doesn't ask.
+     */
+    private askAttackersAgain() {
+        if (this.tableTop.size >= TableSize) return;
+
+        this.getAttackingPlayers().forEach(([_name, player]) => {
+            player.turned = false;
+        });
     }
 
     /**
@@ -818,6 +833,11 @@ export class Game {
         const tableCard: (string | null)[] = Array.from(this.tableTop.entries()).flat();
 
         return tableCard.filter((item): item is string => item !== null);
+    }
+
+    /** The cards on the table, as the rules of the table take them. */
+    private getTable(): Table {
+        return Array.from(this.tableTop.entries());
     }
 
     getTableTopNumerics(): Set<number> {
