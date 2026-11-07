@@ -7,9 +7,24 @@ export const APP_DEV_VERSION = import.meta.env.REACT_APP_DEV_VERSION ?? "";
 export const APP_VERSION = import.meta.env.REACT_APP_VERSION ?? packageJson.version;
 export const APP_VERSION_BRANCH = import.meta.env.REACT_APP_BRANCH ?? "";
 
-/** API Endpoint */
-// An empty value, as `.env.sample` has, means the default.
-export const API_URL = import.meta.env.REACT_APP_API_URL || "http://localhost:8080/api/trpc";
+/**
+ * Check that the API's address is an absolute http(s) URL. Anything else, such as
+ * `localhost:8080`, which a browser reads as a URL with the scheme `localhost:`, would
+ * make every request fail without a word, so it stops the app with an error instead.
+ */
+export function parseApiUrl(value: string): string {
+    const protocol = URL.canParse(value) ? new URL(value).protocol : null;
+    if (protocol !== "http:" && protocol !== "https:") {
+        throw new Error(
+            `REACT_APP_API_URL must be an absolute http(s) URL, such as http://localhost:8080/api/trpc, not "${value}".`,
+        );
+    }
+
+    return value;
+}
+
+/** API Endpoint. An empty value, as `.env.sample` has, means the default. */
+export const API_URL = parseApiUrl(import.meta.env.REACT_APP_API_URL || "http://localhost:8080/api/trpc");
 /** The socket server, which serves the API too, at the root of its origin. */
 export const SOCKET_URL = new URL(API_URL).origin;
 
