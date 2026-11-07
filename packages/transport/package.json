@@ -15,7 +15,6 @@
         }
     },
     "scripts": {
-        "prepare": "npm run build",
         "build": "tsgo --declaration",
         "check": "tsgo --noEmit"
     },

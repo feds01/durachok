@@ -1,5 +1,5 @@
 import { cardFromString, generateCardDeck } from "./card";
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 
 describe("Card tests", () => {
     describe("cardFromString", () => {

@@ -11,14 +11,20 @@
         "type": "git",
         "url": "https://github.com/feds01/durachok.git"
     },
+    "workspaces": [
+        "packages/*",
+        "apps/*"
+    ],
     "type": "module",
     "scripts": {
         "fmt": "oxfmt .",
         "fmt:check": "oxfmt --check .",
         "lint": "oxlint .",
         "lint:fix": "oxlint --fix .",
+        "prepare": "turbo build --filter='./packages/*'",
         "check": "turbo check",
         "test": "turbo test",
+        "build": "turbo build",
         "dev": "turbo dev"
     },
     "dependencies": {
@@ -32,21 +38,26 @@
         "oxfmt": "^0.28.0",
         "oxlint": "^1.43.0"
     },
+    "overrides": {
+        "@babel/runtime@<7.26.10": ">=7.26.10",
+        "@tootallnate/once": "^2.0.1",
+        "baseline-browser-mapping": "^2.11.0",
+        "browserslist": "^4.28.7",
+        "cookie@<0.7.0": ">=0.7.0",
+        "diff@>=4.0.0 <4.0.4": ">=4.0.4",
+        "diff@>=6.0.0 <8.0.3": ">=8.0.3",
+        "engine.io": "^6.6.10",
+        "engine.io-client": "^6.6.6",
+        "esbuild": "^0.28.1",
+        "fast-xml-parser@>=4.3.6 <=5.3.3": ">=5.3.4",
+        "postcss": "^8.5.23",
+        "qs@<6.14.1": ">=6.14.1",
+        "socket.io-adapter": "^2.5.8",
+        "tinypool": "^2.1.2",
+        "webpack@>=5.0.0-alpha.0 <5.94.0": ">=5.94.0"
+    },
     "engines": {
         "node": ">=22"
     },
-    "packageManager": "pnpm@10.28.2",
-    "pnpm": {
-        "overrides": {
-            "@tootallnate/once": "^2.0.1",
-            "baseline-browser-mapping": "^2.11.0",
-            "browserslist": "^4.28.7",
-            "engine.io": "^6.6.10",
-            "engine.io-client": "^6.6.6",
-            "esbuild": "^0.28.1",
-            "postcss": "^8.5.23",
-            "socket.io-adapter": "^2.5.8",
-            "tinypool": "^2.1.2"
-        }
-    }
+    "packageManager": "bun@1.4.4"
 }

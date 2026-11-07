@@ -2,8 +2,7 @@
 
 ## Prerequisites
 
-- Node.js (v22 or later)
-- pnpm (v10 or later)
+- Bun (v1.4 or later)
 - MongoDB (v6 or later)
 
 ## MongoDB Installation
@@ -110,7 +109,7 @@ APP_URL=http://localhost:8080
 3. Run the following command to start the development server:
 
 ```bash
-pnpm run dev
+bun run dev
 ```
 
 The server will start on `http://localhost:8080` by default.
@@ -145,7 +144,7 @@ The server uses [tRPC](https://trpc.io/) for type-safe API communication. All AP
 1. Run the following command to build the application:
 
 ```bash
-pnpm run build
+bun run build
 ```
 
 2. The build artifacts will be available in the `dist` directory.
@@ -153,5 +152,5 @@ pnpm run build
 3. Run the production build:
 
 ```bash
-NODE_ENV=production node dist/index.js
+NODE_ENV=production bun dist/index.js
 ```

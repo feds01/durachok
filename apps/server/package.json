@@ -5,10 +5,10 @@
     "author": "Alexander. E. Fedotov",
     "type": "module",
     "scripts": {
-        "dev": "tsx watch src/index",
+        "dev": "bun --watch src/index.ts",
         "check": "tsgo --noEmit",
-        "build": "esbuild src/index.ts --bundle --packages=external --platform=node --format=esm --outdir=dist --sourcemap",
-        "build:client": "tsx src/interface/socket/generate-client.ts"
+        "build": "bun build src/index.ts --target=bun --packages=external --format=esm --outdir=dist --sourcemap=linked",
+        "build:client": "bun src/interface/socket/generate-client.ts"
     },
     "dependencies": {
         "@3xpo/locked": "^0.1.15",
@@ -45,8 +45,6 @@
         "@types/jsonwebtoken": "^9.0.10",
         "@types/node": "^26.1.1",
         "@types/node-fetch": "^2.6.13",
-        "esbuild": "^0.28.1",
-        "tsx": "^4.23.12",
         "typescript": "^7.0.2",
         "wait-port": "^1.1.0"
     }
