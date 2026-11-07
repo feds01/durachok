@@ -589,14 +589,15 @@ export class Game {
         }
 
         const player = this.getPlayer(name);
+        const hasTurned = player.turned;
         player.turned = true;
 
         // since these players are of significant importance to the round, add a
         // history entry for the forfeit's, (that's if they haven't already declared that
-        // they have forfeited.
-        if (player.action !== "none") {
+        // they have forfeited. The player keeps their role, so that the defender can
+        // still be found once they have forfeited.
+        if (!hasTurned && player.action !== "none") {
             this.history.addEntry({ type: "forfeit", player: name });
-            player.action = "none"; // @@Todo: should we really do this?
         }
 
         // If this is the attacking player, set everyone's 'canAttack' (except defending)
