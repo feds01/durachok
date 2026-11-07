@@ -212,6 +212,16 @@ describe.skipIf(!available)("Game flow", () => {
         const log: string[] = [];
         const begun = Date.now();
         owner.on("victory", (payload) => (victory = payload));
+        // Once it's over, each player is sent the lobby, which waits for another game.
+        const gameOver = new Map<Socket, string>();
+        for (const { socket } of players) {
+            socket.on(
+                "lobbyState",
+                ({ update, lobby: { status } }: { update: { type: string }; lobby: { status: string } }) => {
+                    if (update.type === "game_over") gameOver.set(socket, status);
+                },
+            );
+        }
 
         const started = Promise.all(players.map(({ socket }) => next(socket, "action")));
         owner.emit("start", pin);
@@ -310,6 +320,8 @@ describe.skipIf(!available)("Game flow", () => {
         expect(victory).toBeDefined();
         expect(victory!.players.map((p) => p.name).sort()).toEqual(players.map((p) => p.name).sort());
 
+        expect(players.map(({ socket }) => gameOver.get(socket))).toEqual(players.map(() => "waiting"));
+
         // The lobby waits for another game, with both players still in it.
         const after = await trpc<{ status: string; players: unknown[] }>("lobbies.get", { pin }, ownerTokens, "GET");
         expect(after.status).toBe("waiting");
@@ -318,7 +330,12 @@ describe.skipIf(!available)("Game flow", () => {
 
     test("the owner changes the lobby's settings before the game", async () => {
         type LobbyUpdate = {
-            lobby: { maxPlayers: number; hasPassphrase: boolean; passphrase?: string; disableChat: boolean };
+            lobby: {
+                maxPlayers: number;
+                hasPassphrase: boolean;
+                passphrase?: string;
+                disableChat: boolean;
+            };
         };
         const settings = {
             maxPlayers: 3,

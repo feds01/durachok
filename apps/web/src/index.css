@@ -150,3 +150,14 @@
         flex: 1;
     }
 }
+
+@layer components {
+    /* The back of a playing card, in the app's colours, see `PlayingCard`. */
+    .card-back {
+        border: calc(var(--card-w, 80px) * 0.06) solid hsl(0 0% 96%);
+        background-color: var(--color-primary);
+        background-image:
+            repeating-linear-gradient(45deg, hsl(0 0% 100% / 0.16) 0 1px, transparent 1px 6px),
+            repeating-linear-gradient(-45deg, hsl(0 0% 100% / 0.16) 0 1px, transparent 1px 6px);
+    }
+}

@@ -47,6 +47,11 @@ const onMove = factory.build({
                 logger.info(meta, "game finished");
                 await ctx.lobbyService.finishGame(pin);
                 await emitVictory(withRooms, pin, game);
+                // The lobby waits for another game, so the players go back to its waiting room.
+                await withRooms(pin).broadcast("lobbyState", {
+                    update: { type: "game_over" },
+                    lobby: await ctx.lobbyService.get(pin),
+                });
             }
         } catch (e: unknown) {
             if (!(e instanceof InvalidGameState || e instanceof InvalidMoveError)) {

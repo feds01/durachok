@@ -1,4 +1,4 @@
-import { Lobby, PlayerGameState } from "@durachok/transport";
+import { Action, Lobby, PlayerGameState, PlayerMove, VictoryMessage } from "@durachok/transport";
 
 /** Why this client is no longer in the lobby. */
 export type CloseReason =
@@ -36,6 +36,12 @@ export interface LobbyState {
     lobby: Lobby | null;
     /** This player's view of the game, once one is being played. */
     game: PlayerGameState | null;
+    /** The move that this player sent, which the server hasn't answered yet. */
+    pending: PlayerMove | null;
+    /** What happened in the game's last update, so that the table can show it happening. */
+    actions: Action[];
+    /** The players of the last game, in the order that they went out, until the player dismisses them. */
+    results: VictoryMessage["players"] | null;
     /** Whether the countdown before the game starts is running. */
     countingDown: boolean;
     /** The last error that the server reported, and when, so that a repeated one shows again. */
@@ -46,6 +52,9 @@ export const initialLobbyState: LobbyState = {
     connection: { kind: "connecting" },
     lobby: null,
     game: null,
+    pending: null,
+    actions: [],
+    results: null,
     countingDown: false,
     error: null,
 };
@@ -56,7 +65,10 @@ export type LobbyEvent =
     | { type: "lobby"; lobby: Lobby }
     | { type: "countdown" }
     | { type: "start" }
-    | { type: "game"; game: PlayerGameState }
+    | { type: "game"; game: PlayerGameState; actions?: Action[] }
+    | { type: "move"; move: PlayerMove }
+    | { type: "victory"; players: VictoryMessage["players"] }
+    | { type: "dismissResults" }
     | { type: "close"; reason: string }
     | { type: "left" }
     | { type: "error"; code: string; message?: string; at: number }
@@ -77,6 +89,7 @@ export function reduceLobby(state: LobbyState, event: LobbyEvent): LobbyState {
                 connection: { kind: "joined" },
                 lobby: event.lobby,
                 game: event.game ?? null,
+                pending: null,
             };
         case "lobby": {
             // Updates for the whole room leave out the passphrase, which only the owner was
@@ -87,11 +100,27 @@ export function reduceLobby(state: LobbyState, event: LobbyEvent): LobbyState {
             return { ...state, lobby: { ...event.lobby, ...(passphrase && { passphrase }) } };
         }
         case "countdown":
-            return { ...state, countingDown: true };
+            // A new game puts the last one's results away.
+            return { ...state, countingDown: true, results: null };
         case "start":
             return { ...state, countingDown: false };
         case "game":
-            return { ...state, game: event.game };
+            // The server answered the player's move, whether it took it or not.
+            return { ...state, game: event.game, actions: event.actions ?? [], pending: null };
+        case "move":
+            return state.game ? { ...state, pending: event.move } : state;
+        case "victory":
+            // The server puts the lobby back to waiting, ready for another game.
+            return {
+                ...state,
+                lobby: state.lobby && { ...state.lobby, status: "waiting" },
+                game: null,
+                pending: null,
+                actions: [],
+                results: event.players,
+            };
+        case "dismissResults":
+            return { ...state, results: null };
         case "close": {
             const reason = isServerCloseReason(event.reason) ? event.reason : "lobby_closed";
             return { ...state, connection: { kind: "closed", reason } };
@@ -103,7 +132,11 @@ export function reduceLobby(state: LobbyState, event: LobbyEvent): LobbyState {
             if (state.connection.kind === "connecting" && event.code === "unauthorized") {
                 return { ...state, connection: { kind: "closed", reason: "unauthorized" } };
             }
-            return { ...state, error: { message: event.message ?? describeError(event.code), at: event.at } };
+            return {
+                ...state,
+                pending: null,
+                error: { message: event.message ?? describeError(event.code), at: event.at },
+            };
         case "disconnected":
             return {
                 ...state,
