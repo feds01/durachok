@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import { useEffect, useMemo } from "react";
 import { Home } from "lucide-react";
 
@@ -6,6 +7,7 @@ import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { useAuthDispatch, useAuthState } from "@/contexts/auth";
 import GamePrompt, { LobbyAuthInfo } from "@/forms/GamePrompt";
+import { fadeUp } from "@/lib/motion";
 import { isDef } from "@/utils";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 
@@ -110,7 +112,13 @@ function Index() {
                 .map((k, i) => (
                     <PlayingCardIcon index={i} key={k} />
                 ))}
-            <div className="max-w-150 mx-auto pt-4 flex flex-col h-full rounded text-center max-sm:pt-16 max-sm:mx-8">
+            {/* Fades in, e.g. as the user arrives from logging out. */}
+            <motion.div
+                variants={fadeUp}
+                initial="hidden"
+                animate="visible"
+                className="max-w-150 mx-auto pt-4 flex flex-col h-full rounded text-center max-sm:pt-16 max-sm:mx-8"
+            >
                 <Logo size={64} />
                 <GamePrompt startPin={startPin} onSuccess={redirectToLobby} />
                 {isRegistered() ? (
@@ -128,7 +136,7 @@ function Index() {
                         </Link>
                     </p>
                 )}
-            </div>
+            </motion.div>
         </div>
     );
 }
