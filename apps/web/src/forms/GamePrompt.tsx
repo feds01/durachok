@@ -161,7 +161,14 @@ export default function GamePrompt({ startPin, onSuccess }: Props) {
     );
 
     return (
-        <form className="grow flex flex-col mx-auto max-w-100" onSubmit={form.handleSubmit(onSubmit)}>
+        <form
+            className="grow flex flex-col mx-auto max-w-100"
+            // Each submission moves on a stage, and only the last stage joins the lobby.
+            onSubmit={(event) => {
+                event.preventDefault();
+                void next();
+            }}
+        >
             {stage.kind === "pin" && (
                 <div className="pt-16 space-y-2">
                     <Input
@@ -208,7 +215,6 @@ export default function GamePrompt({ startPin, onSuccess }: Props) {
                 disabled={!isDef(form.formState.dirtyFields[stage.kind])}
                 isSubmitting={form.formState.isSubmitting}
                 className="h-15 text-2xl mt-4"
-                onClick={next}
             />
         </form>
     );
