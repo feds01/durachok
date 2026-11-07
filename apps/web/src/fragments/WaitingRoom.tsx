@@ -1,3 +1,4 @@
+import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Check, Crown, Link2, LogOut, User, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -6,6 +7,7 @@ import Logo from "@/components/Logo";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useLobbyStore } from "@/contexts/lobby";
+import { fadeUp, popIn, stagger } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { Lobby } from "@durachok/transport";
 import { Link } from "@tanstack/react-router";
@@ -30,8 +32,13 @@ export default function WaitingRoom({ lobby, isOwner, isMe, onLeave }: Props) {
     const canStart = lobby.players.length >= 2;
 
     return (
-        <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8">
-            <header className="flex flex-wrap items-center justify-between gap-4">
+        <motion.div
+            className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8"
+            variants={stagger(0.08)}
+            initial="hidden"
+            animate="visible"
+        >
+            <motion.header variants={fadeUp} className="flex flex-wrap items-center justify-between gap-4">
                 <Logo size={32} />
                 <div className="flex items-center gap-2">
                     <CopyInviteLinkButton pin={lobby.pin} />
@@ -46,20 +53,22 @@ export default function WaitingRoom({ lobby, isOwner, isMe, onLeave }: Props) {
                         </Button>
                     )}
                 </div>
-            </header>
+            </motion.header>
 
-            <div className="text-center">
+            <motion.div variants={fadeUp} className="text-center">
                 <p className="m-0 font-body text-sm uppercase tracking-widest text-muted-foreground">Lobby</p>
                 <h1 className="m-0 text-6xl tracking-widest">
                     <code>{lobby.pin}</code>
                 </h1>
-            </div>
+            </motion.div>
 
             {isOwner && lobby.passphrase && (
-                <LobbyPassphrase key={lobby.passphrase} passphrase={lobby.passphrase} onRotate={rotatePassphrase} />
+                <motion.div variants={fadeUp}>
+                    <LobbyPassphrase key={lobby.passphrase} passphrase={lobby.passphrase} onRotate={rotatePassphrase} />
+                </motion.div>
             )}
 
-            <section className="rounded-xl border bg-card p-4">
+            <motion.section variants={fadeUp} className="rounded-xl border bg-card p-4">
                 <div className="mb-4 flex items-center justify-between gap-4">
                     <h2 className="m-0 font-body text-xl">
                         Players{" "}
@@ -75,18 +84,20 @@ export default function WaitingRoom({ lobby, isOwner, isMe, onLeave }: Props) {
                     )}
                 </div>
                 <ul className="m-0 grid list-none grid-cols-2 gap-3 p-0 sm:grid-cols-4">
-                    {lobby.players.map((player) => {
-                        const isLobbyOwner = player.id === lobby.owner.id;
-                        return (
-                            <PlayerItem
-                                key={player.id}
-                                player={player}
-                                isOwner={isLobbyOwner}
-                                isMe={isMe(player)}
-                                {...(isOwner && !isLobbyOwner && { onKick: () => kick(player.name) })}
-                            />
-                        );
-                    })}
+                    <AnimatePresence initial={false}>
+                        {lobby.players.map((player) => {
+                            const isLobbyOwner = player.id === lobby.owner.id;
+                            return (
+                                <PlayerItem
+                                    key={player.id}
+                                    player={player}
+                                    isOwner={isLobbyOwner}
+                                    isMe={isMe(player)}
+                                    {...(isOwner && !isLobbyOwner && { onKick: () => kick(player.name) })}
+                                />
+                            );
+                        })}
+                    </AnimatePresence>
                 </ul>
                 <p className="mb-0 mt-4 text-center font-body text-muted-foreground">
                     {isOwner
@@ -95,8 +106,8 @@ export default function WaitingRoom({ lobby, isOwner, isMe, onLeave }: Props) {
                             : "Share the invite link or the pin. The game needs at least two players."
                         : `Waiting for ${lobby.owner.name} to start the game…`}
                 </p>
-            </section>
-        </div>
+            </motion.section>
+        </motion.div>
     );
 }
 
@@ -110,7 +121,12 @@ type PlayerItemProps = {
 
 function PlayerItem({ player, isOwner, isMe, onKick }: PlayerItemProps) {
     return (
-        <li
+        <motion.li
+            layout
+            variants={popIn}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
             className={cn(
                 "relative flex flex-col items-center gap-2 rounded-lg border bg-background/40 p-3",
                 isMe && "border-primary",
@@ -139,7 +155,7 @@ function PlayerItem({ player, isOwner, isMe, onKick }: PlayerItemProps) {
                     <X />
                 </Button>
             )}
-        </li>
+        </motion.li>
     );
 }
 
