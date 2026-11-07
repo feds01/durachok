@@ -5,6 +5,7 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { formatTime } from "@/utils";
 import { Message } from "@durachok/transport";
 
 /** The longest message that the server takes. */
@@ -16,8 +17,6 @@ type Props = {
     me: string | null;
     onSend: (message: string) => void;
 };
-
-const timeOf = (time: number) => new Date(time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
 /**
  * The lobby's chat, behind a button in the corner that counts the messages the player
@@ -88,7 +87,7 @@ export default function LobbyChat({ messages, me, onSend }: Props) {
                                         )}
                                     >
                                         <span className="text-xs text-muted-foreground">
-                                            {mine ? "You" : name} · {timeOf(time)}
+                                            {mine ? "You" : name} · {formatTime(time)}
                                         </span>
                                         <span
                                             className={cn(
