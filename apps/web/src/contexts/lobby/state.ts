@@ -1,4 +1,4 @@
-import { Action, Lobby, PlayerGameState, PlayerMove, VictoryMessage } from "@durachok/transport";
+import { Action, Lobby, Message, PlayerGameState, PlayerMove, VictoryMessage } from "@durachok/transport";
 
 /** Why this client is no longer in the lobby. */
 export type CloseReason =
@@ -69,6 +69,7 @@ export type LobbyEvent =
     | { type: "move"; move: PlayerMove }
     | { type: "victory"; players: VictoryMessage["players"] }
     | { type: "dismissResults" }
+    | { type: "message"; message: Message }
     | { type: "close"; reason: string }
     | { type: "left" }
     | { type: "error"; code: string; message?: string; at: number }
@@ -121,6 +122,10 @@ export function reduceLobby(state: LobbyState, event: LobbyEvent): LobbyState {
             };
         case "dismissResults":
             return { ...state, results: null };
+        case "message":
+            return state.lobby
+                ? { ...state, lobby: { ...state.lobby, chat: [...state.lobby.chat, event.message] } }
+                : state;
         case "close": {
             const reason = isServerCloseReason(event.reason) ? event.reason : "lobby_closed";
             return { ...state, connection: { kind: "closed", reason } };

@@ -194,4 +194,14 @@ describe("lobby state", () => {
         expect(reduceLobby(finished, { type: "dismissResults" }).results).toBeNull();
         expect(reduceLobby(finished, { type: "countdown" }).results).toBeNull();
     });
+
+    test("a message joins the lobby's chat", () => {
+        const message = { name: "guest", time: 1, message: "hello" };
+        const state = reduceAll([
+            { type: "join", lobby },
+            { type: "message", message },
+        ]);
+
+        expect(state.lobby?.chat).toEqual([message]);
+    });
 });
