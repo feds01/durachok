@@ -113,7 +113,8 @@ export const PlayerDeckStateSchema = z.union([
     /** The player has a hidden deck. */
     z.object({
         type: z.literal("hidden"),
-        size: z.number(),
+        /** How many cards the player holds, or null in mythic mode, where nobody is told. */
+        size: z.number().nullable(),
     }),
 ]);
 
@@ -194,8 +195,11 @@ export const PlayerGameStateSchema = z.object({
     players: z.array(OpaquePlayerStateSchema),
     /** The current state of the game. */
     tableTop: z.record(z.string(), z.string().nullable()),
-    /** The size of the deck */
-    deckSize: z.number(),
+    /**
+     * How many cards are left to draw, or null in mythic mode while some are, where the
+     * players only see that the deck isn't empty.
+     */
+    deckSize: z.number().nullable(),
     /** The trump card. */
     trump: CardSchema,
 });

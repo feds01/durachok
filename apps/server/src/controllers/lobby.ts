@@ -106,6 +106,7 @@ export class LobbyService {
             disableChat: lobby.disableChat,
             randomisePlayerOrder: lobby.randomisePlayerOrder,
             roundTimeout: lobby.roundTimeout,
+            mythicMode: lobby.mythicMode,
 
             /** State */
             status: lobby.status,
@@ -423,8 +424,16 @@ export class LobbyService {
      * Create a new lobby with the given `user` as the owner and the provided game settings.
      * */
     public async create(userId: string, settings: GameSettings): Promise<{ pin: string }> {
-        const { maxPlayers, passphrase, shortGameDeck, freeForAll, disableChat, randomisePlayerOrder, roundTimeout } =
-            settings;
+        const {
+            maxPlayers,
+            passphrase,
+            shortGameDeck,
+            freeForAll,
+            disableChat,
+            randomisePlayerOrder,
+            roundTimeout,
+            mythicMode,
+        } = settings;
 
         const pin = await this.newGamePin();
         const owner = await this.commonService.getUserDbObject(userId);
@@ -445,6 +454,7 @@ export class LobbyService {
                 disableChat,
                 randomisePlayerOrder,
                 roundTimeout,
+                mythicMode,
                 status: "waiting",
                 // Automatically add the owner to the lobby.
                 players: [ownerAsPlayer],

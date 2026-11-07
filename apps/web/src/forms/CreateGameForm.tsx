@@ -15,6 +15,7 @@ const DEFAULT_SETTINGS: GameSettingsFormData = {
     shortGameDeck: false,
     freeForAll: true,
     disableChat: false,
+    mythicMode: false,
 };
 
 export default function CreateGameForm({ onSuccess }: CreateGameFormProps) {

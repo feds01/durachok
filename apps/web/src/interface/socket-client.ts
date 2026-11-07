@@ -22,6 +22,7 @@ export namespace Root {
                 passphrase?: string | undefined;
                 randomisePlayerOrder: boolean;
                 roundTimeout: number;
+                mythicMode: boolean;
                 status: "waiting" | "playing" | "finished";
                 players: {
                     id: string;
@@ -54,7 +55,7 @@ export namespace Root {
                                 }
                               | {
                                     type: "hidden";
-                                    size: number;
+                                    size: number | null;
                                 };
                           out: number | null;
                           turned: boolean;
@@ -62,7 +63,7 @@ export namespace Root {
                           action: "attack" | "defend" | "none";
                       }[];
                       tableTop: Record<string, string | null>;
-                      deckSize: number;
+                      deckSize: number | null;
                       trump: {
                           suit: string;
                           card: string;
@@ -103,6 +104,7 @@ export namespace Root {
                 passphrase?: string | undefined;
                 randomisePlayerOrder: boolean;
                 roundTimeout: number;
+                mythicMode: boolean;
                 status: "waiting" | "playing" | "finished";
                 players: {
                     id: string;
@@ -146,7 +148,7 @@ export namespace Root {
                           }
                         | {
                               type: "hidden";
-                              size: number;
+                              size: number | null;
                           };
                     out: number | null;
                     turned: boolean;
@@ -154,7 +156,7 @@ export namespace Root {
                     action: "attack" | "defend" | "none";
                 }[];
                 tableTop: Record<string, string | null>;
-                deckSize: number;
+                deckSize: number | null;
                 trump: {
                     suit: string;
                     card: string;
@@ -228,7 +230,7 @@ export namespace Root {
                           }
                         | {
                               type: "hidden";
-                              size: number;
+                              size: number | null;
                           };
                     out: number | null;
                     turned: boolean;
@@ -236,7 +238,7 @@ export namespace Root {
                     action: "attack" | "defend" | "none";
                 }[];
                 tableTop: Record<string, string | null>;
-                deckSize: number;
+                deckSize: number | null;
                 trump: {
                     suit: string;
                     card: string;
@@ -302,6 +304,7 @@ export namespace Root {
                 passphrase?: boolean | undefined;
                 randomisePlayerOrder?: boolean | undefined;
                 roundTimeout: number;
+                mythicMode?: boolean | undefined;
             },
         ) => void;
     }

@@ -147,6 +147,22 @@ describe("Game tests", () => {
         expect(game.getDefendingPlayerName()).toBe("b");
     });
 
+    test("in mythic mode, nobody is told how many cards the deck or the other players hold", () => {
+        const game = new Game(["a", "b"], null, { ...DEFAULT_SETTINGS, mythicMode: true });
+        const view = game.getStateForPlayer("a");
+
+        expect(view.deckSize).toBeNull();
+        expect(view.players[0].deck).toEqual({ type: "hidden", size: null });
+        expect(view.player.deck).toHaveLength(6);
+        expect(
+            game.getStateForSpectator().players.every(({ deck }) => deck.type === "hidden" && deck.size === null),
+        ).toBe(true);
+
+        // An empty deck shows, as the trump card that lay under it is gone.
+        game.deck = [];
+        expect(game.getStateForPlayer("a").deckSize).toBe(0);
+    });
+
     describe("an attacker who is done", () => {
         test("is asked again when the defender beats a card, even with a rank already on the table", () => {
             const game = twoPlayers({ a: ["7S", "7D", "8C", "QC"], b: ["8D", "8S", "AC", "KC"] });

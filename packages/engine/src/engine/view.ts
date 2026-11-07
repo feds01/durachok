@@ -1,5 +1,6 @@
 import { OpaquePlayerState, PlayerGameState, PlayerMove } from "@durachok/transport";
 
+import { TableSize } from "./consts";
 import { Table, beats, passesAttack, rankOnTable, roomForAttack, uncoveredCount } from "./rules";
 
 /*
@@ -20,19 +21,28 @@ function tableOf(state: PlayerGameState): Table {
     return Object.entries(state.tableTop);
 }
 
-/** How many cards another player holds, whether or not this player can see them. */
-export function handSize(player: OpaquePlayerState): number {
+/** How many cards another player holds, whether or not this player can see them, or null in mythic mode. */
+export function handSize(player: OpaquePlayerState): number | null {
     return player.deck.type === "visible" ? player.deck.cards.length : player.deck.size;
 }
 
-/** How many cards the defender holds, who is this player or another. */
-function defenderHandSize(state: PlayerGameState): number {
+/** How many cards the defender holds, who is this player or another, or null if this player isn't told. */
+function defenderHandSize(state: PlayerGameState): number | null {
     if (state.player.action === "defend") {
         return state.player.deck.length;
     }
 
     const defender = state.players.find(({ action }) => action === "defend");
     return defender ? handSize(defender) : 0;
+}
+
+/**
+ * Whether the table has room for another attack on a defender with a hand of a size. When
+ * the player isn't told the size, in mythic mode, they can try, and the game refuses an
+ * attack that the defender can't beat.
+ */
+function attackFits(table: Table, defenderCards: number | null): boolean {
+    return defenderCards === null ? table.length < TableSize : roomForAttack(table, defenderCards);
 }
 
 /**
@@ -49,7 +59,7 @@ export function canPlace(state: PlayerGameState, card: string): boolean {
 
     switch (player.action) {
         case "attack":
-            return (table.length === 0 || rankOnTable(table, card)) && roomForAttack(table, defenderHandSize(state));
+            return (table.length === 0 || rankOnTable(table, card)) && attackFits(table, defenderHandSize(state));
         case "defend": {
             // A defender who takes the cards can't pass them on.
             if (player.turned) {
@@ -58,7 +68,7 @@ export function canPlace(state: PlayerGameState, card: string): boolean {
 
             // The players after this one are in order, so the first still in the game is next.
             const next = state.players.find(({ out }) => out === null);
-            return passesAttack(table, card) && next !== undefined && roomForAttack(table, handSize(next));
+            return passesAttack(table, card) && next !== undefined && attackFits(table, handSize(next));
         }
         case "none":
             return false;

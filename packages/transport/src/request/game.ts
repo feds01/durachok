@@ -17,6 +17,11 @@ export const GameSettingsSchema = z
         randomisePlayerOrder: z.boolean().default(false),
         /** Timeout in seconds. */
         roundTimeout: z.number().min(60).max(600),
+        /**
+         * Whether to play in mythic mode, where nobody is told how many cards are left in the
+         * deck, discarded, or in another player's hand, so that the players keep count themselves.
+         */
+        mythicMode: z.boolean().default(false),
     })
     .refine(
         (data) => {

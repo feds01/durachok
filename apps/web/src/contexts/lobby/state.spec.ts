@@ -14,6 +14,7 @@ const lobby: Lobby = {
     disableChat: false,
     randomisePlayerOrder: true,
     roundTimeout: 120,
+    mythicMode: false,
     status: "waiting",
     players: [{ id: "owner-id", name: "owner" }],
     chat: [],

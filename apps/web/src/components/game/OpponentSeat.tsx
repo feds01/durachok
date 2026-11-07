@@ -10,6 +10,9 @@ import { OpaquePlayerState } from "@durachok/transport";
 /** How many of a player's cards to draw, after which their count says the rest. */
 const SHOWN_CARDS = 8;
 
+/** How many cards to draw for a hand whose size nobody is told, in mythic mode. */
+const SECRET_HAND = 4;
+
 type Props = {
     player: OpaquePlayerState;
     /** The player's profile picture, if they have one. */
@@ -21,7 +24,7 @@ type Props = {
 /** Another player at the table: who they are, how many cards they hold, and what they're doing. */
 export default function OpponentSeat({ player, image, place }: Props) {
     const count = handSize(player);
-    const shown = Math.min(count, SHOWN_CARDS);
+    const shown = count === null ? SECRET_HAND : Math.min(count, SHOWN_CARDS);
     const inRound = player.out === null && player.action !== "none" && !player.turned;
 
     return (
@@ -49,10 +52,14 @@ export default function OpponentSeat({ player, image, place }: Props) {
                         aria-hidden="true"
                     />
                 ))}
-                <span className="ml-2 text-sm font-semibold tabular-nums text-muted-foreground">
-                    {count}
-                    <span className="sr-only"> {count === 1 ? "card" : "cards"}</span>
-                </span>
+                {count === null ? (
+                    <span className="sr-only">Cards, how many isn't told</span>
+                ) : (
+                    <span className="ml-2 text-sm font-semibold tabular-nums text-muted-foreground">
+                        {count}
+                        <span className="sr-only"> {count === 1 ? "card" : "cards"}</span>
+                    </span>
+                )}
             </div>
             <RoleBadge action={player.action} turned={player.turned} place={place} />
         </motion.li>

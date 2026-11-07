@@ -96,6 +96,12 @@ export default function GameSettingsForm({ defaultValues, submitLabel, onSubmit:
                 label="Anyone can attack after the first card."
             />
             <ControlledSwitchInput
+                name="mythicMode"
+                control={form.control}
+                legend="Mythic mode"
+                label="Nobody is told how many cards are left, discarded or in another hand. Keep count yourself."
+            />
+            <ControlledSwitchInput
                 name="disableChat"
                 control={form.control}
                 legend="No chat"

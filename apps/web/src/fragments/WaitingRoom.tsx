@@ -15,6 +15,7 @@ import {
     MessageSquareOff,
     Settings,
     Shuffle,
+    Sparkles,
     Swords,
     Timer,
     User,
@@ -197,6 +198,7 @@ function settingsOf(lobby: Lobby): GameSettings {
         freeForAll: lobby.freeForAll,
         disableChat: lobby.disableChat,
         randomisePlayerOrder: lobby.randomisePlayerOrder,
+        mythicMode: lobby.mythicMode,
     };
 }
 
@@ -251,6 +253,15 @@ function SettingsSummary({ lobby, onChange }: SettingsSummaryProps) {
             description: lobby.hasPassphrase ? "Joining needs the passphrase" : "Anyone with the pin can join",
             off: !lobby.hasPassphrase,
             next: { ...settings, passphrase: !lobby.hasPassphrase },
+        },
+        {
+            id: "mythic",
+            icon: Sparkles,
+            description: lobby.mythicMode
+                ? "Mythic mode: nobody is told how many cards anyone holds"
+                : "Everyone sees how many cards each player holds",
+            off: !lobby.mythicMode,
+            next: { ...settings, mythicMode: !lobby.mythicMode },
         },
         {
             id: "chat",

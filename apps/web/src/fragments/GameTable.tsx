@@ -185,13 +185,23 @@ export default function GameTable({ lobby, game }: Props) {
     const placeOf = (name: string) => (outOrder.includes(name) ? outOrder.indexOf(name) + 1 : undefined);
     const imageOf = (name: string) => lobby.players.find((other) => other.name === name)?.image;
 
-    // The cards that aren't anywhere else were beaten and discarded.
+    // The cards that aren't anywhere else were beaten and discarded. In mythic mode, the counts
+    // aren't told, so the pile only shows that a round was beaten.
     const inPlay =
-        view.deckSize +
+        (view.deckSize ?? 0) +
         player.deck.length +
-        players.reduce((total, other) => total + handSize(other), 0) +
+        players.reduce((total, other) => total + (handSize(other) ?? 0), 0) +
         table.reduce((total, { coveredBy }) => total + (coveredBy ? 2 : 1), 0);
-    const discarded = Math.max((lobby.shortGameDeck ? 36 : 52) - inPlay, 0);
+    const roundBeaten = actions.some(({ type }) => type === "new_round") && !pickup;
+    const [discardedAny, setDiscardedAny] = useState(false);
+    if (roundBeaten && !discardedAny) {
+        setDiscardedAny(true);
+    }
+    const discarded = lobby.mythicMode
+        ? discardedAny || roundBeaten
+            ? null
+            : 0
+        : Math.max((lobby.shortGameDeck ? 36 : 52) - inPlay, 0);
 
     const canPass = player.action === "defend" && hand.some((card) => canPlace(view, card));
     const mustAct = turn.kind === "lead" || turn.kind === "attack" || turn.kind === "defend";

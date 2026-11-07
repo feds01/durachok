@@ -335,6 +335,7 @@ describe.skipIf(!available)("Game flow", () => {
                 hasPassphrase: boolean;
                 passphrase?: string;
                 disableChat: boolean;
+                mythicMode: boolean;
             };
         };
         const settings = {
@@ -345,6 +346,7 @@ describe.skipIf(!available)("Game flow", () => {
             disableChat: true,
             randomisePlayerOrder: false,
             roundTimeout: 200,
+            mythicMode: true,
         };
 
         const id = crypto.randomUUID().slice(0, 8);
@@ -378,7 +380,7 @@ describe.skipIf(!available)("Game flow", () => {
         const ownerSees = waitFor<LobbyUpdate>(owner, "lobbyState", ({ lobby }) => lobby.passphrase !== undefined);
         owner.emit("settings", pin, settings);
         const { lobby: forGuest } = await guestSees;
-        expect(forGuest).toMatchObject({ hasPassphrase: true, disableChat: true });
+        expect(forGuest).toMatchObject({ hasPassphrase: true, disableChat: true, mythicMode: true });
         expect(forGuest.passphrase).toBeUndefined();
         const { passphrase } = (await ownerSees).lobby;
         expect(passphrase).toMatch(/^[♡♢♣♤]{4}$/);

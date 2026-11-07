@@ -128,6 +128,13 @@ function playRandomMove(game: Game, settings: GameSettings): Game | null {
  * places them to pass the attack on, or beats a card at any position.
  */
 function checkViewsAgree(game: Game, settings: GameSettings, seed: number) {
+    // In mythic mode, the view isn't told the hand sizes, so it offers an attack that might be
+    // too big for the defender, which the game refuses, but it never leaves out a legal move.
+    const offersEnough = (offered: unknown[], accepted: unknown[]) =>
+        settings.mythicMode
+            ? accepted.every((move) => offered.some((other) => JSON.stringify(other) === JSON.stringify(move)))
+            : JSON.stringify(offered) === JSON.stringify(accepted);
+
     for (const [name, player] of game.players) {
         if (player.out !== null || player.action === "none") continue;
 
@@ -146,7 +153,7 @@ function checkViewsAgree(game: Game, settings: GameSettings, seed: number) {
                 .map(({ player: _, ...move }) => move);
             const offered = movesFor(view, card);
 
-            if (JSON.stringify(offered) !== JSON.stringify(accepted)) {
+            if (!offersEnough(offered, accepted)) {
                 throw new Error(
                     `Game with seed ${seed}: ${name} (${player.action}) with ${card} is offered ${JSON.stringify(offered)}, ` +
                         `but the engine accepts ${JSON.stringify(accepted)}.`,
@@ -220,5 +227,11 @@ describe("A player's view of a simulated game", () => {
                 playGame(gameSeed, playerCount, settings, (game) => checkViewsAgree(game, settings, gameSeed));
             }
         }, 30_000);
+
+        test(`offers ${playerCount} players in mythic mode every move that the engine accepts`, () => {
+            const gameSeed = 15485863 + playerCount;
+            const settings = { ...DEFAULT_SETTINGS, mythicMode: true };
+            playGame(gameSeed, playerCount, settings, (game) => checkViewsAgree(game, settings, gameSeed));
+        });
     }
 });
