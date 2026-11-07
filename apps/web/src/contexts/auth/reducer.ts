@@ -43,6 +43,11 @@ export type AuthAction =
           payload: Omit<RegisteredUser, "kind">;
       }
     | {
+          /** The server refreshed the user's expired tokens. */
+          type: "tokens";
+          payload: Pick<LoggedInAuthState, "token" | "refreshToken">;
+      }
+    | {
           type: "logout";
       };
 
@@ -82,6 +87,13 @@ export const reducer = (state: AuthState, action: AuthAction): AuthState => {
                 ...state,
                 user: { ...action.payload, kind: "registered" },
             };
+        case "tokens":
+            if (state.kind !== "logged-in") {
+                return state;
+            }
+            localStorage.setItem("token", action.payload.token);
+            localStorage.setItem("refreshToken", action.payload.refreshToken);
+            return { ...state, ...action.payload };
         case "logout":
             localStorage.removeItem("token");
             localStorage.removeItem("refreshToken");
