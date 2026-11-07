@@ -17,16 +17,7 @@
     ],
     "type": "module",
     "scripts": {
-        "fmt": "oxfmt .",
-        "fmt:check": "oxfmt --check .",
-        "lint": "oxlint .",
-        "lint:fix": "oxlint --fix .",
-        "prepare": "turbo build --filter='./packages/*'",
-        "arch": "zenith check",
-        "check": "turbo check",
-        "test": "turbo test",
-        "build": "turbo build",
-        "dev": "turbo dev"
+        "prepare": "turbo build --filter='./packages/*'"
     },
     "dependencies": {
         "@total-typescript/ts-reset": "^0.6.1",
