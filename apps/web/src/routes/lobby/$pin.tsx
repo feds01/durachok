@@ -4,6 +4,7 @@ import Alert from "@/components/Alert";
 import CountdownOverlay from "@/components/CountdownOverlay";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import Loader from "@/components/Loader";
+import LobbyChat from "@/components/LobbyChat";
 import { useAuthDispatch, useAuthState } from "@/contexts/auth";
 import { useLobbyConnection, useLobbyStore } from "@/contexts/lobby";
 import GameResults from "@/fragments/GameResults";
@@ -48,7 +49,7 @@ function LobbyPage() {
     const { pin } = Route.useLoaderData();
     useLobbyConnection(pin);
 
-    const { connection, lobby, game, results, countingDown, error, leave, dismissResults } = useLobbyStore(
+    const { connection, lobby, game, results, countingDown, error, leave, dismissResults, sendMessage } = useLobbyStore(
         useShallow((state) => ({
             connection: state.connection,
             lobby: state.lobby,
@@ -58,6 +59,7 @@ function LobbyPage() {
             error: state.error,
             leave: state.leave,
             dismissResults: state.dismissResults,
+            sendMessage: state.sendMessage,
         })),
     );
     const { state: auth } = useAuthState();
@@ -111,6 +113,7 @@ function LobbyPage() {
                 // The game starts once the countdown ends, and its first update deals the cards.
                 <Loader label="Dealing the cards" />
             )}
+            {!lobby.disableChat && <LobbyChat messages={lobby.chat} me={user?.name ?? null} onSend={sendMessage} />}
             {results && <GameResults results={results} me={user?.name ?? null} onClose={dismissResults} />}
             {countingDown && <CountdownOverlay />}
         </>

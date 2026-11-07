@@ -40,3 +40,12 @@ export function assert(condition: boolean, message?: string): asserts condition 
         throw new Error(`Assertion failed: ${message ?? ""}`);
     }
 }
+
+/**
+ * The time of day of a timestamp, in the reader's own format, e.g. 14:05.
+ *
+ * @param time - The timestamp, in milliseconds.
+ */
+export function formatTime(time: number): string {
+    return new Date(time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}

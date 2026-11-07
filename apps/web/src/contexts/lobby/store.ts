@@ -84,6 +84,7 @@ export const useLobbyStore = create<LobbyStore>((set, get) => {
             socket.on("action", ({ actions, update }) => dispatch({ type: "game", game: update, actions }));
             socket.on("playerState", ({ update }) => dispatch({ type: "game", game: update }));
             socket.on("victory", ({ players }) => dispatch({ type: "victory", players }));
+            socket.on("message", (message) => dispatch({ type: "message", message }));
             socket.on("close", ({ reason }) => dispatch({ type: "close", reason }));
             socket.on("error", ({ type, message }) =>
                 dispatch({ type: "error", code: type, at: Date.now(), ...(message && { message }) }),
