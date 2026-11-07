@@ -1,18 +1,6 @@
-export class InvalidGameState implements Error {
-    constructor(message = "") {
-        // Pass remaining arguments (including vendor specific ones) to parent constructor
-
-        // Maintains proper stack trace for where our error was thrown (only available on V8)
-        if (Error.captureStackTrace) {
-            Error.captureStackTrace(this, InvalidGameState);
-        }
-
-        // Custom debugging information
-        this.message = message;
-    }
-
-    message: string;
-    name: string = "InvalidGameState";
+/** An error that the game engine throws when a move, or the game state, is invalid. */
+export class InvalidGameState extends Error {
+    public override name = "InvalidGameState";
 }
 
 export default InvalidGameState;
