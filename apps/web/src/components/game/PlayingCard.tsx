@@ -1,8 +1,8 @@
 import { HTMLMotionProps, motion } from "framer-motion";
 import { forwardRef } from "react";
 
-import { cardName } from "@/lib/cards";
 import { cn } from "@/lib/utils";
+import { cardName } from "@durachok/engine";
 
 type Props = Omit<HTMLMotionProps<"div">, "children"> & {
     /** The card, e.g. `QH`, or nothing for a card that lies face down. */

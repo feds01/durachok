@@ -1,6 +1,6 @@
 export { shuffleArray, getRandomKey } from "./utils";
 export { Game } from "./engine/game";
-export { cardFromString } from "./engine/card";
+export { cardFromString, cardName, isRedSuit, rankOf, sortHand, suitName, suitOf, suitSymbol } from "./engine/card";
 export { CardNumerics, CardSuits, TableSize } from "./engine/consts";
 export { HistoryState, History } from "./engine/history";
 export * from "./engine/errors";

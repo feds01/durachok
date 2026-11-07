@@ -1,4 +1,4 @@
-import { cardFromString, generateCardDeck } from "./card";
+import { cardFromString, cardName, generateCardDeck, isRedSuit, sortHand, suitSymbol } from "./card";
 import { describe, expect, test } from "bun:test";
 
 describe("Card tests", () => {
@@ -120,6 +120,23 @@ describe("Card tests", () => {
 
             expect(generateCardDeck()).toEqual(deck);
             expect(generateCardDeck(true)).toEqual(shortDeck);
+        });
+    });
+
+    describe("a card for a player", () => {
+        test("is named in words", () => {
+            expect(cardName("QH")).toBe("queen of hearts");
+            expect(cardName("10S")).toBe("10 of spades");
+            expect(cardName("AD")).toBe("ace of diamonds");
+        });
+
+        test("has a filled suit symbol, red for hearts and diamonds", () => {
+            expect(suitSymbol("C")).toBe("♣");
+            expect(["H", "D", "C", "S"].map(isRedSuit)).toEqual([true, true, false, false]);
+        });
+
+        test("sits in a hand by suit, with the trumps last, each low to high", () => {
+            expect(sortHand(["AH", "7S", "2H", "QC", "6S", "10D"], "S")).toEqual(["2H", "AH", "QC", "10D", "6S", "7S"]);
         });
     });
 });

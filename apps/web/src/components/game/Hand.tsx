@@ -2,8 +2,8 @@ import { useDraggable } from "@dnd-kit/core";
 import { motion } from "framer-motion";
 
 import PlayingCard from "@/components/game/PlayingCard";
-import { cardName } from "@/lib/cards";
 import { cn } from "@/lib/utils";
+import { cardName } from "@durachok/engine";
 
 type Props = {
     /** The cards, in the order that the player holds them. */

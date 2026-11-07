@@ -26,7 +26,6 @@ import RoleBadge from "@/components/game/RoleBadge";
 import TableArea, { ClearTo, Targets } from "@/components/game/TableArea";
 import { Button } from "@/components/ui/button";
 import { useLobbyStore } from "@/contexts/lobby";
-import { isRedSuit, sortHand, suitName, suitSymbol } from "@/lib/cards";
 import { usePreference } from "@/lib/preferences";
 import { playSound } from "@/lib/sound";
 import { cn } from "@/lib/utils";
@@ -37,7 +36,11 @@ import {
     canForfeit,
     canPlace,
     handSize,
+    isRedSuit,
     movesFor,
+    sortHand,
+    suitName,
+    suitSymbol,
     tableCards,
     turnOf,
 } from "@durachok/engine";

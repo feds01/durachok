@@ -2,9 +2,8 @@ import { useDroppable } from "@dnd-kit/core";
 import { AnimatePresence, Variants, motion } from "framer-motion";
 
 import PlayingCard from "@/components/game/PlayingCard";
-import { cardName } from "@/lib/cards";
 import { cn } from "@/lib/utils";
-import { TableCard } from "@durachok/engine";
+import { cardName, TableCard } from "@durachok/engine";
 
 /** Where the cards on the table go when it clears. */
 export type ClearTo =

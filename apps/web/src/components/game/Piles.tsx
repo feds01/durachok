@@ -1,6 +1,6 @@
 import PlayingCard from "@/components/game/PlayingCard";
-import { cardName, isRedSuit, suitName, suitSymbol } from "@/lib/cards";
 import { cn } from "@/lib/utils";
+import { cardName, isRedSuit, suitName, suitSymbol } from "@durachok/engine";
 import { Card } from "@durachok/transport";
 
 /** How many cards of a pile to draw, enough to look like a pile. */
