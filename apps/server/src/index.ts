@@ -7,7 +7,7 @@ import helmet from "helmet";
 import { createServer } from "http";
 import { AddressInfo } from "net";
 
-import { APP_URL, ENV, IMAGE_STORAGE, PORT, UPLOAD_FOLDER, WEB_ORIGINS } from "./config";
+import { APP_URL, ENV, IMAGE_STORAGE, PORT, TRUST_PROXY, UPLOAD_FOLDER, WEB_ORIGINS, secretProblems } from "./config";
 import { appRouter } from "./interface/routes";
 import { connectSocket } from "./interface/socket";
 import { connectDB } from "./lib/database";
@@ -15,7 +15,20 @@ import logger from "./lib/logger";
 import { createSessionContext } from "./lib/trpc";
 import { expr } from "./utils";
 
+// Tokens signed with a key that is missing, or shared, could be forged, so don't start without proper ones.
+const problems = secretProblems();
+if (problems.length > 0) {
+    // Straight to stderr, since the logger writes from a worker, which exiting would cut off.
+    process.stderr.write(
+        `The server can't sign tokens safely, so it won't start: ${problems.join("; ")}. Set its keys in apps/server/.env.\n`,
+    );
+    process.exit(1);
+}
+
 const app = express();
+
+// The rate limits count by the client's address, which the proxies in front of the server pass on.
+app.set("trust proxy", TRUST_PROXY);
 
 // Various Express middleware.
 

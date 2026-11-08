@@ -1,6 +1,6 @@
 import { ClientEvents } from "@durachok/transport";
 
-import { ensureLobbyAccess } from "../common/auth";
+import { clientsOf, ensureLobbyAccess } from "../common/auth";
 import { factory } from "./ctx";
 
 const onLeave = factory.build({
@@ -15,8 +15,12 @@ const onLeave = factory.build({
         logger.info(meta, "processing event");
         const { name } = await ensureLobbyAccess(ctx, client, pin);
 
-        // Only possible before the game starts, and not for the owner.
-        await ctx.lobbyService.removePlayer(pin, name);
+        // Only possible before the game starts, and not for the owner. Each of the player's
+        // connections leaves the room, so that another tab doesn't go on hearing the lobby.
+        const player = await ctx.lobbyService.removePlayer(pin, name);
+        for (const theirs of await clientsOf(withRooms, pin, player)) {
+            await theirs.leave(pin);
+        }
         await client.leave(pin);
         logger.info(meta, "player left");
 

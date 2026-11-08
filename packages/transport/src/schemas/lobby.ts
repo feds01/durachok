@@ -7,8 +7,19 @@ export const GamePinSchema = z.string().regex(/^\d{6}$/, "Game PIN is 6 digits l
 
 export type GamePin = z.infer<typeof GamePinSchema>;
 
+/**
+ * How many suits a passphrase has. A suit can come up more than once, so that there are 4⁴ = 256
+ * passphrases, rather than the 24 orders of the four suits.
+ */
+export const PASSPHRASE_LENGTH = 4;
+
 /** Represents a game passphrase, composed of the card suits. */
-export const GamePassPhraseSchema = z.string().regex(/^[♡♢♣♤]{4}$/, "Game passphrase must be 4 playing card symbols.");
+export const GamePassPhraseSchema = z
+    .string()
+    .regex(
+        new RegExp(`^[♡♢♣♤]{${PASSPHRASE_LENGTH}}$`),
+        `Game passphrase must be ${PASSPHRASE_LENGTH} playing card symbols.`,
+    );
 
 export type GamePassPhrase = z.infer<typeof GamePassPhraseSchema>;
 

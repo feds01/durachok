@@ -4,6 +4,7 @@ import superjson, { registerCustom } from "superjson";
 import { ZodError } from "zod";
 
 import { expr } from "../utils";
+import { RateLimiter } from "./rate-limit";
 import { transformZodErrorIntoErrorSummary } from "../utils/error";
 import { getTokenFromHeaders, setTokensInResponse } from "./authentication";
 import { createContext } from "./context";
@@ -12,7 +13,9 @@ import logger from "./logger";
 /** Function to construct the context that we need */
 export const createSessionContext = async ({ req, res }: trpcExpress.CreateExpressContextOptions) => {
     const hostname = `${req.protocol}://${req.get("host")}`;
-    const ctx = createContext(logger, hostname);
+    // The client's address, as the proxies that the server trusts tell it, @see TRUST_PROXY.
+    const ip = req.ip ?? req.socket.remoteAddress ?? "unknown";
+    const ctx = { ...createContext(logger, hostname), ip };
 
     // Try and read the user.
     const tokens = await getTokenFromHeaders(ctx.authService, req.headers, (tokens) =>
@@ -89,6 +92,39 @@ export const publicProcedure = t.procedure.use(async (opts) => {
 
     return result;
 });
+
+/** The error for a client that did more than a limit lets it, @see limits. */
+export function tooManyRequests(): TRPCError {
+    return new TRPCError({ code: "TOO_MANY_REQUESTS", message: "Too many requests, wait a minute and try again" });
+}
+
+/** A public procedure that each address may call only as often as a limiter lets it. */
+export function limitedProcedure(limiter: RateLimiter) {
+    return publicProcedure.use((opts) => {
+        if (!limiter.take(opts.ctx.ip)) {
+            throw tooManyRequests();
+        }
+        return opts.next();
+    });
+}
+
+/**
+ * A public procedure that each address may fail at only as often as a limiter lets it, such as
+ * logging in, so that guessing is slow, but a client that gets it right isn't held back.
+ */
+export function failureLimitedProcedure(limiter: RateLimiter) {
+    return publicProcedure.use(async (opts) => {
+        if (limiter.isLimited(opts.ctx.ip)) {
+            throw tooManyRequests();
+        }
+
+        const result = await opts.next();
+        if (!result.ok) {
+            limiter.hit(opts.ctx.ip);
+        }
+        return result;
+    });
+}
 
 /** A procedure that requires the request to send tokens. */
 export const authProcedure = publicProcedure.use(function hasToken(opts) {

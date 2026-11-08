@@ -1,7 +1,9 @@
 import { Context } from "../../../lib/context";
 import { UserTokensResponse } from "../../../schemas/auth";
+import { DBPlayer, isPlayer } from "../../../schemas/lobby";
+import { isDef } from "../../../utils";
 import { ApiError } from "../../../utils/error";
-import { Client } from "../actions/ctx";
+import { Client, Rooms } from "../actions/ctx";
 
 /**
  * Get the tokens that the connection middleware verified for a client.
@@ -46,6 +48,18 @@ export async function ensureLobbyAccess(
         isRegistered: payload.kind === "registered",
         isOwner: await ctx.lobbyService.hasOwnerAccess(payload, pin),
     };
+}
+
+/**
+ * The connections in a lobby's room that are a player's, from each of their tabs, e.g. to take
+ * them all out of the room once the player leaves it.
+ */
+export async function clientsOf(withRooms: Rooms, pin: string, player: DBPlayer) {
+    const clients = await withRooms(pin).getClients();
+    return clients.filter((client) => {
+        const { auth } = client.getData();
+        return isDef(auth) && isPlayer(auth.payload, player);
+    });
 }
 
 /**

@@ -12,6 +12,8 @@ export const RawTokenPayload = z.object({
             z.object({
                 name: z.string(),
                 pin: z.string(),
+                /** The secret of the player's place in the lobby, @see DBPlayer.seat. */
+                seat: z.string(),
             }),
         )
         .or(
@@ -37,6 +39,7 @@ const TokenPayloadSchema = z.union([
         kind: z.literal("anonymous"),
         name: z.string(),
         pin: z.string(),
+        seat: z.string(),
     }),
     /** A bot from the registry, @see IBotUser. */
     z.object({
@@ -46,6 +49,21 @@ const TokenPayloadSchema = z.union([
 ]);
 
 export type TokenPayload = z.infer<typeof TokenPayloadSchema>;
+
+/**
+ * Who holds a token, the same for each of their tokens and connections, e.g. to count what they
+ * do: a user by their account, a bot by the registry, and an anonymous player by their place.
+ */
+export function holderOf(token: TokenPayload): string {
+    switch (token.kind) {
+        case "registered":
+            return `user:${token.user.id}`;
+        case "bot":
+            return `bot:${token.bot.id}`;
+        case "anonymous":
+            return `seat:${token.seat}`;
+    }
+}
 
 /** The response that we send when we refresh the user's tokens. */
 export const UserTokensResponseSchema = z
