@@ -8,23 +8,31 @@ export const APP_VERSION = import.meta.env.REACT_APP_VERSION ?? packageJson.vers
 export const APP_VERSION_BRANCH = import.meta.env.REACT_APP_BRANCH ?? "";
 
 /**
- * Check that the API's address is an absolute http(s) URL. Anything else, such as
- * `localhost:8080`, which a browser reads as a URL with the scheme `localhost:`, would
- * make every request fail without a word, so it stops the app with an error instead.
+ * Read the API's address: an absolute http(s) URL, or a path on the web app's own origin,
+ * such as `/api/trpc`, which the web server passes on to the API. Anything else, such as
+ * `localhost:8080`, which a browser reads as a URL with the scheme `localhost:`, would make
+ * every request fail without a word, so it stops the app with an error instead.
  */
-export function parseApiUrl(value: string): string {
-    const protocol = URL.canParse(value) ? new URL(value).protocol : null;
-    if (protocol !== "http:" && protocol !== "https:") {
+export function parseApiUrl(value: string, origin: string): string {
+    const url = value.startsWith("/") ? new URL(value, origin) : URL.canParse(value) ? new URL(value) : null;
+    if (url?.protocol !== "http:" && url?.protocol !== "https:") {
         throw new Error(
-            `REACT_APP_API_URL must be an absolute http(s) URL, such as http://localhost:8080/api/trpc, not "${value}".`,
+            `REACT_APP_API_URL must be a path such as /api/trpc, or an absolute http(s) URL such as http://localhost:8080/api/trpc, not "${value}".`,
         );
     }
 
-    return value;
+    return url.href;
 }
 
-/** API Endpoint. An empty value, as `.env.sample` has, means the default. */
-export const API_URL = parseApiUrl(import.meta.env.REACT_APP_API_URL || "http://localhost:8080/api/trpc");
+/**
+ * API Endpoint. An empty value, as `.env.sample` has, means the web app's own origin, whose
+ * server passes the API on, so that a single address serves the whole app, e.g. through a tunnel.
+ */
+export const API_URL = parseApiUrl(
+    import.meta.env.REACT_APP_API_URL || "/api/trpc",
+    // Outside a browser, as in the tests, there's no page to take the origin from.
+    globalThis.location?.origin ?? "http://localhost",
+);
 /** The socket server, which serves the API too, at the root of its origin. */
 export const SOCKET_URL = new URL(API_URL).origin;
 
