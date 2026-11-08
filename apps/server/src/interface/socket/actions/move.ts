@@ -3,7 +3,6 @@ import { PlayerMoveSchema } from "@durachok/transport";
 import { GamePinSchema } from "@durachok/transport";
 import { z } from "zod";
 
-import { InvalidMoveError } from "../../../controllers/common";
 import { ensureLobbyAccess } from "../common/auth";
 import { emitActions, emitVictory } from "../common/game";
 import { factory } from "./ctx";
@@ -54,7 +53,7 @@ const onMove = factory.build({
                 });
             }
         } catch (e: unknown) {
-            if (!(e instanceof InvalidGameState || e instanceof InvalidMoveError)) {
+            if (!(e instanceof InvalidGameState)) {
                 throw e;
             }
 
