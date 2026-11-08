@@ -334,9 +334,11 @@ function PlayerItem({ player, isOwner, isMe, onKick }: PlayerItemProps) {
             initial="hidden"
             animate="visible"
             exit="exit"
-            whileHover={{ y: -4 }}
+            // The tile lifts under the pointer in CSS, not with whileHover: a hover that ends and starts
+            // again while the tile exits, as it shrinks from under the pointer, can stop its exit, and
+            // AnimatePresence then keeps every removed tile until the page reloads.
             className={cn(
-                "group relative flex aspect-[4/5] flex-col items-center justify-center gap-3 rounded-xl border bg-gradient-to-b from-secondary/70 to-card p-3 shadow-md",
+                "group relative flex aspect-[4/5] flex-col items-center justify-center gap-3 rounded-xl border bg-gradient-to-b from-secondary/70 to-card p-3 shadow-md transition-[translate] hover:-translate-y-1",
                 isMe && "border-primary ring-1 ring-primary/40",
             )}
         >
