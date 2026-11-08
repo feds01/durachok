@@ -38,7 +38,7 @@ Start a lobby, share the pin, and play with up to eight friends, on a computer o
 ## Getting started
 
 You'll need [Bun](https://bun.sh/) 1.4 or later, [just](https://just.systems/) to run the project's commands, and
-[pre-commit](https://pre-commit.com/) for the git hooks. MongoDB comes from [Docker](https://www.docker.com/) or Apple's [container](https://github.com/apple/container), or use
+[pre-commit](https://pre-commit.com/) for the git hooks. MongoDB comes from Apple's [container](https://github.com/apple/container) on a Mac, or [Docker](https://www.docker.com/), or use
 your own (see the [server's README](./apps/server/README.md)). To share a game on a public link, `just tunnel` needs
 [cloudflared](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/).
 

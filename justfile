@@ -22,7 +22,7 @@ setup: install && db
         echo "note: core.hooksPath is $hooks_path, so git only runs the hook if that hands off to the repo's own hooks"
     fi
 
-# Make sure the server can reach MongoDB as a replica set, and start the local one if it isn't running, or isn't one: in Docker, or in Apple's `container`, which `DB_RUNTIME=container` picks over a running Docker
+# Make sure the server can reach MongoDB as a replica set, and start the local one if it isn't running, or isn't one: in Apple's `container` on a Mac that has it, otherwise in Docker, or as `DB_RUNTIME=docker|container` says
 db:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -32,14 +32,15 @@ db:
     # 0: it's up; 2: a remote MongoDB is down, which no local container can fix.
     if [ "$status" -ne 1 ]; then exit "$status"; fi
 
+    # On a Mac, Apple's container, which needs no Docker, and elsewhere, or without it, Docker.
     runtime="${DB_RUNTIME:-}"
     if [ -z "$runtime" ]; then
-        if command -v docker >/dev/null && docker info >/dev/null 2>&1; then
-            runtime=docker
-        elif command -v container >/dev/null; then
+        if [ "$(uname)" = Darwin ] && command -v container >/dev/null; then
             runtime=container
+        elif command -v docker >/dev/null && docker info >/dev/null 2>&1; then
+            runtime=docker
         else
-            echo "error: start Docker, or install Apple's container (https://github.com/apple/container), so that 'just db' can run MongoDB in it, or run MongoDB yourself (see apps/server/README.md)" >&2
+            echo "error: install Apple's container ('brew install container') on a Mac, or start Docker, so that 'just db' can run MongoDB in it, or run MongoDB yourself (see apps/server/README.md)" >&2
             exit 1
         fi
     fi

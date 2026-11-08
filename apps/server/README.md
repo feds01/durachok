@@ -3,11 +3,11 @@
 ## Prerequisites
 
 - Bun (v1.4 or later)
-- MongoDB (v6 or later), as a replica set, which `just db` can run in Docker or Apple's `container` for you (see below)
+- MongoDB (v6 or later), as a replica set, which `just db` can run in Apple's `container` or Docker for you (see below)
 
 ## MongoDB Installation
 
-### Using Docker or Apple's `container` (recommended)
+### Using Apple's `container` or Docker (recommended)
 
 From the repository root, run:
 
@@ -15,9 +15,9 @@ From the repository root, run:
 just db
 ```
 
-It checks that the server can reach MongoDB at `MONGODB_URI`, as a replica set. When that is a local address and nothing answers, or the MongoDB there isn't a replica set, it starts MongoDB 8 in Docker on `localhost:27017`, from [`compose.yaml`](../../compose.yaml), as a replica set of one, and checks again. `just setup` runs it too. The data lives in a Docker volume, and the container restarts with Docker.
+It checks that the server can reach MongoDB at `MONGODB_URI`, as a replica set. When that is a local address and nothing answers, or the MongoDB there isn't a replica set, it starts MongoDB 8 on `localhost:27017`, as a replica set of one, and checks again. `just setup` runs it too.
 
-Without Docker running, it uses Apple's [`container`](https://github.com/apple/container) instead, if it's installed, and `DB_RUNTIME=container just db` picks it even with Docker running. It starts `container`'s services if they aren't running, then runs MongoDB 8 in a container named `durachok-mongo`, on `localhost:27017`, with its data in the volume `durachok-mongo-data`. After a restart of the Mac, `just db` starts it again.
+On a Mac with Apple's [`container`](https://github.com/apple/container) (`brew install container`), MongoDB runs in a container named `durachok-mongo`, with its data in the volume `durachok-mongo-data`, and `just db` starts `container`'s services first if they aren't running. After a restart of the Mac, `just db` starts it again. Elsewhere, or without `container`, MongoDB runs in Docker, from [`compose.yaml`](../../compose.yaml), with its data in a Docker volume, and restarts with Docker. `DB_RUNTIME=docker` or `DB_RUNTIME=container` picks one.
 
 The server changes lobbies in transactions, which MongoDB only has on a replica set, so it won't start against a standalone MongoDB.
 
