@@ -260,7 +260,7 @@ export namespace Root {
                       }
                   >
                 | undefined;
-            message?: string | undefined;
+            message: string;
         }) => void;
     }
 

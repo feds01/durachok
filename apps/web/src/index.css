@@ -161,3 +161,20 @@
             repeating-linear-gradient(-45deg, hsl(0 0% 100% / 0.16) 0 1px, transparent 1px 6px);
     }
 }
+
+/*
+ * Each suit's colour while it's trumps, so that a glance at a card's edge says that it's a
+ * trump, and of which suit. Whatever shows the trump suit takes it from its `data-trump`.
+ */
+[data-trump="H"] {
+    --trump: var(--color-rose-400);
+}
+[data-trump="D"] {
+    --trump: var(--color-orange-400);
+}
+[data-trump="C"] {
+    --trump: var(--color-emerald-400);
+}
+[data-trump="S"] {
+    --trump: var(--color-violet-400);
+}

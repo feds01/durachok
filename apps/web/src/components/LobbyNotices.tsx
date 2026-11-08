@@ -1,7 +1,8 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { LoaderCircle, TriangleAlert, WifiOff, X } from "lucide-react";
+import { TriangleAlert, WifiOff, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import { CardFan } from "@/components/Loader";
 import { cn } from "@/lib/utils";
 
 /** How long an error stays up, in seconds, unless the player dismisses it first. */
@@ -24,8 +25,9 @@ type Props = {
 };
 
 /**
- * What's wrong in the lobby, along the top of the page: a lost connection, which holds the
- * page until it's back, and the server's errors, which go away on their own.
+ * What's wrong in the lobby: a lost connection, which holds the page behind the same loader
+ * as joining the lobby until it's back, and the server's errors, along the top of the page,
+ * which go away on their own.
  */
 export default function LobbyNotices({ reconnecting, error }: Props) {
     const [dismissed, setDismissed] = useState<number | null>(null);
@@ -46,12 +48,22 @@ export default function LobbyNotices({ reconnecting, error }: Props) {
                     // Nothing can be played while the connection is down.
                     <motion.div
                         key="cover"
-                        aria-hidden="true"
-                        className="fixed inset-0 z-40 bg-background/60 backdrop-blur-[2px]"
+                        className="fixed inset-0 z-40 bg-background/70 backdrop-blur-[2px]"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                    />
+                    >
+                        <div className="flex h-full flex-col items-center justify-center gap-6" aria-live="polite">
+                            <CardFan />
+                            <div className="flex flex-col items-center gap-1 text-center">
+                                <p className="m-0 flex items-center gap-2 text-lg font-semibold">
+                                    <WifiOff className="size-5 shrink-0 text-amber-300" aria-hidden="true" />
+                                    Connection lost
+                                </p>
+                                <p className="m-0 text-muted-foreground">Getting you back into the lobby…</p>
+                            </div>
+                        </div>
+                    </motion.div>
                 )}
             </AnimatePresence>
             <div
@@ -59,19 +71,6 @@ export default function LobbyNotices({ reconnecting, error }: Props) {
                 aria-live="polite"
             >
                 <AnimatePresence>
-                    {reconnecting && (
-                        <motion.div key="reconnecting" className={NOTICE} {...slide}>
-                            <WifiOff className="size-5 shrink-0 text-amber-300" aria-hidden="true" />
-                            <div className="flex-1">
-                                <p className="m-0 font-semibold">Connection lost</p>
-                                <p className="m-0 text-sm text-muted-foreground">Getting you back into the lobby…</p>
-                            </div>
-                            <LoaderCircle
-                                className="size-5 shrink-0 animate-spin text-muted-foreground"
-                                aria-hidden="true"
-                            />
-                        </motion.div>
-                    )}
                     {shown && (
                         <motion.div key={shown.at} role="alert" className={cn(NOTICE, "border-rose-400/40")} {...slide}>
                             <TriangleAlert className="size-5 shrink-0 text-rose-400" aria-hidden="true" />

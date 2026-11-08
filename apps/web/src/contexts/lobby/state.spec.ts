@@ -142,7 +142,13 @@ describe("lobby state", () => {
     });
 
     test("being turned away while joining closes the lobby, and later errors are shown", () => {
-        expect(reduceLobby(initialLobbyState, { type: "error", code: "unauthorized", at: 1 }).connection).toEqual({
+        const turnedAway = reduceLobby(initialLobbyState, {
+            type: "error",
+            code: "unauthorized",
+            message: "Not in the lobby",
+            at: 1,
+        });
+        expect(turnedAway.connection).toEqual({
             kind: "closed",
             reason: "unauthorized",
         });

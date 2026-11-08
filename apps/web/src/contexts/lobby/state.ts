@@ -24,10 +24,13 @@ function isServerCloseReason(reason: string): reason is CloseReason {
 
 /** Where this client's connection to the lobby is. */
 export type LobbyConnection =
+    /** The client is trying to connect, and the socket is retrying. */
     | { kind: "connecting" }
+    /** The client is connected, and the server accepted its tokens. */
     | { kind: "joined" }
     /** The connection dropped while in the lobby, and the socket is reconnecting. */
     | { kind: "reconnecting" }
+    /** The connection was closed. */
     | { kind: "closed"; reason: CloseReason };
 
 export interface LobbyState {
@@ -72,7 +75,7 @@ export type LobbyEvent =
     | { type: "message"; message: Message }
     | { type: "close"; reason: string }
     | { type: "left" }
-    | { type: "error"; code: string; message?: string; at: number }
+    | { type: "error"; code: string; message: string; at: number }
     | { type: "disconnected"; reconnecting: boolean }
     | { type: "connectError"; retrying: boolean };
 
@@ -140,7 +143,7 @@ export function reduceLobby(state: LobbyState, event: LobbyEvent): LobbyState {
             return {
                 ...state,
                 pending: null,
-                error: { message: event.message ?? describeError(event.code), at: event.at },
+                error: { message: event.message, at: event.at },
             };
         case "disconnected":
             return {
@@ -153,19 +156,5 @@ export function reduceLobby(state: LobbyState, event: LobbyEvent): LobbyState {
                 return { ...state, connection: { kind: "closed", reason: "unauthorized" } };
             }
             return state;
-    }
-}
-
-/** A message for an error that the server reported without one. */
-function describeError(code: string): string {
-    switch (code) {
-        case "unauthorized":
-            return "You can't do that in this lobby.";
-        case "not_found":
-            return "The lobby no longer exists.";
-        case "bad_request":
-            return "That isn't possible right now.";
-        default:
-            return "Something went wrong on the server.";
     }
 }

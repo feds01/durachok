@@ -1,15 +1,13 @@
 import {
-    CollisionDetection,
     DndContext,
     DragEndEvent,
     DragOverlay,
     DragStartEvent,
     PointerSensor,
-    pointerWithin,
-    rectIntersection,
     useSensor,
     useSensors,
 } from "@dnd-kit/core";
+import { arrayMove } from "@dnd-kit/sortable";
 import { LayoutGroup } from "framer-motion";
 import { Check, Hand, Lightbulb, LightbulbOff, Volume2, VolumeX } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -18,53 +16,48 @@ import { useShallow } from "zustand/react/shallow";
 import Logo from "@/components/Logo";
 import UserAvatar from "@/components/UserAvatar";
 import ActionCard from "@/components/game/ActionCard";
+import CardFlights from "@/components/game/CardFlights";
 import PlayerHand from "@/components/game/Hand";
 import OpponentSeat from "@/components/game/OpponentSeat";
 import { DeckPile, DiscardPile } from "@/components/game/Piles";
 import PlayingCard from "@/components/game/PlayingCard";
 import RoleBadge from "@/components/game/RoleBadge";
-import TableArea, { ClearTo, Targets } from "@/components/game/TableArea";
+import RoundAnnouncement from "@/components/game/RoundAnnouncement";
+import SortControl from "@/components/game/SortControl";
+import TableArea, { Targets } from "@/components/game/TableArea";
 import { Button } from "@/components/ui/button";
 import { useLobbyStore } from "@/contexts/lobby";
+import { useRoundAnnouncement } from "@/lib/announcement";
+import { useDeal } from "@/lib/deal";
+import { collisionDetection } from "@/lib/drag";
 import { usePreference } from "@/lib/preferences";
 import { playSound } from "@/lib/sound";
+import { CardSources, readActions } from "@/lib/table";
 import { cn } from "@/lib/utils";
+import { expr } from "@/utils";
 import {
+    HandSort,
     Turn,
     applyMove,
+    arrangeHand,
     canCover,
     canForfeit,
     canPlace,
-    isRedSuit,
     movesFor,
     sortHand,
-    suitName,
-    suitSymbol,
+    suitOf,
     tableCards,
     turnOf,
 } from "@durachok/engine";
-import { Action, Lobby, PlayerGameState, PlayerMove } from "@durachok/transport";
+import { Lobby, PlayerGameState, PlayerMove } from "@durachok/transport";
 
 type Props = {
     lobby: Lobby;
     game: PlayerGameState;
 };
 
-type Pickup = Extract<Action, { type: "pickup" }>;
-
 /** How long the round waits on an attacker before it takes them as done, in seconds. */
 const DONE_TIMEOUT_SECONDS = 8;
-
-/** Prefer the attack that a dragged card is over to the table around it. */
-const collisionDetection: CollisionDetection = (args) => {
-    const hits = pointerWithin(args);
-    const attack = hits.find(({ id }) => String(id).startsWith("slot-"));
-
-    if (attack) {
-        return [attack];
-    }
-    return hits.length > 0 ? hits : rectIntersection(args);
-};
 
 /**
  * The game, as the player sees it: the other players along the top, the deck, the table and
@@ -80,7 +73,12 @@ export default function GameTable({ lobby, game }: Props) {
     const [dropped, setDropped] = useState<string | null>(null);
     const [muted, setMuted] = usePreference("muted");
     const [hints, setHints] = usePreference("hints");
+    const [byRank, setByRank] = usePreference("sortByRank");
+    // The order that the player put their cards in by hand, until they sort them again.
+    const [arranged, setArranged] = useState<string[] | null>(null);
     const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
+    // The server's view, as the player's own move doesn't change their role or clear the table.
+    const [announcement, dismissAnnouncement] = useRoundAnnouncement(game);
 
     // The player sees their move straight away, until the server answers it.
     const view = useMemo(() => (pending ? applyMove(game, pending) : game), [game, pending]);
@@ -88,7 +86,10 @@ export default function GameTable({ lobby, game }: Props) {
     const me = player.name;
     const table = tableCards(view);
     const turn = turnOf(view);
-    const hand = useMemo(() => sortHand(player.deck, trump.suit), [player.deck, trump.suit]);
+    const hand = useMemo(
+        () => arrangeHand(sortHand(player.deck, trump.suit, byRank ? "rank" : "suit"), arranged),
+        [player.deck, trump.suit, byRank, arranged],
+    );
     // Nothing more can be played until the server answers the last move.
     const playable = useMemo(
         () => new Set(pending ? [] : hand.filter((card) => movesFor(view, card).length > 0)),
@@ -96,15 +97,14 @@ export default function GameTable({ lobby, game }: Props) {
     );
 
     // The last update says where the table's cards came from, and where they go when it clears.
-    const fromHand = new Set([
-        ...(pending && pending.type !== "forfeit" ? [pending.card] : []),
-        ...actions.flatMap((action) =>
-            (action.type === "place" || action.type === "cover") && action.player === me ? [action.card] : [],
-        ),
-    ]);
-    const pickup = actions.find((action): action is Pickup => action.type === "pickup");
-    const clearTo: ClearTo = !pickup ? "discard" : pickup.player === me ? "hand" : "away";
-    const pickedUp = new Set(pickup?.player === me ? pickup.cards : []);
+    const update = readActions(actions, me);
+    const sources: CardSources = {
+        fromHand: new Set([...(pending && pending.type !== "forfeit" ? [pending.card] : []), ...update.mine]),
+        dropped,
+        playedBy: update.playedBy,
+        trumpSuit: trump.suit,
+    };
+    const deal = useDeal(game, update);
 
     useEffect(() => playSound("begin"), []);
     useEffect(() => {
@@ -122,7 +122,9 @@ export default function GameTable({ lobby, game }: Props) {
         return () => window.removeEventListener("keydown", onKeyDown);
     }, [selected]);
 
-    const holding = dragging ?? selected;
+    // A card that can't be played now, as while the server hasn't answered the last move, can
+    // only be moved along the hand.
+    const holding = dragging && playable.has(dragging) ? dragging : selected;
     const targets: Targets | null = holding
         ? {
               place: canPlace(view, holding),
@@ -130,8 +132,22 @@ export default function GameTable({ lobby, game }: Props) {
           }
         : null;
 
+    // What the hand is sorted by, or nothing once the player arranged it themselves.
+    const sortedBy = expr((): HandSort | null => {
+        if (arranged) {
+            return null;
+        }
+        return byRank ? "rank" : "suit";
+    });
+
+    const sortBy = (by: HandSort) => {
+        setByRank(by === "rank");
+        setArranged(null);
+    };
+
     const play = (move: PlayerMove) => {
         setSelected(null);
+        deal.forgetDrawn();
         dispatchMove(move);
     };
 
@@ -163,12 +179,27 @@ export default function GameTable({ lobby, game }: Props) {
         const target = over ? String(over.id) : "";
         const position = Number(target.replace("slot-", ""));
 
-        const move: PlayerMove | null =
-            target === "table" && canPlace(view, card)
-                ? { type: "place", card }
-                : target.startsWith("slot-") && canCover(view, card, position)
-                  ? { type: "cover", card, position }
-                  : null;
+        // The player moved the card along their hand.
+        if (hand.includes(target)) {
+            if (target !== card) {
+                setArranged(arrayMove(hand, hand.indexOf(card), hand.indexOf(target)));
+            }
+            return;
+        }
+
+        const move = expr((): PlayerMove | null => {
+            // Only a card that can be played now goes on the table: not while the server hasn't answered.
+            if (!playable.has(card)) {
+                return null;
+            }
+            if (target === "table" && canPlace(view, card)) {
+                return { type: "place", card };
+            }
+            if (target.startsWith("slot-") && canCover(view, card, position)) {
+                return { type: "cover", card, position };
+            }
+            return null;
+        });
 
         if (move) {
             setDropped(card);
@@ -209,18 +240,6 @@ export default function GameTable({ lobby, game }: Props) {
                             <Logo size={28} />
                         </div>
                         <div className="flex items-center gap-2 max-sm:w-full max-sm:justify-between">
-                            <span
-                                className="flex items-center gap-1.5 rounded-full border bg-card/80 px-3 py-1 text-sm font-semibold"
-                                aria-label={`Trumps are ${suitName(trump.suit)}`}
-                            >
-                                Trumps
-                                <span
-                                    className={cn("text-lg leading-none", isRedSuit(trump.suit) && "text-rose-400")}
-                                    aria-hidden="true"
-                                >
-                                    {suitSymbol(trump.suit)}
-                                </span>
-                            </span>
                             <span className="rounded-full border bg-card/80 px-3 py-1 text-sm text-muted-foreground">
                                 Lobby <span className="font-semibold tabular-nums text-foreground">{lobby.pin}</span>
                             </span>
@@ -260,54 +279,71 @@ export default function GameTable({ lobby, game }: Props) {
                         ))}
                     </ul>
 
-                    <div className="mx-auto grid w-full max-w-6xl flex-1 grid-cols-2 items-center gap-4 px-4 py-4 sm:grid-cols-[auto_1fr_auto]">
+                    {/* The deck and the discard pile take columns as wide as each other, as far from the table. */}
+                    <div className="mx-auto grid w-full max-w-6xl flex-1 grid-cols-2 items-center gap-4 px-4 py-4 sm:grid-cols-[calc(var(--card-w)*1.6)_1fr_calc(var(--card-w)*1.6)]">
                         <div className="justify-self-start">
                             <DeckPile size={view.deckSize} trump={trump} />
                         </div>
-                        <div className="col-span-2 row-start-2 sm:col-span-1 sm:row-start-auto">
+                        <div className="relative col-span-2 row-start-2 sm:col-span-1 sm:row-start-auto">
                             <TableArea
                                 cards={table}
+                                role={player.out === null ? player.action : "none"}
                                 targets={targets}
                                 defending={player.action === "defend"}
-                                clearTo={clearTo}
-                                fromHand={fromHand}
-                                dropped={dropped}
+                                clearTo={update.clearTo}
+                                sources={sources}
                                 onPlace={() => holding && play({ type: "place", card: holding })}
                                 onCover={(position) => holding && play({ type: "cover", card: holding, position })}
                             />
+                            <RoundAnnouncement
+                                announcement={announcement}
+                                overCards={table.length > 0}
+                                onDone={dismissAnnouncement}
+                            />
                         </div>
-                        <div className="justify-self-end">
+                        <div className="justify-self-end sm:justify-self-start">
                             <DiscardPile count={view.discardSize} />
                         </div>
                     </div>
 
-                    {/* A hint keeps its height as its text changes, so the table stays put. */}
-                    <section aria-label="You" className="flex flex-col items-center gap-2 px-4">
-                        <div className="flex items-center gap-3">
+                    <section aria-label="You" className="relative flex flex-col items-center gap-2">
+                        {/* A hint floats over the space above the player, so that turning hints on moves nothing. */}
+                        {hints && (
+                            <p
+                                className="pointer-events-none absolute inset-x-4 bottom-full m-0 flex justify-center pb-2 text-center"
+                                aria-live="polite"
+                            >
+                                <span
+                                    className={cn(
+                                        "max-w-xl rounded-2xl bg-background/80 px-3 py-1 backdrop-blur-sm",
+                                        mustAct ? "font-semibold text-foreground" : "text-muted-foreground",
+                                    )}
+                                >
+                                    {describeTurn(turn, { canPass, tableClear: table.length === 0 })}
+                                </span>
+                            </p>
+                        )}
+                        <div className="flex items-center gap-3 px-4">
                             <UserAvatar image={imageOf(me)} size={32} />
                             <span className="font-semibold">{me}</span>
                             <RoleBadge action={player.action} turned={player.turned} place={placeOf(me)} />
                         </div>
-                        {hints && (
-                            <p
-                                className={cn(
-                                    "m-0 flex min-h-12 max-w-xl items-center text-center",
-                                    mustAct ? "font-semibold text-foreground" : "text-muted-foreground",
-                                )}
-                                aria-live="polite"
-                            >
-                                {describeTurn(turn, { canPass })}
-                            </p>
-                        )}
-                        {/* The hand stays in the middle, with a column either side for the card that ends the player's round. */}
-                        <div className="grid w-full grid-cols-[minmax(var(--card-w),1fr)_minmax(0,auto)_minmax(var(--card-w),1fr)] items-end">
-                            <span aria-hidden="true" />
+                        {/*
+                         * The hand stays in the middle of the table, between a column for sorting it, under
+                         * the deck, so that it stays put however many cards the player holds, and one for
+                         * the card that ends the player's round.
+                         */}
+                        <div className="mx-auto grid w-full max-w-6xl grid-cols-[minmax(var(--card-w),1fr)_minmax(0,auto)_minmax(var(--card-w),1fr)] items-end px-4">
+                            <div className="flex w-(--card-w) justify-center justify-self-start pb-6">
+                                <SortControl sort={sortedBy} onSort={sortBy} />
+                            </div>
                             <PlayerHand
                                 cards={hand}
                                 playable={playable}
                                 selected={selected}
                                 active={mustAct}
-                                pickedUp={pickedUp}
+                                drawn={deal.drawn}
+                                trumpSuit={trump.suit}
                                 onPick={pick}
                             />
                             <div className="justify-self-start pb-6 pl-4 sm:pl-10">
@@ -331,8 +367,15 @@ export default function GameTable({ lobby, game }: Props) {
                         </div>
                     </section>
 
+                    <CardFlights flights={deal.flights} onLanded={deal.landed} />
                     <DragOverlay dropAnimation={null}>
-                        {dragging && <PlayingCard card={dragging} className="rotate-6 shadow-2xl" />}
+                        {dragging && (
+                            <PlayingCard
+                                card={dragging}
+                                trump={suitOf(dragging) === trump.suit}
+                                className="rotate-6 shadow-2xl"
+                            />
+                        )}
                     </DragOverlay>
                 </div>
             </LayoutGroup>
@@ -341,7 +384,7 @@ export default function GameTable({ lobby, game }: Props) {
 }
 
 /** What the player can do now, in a sentence, as a hint for players who want one. */
-function describeTurn(turn: Turn, { canPass }: { canPass: boolean }): string {
+function describeTurn(turn: Turn, { canPass, tableClear }: { canPass: boolean; tableClear: boolean }): string {
     switch (turn.kind) {
         case "out":
             return "You're out of cards. Watch the rest play out.";
@@ -358,7 +401,7 @@ function describeTurn(turn: Turn, { canPass }: { canPass: boolean }): string {
         case "taking":
             return "You're taking the cards. The attackers can still add some.";
         case "defended":
-            return "Everything's beaten. Waiting for the attackers.";
+            return tableClear ? "Waiting for the attack." : "Everything's beaten. Waiting for the attackers.";
         case "wait":
             return turn.attacker && turn.defender
                 ? `${turn.attacker} is attacking ${turn.defender}. You can add cards once ${turn.attacker} is done.`

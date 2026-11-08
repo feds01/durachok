@@ -81,13 +81,38 @@ export function isRedSuit(suit: string): boolean {
     return suit === "H" || suit === "D";
 }
 
-/** A hand in the order that a player would hold it: by suit, with the trumps last, each low to high. */
-export function sortHand(cards: string[], trumpSuit: string): string[] {
+/** How a hand can be sorted: suit by suit, or rank by rank. */
+export type HandSort = "suit" | "rank";
+
+/**
+ * A hand in the order that a player would hold it, with the trumps last either way: by suit,
+ * each low to high, or low to high by rank, each rank's suits in the same order.
+ */
+export function sortHand(cards: string[], trumpSuit: string, by: HandSort = "suit"): string[] {
     const order = (card: string) => {
         const { suit, value } = cardFromString(card);
         const suitIndex = suit === trumpSuit ? SUIT_ORDER.length : SUIT_ORDER.indexOf(suit);
-        return suitIndex * 100 + value;
+        if (by === "suit") {
+            return suitIndex * 100 + value;
+        }
+        return (suit === trumpSuit ? 1000 : 0) + value * 10 + suitIndex;
     };
 
     return cards.toSorted((a, b) => order(a) - order(b));
+}
+
+/**
+ * A hand in the order that its player holds it: sorted, or in the order that they arranged
+ * it themselves, without the cards that they no longer hold, and with the cards that they got
+ * since on the end, in their sorted order.
+ */
+export function arrangeHand(sorted: string[], arranged: string[] | null): string[] {
+    if (!arranged) {
+        return sorted;
+    }
+
+    const held = new Set(sorted);
+    const kept = arranged.filter((card) => held.has(card));
+    const placed = new Set(kept);
+    return [...kept, ...sorted.filter((card) => !placed.has(card))];
 }

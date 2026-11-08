@@ -1,5 +1,7 @@
 import PlayingCard from "@/components/game/PlayingCard";
+import { pileLean } from "@/lib/flight";
 import { cn } from "@/lib/utils";
+import { expr } from "@/utils";
 import { cardName, isRedSuit, suitName, suitSymbol } from "@durachok/engine";
 import { Card } from "@durachok/transport";
 
@@ -21,20 +23,28 @@ type DeckProps = {
  */
 export function DeckPile({ size, trump }: DeckProps) {
     const backs = size === null ? PILE_DEPTH : Math.min(size - 1, PILE_DEPTH);
-    const description =
-        size === null
-            ? `Cards are left to draw, the last of them the ${cardName(trump.card)}.`
-            : size > 0
-              ? `${size} ${size === 1 ? "card" : "cards"} left to draw, the last of them the ${cardName(trump.card)}.`
-              : `No cards left to draw. Trumps are ${suitName(trump.suit)}.`;
+    // How much of the deck is left, in a word under it, and in a sentence for screen readers.
+    const { label, left } = expr(() => {
+        const last = `the last of them the ${cardName(trump.card)}`;
+        if (size === null) {
+            return { label: "Deck", left: `Cards are left to draw, ${last}.` };
+        }
+        if (size === 0) {
+            return { label: "Deck empty", left: "No cards left to draw." };
+        }
+        return { label: `${size} left`, left: `${size} ${size === 1 ? "card" : "cards"} left to draw, ${last}.` };
+    });
 
     return (
         <div className="flex flex-col items-center gap-2">
             <div className="relative h-[calc(var(--card-w)*1.4)] w-[calc(var(--card-w)*1.6)]" aria-hidden="true">
+                {/* Where drawn cards come from, which stays when the deck is gone. */}
+                <span data-pile="deck" className="absolute left-0 top-0 aspect-5/7 w-(--card-w)" />
                 {size === null || size > 0 ? (
                     <>
                         <PlayingCard
                             card={trump.card}
+                            trump
                             className="absolute left-[calc(var(--card-w)*0.4)] top-0 rotate-90"
                             aria-hidden="true"
                         />
@@ -51,9 +61,20 @@ export function DeckPile({ size, trump }: DeckProps) {
                     <TrumpSuit suit={trump.suit} className="absolute inset-y-0 left-0" />
                 )}
             </div>
-            <p className="m-0 text-xs text-muted-foreground">
-                <span aria-hidden="true">{size === null ? "Deck" : size > 0 ? `${size} left` : "Deck empty"}</span>
-                <span className="sr-only">{description}</span>
+            <div className="flex flex-col items-center gap-0.5" aria-hidden="true">
+                <span
+                    data-trump={trump.suit}
+                    className="flex items-center gap-1 rounded-full border border-(color:--trump)/70 bg-card/80 px-2 py-0.5 text-xs font-semibold"
+                >
+                    Trumps
+                    <span className={cn("text-base leading-none", isRedSuit(trump.suit) && "text-rose-400")}>
+                        {suitSymbol(trump.suit)}
+                    </span>
+                </span>
+                <span className="text-xs text-muted-foreground">{label}</span>
+            </div>
+            <p className="sr-only">
+                Trumps are {suitName(trump.suit)}. {left}
             </p>
         </div>
     );
@@ -82,18 +103,23 @@ export function DiscardPile({ count }: { count: number | null }) {
     const shown = count === null ? PILE_DEPTH : Math.min(count, PILE_DEPTH);
 
     return (
-        <div className="flex flex-col items-center gap-2">
-            <div className="relative h-[calc(var(--card-w)*1.4)] w-(--card-w)" aria-hidden="true">
+        // The pile's cards lean out of its outline, by as much as the room it leaves them on
+        // either side, so that the pile is as far from the table as the deck is.
+        <div className="flex flex-col items-center gap-2 px-[calc(var(--card-w)*0.135)]">
+            <div data-pile="discard" className="relative h-[calc(var(--card-w)*1.4)] w-(--card-w)" aria-hidden="true">
                 {count === 0 ? (
-                    <span className="absolute inset-0 rounded-[5%/3.6%] border-2 border-dashed" />
+                    // Where the pile goes, leaning like the card at its bottom will.
+                    <span
+                        className="absolute inset-0 rounded-[5%/3.6%] border-2 border-dashed"
+                        style={{ rotate: `${pileLean(0)}deg` }}
+                    />
                 ) : (
                     Array.from({ length: shown }, (_, index) => (
                         <PlayingCard
                             // eslint-disable-next-line react/no-array-index-key -- the cards of a pile are alike
                             key={index}
                             className="absolute left-0 top-0"
-                            // The same untidiness each time, so that the pile doesn't shuffle as it grows.
-                            style={{ rotate: `${((index * 37) % 24) - 12}deg` }}
+                            style={{ rotate: `${pileLean(index)}deg` }}
                         />
                     ))
                 )}

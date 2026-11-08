@@ -132,8 +132,8 @@ export const ErrorMessageSchema = z.object({
     type: ErrorMessageTypeSchema,
     /** An optional schema that indicates any details about the error, i.e. unprocessable fields. */
     details: ErrorSummarySchema.optional(),
-    /** Additional optional information about the error. */
-    message: z.string().optional(),
+    /** What went wrong, in words that the player can read. */
+    message: z.string(),
 });
 
 export type ErrorMessage = z.infer<typeof ErrorMessageSchema>;
