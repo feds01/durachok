@@ -8,6 +8,7 @@ const lobby: Lobby = {
     pin: "123456",
     owner: { id: "owner-id", name: "owner" },
     hasPassphrase: false,
+    version: 1,
     maxPlayers: 4,
     shortGameDeck: false,
     freeForAll: false,
@@ -161,7 +162,7 @@ describe("lobby state", () => {
 
     test("a move waits for the server's answer, whether it takes the move or not", () => {
         const playing = reduceAll([
-            { type: "join", lobby: { ...lobby, status: "playing" }, game },
+            { type: "join", lobby: { ...lobby, status: "playing" }, game: { state: game, version: 1 } },
             { type: "move", move: { type: "place", card: "6S" } },
         ]);
         expect(playing.pending).toEqual({ type: "place", card: "6S" });
@@ -169,6 +170,7 @@ describe("lobby state", () => {
         const answered = reduceLobby(playing, {
             type: "game",
             game: { ...game, tableTop: { "6S": null } },
+            version: 2,
             actions: [{ type: "place", card: "6S", player: "owner" }],
         });
         expect(answered.pending).toBeNull();
@@ -192,7 +194,7 @@ describe("lobby state", () => {
             { name: "owner", out: null },
         ];
         const finished = reduceAll([
-            { type: "join", lobby: { ...lobby, status: "playing" }, game },
+            { type: "join", lobby: { ...lobby, status: "playing" }, game: { state: game, version: 1 } },
             { type: "victory", players },
         ]);
 
@@ -211,5 +213,61 @@ describe("lobby state", () => {
         ]);
 
         expect(state.lobby?.chat).toEqual([message]);
+    });
+
+    test("a message that an update of the lobby already brought isn't added again", () => {
+        const message = { name: "guest", time: 1, message: "hello" };
+        const state = reduceAll([
+            { type: "join", lobby },
+            { type: "lobby", lobby: { ...lobby, version: 2, chat: [message] } },
+            { type: "message", message },
+        ]);
+
+        expect(state.lobby?.chat).toEqual([message]);
+    });
+
+    test("an update of the lobby that arrives after a newer one is left out", () => {
+        const guest = { id: "guest", name: "guest" };
+        const state = reduceAll([
+            { type: "join", lobby },
+            { type: "lobby", lobby: { ...lobby, version: 3, players: [...lobby.players, guest] } },
+            { type: "lobby", lobby: { ...lobby, version: 2 } },
+        ]);
+
+        expect(state.lobby?.version).toBe(3);
+        expect(state.lobby?.players).toHaveLength(2);
+    });
+
+    test("the owner is sent the lobby again at the same version, with the passphrase", () => {
+        const state = reduceAll([
+            { type: "join", lobby },
+            { type: "lobby", lobby: { ...lobby, version: 2, hasPassphrase: true } },
+            { type: "lobby", lobby: { ...lobby, version: 2, hasPassphrase: true, passphrase: "♡♢♣♤" } },
+        ]);
+
+        expect(state.lobby?.passphrase).toBe("♡♢♣♤");
+    });
+
+    test("an update of the game that arrives after a newer one is left out", () => {
+        const placed = { ...game, tableTop: { "6S": null } };
+        const state = reduceAll([
+            { type: "join", lobby: { ...lobby, status: "playing" }, game: { state: game, version: 1 } },
+            { type: "game", game: { ...placed, tableTop: { "6S": "7S" } }, version: 3 },
+            { type: "game", game: placed, version: 2 },
+        ]);
+
+        expect(state.game?.tableTop).toEqual({ "6S": "7S" });
+        expect(state.gameVersion).toBe(3);
+    });
+
+    test("the next game's updates are newer than the last game's", () => {
+        const state = reduceAll([
+            { type: "join", lobby: { ...lobby, status: "playing" }, game: { state: game, version: 40 } },
+            { type: "victory", players: [] },
+            { type: "game", game, version: 41 },
+        ]);
+
+        expect(state.game).toEqual(game);
+        expect(state.gameVersion).toBe(41);
     });
 });

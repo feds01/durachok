@@ -41,10 +41,8 @@ const onJoin = factory.build({
         // Send the player the lobby, and the game if one is being played, e.g. when
         // they rejoin. Only the owner sees the passphrase.
         const lobby = await ctx.lobbyService.get(pin, { withPassphrase: isOwner });
-        await client.emit("join", {
-            lobby,
-            game: lobby.status === "playing" ? await ctx.gameService(lobby).getGameStateFor(name) : undefined,
-        });
+        const game = lobby.status === "playing" ? await ctx.gameService(lobby).getGameStateFor(name) : undefined;
+        await client.emit("join", { lobby, ...(game && { game: game.update, gameVersion: game.version }) });
 
         await withRooms(pin).broadcast("lobbyState", {
             update: {

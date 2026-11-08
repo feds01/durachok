@@ -2,10 +2,11 @@ import { GameStatus } from "@durachok/transport";
 import { Message } from "@durachok/transport";
 import mongoose, { HydratedDocument, MergeType, PopulateDocumentResult, Schema, Types } from "mongoose";
 
+import { Versioned, versioning } from "../lib/database";
 import { DBPlayer } from "../schemas/lobby";
 import { IUser } from "./user.model";
 
-export interface ILobby {
+export interface ILobby extends Versioned {
     pin: string;
     createdAt: Date;
 
@@ -89,6 +90,6 @@ const LobbySchema = new Schema<ILobby>({
         ref: "game",
         required: false,
     },
-});
+}).plugin(versioning);
 
 export default mongoose.model<ILobby>("lobby", LobbySchema);

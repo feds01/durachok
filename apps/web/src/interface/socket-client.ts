@@ -15,6 +15,7 @@ export namespace Root {
                     image?: string | undefined;
                 };
                 hasPassphrase: boolean;
+                version: number;
                 maxPlayers: number;
                 shortGameDeck: boolean;
                 freeForAll: boolean;
@@ -72,6 +73,7 @@ export namespace Root {
                       };
                   }
                 | undefined;
+            gameVersion?: number | undefined;
         }) => void;
         lobbyState: (p1: {
             update:
@@ -98,6 +100,7 @@ export namespace Root {
                     image?: string | undefined;
                 };
                 hasPassphrase: boolean;
+                version: number;
                 maxPlayers: number;
                 shortGameDeck: boolean;
                 freeForAll: boolean;
@@ -165,6 +168,7 @@ export namespace Root {
                     value: number;
                 };
             };
+            version: number;
         }) => void;
         action: (p1: {
             actions: (
@@ -248,6 +252,7 @@ export namespace Root {
                     value: number;
                 };
             };
+            version: number;
         }) => void;
         error: (p1: {
             type: "internal" | "bad_request" | "not_found" | "unauthorized" | "invalid_move" | "stale_game";

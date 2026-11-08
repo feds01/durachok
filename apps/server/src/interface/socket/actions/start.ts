@@ -21,7 +21,7 @@ const onStart = factory.build({
         // Lock in the connected players, and create the game for them.
         const players = await ctx.lobbyService.startGame(pin);
         const lobby = await ctx.lobbyService.get(pin);
-        const game = await ctx.gameService(lobby).create(players);
+        const { game, version } = await ctx.gameService(lobby).create(players);
         logger.info({ ...meta, players }, "game created");
 
         await withRooms(pin).broadcast("lobbyState", { update: { type: "settings_update" }, lobby });
@@ -30,7 +30,7 @@ const onStart = factory.build({
 
         // Send each player the game, with who attacks and defends first.
         await withRooms(pin).broadcast("start");
-        await emitActions(ctx, withRooms, pin, game, game.history.serialize().nodes);
+        await emitActions(ctx, withRooms, pin, game, game.history.serialize().nodes, version);
     },
 });
 

@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, { Query, Schema, UpdateQuery } from "mongoose";
 
 import { MONGO_URI } from "../config";
 import { expr, isDef } from "../utils";
@@ -45,3 +45,21 @@ export const connectDB = async () => {
  * then writes it never acts on one that is out of date, whichever server makes it.
  */
 export const transaction = <T>(func: () => Promise<T>): Promise<T> => mongoose.connection.transaction(func);
+
+/** A document that counts its changes, @see versioning. */
+export interface Versioned {
+    /**
+     * How many times the document has changed. Clients are sent it with each update, so
+     * that they can leave out one that arrives after a newer one.
+     */
+    version: number;
+}
+
+/** A schema plugin that gives its documents a `version`, which every update adds one to. */
+export function versioning(schema: Schema): void {
+    schema.add({ version: { type: Number, required: true, default: 0 } });
+    schema.pre(["updateOne", "findOneAndUpdate"], function (this: Query<unknown, Versioned>) {
+        const update = (this.getUpdate() ?? {}) as UpdateQuery<Versioned>;
+        this.setUpdate({ ...update, $inc: { ...update.$inc, version: 1 } });
+    });
+}

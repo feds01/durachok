@@ -1,5 +1,5 @@
 import { Game } from "@durachok/engine";
-import { Action, PlayerGameState, PlayerMove } from "@durachok/transport";
+import { Action, PlayerMove, StateUpdateMessage } from "@durachok/transport";
 import { Lobby } from "@durachok/transport";
 import { TRPCError } from "@trpc/server";
 import { MongoError } from "mongodb";
@@ -10,10 +10,17 @@ import Games, { GameDocument } from "../models/game.model";
 import { DBGameSchema } from "../schemas/game";
 import { CommonService, InvalidMoveError, PlayerNotInLobbyError } from "./common";
 
-/** The result of a move: the game after it, and the actions that it caused. */
+/** The result of a move: the game after it, the actions that it caused, and the game's version after it. */
 export interface MoveResult {
     game: Game;
     actions: Action[];
+    version: number;
+}
+
+/** A new game, and its version. */
+export interface CreatedGame {
+    game: Game;
+    version: number;
 }
 
 /** Service to orchestrate and manage a game.  */
@@ -47,22 +54,18 @@ export class GameService {
         return Game.fromState(state, history, this.lobby);
     }
 
-    public async get(): Promise<Game> {
-        const game = await this.commonService.getGameDbObject(this.lobby.pin);
-        return this.enrich(game);
-    }
-
-    /** Get a game state for a specific player. */
-    public async getGameStateFor(player: string): Promise<PlayerGameState> {
-        const game = await this.get();
-        return game.getStateForPlayer(player);
+    /** Get a game state for a specific player, with the version of the game that it shows. */
+    public async getGameStateFor(player: string): Promise<StateUpdateMessage> {
+        const raw = await this.commonService.getGameDbObject(this.lobby.pin);
+        const game = await this.enrich(raw);
+        return { update: game.getStateForPlayer(player), version: raw.version };
     }
 
     /**
      * Create the game for the lobby, with the given players and the lobby's settings,
      * replacing any game that it played before.
      */
-    public async create(players: string[]): Promise<Game> {
+    public async create(players: string[]): Promise<CreatedGame> {
         const [first, ...rest] = players;
         if (!first) {
             throw new TRPCError({ code: "BAD_REQUEST", message: "A game needs players" });
@@ -70,9 +73,11 @@ export class GameService {
 
         const lobby = await this.commonService.getLobbyDbObject(this.lobby.pin);
         const game = new Game([first, ...rest], null, this.lobby);
-        await this.save(lobby.id, game);
+        // The lobby's games share one document, so the new game's version counts on from the
+        // last game's, and a player who saw that one takes the new game's updates as newer.
+        const version = await this.save(lobby.id, game);
 
-        return game;
+        return { game, version };
     }
 
     /**
@@ -80,12 +85,15 @@ export class GameService {
      *
      * @param id The ID of the game.
      * @param game The game to save.
+     *
+     * @returns The game's version, now that it is saved.
      * */
-    private async save(id: string, game: Game): Promise<void> {
+    private async save(id: string, game: Game): Promise<number> {
         const raw = game.serialize();
 
         try {
-            await Games.findByIdAndUpdate(id, raw, { upsert: true });
+            const saved = await Games.findByIdAndUpdate(id, raw, { upsert: true, returnDocument: "after" });
+            return saved.version;
         } catch (e: unknown) {
             // Another change got to the game first, so the transaction that the save is in runs again.
             if (e instanceof MongoError && e.hasErrorLabel("TransientTransactionError")) {
@@ -110,7 +118,7 @@ export class GameService {
      * @param name The player to make the move for.
      * @param move The move to make.
      *
-     * @returns The updated game, and the actions that the move caused.
+     * @returns The updated game, the actions that the move caused, and the game's version.
      * */
     public async makeMove(name: string, move: PlayerMove): Promise<MoveResult> {
         return transaction(async () => {
@@ -160,8 +168,8 @@ export class GameService {
                     throw new InvalidMoveError("Can't make a move yet");
             }
 
-            await this.save(raw.id, game);
-            return { game, actions: game.history.serialize().nodes.slice(before) };
+            const version = await this.save(raw.id, game);
+            return { game, actions: game.history.serialize().nodes.slice(before), version };
         });
     }
 }

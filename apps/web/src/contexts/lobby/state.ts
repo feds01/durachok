@@ -1,4 +1,12 @@
-import { Action, Lobby, Message, PlayerGameState, PlayerMove, VictoryMessage } from "@durachok/transport";
+import {
+    Action,
+    Lobby,
+    Message,
+    PlayerGameState,
+    PlayerMove,
+    VictoryMessage,
+    isSameMessage,
+} from "@durachok/transport";
 
 /** Why this client is no longer in the lobby. */
 export type CloseReason =
@@ -39,6 +47,11 @@ export interface LobbyState {
     lobby: Lobby | null;
     /** This player's view of the game, once one is being played. */
     game: PlayerGameState | null;
+    /**
+     * The version of the newest game that the server sent, which goes on counting from one
+     * game to the next, so that an update which arrives after a newer one is left out.
+     */
+    gameVersion: number | null;
     /** The move that this player sent, which the server hasn't answered yet. */
     pending: PlayerMove | null;
     /** What happened in the game's last update, so that the table can show it happening. */
@@ -55,6 +68,7 @@ export const initialLobbyState: LobbyState = {
     connection: { kind: "connecting" },
     lobby: null,
     game: null,
+    gameVersion: null,
     pending: null,
     actions: [],
     results: null,
@@ -64,11 +78,11 @@ export const initialLobbyState: LobbyState = {
 
 /** What happened on the socket, as the lobby state sees it. */
 export type LobbyEvent =
-    | { type: "join"; lobby: Lobby; game?: PlayerGameState }
+    | { type: "join"; lobby: Lobby; game?: { state: PlayerGameState; version: number } }
     | { type: "lobby"; lobby: Lobby }
     | { type: "countdown" }
     | { type: "start" }
-    | { type: "game"; game: PlayerGameState; actions?: Action[] }
+    | { type: "game"; game: PlayerGameState; version: number; actions?: Action[] }
     | { type: "move"; move: PlayerMove }
     | { type: "victory"; players: VictoryMessage["players"] }
     | { type: "dismissResults" }
@@ -88,14 +102,23 @@ export function reduceLobby(state: LobbyState, event: LobbyEvent): LobbyState {
 
     switch (event.type) {
         case "join":
+            // The lobby and game as they are when the player (re)joins, which updates
+            // from before then can't replace.
             return {
                 ...state,
                 connection: { kind: "joined" },
                 lobby: event.lobby,
-                game: event.game ?? null,
+                game: event.game?.state ?? null,
+                gameVersion: event.game?.version ?? state.gameVersion,
                 pending: null,
             };
         case "lobby": {
+            // An update that arrived after a newer one. The same version can come again,
+            // e.g. with the passphrase for the owner, so only an older one is left out.
+            if (state.lobby && event.lobby.version < state.lobby.version) {
+                return state;
+            }
+
             // Updates for the whole room leave out the passphrase, which only the owner was
             // sent, so keep the one they have, unless the lobby no longer has one.
             const passphrase = event.lobby.hasPassphrase
@@ -109,8 +132,19 @@ export function reduceLobby(state: LobbyState, event: LobbyEvent): LobbyState {
         case "start":
             return { ...state, countingDown: false };
         case "game":
+            // An update that arrived after a newer one, whose game the player already sees.
+            if (state.gameVersion !== null && event.version < state.gameVersion) {
+                return state;
+            }
+
             // The server answered the player's move, whether it took it or not.
-            return { ...state, game: event.game, actions: event.actions ?? [], pending: null };
+            return {
+                ...state,
+                game: event.game,
+                gameVersion: event.version,
+                actions: event.actions ?? [],
+                pending: null,
+            };
         case "move":
             return state.game ? { ...state, pending: event.move } : state;
         case "victory":
@@ -125,10 +159,16 @@ export function reduceLobby(state: LobbyState, event: LobbyEvent): LobbyState {
             };
         case "dismissResults":
             return { ...state, results: null };
-        case "message":
-            return state.lobby
-                ? { ...state, lobby: { ...state.lobby, chat: [...state.lobby.chat, event.message] } }
-                : state;
+        case "message": {
+            if (!state.lobby) {
+                return state;
+            }
+
+            // An update of the lobby can bring the message before the message itself arrives.
+            const { message } = event;
+            const seen = state.lobby.chat.some((other) => isSameMessage(other, message));
+            return seen ? state : { ...state, lobby: { ...state.lobby, chat: [...state.lobby.chat, message] } };
+        }
         case "close": {
             const reason = isServerCloseReason(event.reason) ? event.reason : "lobby_closed";
             return { ...state, connection: { kind: "closed", reason } };

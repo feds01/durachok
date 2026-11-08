@@ -26,6 +26,11 @@ export const MessageSchema = z.object({
 
 export type Message = z.infer<typeof MessageSchema>;
 
+/** Whether two messages are the same one, e.g. when a player is sent a message twice. */
+export function isSameMessage(a: Message, b: Message): boolean {
+    return a.time === b.time && a.name === b.name && a.message === b.message;
+}
+
 /** A schema that represents the lobby settings. */
 export const LobbySettingsSchema = z.object({
     /** Maximum number of players in the lobby. */
@@ -67,6 +72,11 @@ export const LobbySchema = z
         owner: PlayerSchema,
         /** Whether players need the passphrase to join. Only the owner is sent the passphrase itself. */
         hasPassphrase: z.boolean(),
+        /**
+         * How many times the lobby has changed. Updates can arrive out of order, so a client
+         * keeps the lobby with the highest version that it was sent.
+         */
+        version: z.number().int(),
     })
     .merge(LobbySettingsSchema)
     .merge(LobbyStateSchema);

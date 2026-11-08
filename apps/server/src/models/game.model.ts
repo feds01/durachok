@@ -2,7 +2,10 @@ import { HistoryState } from "@durachok/engine";
 import { GameState } from "@durachok/transport";
 import mongoose, { HydratedDocument, Schema } from "mongoose";
 
-export interface IGame {
+import { Versioned, versioning } from "../lib/database";
+
+/** A lobby's game. A lobby's games share one document, so a new game's version counts on from the last's. */
+export interface IGame extends Versioned {
     history: HistoryState;
     state: GameState;
 }
@@ -36,6 +39,6 @@ const GameSchema = new Schema<IGame>({
             tableTop: { type: Map, of: String },
         },
     },
-});
+}).plugin(versioning);
 
 export default mongoose.model<IGame>("game", GameSchema);

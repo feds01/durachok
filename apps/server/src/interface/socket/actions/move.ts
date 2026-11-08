@@ -40,8 +40,8 @@ const onMove = factory.build({
         const gameService = ctx.gameService(lobby);
 
         try {
-            const { game, actions } = await gameService.makeMove(name, move);
-            await emitActions(ctx, withRooms, pin, game, actions);
+            const { game, actions, version } = await gameService.makeMove(name, move);
+            await emitActions(ctx, withRooms, pin, game, actions, version);
 
             if (game.isFinished()) {
                 logger.info(meta, "game finished");
@@ -62,7 +62,7 @@ const onMove = factory.build({
             // undo whatever they showed before the server answered.
             logger.warn({ ...meta, reason: e.message }, "invalid move");
             await client.emit("error", { type: "invalid_move", message: e.message });
-            await client.emit("playerState", { update: await gameService.getGameStateFor(name) });
+            await client.emit("playerState", await gameService.getGameStateFor(name));
         }
     },
 });
