@@ -5,7 +5,8 @@
             "dependsOn": ["^check"]
         },
         "test": {
-            "dependsOn": ["^test"]
+            "dependsOn": ["^test"],
+            "passThroughEnv": ["TEST_MONGODB_URI", "TEST_SERVER_LOG"]
         },
         "build": {
             "dependsOn": ["^build"],

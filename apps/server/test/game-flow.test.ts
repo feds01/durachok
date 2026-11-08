@@ -16,16 +16,28 @@ const DB_URI = `${MONGO}/durachok-test-${crypto.randomUUID().slice(0, 8)}`;
 const PORT = 20000 + Math.floor(Math.random() * 10000);
 const BASE = `http://localhost:${PORT}`;
 
-/** Whether MongoDB answers. CI must have it, so waits for it to start there. */
+/**
+ * Whether MongoDB answers. CI must have it, so waits for it to start there. It must be a
+ * replica set, since the server changes lobbies in transactions.
+ */
 async function mongoAvailable(): Promise<boolean> {
+    let connection: mongoose.Connection;
     try {
-        const connection = await mongoose
+        connection = await mongoose
             .createConnection(MONGO, { serverSelectionTimeoutMS: process.env.CI ? 30_000 : 1000 })
             .asPromise();
-        await connection.close();
-        return true;
     } catch {
         return false;
+    }
+
+    try {
+        const hello = await connection.db?.admin().command({ hello: 1 });
+        if (!hello?.setName) {
+            throw new Error(`MongoDB at ${MONGO} isn't a replica set, which the server needs. Run \`just db\`.`);
+        }
+        return true;
+    } finally {
+        await connection.close();
     }
 }
 
@@ -130,8 +142,12 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-    sockets.forEach((socket) => socket.close());
+    // Stop the server before the sockets close, so that it doesn't start a transaction for
+    // each of them as it stops, which MongoDB would hold open, and keep the database from
+    // being dropped, until it expires.
     server?.kill();
+    await server?.exited;
+    sockets.forEach((socket) => socket.close());
 
     if (available) {
         const connection = await mongoose.createConnection(DB_URI).asPromise();
@@ -408,4 +424,149 @@ describe.skipIf(!available)("Game flow", () => {
         guest.emit("settings", pin, settings);
         expect((await notOwner).type).toBe("unauthorized");
     }, 30_000);
+});
+
+/** Register an owner, and create a lobby of theirs with a short deck. */
+async function createLobby(prefix: string, maxPlayers: number) {
+    const name = `${prefix}-${crypto.randomUUID().slice(0, 8)}`;
+    const tokens = await trpc<Tokens>("auth.register", {
+        name,
+        email: `${name}@example.com`,
+        password: "Password123!",
+        reCaptchaToken: "test",
+    });
+    const { pin } = await trpc<{ pin: string }>(
+        "lobbies.create",
+        { settings: { maxPlayers, passphrase: false, shortGameDeck: true, roundTimeout: 120 } },
+        tokens,
+    );
+    return { pin, tokens };
+}
+
+/** Connect a player to a lobby, resolving once the server has sent them the lobby. */
+async function enter(pin: string, tokens: Tokens): Promise<Socket> {
+    const socket = await connect(tokens);
+    sockets.push(socket);
+    const joined = next(socket, "join");
+    socket.emit("join", pin);
+    await joined;
+    return socket;
+}
+
+/** Join a lobby as an anonymous player, and connect to it. */
+async function joinAs(pin: string, name: string): Promise<Socket> {
+    return enter(pin, await trpc<Tokens>("lobbies.join", { pin, name }));
+}
+
+type StoredPlayer = { name: string; socket: string | null };
+
+/** Read a lobby's players and status, and its game's players, as the database has them. */
+async function stored(pin: string) {
+    const connection = await mongoose.createConnection(DB_URI).asPromise();
+    try {
+        const lobby = await connection.collection("lobbies").findOne({ pin });
+        // A lobby's game has the lobby's id.
+        const game = lobby && (await connection.collection("games").findOne({ _id: lobby._id }));
+        return {
+            status: lobby?.status as string | undefined,
+            players: (lobby?.players ?? []) as StoredPlayer[],
+            inGame: Object.keys(game?.state?.players ?? {}).toSorted(),
+        };
+    } finally {
+        await connection.close();
+    }
+}
+
+const names = (players: StoredPlayer[]) => players.map((p) => p.name).toSorted();
+
+/**
+ * Players who do things at the same time, which the server takes one at a time: each
+ * test races requests, and checks that the lobby comes out right whichever wins.
+ */
+describe.skipIf(!available)("Players at the same time", () => {
+    /**
+     * How long after the first request the second is sent, in a lobby of its own for each,
+     * so that the second lands at each step of the first, wherever its checks and writes are.
+     */
+    const DELAYS = [0, 1, 2, 4, 8];
+
+    test("players who join at once can't share a name, or take more places than there are", async () => {
+        const { pin } = await createLobby("crowd", 3);
+
+        // Many players ask for the same name at once, and only one of them gets it.
+        const twins = await Promise.allSettled(
+            Array.from({ length: 30 }, () => trpc<Tokens>("lobbies.join", { pin, name: "twin" })),
+        );
+        expect(twins.filter(({ status }) => status === "fulfilled")).toHaveLength(1);
+        for (const result of twins) {
+            if (result.status === "rejected") expect(String(result.reason)).toContain("User already in lobby");
+        }
+
+        // One place is left, and only one of the players who ask for it gets it.
+        const others = await Promise.allSettled(
+            Array.from({ length: 10 }, (_, i) => trpc<Tokens>("lobbies.join", { pin, name: `p${i}` })),
+        );
+        expect(others.filter(({ status }) => status === "fulfilled")).toHaveLength(1);
+
+        const { players } = await stored(pin);
+        expect(players).toHaveLength(3);
+        expect(new Set(names(players)).size).toBe(3);
+    }, 15_000);
+
+    test("a player kicked as the game starts is in the game, or out of the lobby, as they were told", async () => {
+        await Promise.all(
+            DELAYS.map(async (delay) => {
+                const { pin, tokens } = await createLobby("kicker", 3);
+                const owner = await enter(pin, tokens);
+                const kicked = await joinAs(pin, "a");
+                await joinAs(pin, "b");
+
+                // The player hears that they were kicked, or the owner that they couldn't kick them.
+                const outcome = new Promise<"kicked" | "refused">((resolve) => {
+                    kicked.once("close", () => resolve("kicked"));
+                    owner.once("error", () => resolve("refused"));
+                });
+                const dealt = next(owner, "action");
+                owner.emit("kick", pin, { name: "a" });
+                await Bun.sleep(delay);
+                owner.emit("start", pin);
+                await dealt;
+
+                const wasKicked = (await outcome) === "kicked";
+                const { status, players, inGame } = await stored(pin);
+                expect(status).toBe("playing");
+                expect(inGame).toEqual(names(players));
+                expect(inGame.includes("a")).toBe(!wasKicked);
+            }),
+        );
+    }, 20_000);
+
+    test("a player who leaves as the game starts doesn't keep a connection that's gone", async () => {
+        await Promise.all(
+            DELAYS.map(async (delay) => {
+                const { pin, tokens } = await createLobby("leaver", 3);
+                const owner = await enter(pin, tokens);
+                await joinAs(pin, "a");
+                const leaver = await joinAs(pin, "b");
+
+                const dealt = next(owner, "action");
+                owner.emit("start", pin);
+                await Bun.sleep(delay);
+                leaver.close();
+                await dealt;
+
+                // Leaving before the game starts gives up the place, and after keeps it, without
+                // a connection, so that they can rejoin.
+                let lobby = await stored(pin);
+                for (let attempt = 0; lobby.players.some((p) => p.name === "b" && p.socket !== null); attempt++) {
+                    if (attempt > 50) {
+                        throw new Error(`b kept a connection that closed: ${JSON.stringify(lobby.players)}`);
+                    }
+                    await Bun.sleep(20);
+                    lobby = await stored(pin);
+                }
+                expect(lobby.inGame).toEqual(names(lobby.players));
+            }),
+        );
+    }, 20_000);
 });

@@ -78,14 +78,6 @@ jobs:
     test:
         name: Test
         runs-on: ubuntu-latest
-        # The server's tests play games through it, against a real MongoDB. MongoDB 8
-        # refuses to start on the runner's kernel (6.19 or newer, SERVER-121912), so
-        # CI runs MongoDB 7.
-        services:
-            mongo:
-                image: mongo:7
-                ports:
-                    - 27017:27017
         steps:
             - uses: actions/checkout@v7
 
@@ -97,6 +89,21 @@ jobs:
 
             - name: Install dependencies
               run: just install
+
+            # The server's tests play games through it, against a real MongoDB, as a
+            # replica set of one, since the server changes lobbies in transactions. A
+            # service container can't be started as one, so it runs here. MongoDB 8
+            # refuses to start on the runner's kernel (6.19 or newer, SERVER-121912), so
+            # CI runs MongoDB 7.
+            - name: Start MongoDB
+              run: |
+                  docker run --detach --name mongo --publish 27017:27017 mongo:7 --replSet rs0
+                  for attempt in $(seq 60); do
+                      docker exec mongo mongosh --quiet --eval "try { rs.status() } catch (e) { rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: 'localhost:27017' }] }) } quit(db.hello().isWritablePrimary ? 0 : 1)" && exit 0
+                      sleep 1
+                  done
+                  echo "MongoDB didn't start as a replica set" >&2
+                  exit 1
 
             - name: Run tests
               run: just test

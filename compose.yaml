@@ -5,13 +5,22 @@ name: durachok
 services:
     mongo:
         image: mongo:8
+        # A replica set of one, since the server changes lobbies in transactions,
+        # which a standalone MongoDB doesn't have.
+        command: ["--replSet", "rs0"]
         restart: unless-stopped
         ports:
             - "127.0.0.1:27017:27017"
         volumes:
             - mongo-data:/data/db
         healthcheck:
-            test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+            # Sets up the replica set the first time, and is healthy once it takes writes.
+            test:
+                - CMD
+                - mongosh
+                - --quiet
+                - --eval
+                - "try { rs.status() } catch (e) { rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: 'localhost:27017' }] }) } quit(db.hello().isWritablePrimary ? 0 : 1)"
             interval: 2s
             timeout: 5s
             retries: 30

@@ -111,15 +111,7 @@ export const lobbyRouter = router({
             return { name: input.name, socket: null, confirmed: false };
         });
 
-        // We need to determine whether the `name` is taken or not.
-        const isUserInLobby = await ctx.lobbyService.isUserInLobby(input.pin, player.name, player.registered);
-        if (isUserInLobby) {
-            throw new TRPCError({
-                code: "BAD_REQUEST",
-                message: "User already in lobby",
-            });
-        }
-
+        // Add the player, if the lobby still has a place for them, and their name isn't taken.
         await ctx.lobbyService.addUserTo(input.pin, player);
 
         // Okay, now we need to determine whether this is an "anonymous" user,
