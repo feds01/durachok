@@ -6,7 +6,15 @@ import { InvalidGameState } from "./errors/InvalidGameState";
 import { History, HistoryState } from "./history";
 import { Table, beats, passesAttack, rankOnTable, roomForAttack } from "./rules";
 
-import { Card, GamePlayer, GameState, GameStatus, PlayerGameState, SpectatorGameState } from "@durachok/transport";
+import {
+    Card,
+    GamePlayer,
+    GameState,
+    GameStatus,
+    PlayerGameState,
+    PlayerMove,
+    SpectatorGameState,
+} from "@durachok/transport";
 
 /** Options for the game. */
 export interface GameSettings {
@@ -976,6 +984,38 @@ export class Game {
         const discarded = generateCardDeck(this.settings.shortGameDeck).length - inPlay;
 
         return this.settings.mythicMode && discarded > 0 ? null : discarded;
+    }
+
+    /**
+     * Make a move for a player, as a client sends it: an attacker places a card or says that
+     * they're done, and the defender beats a card, passes the attack on, or takes the cards.
+     *
+     * @throws InvalidGameState if the player can't make the move.
+     */
+    public makeMove(name: string, move: PlayerMove): void {
+        if (this.isFinished()) {
+            throw new InvalidGameState("The game has finished");
+        }
+
+        const player = this.getPlayer(name);
+        if (player.action === "none") {
+            throw new InvalidGameState("Can't make a move yet");
+        }
+
+        switch (move.type) {
+            case "place":
+                this.addCardToTableTop(name, move.card);
+                break;
+            case "cover":
+                if (player.action === "attack") {
+                    throw new InvalidGameState("Can't cover a card when attacking");
+                }
+                this.coverCardOnTableTop(move.card, move.position);
+                break;
+            case "forfeit":
+                this.finalisePlayerTurn(name);
+                break;
+        }
     }
 
     /**

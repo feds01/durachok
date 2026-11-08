@@ -241,3 +241,38 @@ describe("Game tests", () => {
         expect(() => game.addCardToTableTop("b", "7D")).toThrow("taking the cards");
     });
 });
+
+describe("Making a move", () => {
+    test("an attacker places a card, and the defender beats it", () => {
+        const game = twoPlayers({ a: ["6S", "7S"], b: ["8S", "9D"] });
+
+        game.makeMove("a", { type: "place", card: "6S" });
+        game.makeMove("b", { type: "cover", card: "8S", position: 0 });
+
+        expect(Object.fromEntries(game.tableTop)).toEqual({ "6S": "8S" });
+    });
+
+    test("an attacker can't beat a card", () => {
+        const game = twoPlayers({ a: ["6S", "7S"], b: ["8S", "9D"] });
+        game.makeMove("a", { type: "place", card: "6S" });
+
+        expect(() => game.makeMove("a", { type: "cover", card: "7S", position: 0 })).toThrow(
+            "Can't cover a card when attacking",
+        );
+    });
+
+    test("a player waiting for the round's attacker can't move yet", () => {
+        const game = new Game(["a", "b", "c"], null, { ...DEFAULT_SETTINGS, randomisePlayerOrder: false });
+        game.trump = cardFromString("2H");
+        setUpRound(game, { hands: { a: ["6S"], b: ["8S"], c: ["6D"] }, attacker: "a", defender: "b", deck: [] });
+
+        expect(() => game.makeMove("c", { type: "place", card: "6D" })).toThrow("Can't make a move yet");
+    });
+
+    test("nobody can move once the game has finished", () => {
+        const game = twoPlayers({ a: ["6S"], b: ["8S"] });
+        game.status = "finished";
+
+        expect(() => game.makeMove("a", { type: "place", card: "6S" })).toThrow("The game has finished");
+    });
+});

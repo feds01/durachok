@@ -8,7 +8,7 @@ import { Logger } from "pino";
 import { transaction } from "../lib/database";
 import Games, { GameDocument } from "../models/game.model";
 import { DBGameSchema } from "../schemas/game";
-import { CommonService, InvalidMoveError, PlayerNotInLobbyError } from "./common";
+import { CommonService, PlayerNotInLobbyError } from "./common";
 
 /** The result of a move: the game after it, the actions that it caused, and the game's version after it. */
 export interface MoveResult {
@@ -125,48 +125,12 @@ export class GameService {
             const raw = await this.commonService.getGameDbObject(this.lobby.pin);
             const game = await this.enrich(raw);
 
-            if (game.isFinished()) {
-                throw new InvalidMoveError("The game has finished");
-            }
-
             if (!game.players.has(name)) {
                 throw new PlayerNotInLobbyError();
             }
 
-            const player = game.getPlayer(name);
             const before = game.history.serialize().nodes.length;
-
-            switch (player.action) {
-                case "attack": {
-                    switch (move.type) {
-                        case "place":
-                            game.addCardToTableTop(name, move.card);
-                            break;
-                        case "forfeit":
-                            game.finalisePlayerTurn(name);
-                            break;
-                        case "cover":
-                            throw new InvalidMoveError("Can't cover a card when attacking");
-                    }
-                    break;
-                }
-                case "defend": {
-                    switch (move.type) {
-                        case "forfeit":
-                            game.finalisePlayerTurn(name);
-                            break;
-                        case "place":
-                            game.addCardToTableTop(name, move.card);
-                            break;
-                        case "cover":
-                            game.coverCardOnTableTop(move.card, move.position);
-                            break;
-                    }
-                    break;
-                }
-                case "none":
-                    throw new InvalidMoveError("Can't make a move yet");
-            }
+            game.makeMove(name, move);
 
             const version = await this.save(raw.id, game);
             return { game, actions: game.history.serialize().nodes.slice(before), version };

@@ -39,15 +39,9 @@ function clone(game: Game, settings: GameSettings): Game {
     return Game.fromState(state, history, settings);
 }
 
-function apply(game: Game, move: Move) {
-    switch (move.type) {
-        case "place":
-            return game.addCardToTableTop(move.player, move.card);
-        case "cover":
-            return game.coverCardOnTableTop(move.card, move.position);
-        case "forfeit":
-            return game.finalisePlayerTurn(move.player);
-    }
+/** Make a move, as the server does with one that a player sends. */
+function apply(game: Game, { player, ...move }: Move) {
+    game.makeMove(player, move);
 }
 
 /** The moves that the server would pass on to the engine, as its `move` handler does. */
