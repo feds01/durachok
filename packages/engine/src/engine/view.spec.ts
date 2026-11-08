@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { GamePlayer, OpaquePlayerState, PlayerGameState } from "@durachok/transport";
 
-import { applyMove, canCover, canForfeit, canPlace, movesFor, tableCards, turnOf } from "./view";
+import { applyMove, canCover, canForfeit, canPlace, movesFor, tableCards, turnOf, visibleHands } from "./view";
 
 /** A game between "me" and "them", with hearts as trumps, me attacking and them defending. */
 function game(overrides: {
@@ -258,5 +258,31 @@ describe("a defender who takes the cards", () => {
 
         expect(canCover(taking, "QD", 0)).toBe(false);
         expect(canPlace(taking, "7S")).toBe(false);
+    });
+});
+
+describe("the hands that a player can see", () => {
+    const out = { me: { out: 1, deck: [], action: "none" as const } };
+    const shown = (cards: string[]) => ({ type: "visible" as const, cards });
+
+    test("none while the player is still in the game", () => {
+        expect(visibleHands(game({}))).toEqual([]);
+    });
+
+    test("everyone's still in the game once the player is out, each sorted with the trumps last", () => {
+        const state = game({
+            ...out,
+            them: { deck: shown(["9H", "6S", "QD"]) },
+            others: [
+                { name: "gone", deck: shown([]), out: 2, turned: false, beganRound: false, action: "none" },
+                { name: "third", deck: shown(["7C"]), out: null, turned: false, beganRound: false, action: "attack" },
+            ],
+        });
+
+        expect(visibleHands(state)).toEqual([
+            { name: "them", cards: ["6S", "QD", "9H"] },
+            { name: "third", cards: ["7C"] },
+        ]);
+        expect(visibleHands(state, "third").map(({ name }) => name)).toEqual(["third", "them"]);
     });
 });

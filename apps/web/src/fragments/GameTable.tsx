@@ -17,6 +17,7 @@ import Logo from "@/components/Logo";
 import UserAvatar from "@/components/UserAvatar";
 import ActionCard from "@/components/game/ActionCard";
 import CardFlights from "@/components/game/CardFlights";
+import HandsDialog from "@/components/game/HandsDialog";
 import PlayerHand from "@/components/game/Hand";
 import OpponentSeat from "@/components/game/OpponentSeat";
 import { DeckPile, DiscardPile } from "@/components/game/Piles";
@@ -48,6 +49,7 @@ import {
     suitOf,
     tableCards,
     turnOf,
+    visibleHands,
 } from "@durachok/engine";
 import { Lobby, PlayerGameState, PlayerMove } from "@durachok/transport";
 
@@ -76,6 +78,8 @@ export default function GameTable({ lobby, game }: Props) {
     const [byRank, setByRank] = usePreference("sortByRank");
     // The order that the player put their cards in by hand, until they sort them again.
     const [arranged, setArranged] = useState<string[] | null>(null);
+    // The player whose cards a player who is out of the game asked to see.
+    const [shownHand, setShownHand] = useState<string | null>(null);
     const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
     // The server's view, as the player's own move doesn't change their role or clear the table.
     const [announcement, dismissAnnouncement] = useRoundAnnouncement(game);
@@ -86,6 +90,8 @@ export default function GameTable({ lobby, game }: Props) {
     const me = player.name;
     const table = tableCards(view);
     const turn = turnOf(view);
+    // Once out of the game, the player can see the hands still in it, the one they clicked first.
+    const seenHands = visibleHands(view, shownHand ?? undefined);
     const hand = useMemo(
         () => arrangeHand(sortHand(player.deck, trump.suit, byRank ? "rank" : "suit"), arranged),
         [player.deck, trump.suit, byRank, arranged],
@@ -275,9 +281,21 @@ export default function GameTable({ lobby, game }: Props) {
                                 player={other}
                                 image={imageOf(other.name)}
                                 place={placeOf(other.name)}
+                                onShowCards={
+                                    seenHands.some(({ name }) => name === other.name)
+                                        ? () => setShownHand(other.name)
+                                        : undefined
+                                }
                             />
                         ))}
                     </ul>
+                    <HandsDialog
+                        hands={seenHands}
+                        focus={shownHand}
+                        trumpSuit={trump.suit}
+                        imageOf={imageOf}
+                        onClose={() => setShownHand(null)}
+                    />
 
                     {/* The deck and the discard pile take columns as wide as each other, as far from the table. */}
                     <div className="mx-auto grid w-full max-w-6xl flex-1 grid-cols-2 items-center gap-4 px-4 py-4 sm:grid-cols-[calc(var(--card-w)*1.6)_1fr_calc(var(--card-w)*1.6)]">
@@ -328,6 +346,10 @@ export default function GameTable({ lobby, game }: Props) {
                             <span className="font-semibold">{me}</span>
                             <RoleBadge action={player.action} turned={player.turned} place={placeOf(me)} />
                         </div>
+                        {/* Out of the game, the player can look at the hands still in it, whether or not hints are on. */}
+                        {seenHands.length > 0 && (
+                            <p className="m-0 text-sm text-muted-foreground">Click a player to see their cards.</p>
+                        )}
                         {/*
                          * The hand stays in the middle of the table, between a column for sorting it, under
                          * the deck, so that it stays put however many cards the player holds, and one for

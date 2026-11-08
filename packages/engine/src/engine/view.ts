@@ -1,5 +1,6 @@
 import { OpaquePlayerState, PlayerGameState, PlayerMove } from "@durachok/transport";
 
+import { sortHand } from "./card";
 import { TableSize } from "./consts";
 import { Table, beats, passesAttack, rankOnTable, roomForAttack, uncoveredCount } from "./rules";
 
@@ -19,6 +20,26 @@ export function tableCards(state: PlayerGameState): TableCard[] {
 
 function tableOf(state: PlayerGameState): Table {
     return Object.entries(state.tableTop);
+}
+
+/** Another player's hand, which a player can see. */
+export interface SeenHand {
+    name: string;
+    /** The cards, sorted by suit with the trumps last, as a player's own hand is. */
+    cards: string[];
+}
+
+/**
+ * The hands of the other players that a player can see, which are those of everyone still in the
+ * game once the player is out of it, and none before.
+ *
+ * @param first - The player whose hand goes first, e.g. the one that was asked for.
+ */
+export function visibleHands(state: PlayerGameState, first?: string): SeenHand[] {
+    const hands = state.players.flatMap(({ name, out, deck }) =>
+        out === null && deck.type === "visible" ? [{ name, cards: sortHand(deck.cards, state.trump.suit) }] : [],
+    );
+    return hands.toSorted((a, b) => Number(b.name === first) - Number(a.name === first));
 }
 
 /** How many cards another player holds, whether or not this player can see them, or null in mythic mode. */
