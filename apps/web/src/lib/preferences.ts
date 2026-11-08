@@ -5,9 +5,13 @@ import { useState } from "react";
  * browser remembers if it can. Without storage, a choice lasts until the page reloads.
  */
 
-export type Preference = "muted" | "hints";
+export type Preference =
+    | "muted"
+    | "hints"
+    /** Whether the player's cards are sorted by rank, rather than by suit. */
+    | "sortByRank";
 
-const DEFAULTS: Record<Preference, boolean> = { muted: false, hints: false };
+const DEFAULTS: Record<Preference, boolean> = { muted: false, hints: false, sortByRank: false };
 
 export function readPreference(preference: Preference): boolean {
     try {

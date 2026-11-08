@@ -42,7 +42,7 @@ export default function OpponentSeat({ player, image, place }: Props) {
                 <span className="max-w-28 truncate text-sm font-semibold">{player.name}</span>
             </div>
             {/* Small cards, face up for a player who is out of the game and may see them. */}
-            <div className="flex h-[calc(var(--card-w)*1.4)] items-center [--card-w:22px]">
+            <div data-seat={player.name} className="flex h-[calc(var(--card-w)*1.4)] items-center [--card-w:22px]">
                 {Array.from({ length: shown }, (_, index) => (
                     <PlayingCard
                         // eslint-disable-next-line react/no-array-index-key -- a hidden hand's cards are alike
