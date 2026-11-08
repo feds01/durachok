@@ -12,9 +12,23 @@ const proxy = {
     "/socket.io": { target: API_TARGET, changeOrigin: true, ws: true },
 };
 
-// A Cloudflare quick tunnel (`cloudflared tunnel --url http://localhost:5173`) lets a friend
-// play against a server on this machine, from an address that Vite would otherwise refuse.
-const allowedHosts = [".trycloudflare.com"];
+const allowedHosts = [
+    /*
+     * A Cloudflare quick tunnel (`cloudflared tunnel --url http://localhost:5173`) or an ngrok one
+     * (`ngrok http 5173`) lets a friend play against a server on this machine, from an address
+     * that Vite would otherwise refuse.
+     * */
+    ".trycloudflare.com",
+
+    /*
+     * Ngrok's domains for free accounts, then for paid ones, then its older one.
+     */
+    ".ngrok-free.app",
+    ".ngrok-free.dev",
+    ".ngrok.app",
+    ".ngrok.dev",
+    ".ngrok.io",
+];
 
 // https://vitejs.dev/config/
 export default defineConfig({
