@@ -25,6 +25,8 @@ export {
     movesFor,
     tableCards,
     turnOf,
+    visibleHands,
+    type SeenHand,
     type TableCard,
     type Turn,
 } from "./engine/view";

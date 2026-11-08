@@ -19,24 +19,18 @@ type Props = {
     image?: string;
     /** The player's place, once they're out of the game. */
     place?: number;
+    /** Show the player's whole hand, for a player who can see it. Without it, the seat isn't a button. */
+    onShowCards?: () => void;
 };
 
 /** Another player at the table: who they are, how many cards they hold, and what they're doing. */
-export default function OpponentSeat({ player, image, place }: Props) {
+export default function OpponentSeat({ player, image, place, onShowCards }: Props) {
     const count = handSize(player);
     const shown = count === null ? SECRET_HAND : Math.min(count, SHOWN_CARDS);
     const inRound = player.out === null && player.action !== "none" && !player.turned;
 
-    return (
-        <motion.li
-            layout
-            className={cn(
-                "flex min-w-32 flex-col items-center gap-2 rounded-xl border bg-card/80 px-3 py-2 shadow-sm backdrop-blur-sm transition-shadow",
-                inRound && player.action === "attack" && "border-amber-400/60",
-                inRound && player.action === "defend" && "border-sky-400/60",
-                player.out !== null && "opacity-70",
-            )}
-        >
+    const content = (
+        <>
             <div className="flex items-center gap-2">
                 <UserAvatar image={image} size={28} />
                 <span className="max-w-28 truncate text-sm font-semibold">{player.name}</span>
@@ -62,6 +56,31 @@ export default function OpponentSeat({ player, image, place }: Props) {
                 )}
             </div>
             <RoleBadge action={player.action} turned={player.turned} place={place} />
+        </>
+    );
+
+    return (
+        <motion.li
+            layout
+            className={cn(
+                "flex min-w-32 flex-col items-center gap-2 rounded-xl border bg-card/80 px-3 py-2 shadow-sm backdrop-blur-sm transition-shadow",
+                inRound && player.action === "attack" && "border-amber-400/60",
+                inRound && player.action === "defend" && "border-sky-400/60",
+                player.out !== null && "opacity-70",
+            )}
+        >
+            {onShowCards ? (
+                <button
+                    type="button"
+                    onClick={onShowCards}
+                    title={`See ${player.name}'s cards`}
+                    className="flex cursor-pointer flex-col items-center gap-2 rounded-lg transition-transform hover:-translate-y-0.5"
+                >
+                    {content}
+                </button>
+            ) : (
+                content
+            )}
         </motion.li>
     );
 }
