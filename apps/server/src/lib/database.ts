@@ -46,13 +46,20 @@ export const connectDB = async () => {
  */
 export const transaction = <T>(func: () => Promise<T>): Promise<T> => mongoose.connection.transaction(func);
 
-/**
- * Count every change to a schema's documents in their `version`. Clients are sent it
- * with each update, so that they can leave out one that arrives after a newer one.
- */
-export function countChanges<T extends { version: number }>(schema: Schema<T>): void {
-    schema.pre(["updateOne", "findOneAndUpdate"], function (this: Query<unknown, T>) {
-        const update = (this.getUpdate() ?? {}) as UpdateQuery<T>;
+/** A document that counts its changes, @see versioning. */
+export interface Versioned {
+    /**
+     * How many times the document has changed. Clients are sent it with each update, so
+     * that they can leave out one that arrives after a newer one.
+     */
+    version: number;
+}
+
+/** A schema plugin that gives its documents a `version`, which every update adds one to. */
+export function versioning(schema: Schema): void {
+    schema.add({ version: { type: Number, required: true, default: 0 } });
+    schema.pre(["updateOne", "findOneAndUpdate"], function (this: Query<unknown, Versioned>) {
+        const update = (this.getUpdate() ?? {}) as UpdateQuery<Versioned>;
         this.setUpdate({ ...update, $inc: { ...update.$inc, version: 1 } });
     });
 }

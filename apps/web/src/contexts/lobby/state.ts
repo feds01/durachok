@@ -1,4 +1,12 @@
-import { Action, Lobby, Message, PlayerGameState, PlayerMove, VictoryMessage } from "@durachok/transport";
+import {
+    Action,
+    Lobby,
+    Message,
+    PlayerGameState,
+    PlayerMove,
+    VictoryMessage,
+    isSameMessage,
+} from "@durachok/transport";
 
 /** Why this client is no longer in the lobby. */
 export type CloseReason =
@@ -158,10 +166,7 @@ export function reduceLobby(state: LobbyState, event: LobbyEvent): LobbyState {
 
             // An update of the lobby can bring the message before the message itself arrives.
             const { message } = event;
-            const seen = state.lobby.chat.some(
-                (other) =>
-                    other.time === message.time && other.name === message.name && other.message === message.message,
-            );
+            const seen = state.lobby.chat.some((other) => isSameMessage(other, message));
             return seen ? state : { ...state, lobby: { ...state.lobby, chat: [...state.lobby.chat, message] } };
         }
         case "close": {

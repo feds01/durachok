@@ -1,5 +1,6 @@
 import { ActionSchema, PlayerGameStateSchema } from "../schemas/game";
 import { LobbySchema } from "../schemas/lobby";
+import { isDef } from "../utils";
 import { z } from "zod";
 
 const LobbyUpdateSchema = z.union([
@@ -49,7 +50,7 @@ export const PlayerJoinSchema = z
             // assume when a `playing` status is set, that the game state is
             // always present.
             if (value.lobby.status === "playing") {
-                return typeof value.game !== "undefined" && typeof value.gameVersion !== "undefined";
+                return isDef(value.game) && isDef(value.gameVersion);
             }
 
             return true;

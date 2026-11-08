@@ -2,11 +2,11 @@ import { GameStatus } from "@durachok/transport";
 import { Message } from "@durachok/transport";
 import mongoose, { HydratedDocument, MergeType, PopulateDocumentResult, Schema, Types } from "mongoose";
 
-import { countChanges } from "../lib/database";
+import { Versioned, versioning } from "../lib/database";
 import { DBPlayer } from "../schemas/lobby";
 import { IUser } from "./user.model";
 
-export interface ILobby {
+export interface ILobby extends Versioned {
     pin: string;
     createdAt: Date;
 
@@ -27,9 +27,6 @@ export interface ILobby {
     chat: Message[];
     owner: Types.ObjectId;
     game: Types.ObjectId | null;
-
-    /** How many times the lobby has changed, @see countChanges. */
-    version: number;
 }
 
 export type LobbyDocument = HydratedDocument<ILobby>;
@@ -63,7 +60,6 @@ const LobbySchema = new Schema<ILobby>({
     },
     createdAt: { type: Date, required: true, default: Date.now },
     status: { type: String, required: true, default: "waiting" },
-    version: { type: Number, required: true, default: 0 },
 
     maxPlayers: { type: Number, required: true },
     disableChat: { type: Boolean, required: true, default: false },
@@ -94,8 +90,6 @@ const LobbySchema = new Schema<ILobby>({
         ref: "game",
         required: false,
     },
-});
-
-countChanges(LobbySchema);
+}).plugin(versioning);
 
 export default mongoose.model<ILobby>("lobby", LobbySchema);
