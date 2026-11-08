@@ -399,9 +399,24 @@ export class LobbyService {
         });
     }
 
-    /** Mark a lobby as waiting again, after its game finished, so that its players can play another. */
+    /**
+     * Mark a lobby as waiting again, after its game finished, so that its players can play another.
+     * A player who left during the game kept their place in it, so that they could come back, and
+     * gives it up now, as they would have in the waiting room, except the owner.
+     */
     public async finishGame(pin: string): Promise<void> {
-        await Lobbies.updateOne({ pin }, { $set: { status: "waiting" } });
+        const lobby = await Lobbies.findOne({ pin }, { owner: 1 });
+        if (!isDef(lobby)) {
+            throw new LobbyNotFoundError();
+        }
+
+        await Lobbies.updateOne(
+            { pin },
+            {
+                $set: { status: "waiting" },
+                $pull: { players: { socket: null, registered: { $ne: lobby.owner.toString() } } },
+            },
+        );
     }
 
     /**
