@@ -39,7 +39,8 @@ Start a lobby, share the pin, and play with up to eight friends, on a computer o
 
 You'll need [Bun](https://bun.sh/) 1.4 or later, [just](https://just.systems/) to run the project's commands, and
 [pre-commit](https://pre-commit.com/) for the git hooks. MongoDB comes from [Docker](https://www.docker.com/), or use
-your own (see the [server's README](./apps/server/README.md)).
+your own (see the [server's README](./apps/server/README.md)). To share a game on a public link, `just tunnel` needs
+[cloudflared](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/).
 
 ```bash
 just setup   # install the dependencies and the git hooks, and make sure MongoDB is running
@@ -67,6 +68,8 @@ The commands are recipes in the [`justfile`](./justfile). Run `just` to list the
 | `just dev`          | Start the server and the web app in development mode               |
 | `just db`           | Make sure the server can reach MongoDB, starting it if needed      |
 | `just build`        | Build everything                                                   |
+| `just host`         | Host a release on this machine, in production mode                 |
+| `just tunnel`       | Share it on a public Cloudflare link, for friends to play on       |
 | `just test`         | Run every package's tests                                          |
 | `just typecheck`    | Type check every package                                           |
 | `just lint`         | Lint, or fix what can be fixed with `just lint --fix`              |

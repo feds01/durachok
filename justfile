@@ -55,6 +55,29 @@ dev:
 build:
     turbo build
 
+# Build a release and host it on this machine in production mode, beside `just dev`
+host port="4173" api="8081": db build
+    #!/usr/bin/env bash
+    set -euo pipefail
+    # The server and the web app stop together: on Ctrl-C, or when either of them stops.
+    trap 'kill $(jobs -p) 2>/dev/null' EXIT
+    (cd apps/server && NODE_ENV=production PORT={{api}} exec bun dist/index.js) &
+    server=$!
+    # The web app's own address serves the API too, so `just tunnel` needs only the one.
+    (cd apps/web && API_TARGET=http://localhost:{{api}} exec node_modules/.bin/vite preview --port {{port}} --strictPort) &
+    web=$!
+    # The bash that macOS has can't wait for whichever of them stops first, so look in on them.
+    while kill -0 "$server" 2>/dev/null && kill -0 "$web" 2>/dev/null; do sleep 1; done
+    echo "error: the server or the web app stopped, so the host stops too" >&2
+    exit 1
+
+# Share a host on this machine on a public Cloudflare link, e.g. the one that `just host` serves
+tunnel port="4173":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    command -v cloudflared >/dev/null || { echo "error: cloudflared not found, install it with 'brew install cloudflared'" >&2; exit 1; }
+    cloudflared tunnel --no-autoupdate --url http://localhost:{{port}}
+
 # Run the tests
 test:
     turbo test
