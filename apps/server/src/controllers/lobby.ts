@@ -7,7 +7,7 @@ import { TRPCError } from "@trpc/server";
 import { customAlphabet } from "nanoid";
 import { Logger } from "pino";
 
-import { withLock } from "../lib/database";
+import { transaction } from "../lib/database";
 import Lobbies, { PopulatedLobbyDocument, PopulatedLobbyFields } from "../models/lobby.model";
 import { TokenPayload } from "../schemas/auth";
 import { DBLobby, DBLobbySchema, DBPlayer } from "../schemas/lobby";
@@ -18,6 +18,7 @@ import {
     InvalidLobbyStateError,
     LobbyFullError,
     LobbyNotFoundError,
+    PlayerAlreadyInLobbyError,
     PlayerNotInLobbyError,
 } from "./common";
 import { ImageService } from "./image";
@@ -260,17 +261,28 @@ export class LobbyService {
         return lobbies.map(this.lobbyIntoInfo);
     }
 
-    /** Add a user to a waiting lobby, if it has a free place. */
+    /** Add a user to a waiting lobby, if it has a free place, and nobody in it has their name or account. */
     public async addUserTo(pin: string, player: DBPlayer): Promise<void> {
-        // Check and add in one update, so that two players can't take the last place.
-        const { matchedCount } = await Lobbies.updateOne(
-            { pin, status: "waiting", $expr: { $lt: [{ $size: "$players" }, "$maxPlayers"] } },
-            { $push: { players: player } },
-        );
+        await transaction(async () => {
+            const lobby = await this.getRaw(pin);
+            if (!isDef(lobby)) {
+                throw new LobbyNotFoundError();
+            }
 
-        if (matchedCount === 0) {
-            throw new LobbyFullError();
-        }
+            if (lobby.status !== "waiting" || lobby.players.length >= lobby.maxPlayers) {
+                throw new LobbyFullError();
+            }
+
+            const taken = lobby.players.some(
+                (other) =>
+                    other.name === player.name || (isDef(player.registered) && other.registered === player.registered),
+            );
+            if (taken) {
+                throw new PlayerAlreadyInLobbyError();
+            }
+
+            await Lobbies.updateOne({ pin }, { $push: { players: player } });
+        });
     }
 
     /** Confirm that the user is playing in the lobby, from the given connection. */
@@ -291,26 +303,28 @@ export class LobbyService {
      * @returns The removed player, e.g. to notify their connection.
      */
     public async removePlayer(pin: string, name: string): Promise<DBPlayer> {
-        const lobby = await this.getRaw(pin);
-        if (!isDef(lobby)) {
-            throw new LobbyNotFoundError();
-        }
+        return transaction(async () => {
+            const lobby = await this.getRaw(pin);
+            if (!isDef(lobby)) {
+                throw new LobbyNotFoundError();
+            }
 
-        if (lobby.status !== "waiting") {
-            throw new InvalidLobbyStateError("Players can only leave a lobby before the game starts");
-        }
+            if (lobby.status !== "waiting") {
+                throw new InvalidLobbyStateError("Players can only leave a lobby before the game starts");
+            }
 
-        const player = lobby.players.find((p) => p.name === name);
-        if (!isDef(player)) {
-            throw new PlayerNotInLobbyError();
-        }
+            const player = lobby.players.find((p) => p.name === name);
+            if (!isDef(player)) {
+                throw new PlayerNotInLobbyError();
+            }
 
-        if (player.registered === lobby.owner.id) {
-            throw new InvalidLobbyStateError("The owner can't leave their lobby");
-        }
+            if (player.registered === lobby.owner.id) {
+                throw new InvalidLobbyStateError("The owner can't leave their lobby");
+            }
 
-        await Lobbies.updateOne({ pin }, { $pull: { players: { name } } });
-        return player;
+            await Lobbies.updateOne({ pin }, { $pull: { players: { name } } });
+            return player;
+        });
     }
 
     /**
@@ -320,24 +334,26 @@ export class LobbyService {
      * @returns The pin of the lobby that the connection was in, if any.
      */
     public async disconnect(socket: string): Promise<string | undefined> {
-        const lobby = await Lobbies.findOne({ "players.socket": socket });
-        if (!isDef(lobby)) {
-            return undefined;
-        }
+        return transaction(async () => {
+            const lobby = await Lobbies.findOne({ "players.socket": socket });
+            if (!isDef(lobby)) {
+                return undefined;
+            }
 
-        const player = lobby.players.find((p) => p.socket === socket);
-        const isOwner = player?.registered === lobby.owner.toString();
+            const player = lobby.players.find((p) => p.socket === socket);
+            const isOwner = player?.registered === lobby.owner.toString();
 
-        if (lobby.status === "waiting" && !isOwner) {
-            await Lobbies.updateOne({ pin: lobby.pin }, { $pull: { players: { socket } } });
-        } else {
-            await Lobbies.updateOne(
-                { pin: lobby.pin, "players.socket": socket },
-                { $set: { "players.$.socket": null } },
-            );
-        }
+            if (lobby.status === "waiting" && !isOwner) {
+                await Lobbies.updateOne({ pin: lobby.pin }, { $pull: { players: { socket } } });
+            } else {
+                await Lobbies.updateOne(
+                    { pin: lobby.pin, "players.socket": socket },
+                    { $set: { "players.$.socket": null } },
+                );
+            }
 
-        return lobby.pin;
+            return lobby.pin;
+        });
     }
 
     /**
@@ -347,7 +363,7 @@ export class LobbyService {
      * @returns The names of the players in the game.
      */
     public async startGame(pin: string): Promise<string[]> {
-        return withLock(`lobby:${pin}`, async () => {
+        return transaction(async () => {
             const lobby = await this.getRaw(pin);
             if (!isDef(lobby)) {
                 throw new LobbyNotFoundError();
@@ -492,8 +508,7 @@ export class LobbyService {
      * gives the lobby one, or keeps the one it has, and turning it off removes it.
      */
     public async updateSettings(pin: string, settings: GameSettings): Promise<void> {
-        // The same lock as starting the game, so that the settings can't change as it starts.
-        await withLock(`lobby:${pin}`, async () => {
+        await transaction(async () => {
             const lobby = await this.getRaw(pin);
             if (!isDef(lobby)) {
                 throw new LobbyNotFoundError();

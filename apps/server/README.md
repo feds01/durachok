@@ -3,7 +3,7 @@
 ## Prerequisites
 
 - Bun (v1.4 or later)
-- MongoDB (v6 or later), which `just db` can run in Docker for you (see below)
+- MongoDB (v6 or later), as a replica set, which `just db` can run in Docker for you (see below)
 
 ## MongoDB Installation
 
@@ -15,9 +15,11 @@ From the repository root, run:
 just db
 ```
 
-It checks that the server can reach MongoDB at `MONGODB_URI`. When that is a local address and nothing answers, it starts MongoDB 8 in Docker on `localhost:27017`, from [`compose.yaml`](../../compose.yaml), and checks again. `just setup` runs it too. The data lives in a Docker volume, and the container restarts with Docker.
+It checks that the server can reach MongoDB at `MONGODB_URI`, as a replica set. When that is a local address and nothing answers, or the MongoDB there isn't a replica set, it starts MongoDB 8 in Docker on `localhost:27017`, from [`compose.yaml`](../../compose.yaml), as a replica set of one, and checks again. `just setup` runs it too. The data lives in a Docker volume, and the container restarts with Docker.
 
-To install MongoDB yourself instead, follow the steps for your platform.
+The server changes lobbies in transactions, which MongoDB only has on a replica set, so it won't start against a standalone MongoDB.
+
+To install MongoDB yourself instead, follow the steps for your platform, then make it a replica set of one: add `replication.replSetName: rs0` to its config file, restart it, and run `mongosh --eval "rs.initiate()"` once.
 
 ### macOS (using Homebrew)
 

@@ -37,6 +37,13 @@ export class PlayerNotInLobbyError extends TRPCError {
     }
 }
 
+/** Error to be thrown when a player joins a lobby that already has a player with their name or account. */
+export class PlayerAlreadyInLobbyError extends TRPCError {
+    public constructor() {
+        super({ code: "BAD_REQUEST", message: "User already in lobby" });
+    }
+}
+
 /** Error to be thrown when a player tries to join a lobby that has no free place. */
 export class LobbyFullError extends TRPCError {
     public constructor() {

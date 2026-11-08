@@ -22,7 +22,7 @@ setup: install && db
         echo "note: core.hooksPath is $hooks_path, so git only runs the hook if that hands off to the repo's own hooks"
     fi
 
-# Make sure the server can reach MongoDB, and start the local one in Docker if it isn't running
+# Make sure the server can reach MongoDB as a replica set, and start the local one in Docker if it isn't running, or isn't one
 db:
     #!/usr/bin/env bash
     set -euo pipefail
