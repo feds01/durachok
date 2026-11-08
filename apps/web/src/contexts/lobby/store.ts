@@ -86,9 +86,7 @@ export const useLobbyStore = create<LobbyStore>((set, get) => {
             socket.on("victory", ({ players }) => dispatch({ type: "victory", players }));
             socket.on("message", (message) => dispatch({ type: "message", message }));
             socket.on("close", ({ reason }) => dispatch({ type: "close", reason }));
-            socket.on("error", ({ type, message }) =>
-                dispatch({ type: "error", code: type, at: Date.now(), ...(message && { message }) }),
-            );
+            socket.on("error", ({ type, message }) => dispatch({ type: "error", code: type, message, at: Date.now() }));
 
             set({ ...initialLobbyState, pin, socket });
 

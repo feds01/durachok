@@ -24,6 +24,7 @@ export function transformErrorIntoMessage(error: Error): ErrorMessage {
     } else if (error instanceof ZodError) {
         return {
             type: "bad_request",
+            message: "That request isn't valid.",
             details: transformZodErrorIntoErrorSummary(error),
         };
     } else if (error instanceof InvalidGameState) {
