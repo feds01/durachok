@@ -5,6 +5,7 @@
  * and uses a database of its own, which it drops afterwards. Set `TEST_SERVER_LOG` to a
  * file to keep the server's logs.
  */
+import { canPlace, turnOf } from "@durachok/engine";
 import type { PlayerGameState, PlayerMove } from "@durachok/transport";
 import type { Subprocess } from "bun";
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
@@ -569,4 +570,40 @@ describe.skipIf(!available)("Players at the same time", () => {
             }),
         );
     }, 20_000);
+
+    test("a move sent twice at once is made once", async () => {
+        const { pin, tokens } = await createLobby("twice", 2);
+        const owner = await enter(pin, tokens);
+        const guest = await joinAs(pin, "guest");
+
+        type ActionMessage = { update: PlayerGameState };
+        const received = new Map<Socket, ActionMessage[]>([
+            [owner, []],
+            [guest, []],
+        ]);
+        for (const [socket, messages] of received) {
+            socket.on("action", (message: ActionMessage) => messages.push(message));
+        }
+
+        const dealt = Promise.all([owner, guest].map((socket) => next(socket, "action")));
+        owner.emit("start", pin);
+        await dealt;
+
+        // The player who leads the round places a card, twice.
+        const [leader, { update }] = [...received]
+            .map(([socket, messages]) => [socket, messages.at(-1)!] as const)
+            .find(([, last]) => turnOf(last.update).kind === "lead")!;
+        const card = update.player.deck.find((held) => canPlace(update, held))!;
+
+        const refused = next<{ type: string }>(leader, "error");
+        leader.emit("move", pin, { type: "place", card });
+        leader.emit("move", pin, { type: "place", card });
+        expect((await refused).type).toBe("invalid_move");
+        await Bun.sleep(100);
+
+        // Everyone saw the deal, and then the move once.
+        for (const messages of received.values()) {
+            expect(messages).toHaveLength(2);
+        }
+    }, 15_000);
 });

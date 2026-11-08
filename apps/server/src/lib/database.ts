@@ -1,4 +1,3 @@
-import { Locked } from "@3xpo/locked";
 import mongoose from "mongoose";
 
 import { MONGO_URI } from "../config";
@@ -46,29 +45,3 @@ export const connectDB = async () => {
  * then writes it never acts on one that is out of date, whichever server makes it.
  */
 export const transaction = <T>(func: () => Promise<T>): Promise<T> => mongoose.connection.transaction(func);
-
-/**
- * A in-memory lock system to ensure that certain events can be synced
- * across multiple instances of requests. This is useful for ensuring that
- * certain game actions can be synchronised across the entire app.
- *
- * N.B. This lock should only be acquired when absolutely necessary, and when
- * there is a possibility of multiple requests being made at the same time.
- */
-const LOCK = new Locked();
-
-/**
- * Run a function with a lock on a given key.
- *
- * @param key The key to lock.
- * @param func The function to run.
- */
-export const withLock = async <T>(key: string, func: () => Promise<T>): Promise<T> => {
-    const unlock = await LOCK.lock(key);
-
-    try {
-        return await func();
-    } finally {
-        unlock();
-    }
-};

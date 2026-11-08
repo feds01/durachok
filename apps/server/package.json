@@ -12,7 +12,6 @@
         "build:client": "bun src/interface/socket/generate-client.ts"
     },
     "dependencies": {
-        "@3xpo/locked": "^0.1.15",
         "@aws-sdk/client-cloudfront": "^3.1164.0",
         "@aws-sdk/client-s3": "^3.1164.0",
         "@aws-sdk/s3-request-presigner": "^3.1164.0",

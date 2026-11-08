@@ -20,7 +20,6 @@
       "name": "@durachok/server",
       "version": "1.0.0",
       "dependencies": {
-        "@3xpo/locked": "^0.1.15",
         "@aws-sdk/client-cloudfront": "^3.1164.0",
         "@aws-sdk/client-s3": "^3.1164.0",
         "@aws-sdk/s3-request-presigner": "^3.1164.0",
@@ -140,10 +139,6 @@
     },
   },
   "packages": {
-    "@3xpo/locked": ["@3xpo/locked@0.1.15", "", { "dependencies": { "@3xpo/resolvablepromise": "^0.2.11" } }, "sha512-2/AaafJEi/g+JGAGbwxvKEG2+cUM1muV2efYiJlghtlMj6VGQC0H1zsG4uXe0dAusrzTmYUUYDJRCOOBRdoP2Q=="],
-
-    "@3xpo/resolvablepromise": ["@3xpo/resolvablepromise@0.2.11", "", {}, "sha512-HFt7BhtMFTb6Ddi/XGE/dP5taytNinLrYfPW0Y4HyCarZ9ZRQVFnFtcfyHiwadu0TMWqmFwTxwNdHEgcYYG6fA=="],
-
     "@aws-sdk/checksums": ["@aws-sdk/checksums@3.1002.3", "", { "dependencies": { "@aws-sdk/core": "^3.980.1", "@aws-sdk/types": "^3.975.0", "@smithy/core": "^3.38.0", "@smithy/types": "^4.19.0", "tslib": "^2.6.2" } }, "sha512-lBwLpni4uWNIH0UxgP8hR3XiGSunn9C7DrhzQzte/uc4chFpghMpf4GkiBrvvygs3NTp1VI5QdD9ZbRA0hM0OQ=="],
 
     "@aws-sdk/client-cloudfront": ["@aws-sdk/client-cloudfront@3.1164.0", "", { "dependencies": { "@aws-sdk/core": "^3.980.1", "@aws-sdk/credential-provider-node": "^3.972.94", "@aws-sdk/types": "^3.975.0", "@smithy/core": "^3.38.0", "@smithy/fetch-http-handler": "^5.8.0", "@smithy/node-http-handler": "^4.14.0", "@smithy/types": "^4.19.0", "tslib": "^2.6.2" } }, "sha512-wofxRzp2pFhdacIRxaMw0p83eIJzR4h/oYmg7ddBas5Bumsnv/M8Wlhb4yJCnuLvHTQAe0XFnDEXmX2yo1uvbA=="],

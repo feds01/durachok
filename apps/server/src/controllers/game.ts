@@ -2,9 +2,10 @@ import { Game } from "@durachok/engine";
 import { Action, PlayerGameState, PlayerMove } from "@durachok/transport";
 import { Lobby } from "@durachok/transport";
 import { TRPCError } from "@trpc/server";
+import { MongoError } from "mongodb";
 import { Logger } from "pino";
 
-import { withLock } from "../lib/database";
+import { transaction } from "../lib/database";
 import Games, { GameDocument } from "../models/game.model";
 import { DBGameSchema } from "../schemas/game";
 import { CommonService, InvalidMoveError, PlayerNotInLobbyError } from "./common";
@@ -86,6 +87,11 @@ export class GameService {
         try {
             await Games.findByIdAndUpdate(id, raw, { upsert: true });
         } catch (e: unknown) {
+            // Another change got to the game first, so the transaction that the save is in runs again.
+            if (e instanceof MongoError && e.hasErrorLabel("TransientTransactionError")) {
+                throw e;
+            }
+
             if (e instanceof Error) {
                 this.logger.error(`Failed to save game: ${e.message}\n${e.stack}`);
             }
@@ -99,7 +105,7 @@ export class GameService {
 
     /**
      * Make a move for a player, and save the game. The game is read, changed and saved
-     * under the lobby's lock, so that moves from several players apply one at a time.
+     * in a transaction, so that moves from several players apply one at a time.
      *
      * @param name The player to make the move for.
      * @param move The move to make.
@@ -107,7 +113,7 @@ export class GameService {
      * @returns The updated game, and the actions that the move caused.
      * */
     public async makeMove(name: string, move: PlayerMove): Promise<MoveResult> {
-        return withLock(`game:${this.lobby.pin}`, async () => {
+        return transaction(async () => {
             const raw = await this.commonService.getGameDbObject(this.lobby.pin);
             const game = await this.enrich(raw);
 
