@@ -1,6 +1,6 @@
 import { ClientEvents } from "@durachok/transport";
 
-import { ensureOwnerAccess } from "../common/auth";
+import { clientsOf, ensureOwnerAccess } from "../common/auth";
 import { factory } from "./ctx";
 
 const onKick = factory.build({
@@ -16,14 +16,12 @@ const onKick = factory.build({
         logger.info(meta, "processing event");
         await ensureOwnerAccess(ctx, client, pin);
 
-        // Only possible before the game starts, and not for the owner.
-        const player = await ctx.lobbyService.removePlayer(pin, name);
+        // Only possible before the game starts, and not for the owner. They can't join again.
+        const player = await ctx.lobbyService.removePlayer(pin, name, { kick: true });
         logger.info(meta, "player kicked");
 
-        // Tell the kicked player, and take their connection out of the lobby.
-        const clients = await withRooms(pin).getClients();
-        const kicked = clients.find((c) => c.id === player.socket);
-        if (kicked) {
+        // Tell the kicked player, and take each of their connections out of the lobby.
+        for (const kicked of await clientsOf(withRooms, pin, player)) {
             await kicked.emit("close", { reason: "kicked" });
             await kicked.leave(pin);
         }

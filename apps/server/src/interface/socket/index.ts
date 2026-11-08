@@ -6,7 +6,10 @@ import { attachSockets } from "zod-sockets";
 import { WEB_ORIGINS } from "../../config";
 import { authenticate } from "../../lib/authentication";
 import { Context, createContext } from "../../lib/context";
+import { limits } from "../../lib/limits";
 import logger from "../../lib/logger";
+import { RateLimiter } from "../../lib/rate-limit";
+import { holderOf } from "../../schemas/auth";
 import { actions } from "./actions";
 import { Rooms } from "./actions/ctx";
 import { config as socketConfig } from "./config";
@@ -16,7 +19,12 @@ const io = new Server({
         origin: WEB_ORIGINS,
         credentials: true,
     },
+    // What a client sends is small: a pin, a move, a message, the settings.
+    maxHttpBufferSize: 16 * 1024,
 });
+
+/** How often a client that sends too much is told to slow down, rather than for each event that it floods. */
+const slowDowns = new RateLimiter(1, 5000);
 
 /** Emits to the clients outside of a handler, once the sockets are attached. */
 let rootContext: { withRooms: Rooms } | undefined;
@@ -52,6 +60,19 @@ export async function connectSocket(server: HTTPServer) {
         }
 
         socket.data = { auth: result.tokens, refreshed: result.refreshed };
+
+        // A player sends only so many events, over all of their connections, and the ones over
+        // the limit are dropped, so that a client can't flood the server, @see limits.
+        const holder = holderOf(result.tokens.payload);
+        socket.use((_event, nextEvent) => {
+            if (limits.events.take(holder)) {
+                return nextEvent();
+            }
+            if (slowDowns.take(holder)) {
+                socket.emit("error", { type: "too_many_requests", message: "Too many requests, slow down" });
+            }
+        });
+
         next();
     });
 
@@ -65,9 +86,16 @@ export async function connectSocket(server: HTTPServer) {
     rootContext = contexts["/"];
 }
 
-/** Tell the clients in a lobby that it was deleted, so that they leave it. */
+/** Tell the clients in a lobby that it was deleted, and take them out of its room. */
 export async function notifyLobbyClosed(pin: string): Promise<void> {
-    await rootContext?.withRooms(pin).broadcast("close", { reason: "lobby_closed" });
+    if (!rootContext) {
+        return;
+    }
+
+    await rootContext.withRooms(pin).broadcast("close", { reason: "lobby_closed" });
+    for (const client of await rootContext.withRooms(pin).getClients()) {
+        await client.leave(pin);
+    }
 }
 
 declare module "zod-sockets" {

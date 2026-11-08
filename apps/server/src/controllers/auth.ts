@@ -5,6 +5,7 @@ import { Logger } from "pino";
 
 import { JWT_REFRESH_SECRET, JWT_SECRET } from "../config";
 import BotUsers from "../models/bot.model";
+import Users from "../models/user.model";
 import { RawTokenPayload, TokenPayload, UserTokensResponse } from "../schemas/auth";
 import { expr, isDef } from "../utils";
 
@@ -64,19 +65,25 @@ export class AuthService {
             kind: "anonymous",
             name: data.name,
             pin: data.pin,
+            seat: data.seat,
         };
     }
 
     /**
      * Whether the server still lets the holder of a token in. A bot can only come in while it
-     * is in the registry, so that the server decides which bots play.
+     * is in the registry, so that the server decides which bots play, and a user while their
+     * account is there, so that a deleted account's tokens stop working at once, rather than
+     * when they expire.
      */
     public async isAllowed(payload: TokenPayload): Promise<boolean> {
-        if (payload.kind !== "bot") {
-            return true;
+        switch (payload.kind) {
+            case "anonymous":
+                return true;
+            case "bot":
+                return isValidObjectId(payload.bot.id) && isDef(await BotUsers.exists({ _id: payload.bot.id }));
+            case "registered":
+                return isValidObjectId(payload.user.id) && isDef(await Users.exists({ _id: payload.user.id }));
         }
-
-        return isValidObjectId(payload.bot.id) && isDef(await BotUsers.exists({ _id: payload.bot.id }));
     }
 
     /**
@@ -132,6 +139,7 @@ export class AuthService {
                 return {
                     name: decodedToken.name,
                     pin: decodedToken.pin,
+                    seat: decodedToken.seat,
                 };
             }
             if (decodedToken.kind === "bot") {

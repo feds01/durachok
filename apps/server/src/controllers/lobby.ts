@@ -1,25 +1,29 @@
-import { CardSuits, shuffleArray } from "@durachok/engine";
+import { CardSuits } from "@durachok/engine";
 import { GameSettings, LobbyInfo } from "@durachok/transport";
 import { GameStatus } from "@durachok/transport";
 import { Lobby, Message } from "@durachok/transport";
-import { Player } from "@durachok/transport";
+import { PASSPHRASE_LENGTH, Player } from "@durachok/transport";
 import { TRPCError } from "@trpc/server";
+import { randomInt } from "node:crypto";
 import { customAlphabet } from "nanoid";
 import { Logger } from "pino";
 
 import { transaction } from "../lib/database";
+import { CHAT_HISTORY, MAX_LOBBIES_PER_OWNER } from "../lib/limits";
 import Lobbies, { PopulatedLobbyDocument, PopulatedLobbyFields } from "../models/lobby.model";
 import { TokenPayload } from "../schemas/auth";
-import { DBLobby, DBLobbySchema, DBPlayer } from "../schemas/lobby";
+import { DBLobby, DBLobbySchema, DBPlayer, identityOf, isPlayer } from "../schemas/lobby";
 import { assert, expr, isDef } from "../utils";
 import {
     CommonService,
     InvalidLobbySettingsError,
     InvalidLobbyStateError,
+    KickedFromLobbyError,
     LobbyFullError,
     LobbyNotFoundError,
     PlayerAlreadyInLobbyError,
     PlayerNotInLobbyError,
+    TooManyLobbiesError,
 } from "./common";
 import { ImageService } from "./image";
 
@@ -36,24 +40,29 @@ export class LobbyService {
         private imageService: ImageService,
     ) {}
 
-    /** Generate a new game pin. */
+    /** Generate a new game pin, which no lobby has. */
     private async newGamePin(): Promise<string> {
         const alphabet = customAlphabet("1234567890", 6);
-        let candidate = alphabet();
 
-        // ##Hack: Very unlikely to happen, but just in case we have a collision.
-        while (isDef(await Lobbies.findOne({ pin: candidate }))) {
-            candidate = alphabet();
+        // A pin that a lobby has already is rare, and a run of them means that the pins are
+        // nearly all taken, which stops here, rather than looking for ever.
+        for (let attempt = 0; attempt < 20; attempt++) {
+            const candidate = alphabet();
+            if (!(await Lobbies.exists({ pin: candidate }))) {
+                return candidate;
+            }
         }
 
-        return candidate;
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Couldn't find a free pin" });
     }
 
-    /** Generate a new game passphrase */
+    /**
+     * Generate a new game passphrase, of suits at random, in which a suit can come up more than
+     * once, @see PASSPHRASE_LENGTH.
+     */
     private newGamePassphrase(): string {
-        const suites = Object.values(CardSuits);
-        shuffleArray(suites);
-        return suites.join("");
+        const suits = Object.values(CardSuits);
+        return Array.from({ length: PASSPHRASE_LENGTH }, () => suits[randomInt(suits.length)]).join("");
     }
 
     /** Get an enriched Lobby object. */
@@ -141,25 +150,14 @@ export class LobbyService {
      * lobby that their token is for.
      */
     public async findPlayer(token: TokenPayload, pin: string): Promise<DBPlayer | undefined> {
-        // @@Todo: There is a potential problem, if a lobby pin is re-used within
-        // the expiration time of the token, then the user could join the new
-        // lobby without the owner's permission or without going through the standard
-        // join process. Mitigation is to parametrise the token over the `id` of the
-        // lobby which should be unique.
+        // An anonymous player's tokens are for one place in one lobby. The secret of the place
+        // keeps them from another lobby that has the same pin later, @see DBPlayer.seat.
         if (token.kind === "anonymous" && token.pin !== pin) {
             return undefined;
         }
 
         const lobby = await this.getRaw(pin);
-        return lobby?.players.find((player) => {
-            if (token.kind === "registered") {
-                return player.registered === token.user.id;
-            }
-            if (token.kind === "bot") {
-                return player.bot === token.bot.id;
-            }
-            return !isDef(player.registered) && !isDef(player.bot) && player.name === token.name;
-        });
+        return lobby?.players.find((player) => isPlayer(token, player));
     }
 
     /** Check if a user has access to a lobby, i.e. they are one of its players. */
@@ -281,6 +279,10 @@ export class LobbyService {
                 throw new LobbyFullError();
             }
 
+            if (lobby.kicked.includes(identityOf(player))) {
+                throw new KickedFromLobbyError();
+            }
+
             const taken = lobby.players.some(
                 (other) =>
                     other.name === player.name ||
@@ -308,11 +310,12 @@ export class LobbyService {
     }
 
     /**
-     * Remove a player from a waiting lobby. The owner can't be removed.
+     * Remove a player from a waiting lobby. The owner can't be removed. A player whom the owner
+     * kicks out can't join the lobby again, @see identityOf.
      *
      * @returns The removed player, e.g. to notify their connection.
      */
-    public async removePlayer(pin: string, name: string): Promise<DBPlayer> {
+    public async removePlayer(pin: string, name: string, { kick = false } = {}): Promise<DBPlayer> {
         return transaction(async () => {
             const lobby = await this.getRaw(pin);
             if (!isDef(lobby)) {
@@ -332,7 +335,10 @@ export class LobbyService {
                 throw new InvalidLobbyStateError("The owner can't leave their lobby");
             }
 
-            await Lobbies.updateOne({ pin }, { $pull: { players: { name } } });
+            await Lobbies.updateOne(
+                { pin },
+                { $pull: { players: { name } }, ...(kick && { $addToSet: { kicked: identityOf(player) } }) },
+            );
             return player;
         });
     }
@@ -433,15 +439,8 @@ export class LobbyService {
             }),
         };
 
-        // We need to update the lobby in the database.
-        await Lobbies.updateOne(
-            { pin },
-            {
-                $push: {
-                    chat: payload,
-                },
-            },
-        );
+        // The lobby keeps only its newest messages, so that a chat can't outgrow its document.
+        await Lobbies.updateOne({ pin }, { $push: { chat: { $each: [payload], $slice: -CHAT_HISTORY } } });
 
         return payload;
     }
@@ -460,6 +459,10 @@ export class LobbyService {
             roundTimeout,
             mythicMode,
         } = settings;
+
+        if ((await Lobbies.countDocuments({ owner: userId })) >= MAX_LOBBIES_PER_OWNER) {
+            throw new TooManyLobbiesError(MAX_LOBBIES_PER_OWNER);
+        }
 
         const pin = await this.newGamePin();
         const owner = await this.commonService.getUserDbObject(userId);

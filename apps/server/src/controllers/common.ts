@@ -57,6 +57,20 @@ export class InvalidLobbySettingsError extends TRPCError {
     }
 }
 
+/** Error to be thrown when a player whom the owner kicked out of a lobby tries to join it again. */
+export class KickedFromLobbyError extends TRPCError {
+    public constructor() {
+        super({ code: "FORBIDDEN", message: "The owner of this lobby kicked you out of it" });
+    }
+}
+
+/** Error to be thrown when a user who keeps as many lobbies as they may tries to make another. */
+export class TooManyLobbiesError extends TRPCError {
+    public constructor(limit: number) {
+        super({ code: "BAD_REQUEST", message: `You can keep ${limit} lobbies at once, delete one to make another` });
+    }
+}
+
 /** Error to be thrown when a user is not found. */
 export class UserNotFoundError extends TRPCError {
     public constructor() {

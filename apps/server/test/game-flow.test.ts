@@ -49,9 +49,26 @@ if (!available && process.env.CI) {
 
 type Tokens = { token: string; refreshToken: string };
 
-/** Call a tRPC procedure, as the web app's client does. */
-async function trpc<T>(path: string, input: unknown, tokens?: Tokens, method: "GET" | "POST" = "POST"): Promise<T> {
-    const headers: Record<string, string> = { "content-type": "application/json" };
+/** The keys that the server signs tokens with, which it won't start without, nor with one for both. */
+const SECRETS = { JWT_SECRET_KEY: "test-access-secret", JWT_REFRESH_SECRET_KEY: "test-refresh-secret" };
+
+/** An address of a client of its own, as the server's limits per address count them, @see TRUST_PROXY. */
+function address(): string {
+    return `10.${Array.from({ length: 3 }, () => Math.floor(Math.random() * 256)).join(".")}`;
+}
+
+/**
+ * Call a tRPC procedure, as the web app's client does, from an address of its own unless one is
+ * given, as each player's would be, so that the server's limits per address don't count the tests together.
+ */
+async function trpc<T>(
+    path: string,
+    input: unknown,
+    tokens?: Tokens,
+    method: "GET" | "POST" = "POST",
+    from: string = address(),
+): Promise<T> {
+    const headers: Record<string, string> = { "content-type": "application/json", "x-forwarded-for": from };
     if (tokens) {
         headers["x-token"] = tokens.token;
         headers["x-refresh-token"] = tokens.refreshToken;
@@ -122,7 +139,16 @@ beforeAll(async () => {
 
     server = Bun.spawn(["bun", "src/index.ts"], {
         cwd: `${import.meta.dir}/..`,
-        env: { ...process.env, PORT: String(PORT), MONGODB_URI: DB_URI, GAME_COUNTDOWN_MS: "0", NODE_ENV: "test" },
+        env: {
+            ...process.env,
+            ...SECRETS,
+            PORT: String(PORT),
+            MONGODB_URI: DB_URI,
+            GAME_COUNTDOWN_MS: "0",
+            NODE_ENV: "test",
+            // The tests play at a machine's pace, far quicker than the limit for a person.
+            SOCKET_EVENT_LIMIT: "100000",
+        },
         stdout: process.env.TEST_SERVER_LOG ? Bun.file(process.env.TEST_SERVER_LOG) : "ignore",
         stderr: "inherit",
     });
@@ -185,7 +211,8 @@ describe.skipIf(!available)("Game flow", () => {
         expect(lobby.players).toHaveLength(1);
 
         // An anonymous player joins with the passphrase that the owner sees.
-        await expect(trpc("lobbies.join", { pin, name: "guest", passphrase: "♡♡♡♡" })).rejects.toThrow("401");
+        const wrong = `${lobby.passphrase!.startsWith("♡") ? "♢" : "♡"}${lobby.passphrase!.slice(1)}`;
+        await expect(trpc("lobbies.join", { pin, name: "guest", passphrase: wrong })).rejects.toThrow("401");
         const guestTokens = await trpc<Tokens>("lobbies.join", { pin, name: "guest", passphrase: lobby.passphrase });
         expect(guestTokens.token).toBeString();
 
@@ -620,7 +647,7 @@ describe.skipIf(!available)("Players at the same time", () => {
 function bots(...args: string[]): string {
     const result = Bun.spawnSync(["bun", "src/scripts/bot.ts", ...args], {
         cwd: `${import.meta.dir}/..`,
-        env: { ...process.env, MONGODB_URI: DB_URI },
+        env: { ...process.env, ...SECRETS, MONGODB_URI: DB_URI },
     });
     return result.stdout.toString();
 }
@@ -692,4 +719,99 @@ describe.skipIf(!available)("Bots", () => {
         const { pin } = await createLobby("host", 2);
         await expect(trpc("lobbies.join", { pin }, botTokens)).rejects.toThrow("needs a name");
     }, 15_000);
+});
+
+/** Register an account, and return its tokens. */
+async function register(prefix: string): Promise<Tokens> {
+    const name = `${prefix}-${crypto.randomUUID().slice(0, 8)}`;
+    return trpc<Tokens>("auth.register", {
+        name,
+        email: `${name}@example.com`,
+        password: "Password123!",
+        reCaptchaToken: "test",
+    });
+}
+
+/** The ways that a client could abuse the lobby, which the server shuts. */
+describe.skipIf(!available)("Abuse", () => {
+    test("an old token for a name can't take the place of the next player with that name", async () => {
+        const { pin } = await createLobby("seat", 4);
+        const first = await trpc<Tokens>("lobbies.join", { pin, name: "bob" });
+        const socket = await enter(pin, first);
+
+        // Bob leaves, and somebody else joins under his name.
+        socket.emit("leave", pin);
+        for (let i = 0; i < 100 && names((await stored(pin)).players).includes("bob"); i++) {
+            await Bun.sleep(20);
+        }
+        const second = await trpc<Tokens>("lobbies.join", { pin, name: "bob" });
+
+        await expect(trpc("lobbies.get", { pin }, first, "GET")).rejects.toThrow("401");
+        expect(await trpc<{ pin: string }>("lobbies.get", { pin }, second, "GET")).toMatchObject({ pin });
+    });
+
+    test("a player whom the owner kicked out can't join again", async () => {
+        const { pin, tokens } = await createLobby("kick", 4);
+        const owner = await enter(pin, tokens);
+        const eve = await joinAs(pin, "eve");
+
+        const kicked = next(eve, "close");
+        owner.emit("kick", pin, { name: "eve" });
+        expect(await kicked).toEqual({ reason: "kicked" });
+
+        await expect(trpc("lobbies.join", { pin, name: "eve" })).rejects.toThrow("kicked you out");
+    });
+
+    test("a passphrase can't be guessed, from one address or from many", async () => {
+        const tokens = await register("guarded");
+        const { pin } = await trpc<{ pin: string }>(
+            "lobbies.create",
+            { settings: { maxPlayers: 8, passphrase: true, shortGameDeck: false, roundTimeout: 120 } },
+            tokens,
+        );
+        const owner = await connect(tokens);
+        sockets.push(owner);
+        const joined = next<{ lobby: { passphrase: string } }>(owner, "join");
+        owner.emit("join", pin);
+        const { passphrase } = (await joined).lobby;
+        const wrong = `${passphrase.startsWith("♡") ? "♢" : "♡"}${passphrase.slice(1)}`;
+
+        // One address fails to join only so often, and then can't join even with the passphrase.
+        const from = address();
+        for (let i = 0; i < 10; i++) {
+            await expect(
+                trpc("lobbies.join", { pin, name: `one-${i}`, passphrase: wrong }, undefined, "POST", from),
+            ).rejects.toThrow("401");
+        }
+        await expect(trpc("lobbies.join", { pin, name: "one", passphrase }, undefined, "POST", from)).rejects.toThrow(
+            "429",
+        );
+
+        // Many addresses together send the lobby only so many wrong passphrases.
+        for (let i = 0; i < 10; i++) {
+            await expect(trpc("lobbies.join", { pin, name: `many-${i}`, passphrase: wrong })).rejects.toThrow("401");
+        }
+        await expect(trpc("lobbies.join", { pin, name: "late", passphrase })).rejects.toThrow("429");
+    });
+
+    test("a player can't flood the chat", async () => {
+        const { pin, tokens } = await createLobby("chatty", 2);
+        const owner = await enter(pin, tokens);
+
+        const refused = waitFor<{ type: string }>(owner, "error", ({ type }) => type === "too_many_requests");
+        for (let i = 0; i < 6; i++) {
+            owner.emit("message", pin, { message: `hello ${i}` });
+        }
+        await refused;
+    });
+
+    test("a deleted account's tokens stop working at once", async () => {
+        const tokens = await register("gone");
+        await trpc("users.delete", undefined, tokens);
+
+        await expect(connect(tokens)).rejects.toThrow("unauthorized");
+        await expect(
+            trpc("lobbies.create", { settings: { maxPlayers: 2, roundTimeout: 120 } }, tokens),
+        ).rejects.toThrow("401");
+    });
 });

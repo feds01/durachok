@@ -2,12 +2,14 @@ import { UserAuthResponseSchema, UserLoginSchema, UserRegistrationSchema } from 
 import { TRPCError } from "@trpc/server";
 
 import { ENV } from "../../config";
-import { authProcedure, publicProcedure, router } from "../../lib/trpc";
+import { limits } from "../../lib/limits";
+import { authProcedure, failureLimitedProcedure, limitedProcedure, router } from "../../lib/trpc";
 import { UserTokensResponseSchema } from "../../schemas/auth";
 import { isDef } from "../../utils";
 
 export const authRouter = router({
-    register: publicProcedure
+    // Each address makes only so many accounts, and fails to log in only so often, @see limits.
+    register: limitedProcedure(limits.registrations)
         .input(UserRegistrationSchema)
         .output(UserAuthResponseSchema)
         .mutation(async (req) => {
@@ -36,7 +38,7 @@ export const authRouter = router({
             };
         }),
 
-    login: publicProcedure
+    login: failureLimitedProcedure(limits.failedLogins)
         .input(UserLoginSchema)
         .output(UserAuthResponseSchema)
         .mutation(async (req) => {

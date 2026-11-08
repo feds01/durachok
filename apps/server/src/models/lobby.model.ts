@@ -25,6 +25,8 @@ export interface ILobby extends Versioned {
     players: DBPlayer[];
     status: GameStatus;
     chat: Message[];
+    /** Who the owner kicked out, who can't join again. */
+    kicked: string[];
     owner: Types.ObjectId;
     game: Types.ObjectId | null;
 }
@@ -56,6 +58,8 @@ const LobbySchema = new Schema<ILobby>({
                 registered: { type: String, required: false },
                 // The ID of the bot in the registry, if the player is a bot.
                 bot: { type: String, required: false },
+                // The secret of an anonymous player's place, which their tokens carry.
+                seat: { type: String, required: false },
             },
         ],
         required: true,
@@ -92,6 +96,7 @@ const LobbySchema = new Schema<ILobby>({
         ref: "game",
         required: false,
     },
+    kicked: { type: [String], default: [] },
 }).plugin(versioning);
 
 export default mongoose.model<ILobby>("lobby", LobbySchema);

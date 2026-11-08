@@ -125,6 +125,8 @@ export const ErrorMessageTypeSchema = z.union([
     z.literal("unauthorized"),
     z.literal("invalid_move"),
     z.literal("stale_game"),
+    /** The client sent more than the server takes in a while, and should slow down. */
+    z.literal("too_many_requests"),
 ]);
 
 export type ErrorMessageType = z.infer<typeof ErrorMessageTypeSchema>;

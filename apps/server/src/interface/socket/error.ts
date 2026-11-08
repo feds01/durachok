@@ -39,6 +39,8 @@ export function transformErrorIntoMessage(error: Error): ErrorMessage {
                 return { type: "unauthorized", message: error.message };
             case "NOT_FOUND":
                 return { type: "not_found", message: error.message };
+            case "TOO_MANY_REQUESTS":
+                return { type: "too_many_requests", message: error.message };
         }
     }
 
