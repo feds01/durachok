@@ -1,6 +1,7 @@
 import { ClientEvents } from "@durachok/transport";
 
 import { clientsOf, ensureOwnerAccess } from "../common/auth";
+import { disconnectClient } from "../io";
 import { factory } from "./ctx";
 
 const onKick = factory.build({
@@ -20,10 +21,11 @@ const onKick = factory.build({
         const player = await ctx.lobbyService.removePlayer(pin, name, { kick: true });
         logger.info(meta, "player kicked");
 
-        // Tell the kicked player, and take each of their connections out of the lobby.
+        // Tell the kicked player, and then close each of their connections, which takes them out of
+        // the lobby, so that a page they leave open holds no connection to it.
         for (const kicked of await clientsOf(withRooms, pin, player)) {
             await kicked.emit("close", { reason: "kicked" });
-            await kicked.leave(pin);
+            disconnectClient(kicked.id);
         }
 
         await withRooms(pin).broadcast("lobbyState", {
