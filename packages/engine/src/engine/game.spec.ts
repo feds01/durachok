@@ -223,6 +223,53 @@ describe("Game tests", () => {
             expect(game.tableTop.size).toBe(0);
             expect(game.getDefendingPlayerName()).toBe("a");
         });
+
+        test("is asked again when the defender takes the cards, to throw in more", () => {
+            const game = new Game(["a", "b", "c"], null, { ...DEFAULT_SETTINGS, randomisePlayerOrder: false });
+            game.trump = cardFromString("2H");
+            setUpRound(game, {
+                hands: { a: ["7S", "QC"], b: ["8S", "9D", "AC"], c: ["7D", "10C"] },
+                attacker: "a",
+                defender: "b",
+                deck: ["9C"],
+            });
+            game.addCardToTableTop("a", "7S");
+            game.finalisePlayerTurn("a");
+            game.finalisePlayerTurn("c");
+            game.finalisePlayerTurn("b");
+
+            // Both attackers were done before b took the cards, so the round waits for them.
+            expect(game.tableTop.size).toBe(1);
+            expect(game.getPlayer("a").turned).toBe(false);
+            expect(game.getPlayer("c").turned).toBe(false);
+
+            game.addCardToTableTop("c", "7D");
+            game.finalisePlayerTurn("a");
+            game.finalisePlayerTurn("c");
+
+            expect(game.tableTop.size).toBe(0);
+            expect(game.getPlayer("b").deck).toEqual(expect.arrayContaining(["7S", "7D"]));
+        });
+
+        test("isn't asked again when the defender takes the cards and nothing more fits", () => {
+            const game = new Game(["a", "b", "c"], null, { ...DEFAULT_SETTINGS, randomisePlayerOrder: false });
+            game.trump = cardFromString("2H");
+            setUpRound(game, {
+                hands: { a: ["7S", "QC"], b: ["8S"], c: ["7D", "10C"] },
+                attacker: "a",
+                defender: "b",
+                deck: ["9C"],
+            });
+            game.addCardToTableTop("a", "7S");
+            game.finalisePlayerTurn("a");
+            game.finalisePlayerTurn("c");
+
+            // b holds as many cards as there are to beat, so nobody can throw in another.
+            game.finalisePlayerTurn("b");
+
+            expect(game.tableTop.size).toBe(0);
+            expect(game.getPlayer("b").deck).toContain("7S");
+        });
     });
 
     test("a defender who takes the cards can't beat them, or pass them on", () => {

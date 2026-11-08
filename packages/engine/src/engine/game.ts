@@ -559,9 +559,9 @@ export class Game {
     }
 
     /**
-     * Ask the attackers again whether they're done, as a change on the table may give them
-     * something to add: being done holds until the next card. A full table takes nothing
-     * more, so it doesn't ask.
+     * Ask the attackers again whether they're done, as a change on the table, or the defender
+     * taking the cards, may give them something to add: being done holds until then. A full
+     * table takes nothing more, so it doesn't ask.
      */
     private askAttackersAgain() {
         if (this.tableTop.size >= TableSize) return;
@@ -645,6 +645,12 @@ export class Game {
                     player.action = "attack";
                 }
             });
+        }
+
+        // A defender who takes the cards gives every attacker the chance to throw in more,
+        // those who were already done too, so the round waits for each of them again.
+        if (defendingPlayerName === name && !hasTurned) {
+            this.askAttackersAgain();
         }
 
         if (this.getActivePlayers().every(([_name, player]) => player.turned)) {
