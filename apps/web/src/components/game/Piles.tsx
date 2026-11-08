@@ -7,8 +7,11 @@ import { Card } from "@durachok/transport";
 const PILE_DEPTH = 4;
 
 type DeckProps = {
-    /** How many cards are left to draw, the last of which is the trump card. */
-    size: number;
+    /**
+     * How many cards are left to draw, the last of which is the trump card, or null in mythic
+     * mode, where the players only see that some are.
+     */
+    size: number | null;
     trump: Card;
 };
 
@@ -17,16 +20,18 @@ type DeckProps = {
  * the bottom of the pile and is drawn last. Once the deck is gone, the trump suit stays.
  */
 export function DeckPile({ size, trump }: DeckProps) {
-    const backs = Math.min(size - 1, PILE_DEPTH);
+    const backs = size === null ? PILE_DEPTH : Math.min(size - 1, PILE_DEPTH);
     const description =
-        size > 0
-            ? `${size} ${size === 1 ? "card" : "cards"} left to draw, the last of them the ${cardName(trump.card)}.`
-            : `No cards left to draw. Trumps are ${suitName(trump.suit)}.`;
+        size === null
+            ? `Cards are left to draw, the last of them the ${cardName(trump.card)}.`
+            : size > 0
+              ? `${size} ${size === 1 ? "card" : "cards"} left to draw, the last of them the ${cardName(trump.card)}.`
+              : `No cards left to draw. Trumps are ${suitName(trump.suit)}.`;
 
     return (
         <div className="flex flex-col items-center gap-2">
             <div className="relative h-[calc(var(--card-w)*1.4)] w-[calc(var(--card-w)*1.6)]" aria-hidden="true">
-                {size > 0 ? (
+                {size === null || size > 0 ? (
                     <>
                         <PlayingCard
                             card={trump.card}
@@ -47,7 +52,7 @@ export function DeckPile({ size, trump }: DeckProps) {
                 )}
             </div>
             <p className="m-0 text-xs text-muted-foreground">
-                <span aria-hidden="true">{size > 0 ? `${size} left` : "Deck empty"}</span>
+                <span aria-hidden="true">{size === null ? "Deck" : size > 0 ? `${size} left` : "Deck empty"}</span>
                 <span className="sr-only">{description}</span>
             </p>
         </div>
@@ -69,9 +74,12 @@ function TrumpSuit({ suit, className }: { suit: string; className?: string }) {
     );
 }
 
-/** The cards that were beaten and put aside, face down in an untidy pile. */
-export function DiscardPile({ count }: { count: number }) {
-    const shown = Math.min(count, PILE_DEPTH);
+/**
+ * The cards that were beaten and put aside, face down in an untidy pile, with how many there
+ * are, unless that's null, in mythic mode.
+ */
+export function DiscardPile({ count }: { count: number | null }) {
+    const shown = count === null ? PILE_DEPTH : Math.min(count, PILE_DEPTH);
 
     return (
         <div className="flex flex-col items-center gap-2">
@@ -91,7 +99,13 @@ export function DiscardPile({ count }: { count: number }) {
                 )}
             </div>
             <p className="m-0 text-xs text-muted-foreground">
-                {count > 0 ? `${count} discarded` : <span aria-hidden="true">Discard</span>}
+                {count === null ? (
+                    "Discarded cards"
+                ) : count > 0 ? (
+                    `${count} discarded`
+                ) : (
+                    <span aria-hidden="true">Discard</span>
+                )}
             </p>
         </div>
     );

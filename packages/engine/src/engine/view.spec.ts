@@ -35,6 +35,7 @@ function game(overrides: {
         ],
         tableTop: overrides.tableTop ?? {},
         deckSize: 20,
+        discardSize: 0,
         trump: { suit: "H", card: "AH", value: 14 },
     };
 }
@@ -227,6 +228,23 @@ describe("a move before the server answers", () => {
 
     test("forfeiting marks the player as turned", () => {
         expect(applyMove(game({ tableTop: { "6D": null } }), { type: "forfeit" }).player.turned).toBe(true);
+    });
+});
+
+describe("in mythic mode, without the other players' hand sizes", () => {
+    const hidden = { deck: { type: "hidden" as const, size: null } };
+
+    test("an attack is only limited by the table, and the game refuses one that the defender can't beat", () => {
+        expect(canPlace(game({ them: hidden, tableTop: { "7D": null, "7H": null, "7C": null } }), "7S")).toBe(true);
+
+        const tableTop = { "7D": "8D", "7H": "8H", "6C": "7C", "6D": "9D", "6H": "10H", "8S": "9S" };
+        expect(canPlace(game({ them: hidden, tableTop }), "7S")).toBe(false);
+    });
+
+    test("the attack can be passed on to a player whose hand size isn't told", () => {
+        expect(
+            canPlace(game({ ...defending, them: { ...hidden, action: "attack" }, tableTop: { "7D": null } }), "7S"),
+        ).toBe(true);
     });
 });
 

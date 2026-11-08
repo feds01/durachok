@@ -14,6 +14,7 @@ const lobby: Lobby = {
     disableChat: false,
     randomisePlayerOrder: true,
     roundTimeout: 120,
+    mythicMode: false,
     status: "waiting",
     players: [{ id: "owner-id", name: "owner" }],
     chat: [],
@@ -33,6 +34,7 @@ const game: PlayerGameState = {
     ],
     tableTop: {},
     deckSize: 24,
+    discardSize: 0,
     trump: { suit: "H", card: "AH", value: 14 },
 };
 

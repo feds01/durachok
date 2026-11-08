@@ -42,6 +42,8 @@ export const LobbySettingsSchema = z.object({
     randomisePlayerOrder: z.boolean(),
     /** Timeout in seconds. */
     roundTimeout: z.number().min(60).max(600),
+    /** Whether to play in mythic mode, where nobody is told how many cards anyone holds. */
+    mythicMode: z.boolean(),
 });
 
 export type LobbySettings = z.infer<typeof LobbySettingsSchema>;

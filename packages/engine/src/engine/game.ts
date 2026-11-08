@@ -16,12 +16,18 @@ export interface GameSettings {
     shortGameDeck: boolean;
     /** Whether to play in free-for-all mode. */
     freeForAll: boolean;
+    /**
+     * Whether to play in mythic mode, where nobody is told how many cards are left in the
+     * deck or in another player's hand, so that the players keep count themselves.
+     */
+    mythicMode: boolean;
 }
 
 export const DEFAULT_SETTINGS: GameSettings = {
     randomisePlayerOrder: true,
     shortGameDeck: false,
     freeForAll: true,
+    mythicMode: false,
 };
 
 /**
@@ -953,6 +959,26 @@ export class Game {
     }
 
     /**
+     * How many cards are left to draw, as the players are told it: in mythic mode, they only
+     * see whether any are.
+     */
+    private getDeckSizeForPlayers(): number | null {
+        return this.settings.mythicMode && this.deck.length > 0 ? null : this.deck.length;
+    }
+
+    /**
+     * How many cards were beaten and put aside, as the players are told it: the cards that
+     * aren't in the deck, a hand or on the table. In mythic mode, they only see whether any are.
+     */
+    private getDiscardSizeForPlayers(): number | null {
+        const hands = Array.from(this.players.values()).reduce((total, { deck }) => total + deck.length, 0);
+        const inPlay = this.deck.length + hands + this.getTableTopDeck().length;
+        const discarded = generateCardDeck(this.settings.shortGameDeck).length - inPlay;
+
+        return this.settings.mythicMode && discarded > 0 ? null : discarded;
+    }
+
+    /**
      * Method used to generate a game state from the perspective of a player. Using the player
      * name, a game state is constructed; notifying the given player with how many cards are in the
      * deck, how many other cards players hold, who has turned, etc.
@@ -970,7 +996,8 @@ export class Game {
         return {
             player: { ...player, deck: [...player.deck] },
             trump: this.trump,
-            deckSize: this.deck.length,
+            deckSize: this.getDeckSizeForPlayers(),
+            discardSize: this.getDiscardSizeForPlayers(),
             tableTop: Object.fromEntries(this.tableTop),
 
             // information about other players, including how many cards they
@@ -989,7 +1016,7 @@ export class Game {
                           }
                         : {
                               type: "hidden",
-                              size: other.deck.length,
+                              size: this.settings.mythicMode ? null : other.deck.length,
                           },
                 };
             }),
@@ -1010,7 +1037,8 @@ export class Game {
 
         return {
             trump: this.trump,
-            deckSize: this.deck.length,
+            deckSize: this.getDeckSizeForPlayers(),
+            discardSize: this.getDiscardSizeForPlayers(),
             tableTop: Object.fromEntries(this.tableTop),
             // information about other players, including how many cards they
             // are holding, if they have turned, and if they are defending...
@@ -1022,7 +1050,7 @@ export class Game {
                     name,
                     deck: {
                         type: "hidden",
-                        size: other.deck.length,
+                        size: this.settings.mythicMode ? null : other.deck.length,
                     },
                 };
             }),
