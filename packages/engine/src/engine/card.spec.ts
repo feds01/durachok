@@ -138,5 +138,17 @@ describe("Card tests", () => {
         test("sits in a hand by suit, with the trumps last, each low to high", () => {
             expect(sortHand(["AH", "7S", "2H", "QC", "6S", "10D"], "S")).toEqual(["2H", "AH", "QC", "10D", "6S", "7S"]);
         });
+
+        test("sits in a hand by rank, with the trumps last, each low to high", () => {
+            expect(sortHand(["AH", "7S", "QD", "QC", "6S", "10D", "6H"], "S", "rank")).toEqual([
+                "6H",
+                "10D",
+                "QC",
+                "QD",
+                "AH",
+                "6S",
+                "7S",
+            ]);
+        });
     });
 });

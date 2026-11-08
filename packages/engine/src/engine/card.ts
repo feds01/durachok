@@ -81,12 +81,18 @@ export function isRedSuit(suit: string): boolean {
     return suit === "H" || suit === "D";
 }
 
-/** A hand in the order that a player would hold it: by suit, with the trumps last, each low to high. */
-export function sortHand(cards: string[], trumpSuit: string): string[] {
+/** How a hand can be sorted: suit by suit, or rank by rank. */
+export type HandSort = "suit" | "rank";
+
+/**
+ * A hand in the order that a player would hold it, with the trumps last either way: by suit,
+ * each low to high, or low to high by rank, each rank's suits in the same order.
+ */
+export function sortHand(cards: string[], trumpSuit: string, by: HandSort = "suit"): string[] {
     const order = (card: string) => {
         const { suit, value } = cardFromString(card);
         const suitIndex = suit === trumpSuit ? SUIT_ORDER.length : SUIT_ORDER.indexOf(suit);
-        return suitIndex * 100 + value;
+        return by === "suit" ? suitIndex * 100 + value : (suit === trumpSuit ? 1000 : 0) + value * 10 + suitIndex;
     };
 
     return cards.toSorted((a, b) => order(a) - order(b));
