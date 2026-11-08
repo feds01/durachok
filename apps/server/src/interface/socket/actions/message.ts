@@ -1,12 +1,11 @@
-import { GamePinSchema } from "@durachok/transport";
-import { z } from "zod";
+import { ClientEvents } from "@durachok/transport";
 
 import { ensureLobbyAccess } from "../common/auth";
 import { factory } from "./ctx";
 
 const onMessage = factory.build({
     event: "message",
-    input: z.tuple([GamePinSchema, z.object({ message: z.string().trim().min(1).max(200) })]),
+    input: ClientEvents.message,
     handler: async ({ withRooms, input, client, logger: $ctx }) => {
         const { ctx } = $ctx;
         const logger = $ctx;

@@ -1,5 +1,4 @@
-import { GamePinSchema, UserNameSchema } from "@durachok/transport";
-import { z } from "zod";
+import { ClientEvents } from "@durachok/transport";
 
 import { ensureOwnerAccess } from "../common/auth";
 import { factory } from "./ctx";
@@ -7,7 +6,7 @@ import { factory } from "./ctx";
 const onKick = factory.build({
     event: "kick",
     /** The player to kick, by their name in the lobby. */
-    input: z.tuple([GamePinSchema, z.object({ name: UserNameSchema })]),
+    input: ClientEvents.kick,
     handler: async ({ withRooms, input, client, logger: $ctx }) => {
         const { ctx } = $ctx;
         const logger = $ctx;

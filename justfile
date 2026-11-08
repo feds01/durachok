@@ -75,10 +75,5 @@ fmt-check:
 architecture *args:
     zenith check "$@"
 
-# Regenerate the web app's socket client from the server's socket actions
-socket-client:
-    bun run --cwd apps/server build:client
-    oxfmt apps/web/src/interface/socket-client.ts
-
 # Lint, check formatting and the architecture, type check, test and build, as CI does
 ci: lint fmt-check architecture typecheck test build
