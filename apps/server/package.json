@@ -8,8 +8,7 @@
         "dev": "bun --watch src/index.ts",
         "check": "tsc --noEmit",
         "test": "bun test",
-        "build": "bun build src/index.ts --target=bun --packages=external --format=esm --outdir=dist --sourcemap=linked",
-        "build:client": "bun src/interface/socket/generate-client.ts"
+        "build": "bun build src/index.ts --target=bun --packages=external --format=esm --outdir=dist --sourcemap=linked"
     },
     "dependencies": {
         "@aws-sdk/client-cloudfront": "^3.1164.0",

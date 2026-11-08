@@ -1,5 +1,4 @@
-import { GamePinSchema } from "@durachok/transport";
-import { z } from "zod";
+import { ClientEvents } from "@durachok/transport";
 
 import { GAME_COUNTDOWN_MS } from "../../../config";
 import { ensureOwnerAccess } from "../common/auth";
@@ -8,7 +7,7 @@ import { factory } from "./ctx";
 
 const onStart = factory.build({
     event: "start",
-    input: z.tuple([GamePinSchema]),
+    input: ClientEvents.start,
     handler: async ({ withRooms, input, client, logger: $ctx }) => {
         const { ctx } = $ctx;
         const logger = $ctx;

@@ -1,5 +1,4 @@
-import { GamePinSchema, GameSettingsSchema } from "@durachok/transport";
-import { z } from "zod";
+import { ClientEvents } from "@durachok/transport";
 
 import { ensureOwnerAccess } from "../common/auth";
 import { factory } from "./ctx";
@@ -7,7 +6,7 @@ import { factory } from "./ctx";
 /** Change the lobby's settings, which only its owner can, before the game starts. */
 const onSettings = factory.build({
     event: "settings",
-    input: z.tuple([GamePinSchema, GameSettingsSchema]),
+    input: ClientEvents.settings,
     handler: async ({ input, client, withRooms, logger: $ctx }) => {
         const { ctx } = $ctx;
         const logger = $ctx;

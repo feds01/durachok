@@ -3,18 +3,14 @@ import { io } from "socket.io-client";
 import { create } from "zustand";
 
 import { SOCKET_URL } from "@/config";
-import { Root } from "@/interface/socket-client";
 import { getAuthTokens, saveRefreshedTokens } from "@/utils/auth";
-import { GameSettings, PlayerMove } from "@durachok/transport";
+import { GameSettings, LobbyClient, PlayerMove } from "@durachok/transport";
 
 import { LobbyEvent, LobbyState, initialLobbyState, reduceLobby } from "./state";
 
 interface LobbyStore extends LobbyState {
-    /** The pin of the lobby that the client is connected to. */
-    pin: string | null;
-
-    /** The socket connection to the server. */
-    socket: Root.Socket | null;
+    /** The client of the lobby that this player is connected to. */
+    client: LobbyClient | null;
 
     /**
      * Connect to a lobby and join it, and rejoin it whenever the socket reconnects.
@@ -51,78 +47,73 @@ interface LobbyStore extends LobbyState {
 export const useLobbyStore = create<LobbyStore>((set, get) => {
     const dispatch = (event: LobbyEvent) => set((state) => reduceLobby(state, event));
 
-    /** Run an action on the socket of the current lobby, if there is one. */
-    const withSocket = (action: (socket: Root.Socket, pin: string) => void) => {
-        const { socket, pin } = get();
-        if (socket && pin) {
-            action(socket, pin);
-        }
-    };
-
     return {
         ...initialLobbyState,
-        pin: null,
-        socket: null,
+        client: null,
 
         connect: (pin) => {
-            const socket: Root.Socket = io(SOCKET_URL, {
+            const socket = io(SOCKET_URL, {
                 // A function, so that each reconnection sends the tokens as they are then.
                 auth: (cb) => cb(getAuthTokens()),
             });
+            const client = new LobbyClient(socket, pin);
 
             // `active` is false once the socket stops reconnecting: when the server refused
             // the tokens, or disconnected the client itself.
-            socket.on("connect", () => socket.emit("join", pin));
             socket.on("connect_error", () => dispatch({ type: "connectError", retrying: socket.active }));
             socket.on("disconnect", () => dispatch({ type: "disconnected", reconnecting: socket.active }));
-            socket.on("tokens", saveRefreshedTokens);
+            client.on("tokens", saveRefreshedTokens);
 
-            socket.on("join", ({ lobby, game, gameVersion }) =>
+            client.on("join", ({ lobby, game, gameVersion }) =>
                 dispatch({
                     type: "join",
                     lobby,
                     ...(game && gameVersion !== undefined && { game: { state: game, version: gameVersion } }),
                 }),
             );
-            socket.on("lobbyState", ({ lobby }) => dispatch({ type: "lobby", lobby }));
-            socket.on("countdown", () => dispatch({ type: "countdown" }));
-            socket.on("start", () => dispatch({ type: "start" }));
-            socket.on("action", ({ actions, update, version }) =>
+            client.on("lobbyState", ({ lobby }) => dispatch({ type: "lobby", lobby }));
+            client.on("countdown", () => dispatch({ type: "countdown" }));
+            client.on("start", () => dispatch({ type: "start" }));
+            client.on("action", ({ actions, update, version }) =>
                 dispatch({ type: "game", game: update, version, actions }),
             );
-            socket.on("playerState", ({ update, version }) => dispatch({ type: "game", game: update, version }));
-            socket.on("victory", ({ players }) => dispatch({ type: "victory", players }));
-            socket.on("message", (message) => dispatch({ type: "message", message }));
-            socket.on("close", ({ reason }) => dispatch({ type: "close", reason }));
-            socket.on("error", ({ type, message }) => dispatch({ type: "error", code: type, message, at: Date.now() }));
+            client.on("playerState", ({ update, version }) => dispatch({ type: "game", game: update, version }));
+            client.on("victory", ({ players }) => dispatch({ type: "victory", players }));
+            client.on("message", (message) => dispatch({ type: "message", message }));
+            client.on("close", ({ reason }) => dispatch({ type: "close", reason }));
+            client.on("error", ({ type, message }) => dispatch({ type: "error", code: type, message, at: Date.now() }));
 
-            set({ ...initialLobbyState, pin, socket });
+            set({ ...initialLobbyState, client });
 
             return () => {
                 socket.removeAllListeners();
                 socket.disconnect();
 
-                if (get().socket === socket) {
-                    set({ ...initialLobbyState, pin: null, socket: null });
+                if (get().client === client) {
+                    set({ ...initialLobbyState, client: null });
                 }
             };
         },
 
-        start: () => withSocket((socket, pin) => socket.emit("start", pin)),
-        kick: (name) => withSocket((socket, pin) => socket.emit("kick", pin, { name })),
-        leave: () =>
-            withSocket((socket, pin) => {
-                socket.emit("leave", pin);
+        start: () => get().client?.start(),
+        kick: (name) => get().client?.kick(name),
+        leave: () => {
+            const { client } = get();
+            if (client) {
+                client.leave();
                 dispatch({ type: "left" });
-            }),
-        rotatePassphrase: () => withSocket((socket, pin) => socket.emit("passphrase", pin)),
-        updateSettings: (settings) => withSocket((socket, pin) => socket.emit("settings", pin, settings)),
-        sendMessage: (message) => withSocket((socket, pin) => socket.emit("message", pin, { message })),
-        dispatchMove: (move) =>
-            withSocket((socket, pin) => {
+            }
+        },
+        rotatePassphrase: () => get().client?.rotatePassphrase(),
+        updateSettings: (settings) => get().client?.updateSettings(settings),
+        sendMessage: (message) => get().client?.sendMessage(message),
+        dispatchMove: (move) => {
+            const { client } = get();
+            if (client) {
                 dispatch({ type: "move", move });
-                socket.emit("move", pin, move);
-            }),
+                client.move(move);
+            }
+        },
         dismissResults: () => dispatch({ type: "dismissResults" }),
     };
 });

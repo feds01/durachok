@@ -1,5 +1,4 @@
-import { GamePinSchema } from "@durachok/transport";
-import { z } from "zod";
+import { ClientEvents } from "@durachok/transport";
 
 import { ensureOwnerAccess } from "../common/auth";
 import { factory } from "./ctx";
@@ -7,7 +6,7 @@ import { factory } from "./ctx";
 /** Give the lobby a new passphrase, which the owner's waiting room asks for every so often. */
 const onPassphrase = factory.build({
     event: "passphrase",
-    input: z.tuple([GamePinSchema]),
+    input: ClientEvents.passphrase,
     handler: async ({ input, client, logger: $ctx }) => {
         const { ctx } = $ctx;
         const logger = $ctx;

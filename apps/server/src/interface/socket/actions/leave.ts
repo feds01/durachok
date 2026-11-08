@@ -1,12 +1,11 @@
-import { GamePinSchema } from "@durachok/transport";
-import { z } from "zod";
+import { ClientEvents } from "@durachok/transport";
 
 import { ensureLobbyAccess } from "../common/auth";
 import { factory } from "./ctx";
 
 const onLeave = factory.build({
     event: "leave",
-    input: z.tuple([GamePinSchema]),
+    input: ClientEvents.leave,
     handler: async ({ withRooms, input, client, logger: $ctx }) => {
         const { ctx } = $ctx;
         const logger = $ctx;

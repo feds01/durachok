@@ -1,7 +1,5 @@
 import { InvalidGameState } from "@durachok/engine";
-import { PlayerMoveSchema } from "@durachok/transport";
-import { GamePinSchema } from "@durachok/transport";
-import { z } from "zod";
+import { ClientEvents } from "@durachok/transport";
 
 import { ensureLobbyAccess } from "../common/auth";
 import { emitActions, emitVictory } from "../common/game";
@@ -9,7 +7,7 @@ import { factory } from "./ctx";
 
 const onMove = factory.build({
     event: "move",
-    input: z.tuple([GamePinSchema, PlayerMoveSchema]),
+    input: ClientEvents.move,
     handler: async ({ input, withRooms, client, logger: $ctx }) => {
         const { ctx } = $ctx;
         const logger = $ctx;
