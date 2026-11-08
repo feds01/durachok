@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import {
     ArrowRight,
+    Bot,
     Check,
     Crown,
     Layers,
@@ -343,11 +344,14 @@ function PlayerItem({ player, isOwner, isMe, onKick }: PlayerItemProps) {
             <Avatar className="size-16 border-2 border-primary shadow-lg">
                 <AvatarImage src={player.image} alt="" />
                 <AvatarFallback className="bg-card text-white">
-                    <User className="size-8" />
+                    {player.bot ? <Bot className="size-8" /> : <User className="size-8" />}
                 </AvatarFallback>
             </Avatar>
             <span className="max-w-full truncate text-base font-medium">{player.name}</span>
             {isMe && <span className="rounded-full bg-primary/20 px-2 py-0.5 text-xs text-primary">You</span>}
+            {player.bot && (
+                <span className="rounded-full bg-secondary px-2 py-0.5 text-xs text-muted-foreground">Bot</span>
+            )}
             {onKick && (
                 <Button
                     variant="ghost"

@@ -121,6 +121,9 @@ export class LobbyService {
                         if (p.registered) {
                             return this.getUserAsPlayer(p.registered);
                         }
+                        if (p.bot) {
+                            return { name: p.name, id: p.bot, bot: true };
+                        }
                         return {
                             name: p.name,
                             registered: null,
@@ -134,7 +137,8 @@ export class LobbyService {
 
     /**
      * Find the player that a token belongs to in a lobby: a registered user by their
-     * account, and an anonymous player by the name and lobby that their token is for.
+     * account, a bot by its entry in the registry, and an anonymous player by the name and
+     * lobby that their token is for.
      */
     public async findPlayer(token: TokenPayload, pin: string): Promise<DBPlayer | undefined> {
         // @@Todo: There is a potential problem, if a lobby pin is re-used within
@@ -151,7 +155,10 @@ export class LobbyService {
             if (token.kind === "registered") {
                 return player.registered === token.user.id;
             }
-            return !isDef(player.registered) && player.name === token.name;
+            if (token.kind === "bot") {
+                return player.bot === token.bot.id;
+            }
+            return !isDef(player.registered) && !isDef(player.bot) && player.name === token.name;
         });
     }
 
@@ -262,7 +269,7 @@ export class LobbyService {
         return lobbies.map(this.lobbyIntoInfo);
     }
 
-    /** Add a user to a waiting lobby, if it has a free place, and nobody in it has their name or account. */
+    /** Add a user to a waiting lobby, if it has a free place, and nobody in it has their name, account or bot. */
     public async addUserTo(pin: string, player: DBPlayer): Promise<void> {
         await transaction(async () => {
             const lobby = await this.getRaw(pin);
@@ -276,7 +283,9 @@ export class LobbyService {
 
             const taken = lobby.players.some(
                 (other) =>
-                    other.name === player.name || (isDef(player.registered) && other.registered === player.registered),
+                    other.name === player.name ||
+                    (isDef(player.registered) && other.registered === player.registered) ||
+                    (isDef(player.bot) && other.bot === player.bot),
             );
             if (taken) {
                 throw new PlayerAlreadyInLobbyError();

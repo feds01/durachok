@@ -13,6 +13,13 @@ export const RawTokenPayload = z.object({
                 name: z.string(),
                 pin: z.string(),
             }),
+        )
+        .or(
+            z.object({
+                name: z.string(),
+                /** The ID of the bot in the registry. */
+                bot: z.string(),
+            }),
         ),
     iat: z.number(),
     exp: z.number(),
@@ -30,6 +37,11 @@ const TokenPayloadSchema = z.union([
         kind: z.literal("anonymous"),
         name: z.string(),
         pin: z.string(),
+    }),
+    /** A bot from the registry, @see IBotUser. */
+    z.object({
+        kind: z.literal("bot"),
+        bot: z.object({ id: z.string(), name: z.string() }),
     }),
 ]);
 

@@ -24,6 +24,11 @@ export async function authenticate(
     const refresh = typeof refreshToken === "string" && refreshToken !== "" ? refreshToken : null;
     const verifiedToken = await authService.verifyToken(token);
 
+    // A token that the server no longer lets in, e.g. a bot's that was removed from the registry.
+    if (verifiedToken && !(await authService.isAllowed(verifiedToken))) {
+        return null;
+    }
+
     // Fast path, we have a valid token.
     if (verifiedToken) {
         assert(isDef(token) && typeof token === "string");
@@ -37,7 +42,11 @@ export async function authenticate(
     }
 
     const newTokens = await authService.refreshTokens(refresh);
-    return isDef(newTokens) ? { tokens: newTokens, refreshed: true } : null;
+    if (!isDef(newTokens) || !(await authService.isAllowed(newTokens.payload))) {
+        return null;
+    }
+
+    return { tokens: newTokens, refreshed: true };
 }
 
 /**

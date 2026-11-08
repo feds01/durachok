@@ -1,12 +1,14 @@
 import { hash, verify } from "argon2";
 import jwt from "jsonwebtoken";
+import { isValidObjectId } from "mongoose";
 import { Logger } from "pino";
 
 import { JWT_REFRESH_SECRET, JWT_SECRET } from "../config";
+import BotUsers from "../models/bot.model";
 import { RawTokenPayload, TokenPayload, UserTokensResponse } from "../schemas/auth";
 import { expr, isDef } from "../utils";
 
-type Tokens = {
+export type Tokens = {
     /** The basic token. */
     token: string;
     /** The refresh token. */
@@ -55,11 +57,26 @@ export class AuthService {
                 },
             };
         }
+        if ("bot" in data) {
+            return { kind: "bot", bot: { id: data.bot, name: data.name } };
+        }
         return {
             kind: "anonymous",
             name: data.name,
             pin: data.pin,
         };
+    }
+
+    /**
+     * Whether the server still lets the holder of a token in. A bot can only come in while it
+     * is in the registry, so that the server decides which bots play.
+     */
+    public async isAllowed(payload: TokenPayload): Promise<boolean> {
+        if (payload.kind !== "bot") {
+            return true;
+        }
+
+        return isValidObjectId(payload.bot.id) && isDef(await BotUsers.exists({ _id: payload.bot.id }));
     }
 
     /**
@@ -116,6 +133,9 @@ export class AuthService {
                     name: decodedToken.name,
                     pin: decodedToken.pin,
                 };
+            }
+            if (decodedToken.kind === "bot") {
+                return { name: decodedToken.bot.name, bot: decodedToken.bot.id };
             }
             return {
                 name: decodedToken.user.name,

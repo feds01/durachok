@@ -54,6 +54,8 @@ const LobbySchema = new Schema<ILobby>({
                 confirmed: { type: Boolean, required: true },
                 // @@Todo: potentially make this an `ObjectId`?
                 registered: { type: String, required: false },
+                // The ID of the bot in the registry, if the player is a bot.
+                bot: { type: String, required: false },
             },
         ],
         required: true,

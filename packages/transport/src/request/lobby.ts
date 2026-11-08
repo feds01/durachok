@@ -18,7 +18,8 @@ export type ByPinRequest = z.infer<typeof ByPinRequestSchema>;
 export const GameJoinRequestSchema = z.object({
     pin: GamePinSchema,
     passphrase: GamePassPhraseSchema.optional(),
-    name: UserNameSchema,
+    /** The name to play under, which only a player without an account needs: users and bots play under their own. */
+    name: UserNameSchema.optional(),
 });
 
 export type GameJoinRequest = z.infer<typeof GameJoinRequestSchema>;
