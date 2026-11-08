@@ -114,6 +114,61 @@
         "vite-plugin-svgr": "^5.2.0",
       },
     },
+    "packages/bots/core": {
+      "name": "@durachok/bots",
+      "version": "1.0.0",
+      "dependencies": {
+        "@durachok/engine": "workspace:*",
+        "@durachok/transport": "workspace:*",
+        "socket.io-client": "4.8.4",
+      },
+      "devDependencies": {
+        "@types/bun": "^1.4.4",
+        "@types/node": "^26.6.6",
+        "typescript": "^7.0.2",
+      },
+    },
+    "packages/bots/strategies/model": {
+      "name": "@durachok/bot-model",
+      "version": "1.0.0",
+      "dependencies": {
+        "@durachok/bots": "workspace:*",
+        "@durachok/transport": "workspace:*",
+        "zod": "^4.6.7",
+      },
+      "devDependencies": {
+        "@types/bun": "^1.4.4",
+        "@types/node": "^26.6.6",
+        "typescript": "^7.0.2",
+      },
+    },
+    "packages/bots/strategies/random": {
+      "name": "@durachok/bot-random",
+      "version": "1.0.0",
+      "dependencies": {
+        "@durachok/bots": "workspace:*",
+        "@durachok/transport": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "^1.4.4",
+        "@types/node": "^26.6.6",
+        "typescript": "^7.0.2",
+      },
+    },
+    "packages/bots/strategies/rules": {
+      "name": "@durachok/bot-rules",
+      "version": "1.0.0",
+      "dependencies": {
+        "@durachok/bots": "workspace:*",
+        "@durachok/engine": "workspace:*",
+        "@durachok/transport": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "^1.4.4",
+        "@types/node": "^26.6.6",
+        "typescript": "^7.0.2",
+      },
+    },
     "packages/engine": {
       "name": "@durachok/engine",
       "version": "1.0.0",
@@ -220,6 +275,14 @@
     "@dnd-kit/sortable": ["@dnd-kit/sortable@10.0.0", "", { "dependencies": { "@dnd-kit/utilities": "^3.2.2", "tslib": "^2.0.0" }, "peerDependencies": { "@dnd-kit/core": "^6.3.0", "react": ">=16.8.0" } }, "sha512-+xqhmIIzvAYMGfBYYnbKuNicfSsk4RksY2XdmJhT+HAC01nix6fHCztU68jooFiMUB01Ky3F0FyOvhG/BZrWkg=="],
 
     "@dnd-kit/utilities": ["@dnd-kit/utilities@3.2.2", "", { "dependencies": { "tslib": "^2.0.0" }, "peerDependencies": { "react": ">=16.8.0" } }, "sha512-+MKAJEOfaBe5SmV6t34p80MMKhjvUz0vRrvVJbPT0WElzaOJ/1xs+D+KDv+tD/NE5ujfrChEcshd4fLn0wpiqg=="],
+
+    "@durachok/bot-model": ["@durachok/bot-model@workspace:packages/bots/strategies/model"],
+
+    "@durachok/bot-random": ["@durachok/bot-random@workspace:packages/bots/strategies/random"],
+
+    "@durachok/bot-rules": ["@durachok/bot-rules@workspace:packages/bots/strategies/rules"],
+
+    "@durachok/bots": ["@durachok/bots@workspace:packages/bots/core"],
 
     "@durachok/engine": ["@durachok/engine@workspace:packages/engine"],
 

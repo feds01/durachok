@@ -13,11 +13,13 @@
     },
     "workspaces": [
         "packages/*",
+        "packages/bots/*",
+        "packages/bots/strategies/*",
         "apps/*"
     ],
     "type": "module",
     "scripts": {
-        "prepare": "turbo build --filter='./packages/*'"
+        "prepare": "turbo build --filter='./packages/**'"
     },
     "dependencies": {
         "@total-typescript/ts-reset": "^0.6.1",

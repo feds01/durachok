@@ -166,6 +166,23 @@ export const PlayerMoveSchema = z.union([
 
 export type PlayerMove = z.infer<typeof PlayerMoveSchema>;
 
+/** Whether two moves are the same one. */
+export function isSameMove(a: PlayerMove, b: PlayerMove): boolean {
+    switch (a.type) {
+        case "place":
+            return b.type === "place" && a.card === b.card;
+        case "cover":
+            return b.type === "cover" && a.card === b.card && a.position === b.position;
+        case "forfeit":
+            return b.type === "forfeit";
+    }
+}
+
+/** Whether an action is a move that a player made. */
+export function isMoveBy(action: Action, name: string): boolean {
+    return (action.type === "place" || action.type === "cover" || action.type === "forfeit") && action.player === name;
+}
+
 /** The current game state. */
 export const GameStateSchema = z.object({
     /** The current status of the game. */
