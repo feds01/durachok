@@ -110,6 +110,7 @@ export class LobbyService {
             mythicMode: lobby.mythicMode,
 
             /** State */
+            version: lobby.version,
             status: lobby.status,
             chat: lobby.chat,
             // The players who confirmed their place: the owner, and everyone who connected.

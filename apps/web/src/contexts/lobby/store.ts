@@ -77,12 +77,20 @@ export const useLobbyStore = create<LobbyStore>((set, get) => {
             socket.on("disconnect", () => dispatch({ type: "disconnected", reconnecting: socket.active }));
             socket.on("tokens", saveRefreshedTokens);
 
-            socket.on("join", ({ lobby, game }) => dispatch({ type: "join", lobby, ...(game && { game }) }));
+            socket.on("join", ({ lobby, game, gameVersion }) =>
+                dispatch({
+                    type: "join",
+                    lobby,
+                    ...(game && gameVersion !== undefined && { game: { state: game, version: gameVersion } }),
+                }),
+            );
             socket.on("lobbyState", ({ lobby }) => dispatch({ type: "lobby", lobby }));
             socket.on("countdown", () => dispatch({ type: "countdown" }));
             socket.on("start", () => dispatch({ type: "start" }));
-            socket.on("action", ({ actions, update }) => dispatch({ type: "game", game: update, actions }));
-            socket.on("playerState", ({ update }) => dispatch({ type: "game", game: update }));
+            socket.on("action", ({ actions, update, version }) =>
+                dispatch({ type: "game", game: update, version, actions }),
+            );
+            socket.on("playerState", ({ update, version }) => dispatch({ type: "game", game: update, version }));
             socket.on("victory", ({ players }) => dispatch({ type: "victory", players }));
             socket.on("message", (message) => dispatch({ type: "message", message }));
             socket.on("close", ({ reason }) => dispatch({ type: "close", reason }));

@@ -216,10 +216,12 @@ describe.skipIf(!available)("Game flow", () => {
         // when everyone has seen a move.
         const states = new Map<Socket, PlayerGameState>();
         const actionCounts = new Map<Socket, number>();
+        const versions = new Map<Socket, number[]>();
         for (const { socket } of players) {
-            socket.on("action", ({ update }: { update: PlayerGameState }) => {
+            socket.on("action", ({ update, version }: { update: PlayerGameState; version: number }) => {
                 states.set(socket, update);
                 actionCounts.set(socket, (actionCounts.get(socket) ?? 0) + 1);
+                versions.set(socket, [...(versions.get(socket) ?? []), version]);
             });
             socket.on("playerState", ({ update }: { update: PlayerGameState }) => states.set(socket, update));
         }
@@ -338,6 +340,12 @@ describe.skipIf(!available)("Game flow", () => {
         expect(victory!.players.map((p) => p.name).sort()).toEqual(players.map((p) => p.name).sort());
 
         expect(players.map(({ socket }) => gameOver.get(socket))).toEqual(players.map(() => "waiting"));
+
+        // Each move took the game's version up by one, from the deal's.
+        for (const { socket } of players) {
+            const seen = versions.get(socket)!;
+            expect(seen).toEqual(seen.map((_, i) => seen[0]! + i));
+        }
 
         // The lobby waits for another game, with both players still in it.
         const after = await trpc<{ status: string; players: unknown[] }>("lobbies.get", { pin }, ownerTokens, "GET");
@@ -576,7 +584,7 @@ describe.skipIf(!available)("Players at the same time", () => {
         const owner = await enter(pin, tokens);
         const guest = await joinAs(pin, "guest");
 
-        type ActionMessage = { update: PlayerGameState };
+        type ActionMessage = { update: PlayerGameState; version: number };
         const received = new Map<Socket, ActionMessage[]>([
             [owner, []],
             [guest, []],
@@ -590,7 +598,7 @@ describe.skipIf(!available)("Players at the same time", () => {
         await dealt;
 
         // The player who leads the round places a card, twice.
-        const [leader, { update }] = [...received]
+        const [leader, { update, version }] = [...received]
             .map(([socket, messages]) => [socket, messages.at(-1)!] as const)
             .find(([, last]) => turnOf(last.update).kind === "lead")!;
         const card = update.player.deck.find((held) => canPlace(update, held))!;
@@ -601,9 +609,9 @@ describe.skipIf(!available)("Players at the same time", () => {
         expect((await refused).type).toBe("invalid_move");
         await Bun.sleep(100);
 
-        // Everyone saw the deal, and then the move once.
+        // Everyone saw the deal, and then the move once, which took the game's version up by one.
         for (const messages of received.values()) {
-            expect(messages).toHaveLength(2);
+            expect(messages.map((message) => message.version)).toEqual([version, version + 1]);
         }
     }, 15_000);
 });

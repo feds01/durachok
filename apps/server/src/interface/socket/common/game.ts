@@ -6,9 +6,16 @@ import { Rooms } from "../actions/ctx";
 
 /**
  * Send each player of a lobby the actions that happened, with the game state
- * that they led to, from that player's perspective.
+ * that they led to, from that player's perspective, and the game's version after them.
  */
-export async function emitActions(ctx: Context, withRooms: Rooms, pin: string, game: Game, actions: Action[]) {
+export async function emitActions(
+    ctx: Context,
+    withRooms: Rooms,
+    pin: string,
+    game: Game,
+    actions: Action[],
+    version: number,
+) {
     const players = await ctx.lobbyService.getPlayers(pin);
     const clients = await withRooms(pin).getClients();
 
@@ -21,7 +28,7 @@ export async function emitActions(ctx: Context, withRooms: Rooms, pin: string, g
                 return;
             }
 
-            await client.emit("action", { actions, update: game.getStateForPlayer(player.name) });
+            await client.emit("action", { actions, update: game.getStateForPlayer(player.name), version });
         }),
     );
 }

@@ -40,6 +40,8 @@ export const PlayerJoinSchema = z
     .object({
         lobby: LobbySchema,
         game: PlayerGameStateSchema.optional(),
+        /** The version of the game that `game` shows, @see ActionMessageSchema. */
+        gameVersion: z.number().int().optional(),
     })
     .refine(
         (value) => {
@@ -47,7 +49,7 @@ export const PlayerJoinSchema = z
             // assume when a `playing` status is set, that the game state is
             // always present.
             if (value.lobby.status === "playing") {
-                return typeof value.game !== "undefined";
+                return typeof value.game !== "undefined" && typeof value.gameVersion !== "undefined";
             }
 
             return true;
@@ -83,7 +85,11 @@ export const CloseGameMessageSchema = z.object({
 /** The current state of the game for a particular state. */
 export const StateUpdateMessageSchema = z.object({
     update: PlayerGameStateSchema,
+    /** The version of the game that the update shows, @see ActionMessageSchema. */
+    version: z.number().int(),
 });
+
+export type StateUpdateMessage = z.infer<typeof StateUpdateMessageSchema>;
 
 /**
  * Indicate to the player that actions have occurred, with the game state that
@@ -92,6 +98,12 @@ export const StateUpdateMessageSchema = z.object({
 export const ActionMessageSchema = z.object({
     actions: z.array(ActionSchema),
     update: PlayerGameStateSchema,
+    /**
+     * How many times the lobby's games have changed, counting on from one game to the
+     * next. Updates can arrive out of order, so a client keeps the game with the highest
+     * version that it was sent.
+     */
+    version: z.number().int(),
 });
 
 export type ActionMessage = z.infer<typeof ActionMessageSchema>;

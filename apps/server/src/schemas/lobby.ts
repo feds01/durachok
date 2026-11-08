@@ -35,6 +35,9 @@ export const DBLobbySchema = z
 
         /* === Game state === */
 
+        /** How many times the lobby has changed, @see countChanges. */
+        version: z.number(),
+
         /** Whether the game has started, waiting, or has finished. */
         status: GameStatusSchema,
         /** All players that are currently in the game. */
