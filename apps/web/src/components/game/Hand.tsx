@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 
 import PlayingCard from "@/components/game/PlayingCard";
 import { DECK, useArrival } from "@/lib/flight";
-import { HAND_ID } from "@/lib/hand";
+import { HAND_ID } from "@/lib/drag";
 import { cn } from "@/lib/utils";
 import { cardName, suitOf } from "@durachok/engine";
 

@@ -92,8 +92,27 @@ export function sortHand(cards: string[], trumpSuit: string, by: HandSort = "sui
     const order = (card: string) => {
         const { suit, value } = cardFromString(card);
         const suitIndex = suit === trumpSuit ? SUIT_ORDER.length : SUIT_ORDER.indexOf(suit);
-        return by === "suit" ? suitIndex * 100 + value : (suit === trumpSuit ? 1000 : 0) + value * 10 + suitIndex;
+        if (by === "suit") {
+            return suitIndex * 100 + value;
+        }
+        return (suit === trumpSuit ? 1000 : 0) + value * 10 + suitIndex;
     };
 
     return cards.toSorted((a, b) => order(a) - order(b));
+}
+
+/**
+ * A hand in the order that its player holds it: sorted, or in the order that they arranged
+ * it themselves, without the cards that they no longer hold, and with the cards that they got
+ * since on the end, in their sorted order.
+ */
+export function arrangeHand(sorted: string[], arranged: string[] | null): string[] {
+    if (!arranged) {
+        return sorted;
+    }
+
+    const held = new Set(sorted);
+    const kept = arranged.filter((card) => held.has(card));
+    const placed = new Set(kept);
+    return [...kept, ...sorted.filter((card) => !placed.has(card))];
 }

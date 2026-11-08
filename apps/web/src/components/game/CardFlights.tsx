@@ -7,7 +7,7 @@ import { CardFlight } from "@/lib/deal";
 import { AWAY, DECK, offsetTo, seatOf } from "@/lib/flight";
 
 type Props = {
-    flights: CardFlight[];
+    flights: readonly CardFlight[];
     onLanded: (id: number) => void;
 };
 

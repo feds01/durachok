@@ -1,14 +1,9 @@
 import {
-    closestCenter,
-    CollisionDetection,
     DndContext,
     DragEndEvent,
     DragOverlay,
     DragStartEvent,
-    DroppableContainer,
     PointerSensor,
-    pointerWithin,
-    rectIntersection,
     useSensor,
     useSensors,
 } from "@dnd-kit/core";
@@ -29,19 +24,22 @@ import PlayingCard from "@/components/game/PlayingCard";
 import RoleBadge from "@/components/game/RoleBadge";
 import RoundAnnouncement from "@/components/game/RoundAnnouncement";
 import SortControl from "@/components/game/SortControl";
-import TableArea, { CardSources, ClearTo, Targets } from "@/components/game/TableArea";
+import TableArea, { Targets } from "@/components/game/TableArea";
 import { Button } from "@/components/ui/button";
 import { useLobbyStore } from "@/contexts/lobby";
 import { useRoundAnnouncement } from "@/lib/announcement";
 import { useDeal } from "@/lib/deal";
-import { arrangeHand, HAND_ID } from "@/lib/hand";
+import { collisionDetection } from "@/lib/drag";
 import { usePreference } from "@/lib/preferences";
 import { playSound } from "@/lib/sound";
+import { CardSources, readActions } from "@/lib/table";
 import { cn } from "@/lib/utils";
+import { expr } from "@/utils";
 import {
     HandSort,
     Turn,
     applyMove,
+    arrangeHand,
     canCover,
     canForfeit,
     canPlace,
@@ -51,50 +49,15 @@ import {
     tableCards,
     turnOf,
 } from "@durachok/engine";
-import { Action, Lobby, PlayerGameState, PlayerMove } from "@durachok/transport";
+import { Lobby, PlayerGameState, PlayerMove } from "@durachok/transport";
 
 type Props = {
     lobby: Lobby;
     game: PlayerGameState;
 };
 
-type Pickup = Extract<Action, { type: "pickup" }>;
-
 /** How long the round waits on an attacker before it takes them as done, in seconds. */
 const DONE_TIMEOUT_SECONDS = 8;
-
-/** Whether a place to drop a card is one of the cards in the player's hand. */
-const inHand = ({ data }: DroppableContainer) => data.current?.sortable !== undefined;
-
-/**
- * Where a dragged card goes: onto the attack that it's over, before the table around it,
- * and over the hand, to the place of the card under the pointer, as the cards overlap.
- */
-const collisionDetection: CollisionDetection = (args) => {
-    const hits = pointerWithin(args);
-    const onTable = hits.find(({ id }) => String(id).startsWith("slot-")) ?? hits.find(({ id }) => id === "table");
-
-    if (onTable) {
-        return [onTable];
-    }
-    const pointer = args.pointerCoordinates;
-    if (pointer && hits.some(({ id }) => id === HAND_ID)) {
-        return closestCenter({
-            ...args,
-            collisionRect: {
-                left: pointer.x,
-                right: pointer.x,
-                top: pointer.y,
-                bottom: pointer.y,
-                width: 0,
-                height: 0,
-            },
-            droppableContainers: args.droppableContainers.filter(inHand),
-        });
-    }
-    const around = args.droppableContainers.filter((container) => !inHand(container) && container.id !== HAND_ID);
-    return rectIntersection({ ...args, droppableContainers: around });
-};
 
 /**
  * The game, as the player sees it: the other players along the top, the deck, the table and
@@ -134,36 +97,14 @@ export default function GameTable({ lobby, game }: Props) {
     );
 
     // The last update says where the table's cards came from, and where they go when it clears.
-    const fromHand = new Set([
-        ...(pending && pending.type !== "forfeit" ? [pending.card] : []),
-        ...actions.flatMap((action) =>
-            (action.type === "place" || action.type === "cover") && action.player === me ? [action.card] : [],
-        ),
-    ]);
-    const pickup = actions.find((action): action is Pickup => action.type === "pickup") ?? null;
-    // A round ends with the defender taking the cards, or with a new round once they're beaten.
-    const newRound = actions.some(({ type }) => type === "new_round");
-    const clearTo: ClearTo | null = pickup
-        ? pickup.player === me
-            ? { to: "hand" }
-            : { to: "seat", player: pickup.player }
-        : newRound
-          ? { to: "discard" }
-          : null;
+    const update = readActions(actions, me);
     const sources: CardSources = {
-        fromHand,
+        fromHand: new Set([...(pending && pending.type !== "forfeit" ? [pending.card] : []), ...update.mine]),
         dropped,
-        playedBy: new Map(
-            actions.flatMap((action) =>
-                (action.type === "place" || action.type === "cover") && action.player !== me
-                    ? [[action.card, action.player] as const]
-                    : [],
-            ),
-        ),
+        playedBy: update.playedBy,
         trumpSuit: trump.suit,
     };
-
-    const deal = useDeal(game, { pickup, newRound });
+    const deal = useDeal(game, update);
 
     useEffect(() => playSound("begin"), []);
     useEffect(() => {
@@ -190,6 +131,14 @@ export default function GameTable({ lobby, game }: Props) {
               cover: new Set(table.flatMap((_, position) => (canCover(view, holding, position) ? [position] : []))),
           }
         : null;
+
+    // What the hand is sorted by, or nothing once the player arranged it themselves.
+    const sortedBy = expr((): HandSort | null => {
+        if (arranged) {
+            return null;
+        }
+        return byRank ? "rank" : "suit";
+    });
 
     const sortBy = (by: HandSort) => {
         setByRank(by === "rank");
@@ -238,14 +187,19 @@ export default function GameTable({ lobby, game }: Props) {
             return;
         }
 
-        // Only a card that can be played now goes on the table: not while the server hasn't answered.
-        const move: PlayerMove | null = !playable.has(card)
-            ? null
-            : target === "table" && canPlace(view, card)
-              ? { type: "place", card }
-              : target.startsWith("slot-") && canCover(view, card, position)
-                ? { type: "cover", card, position }
-                : null;
+        const move = expr((): PlayerMove | null => {
+            // Only a card that can be played now goes on the table: not while the server hasn't answered.
+            if (!playable.has(card)) {
+                return null;
+            }
+            if (target === "table" && canPlace(view, card)) {
+                return { type: "place", card };
+            }
+            if (target.startsWith("slot-") && canCover(view, card, position)) {
+                return { type: "cover", card, position };
+            }
+            return null;
+        });
 
         if (move) {
             setDropped(card);
@@ -336,7 +290,7 @@ export default function GameTable({ lobby, game }: Props) {
                                 role={player.out === null ? player.action : "none"}
                                 targets={targets}
                                 defending={player.action === "defend"}
-                                clearTo={clearTo}
+                                clearTo={update.clearTo}
                                 sources={sources}
                                 onPlace={() => holding && play({ type: "place", card: holding })}
                                 onCover={(position) => holding && play({ type: "cover", card: holding, position })}
@@ -381,7 +335,7 @@ export default function GameTable({ lobby, game }: Props) {
                          */}
                         <div className="mx-auto grid w-full max-w-6xl grid-cols-[minmax(var(--card-w),1fr)_minmax(0,auto)_minmax(var(--card-w),1fr)] items-end px-4">
                             <div className="flex w-(--card-w) justify-center justify-self-start pb-6">
-                                <SortControl sort={arranged ? null : byRank ? "rank" : "suit"} onSort={sortBy} />
+                                <SortControl sort={sortedBy} onSort={sortBy} />
                             </div>
                             <PlayerHand
                                 cards={hand}

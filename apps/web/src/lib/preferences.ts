@@ -5,15 +5,16 @@ import { useState } from "react";
  * browser remembers if it can. Without storage, a choice lasts until the page reloads.
  */
 
-export type Preference =
-    | "muted"
-    | "hints"
+const DEFAULTS = {
+    muted: false,
+    hints: false,
     /** Whether the player's cards are sorted by rank, rather than by suit. */
-    | "sortByRank";
+    sortByRank: false,
+};
 
-const DEFAULTS: Record<Preference, boolean> = { muted: false, hints: false, sortByRank: false };
+export type PreferenceKey = keyof typeof DEFAULTS;
 
-export function readPreference(preference: Preference): boolean {
+export function readPreference(preference: PreferenceKey): boolean {
     try {
         const stored = localStorage.getItem(preference);
         return stored === null ? DEFAULTS[preference] : stored === "true";
@@ -23,7 +24,7 @@ export function readPreference(preference: Preference): boolean {
 }
 
 /** A preference, and a way to change it. */
-export function usePreference(preference: Preference): [boolean, (value: boolean) => void] {
+export function usePreference(preference: PreferenceKey): [boolean, (value: boolean) => void] {
     const [value, setValue] = useState(() => readPreference(preference));
 
     const update = (next: boolean) => {

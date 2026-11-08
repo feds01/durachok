@@ -1,7 +1,7 @@
 import PlayingCard from "@/components/game/PlayingCard";
 import { pileLean } from "@/lib/flight";
-import { trumpBorder } from "@/lib/trump";
 import { cn } from "@/lib/utils";
+import { expr } from "@/utils";
 import { cardName, isRedSuit, suitName, suitSymbol } from "@durachok/engine";
 import { Card } from "@durachok/transport";
 
@@ -23,13 +23,17 @@ type DeckProps = {
  */
 export function DeckPile({ size, trump }: DeckProps) {
     const backs = size === null ? PILE_DEPTH : Math.min(size - 1, PILE_DEPTH);
-    const description = `Trumps are ${suitName(trump.suit)}. ${
-        size === null
-            ? `Cards are left to draw, the last of them the ${cardName(trump.card)}.`
-            : size > 0
-              ? `${size} ${size === 1 ? "card" : "cards"} left to draw, the last of them the ${cardName(trump.card)}.`
-              : "No cards left to draw."
-    }`;
+    // How much of the deck is left, in a word under it, and in a sentence for screen readers.
+    const { label, left } = expr(() => {
+        const last = `the last of them the ${cardName(trump.card)}`;
+        if (size === null) {
+            return { label: "Deck", left: `Cards are left to draw, ${last}.` };
+        }
+        if (size === 0) {
+            return { label: "Deck empty", left: "No cards left to draw." };
+        }
+        return { label: `${size} left`, left: `${size} ${size === 1 ? "card" : "cards"} left to draw, ${last}.` };
+    });
 
     return (
         <div className="flex flex-col items-center gap-2">
@@ -59,21 +63,19 @@ export function DeckPile({ size, trump }: DeckProps) {
             </div>
             <div className="flex flex-col items-center gap-0.5" aria-hidden="true">
                 <span
-                    className={cn(
-                        "flex items-center gap-1 rounded-full border bg-card/80 px-2 py-0.5 text-xs font-semibold",
-                        trumpBorder(trump.suit),
-                    )}
+                    data-trump={trump.suit}
+                    className="flex items-center gap-1 rounded-full border border-(color:--trump)/70 bg-card/80 px-2 py-0.5 text-xs font-semibold"
                 >
                     Trumps
                     <span className={cn("text-base leading-none", isRedSuit(trump.suit) && "text-rose-400")}>
                         {suitSymbol(trump.suit)}
                     </span>
                 </span>
-                <span className="text-xs text-muted-foreground">
-                    {size === null ? "Deck" : size > 0 ? `${size} left` : "Deck empty"}
-                </span>
+                <span className="text-xs text-muted-foreground">{label}</span>
             </div>
-            <p className="sr-only">{description}</p>
+            <p className="sr-only">
+                Trumps are {suitName(trump.suit)}. {left}
+            </p>
         </div>
     );
 }

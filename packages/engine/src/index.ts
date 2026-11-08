@@ -1,6 +1,7 @@
 export { shuffleArray, getRandomKey } from "./utils";
 export { Game } from "./engine/game";
 export {
+    arrangeHand,
     cardFromString,
     cardName,
     isRedSuit,

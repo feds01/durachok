@@ -38,7 +38,12 @@ const withPlayer = (player: Partial<PlayerGameState["player"]>, tableTop: Player
 
 /** A round of three, from the view of `me`: who opens the attack, and who defends. */
 const round = (attacker: string, defender: string, tableTop: PlayerGameState["tableTop"] = {}): RoundView => {
-    const roleOf = (name: string) => (name === defender ? "defend" : name === attacker ? "attack" : "none");
+    const roleOf = (name: string) => {
+        if (name === defender) {
+            return "defend";
+        }
+        return name === attacker ? "attack" : "none";
+    };
     return roundViewOf({
         ...game,
         player: { ...game.player, action: roleOf("me"), beganRound: attacker === "me" },

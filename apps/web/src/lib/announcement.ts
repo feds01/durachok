@@ -49,13 +49,21 @@ export function roundViewOf(game: PlayerGameState): RoundView {
 
 /** Whether two views of the round differ in anything that an announcement depends on. */
 export function sameRoundView(a: RoundView, b: RoundView): boolean {
-    return (
-        a.me === b.me &&
-        a.role === b.role &&
-        a.tableSize === b.tableSize &&
-        a.attacker === b.attacker &&
-        a.defender === b.defender
-    );
+    return (Object.keys(a) as (keyof RoundView)[]).every((key) => a[key] === b[key]);
+}
+
+/**
+ * Who passed the attack on to whom between two views of the round, if anyone did: passing it
+ * on adds a card to the table, which another player then defends.
+ */
+function passOf(before: RoundView | null, after: RoundView): { from: string; to: string } | null {
+    if (!before?.defender || !after.defender || before.defender === after.defender) {
+        return null;
+    }
+    if (before.tableSize === 0 || after.tableSize <= before.tableSize) {
+        return null;
+    }
+    return { from: before.defender, to: after.defender };
 }
 
 /**
@@ -64,36 +72,24 @@ export function sameRoundView(a: RoundView, b: RoundView): boolean {
  * starts, as the table clears for the next round, and when their role changes.
  */
 export function announcementFor(before: RoundView | null, after: RoundView): AnnouncementContent | null {
-    // Passing the attack on adds a card to the table, which another player now defends.
-    const passedFrom =
-        before?.defender &&
-        after.defender &&
-        before.defender !== after.defender &&
-        before.tableSize > 0 &&
-        after.tableSize > before.tableSize
-            ? before.defender
-            : null;
-
-    if (passedFrom && after.defender) {
-        return after.defender === after.me
-            ? { kind: "role", role: "defend", opponent: after.attacker, passedBy: passedFrom }
-            : { kind: "passed", from: passedFrom, to: after.defender, byMe: passedFrom === after.me };
+    const pass = passOf(before, after);
+    if (pass?.to === after.me) {
+        return { kind: "role", role: "defend", opponent: after.attacker, passedBy: pass.from };
+    }
+    if (pass) {
+        return { kind: "passed", ...pass, byMe: pass.from === after.me };
     }
 
     if (after.role === null) {
         return null;
     }
     const newRound = before === null || (before.tableSize > 0 && after.tableSize === 0);
-    if (!newRound && before?.role === after.role) {
+    if (!newRound && before.role === after.role) {
         return null;
     }
 
-    return {
-        kind: "role",
-        role: after.role,
-        opponent: after.role === "attack" ? after.defender : after.attacker,
-        passedBy: null,
-    };
+    const opponent = after.role === "attack" ? after.defender : after.attacker;
+    return { kind: "role", role: after.role, opponent, passedBy: null };
 }
 
 export type Announcement = AnnouncementContent & {

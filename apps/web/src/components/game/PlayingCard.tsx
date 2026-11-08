@@ -1,7 +1,6 @@
 import { HTMLMotionProps, motion } from "framer-motion";
 import { forwardRef } from "react";
 
-import { trumpEdge } from "@/lib/trump";
 import { cn } from "@/lib/utils";
 import { cardName, suitOf } from "@durachok/engine";
 
@@ -24,10 +23,12 @@ const PlayingCard = forwardRef<HTMLDivElement, Props>(function PlayingCard({ car
             className={cn(
                 "relative aspect-5/7 w-(--card-w) shrink-0 select-none rounded-[5%/3.6%] shadow-md shadow-black/40",
                 !card && "card-back",
-                trump && card && trumpEdge(suitOf(card)),
+                // A glow in the suit's colour, which takes over from the card's own shadow.
+                trump && "shadow-[0_0_12px] shadow-(color:--trump)/45 ring-2 ring-(color:--trump)/90",
                 className,
             )}
             aria-hidden={card ? undefined : true}
+            data-trump={trump && card ? suitOf(card) : undefined}
             {...props}
         >
             {card && (

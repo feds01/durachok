@@ -4,29 +4,11 @@ import { ReactNode, useEffect, useRef } from "react";
 
 import PlayingCard from "@/components/game/PlayingCard";
 import { AWAY, DISCARD, offsetTo, pileLean, seatOf, useArrival } from "@/lib/flight";
+import { CardSources, ClearTo } from "@/lib/table";
 import { cn } from "@/lib/utils";
+import { expr } from "@/utils";
 import { cardName, suitOf, TableCard } from "@durachok/engine";
 import { PlayerRole } from "@durachok/transport";
-
-/** Where the cards on the table go as it clears at the end of a round. */
-export type ClearTo =
-    /** The defender beat them all, so they're discarded. */
-    | { to: "discard" }
-    /** The player took them, so they fly into their hand. */
-    | { to: "hand" }
-    /** Another player took them, so they fly to their seat. */
-    | { to: "seat"; player: string };
-
-/** Where the table's cards came from, which says where they fly in from, and which are trumps. */
-export type CardSources = {
-    /** Cards that the player just played, which fly from their hand. */
-    fromHand: ReadonlySet<string>;
-    /** The card that the player dropped onto the table, which lands where they let go of it. */
-    dropped: string | null;
-    /** Who played the cards that other players just played, which fly from their seats. */
-    playedBy: ReadonlyMap<string, string>;
-    trumpSuit: string;
-};
 
 /** Where the card that the player holds up, by clicking or dragging it, can go. */
 export type Targets = {
@@ -119,12 +101,16 @@ function AttackSlot({ position, children }: { position: number; children: ReactN
             return;
         }
 
-        const place =
-            clearTo?.to === "discard"
-                ? document.querySelector(DISCARD)
-                : clearTo?.to === "seat"
-                  ? document.querySelector(seatOf(clearTo.player))
-                  : null;
+        const place = expr(() => {
+            switch (clearTo?.to) {
+                case "discard":
+                    return document.querySelector(DISCARD);
+                case "seat":
+                    return document.querySelector(seatOf(clearTo.player));
+                default:
+                    return null;
+            }
+        });
         if (!element || !place) {
             safeToRemove();
             return;
