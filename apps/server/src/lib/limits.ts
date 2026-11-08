@@ -24,6 +24,8 @@ export const limits = {
     failedLogins: new RateLimiter(10, MINUTE),
     /** Accounts made from one address. */
     registrations: new RateLimiter(5, 10 * MINUTE),
+    /** Avatars that one user uploads. */
+    avatars: new RateLimiter(5, 10 * MINUTE),
 };
 
 /** How many lobbies one user may keep at once. */

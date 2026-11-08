@@ -115,6 +115,10 @@ export class UserService {
             const saved = await user.save();
             return this.get(saved.id);
         } catch (e: unknown) {
+            // An image that can't be an avatar is the user's to fix.
+            if (e instanceof TRPCError) {
+                throw e;
+            }
             this.logger.error(e, `Failed to create user`);
 
             throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
@@ -141,6 +145,9 @@ export class UserService {
 
             await user.save();
         } catch (e: unknown) {
+            if (e instanceof TRPCError) {
+                throw e;
+            }
             this.logger.error(e, "Failed to update user");
             throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
         }
