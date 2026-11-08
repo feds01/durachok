@@ -22,21 +22,58 @@ setup: install && db
         echo "note: core.hooksPath is $hooks_path, so git only runs the hook if that hands off to the repo's own hooks"
     fi
 
-# Make sure the server can reach MongoDB as a replica set, and start the local one in Docker if it isn't running, or isn't one
+# Make sure the server can reach MongoDB as a replica set, and start the local one if it isn't running, or isn't one: in Apple's `container` on a Mac that has it, otherwise in Docker, or as `DB_RUNTIME=docker|container` says
 db:
     #!/usr/bin/env bash
     set -euo pipefail
     ping() { (cd apps/server && bun src/scripts/ping-db.ts "$@"); }
     status=0
     ping || status=$?
-    # 0: it's up; 2: a remote MongoDB is down, which Docker can't fix.
+    # 0: it's up; 2: a remote MongoDB is down, which no local container can fix.
     if [ "$status" -ne 1 ]; then exit "$status"; fi
-    if ! command -v docker >/dev/null || ! docker info >/dev/null 2>&1; then
-        echo "error: start Docker, so that 'just db' can run MongoDB in it, or run MongoDB yourself (see apps/server/README.md)" >&2
-        exit 1
+
+    # On a Mac, Apple's container, which needs no Docker, and elsewhere, or without it, Docker.
+    runtime="${DB_RUNTIME:-}"
+    if [ -z "$runtime" ]; then
+        if [ "$(uname)" = Darwin ] && command -v container >/dev/null; then
+            runtime=container
+        elif command -v docker >/dev/null && docker info >/dev/null 2>&1; then
+            runtime=docker
+        else
+            echo "error: install Apple's container ('brew install container') on a Mac, or start Docker, so that 'just db' can run MongoDB in it, or run MongoDB yourself (see apps/server/README.md)" >&2
+            exit 1
+        fi
     fi
-    echo "Starting MongoDB in Docker..."
-    docker compose up --detach --wait mongo
+
+    case "$runtime" in
+        docker)
+            echo "Starting MongoDB in Docker..."
+            docker compose up --detach --wait mongo
+            ;;
+        container)
+            echo "Starting MongoDB in Apple's container..."
+            container system status >/dev/null 2>&1 || container system start --enable-kernel-install
+            # One container, and one volume for its data, as compose.yaml has for Docker.
+            if container list --all --quiet | grep -qx durachok-mongo; then
+                container start durachok-mongo >/dev/null 2>&1 || true
+            else
+                container volume create durachok-mongo-data >/dev/null 2>&1 || true
+                container run --detach --name durachok-mongo --publish 127.0.0.1:27017:27017 \
+                    --volume durachok-mongo-data:/data/db mongo:8 --replSet rs0 >/dev/null
+            fi
+            # Set up the replica set of one that the server needs, as compose.yaml's health check does,
+            # once MongoDB takes commands, and wait for it to take writes.
+            replset="try { rs.status() } catch (e) { rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: 'localhost:27017' }] }) } quit(db.hello().isWritablePrimary ? 0 : 1)"
+            for _ in $(seq 60); do
+                container exec durachok-mongo mongosh --quiet --eval "$replset" >/dev/null 2>&1 && break
+                sleep 1
+            done
+            ;;
+        *)
+            echo "error: DB_RUNTIME is docker or container, not '$runtime'" >&2
+            exit 1
+            ;;
+    esac
     ping 10000
 
 # Keep the registry of bots that may join lobbies, e.g. `just bots add ivan "Plays by hand-written rules"`
