@@ -1,124 +1,91 @@
+<div align="center">
+
 # Durachok
 
-![Durachok Game table](./docs/table.png "Table")
+**Durak, the Russian card game, in your browser.**<br />
+Start a lobby, share the pin, and play with up to eight friends, on a computer or a phone.
 
-This is the repository that contains the sources to the Durachok game server, game client and the
-library that is shared between the two.
+[![CI](https://github.com/feds01/durachok/actions/workflows/ci.yml/badge.svg)](https://github.com/feds01/durachok/actions/workflows/ci.yml)
+[![Bun](https://img.shields.io/badge/Bun-1.4-black?logo=bun)](https://bun.sh/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![MIT licence](https://img.shields.io/badge/licence-MIT-green)](./LICENSE)
 
-## Structure
+<img src="./docs/table.webp" alt="The game table: the deck and its trump, an attack beaten on the table, and the player's hand" />
 
-The repository is structured as follows:
+</div>
 
-- `apps/web` - The client for the game, a React application that serves as the client for the game.
-- `apps/server` - The server for the game, a Bun application that serves as the server for the game.
-- `packages/engine` - The shared library for the game, a TypeScript library that contains the shared code between the client and the server.
-- `packages/transport` - Shared data transport types used for communication between client and server.
+## Features
 
-## Prerequisites
+- **Lobbies with a pin.** Create a game, share its six-digit pin or invite link, and friends join with just a name, no account needed.
+- **The whole game.** Attack, defend, pass the attack on with a card of the same rank, or take the cards, with a 36 or a 52 card deck.
+- **A table that tells you what's going on.** It announces whether you attack or defend, and when the attack is passed on. Cards fly between the deck, the hands, the table and the discard pile, and each suit's trumps glow in their own colour.
+- **Your hand, your way.** Sort it by suit or by rank, or drag the cards into your own order.
+- **Mythic mode,** in which nobody is told how many cards anyone holds.
+- **Chat** in the lobby, sounds, and tips for new players.
 
-Before you begin, ensure you have the following installed:
+<table>
+  <tr>
+    <td width="38%"><img src="./docs/lobby.webp" alt="A lobby of three players, with its chat open" /></td>
+    <td width="38%"><img src="./docs/announcement.webp" alt="The table announcing that the player is defending" /></td>
+    <td width="24%" rowspan="2"><img src="./docs/phone.webp" alt="The game on a phone" /></td>
+  </tr>
+  <tr>
+    <td><img src="./docs/home.webp" alt="The home page, where a player enters a lobby's pin" /></td>
+    <td><img src="./docs/dashboard.webp" alt="A player's dashboard of their games" /></td>
+  </tr>
+</table>
 
-- [Bun](https://bun.sh/) (v1.4 or later)
-- [just](https://just.systems/), which runs the project's commands
-- [Docker](https://www.docker.com/), for the MongoDB that `just setup` starts, or your own [MongoDB](https://www.mongodb.com/try/download/community) (see the [server README](./apps/server/README.md))
+## Getting started
 
-## Installation
-
-1. Install the dependencies and the pre-commit hooks (see [Pre-commit Setup](#pre-commit-setup) below), and make sure MongoDB is running:
-
-```bash
-just setup
-```
-
-2. Configure the `apps/server` environment, read the [README.md](./apps/server/README.md) for more information.
-
-3. Configure the `apps/web` environment, read the [README.md](./apps/web/README.md) for more information.
-
-4. Run the following command to start the development server:
-
-```bash
-just dev
-```
-
-This will start the server and the client in development mode.
-
-## Pre-commit Setup
-
-This project uses [pre-commit](https://pre-commit.com/) to run linting, formatting, and type checking before each commit. This ensures code quality and consistency across the codebase.
-
-### Installing pre-commit
-
-**macOS (using Homebrew):**
+You'll need [Bun](https://bun.sh/) 1.4 or later, [just](https://just.systems/) to run the project's commands, and
+[pre-commit](https://pre-commit.com/) for the git hooks. MongoDB comes from [Docker](https://www.docker.com/), or use
+your own (see the [server's README](./apps/server/README.md)).
 
 ```bash
-brew install pre-commit
+just setup   # install the dependencies and the git hooks, and make sure MongoDB is running
+just dev     # start the server and the web app
 ```
 
-**Linux/macOS (using pip):**
+Before the first `just dev`, configure the environment of the [server](./apps/server/README.md) and of the
+[web app](./apps/web/README.md).
 
-```bash
-pip install pre-commit
-```
+## How it's built
 
-**Windows (using pip):**
+| Package              | What it is                                                                         |
+| -------------------- | ---------------------------------------------------------------------------------- |
+| `apps/web`           | The game in the browser: React, Vite, Tailwind and framer-motion                   |
+| `apps/server`        | The API and the game's sockets, on Bun, with tRPC, socket.io and MongoDB           |
+| `packages/engine`    | The rules of the game, which the server plays by and the web app checks moves with |
+| `packages/transport` | The types and schemas that the server and the web app send each other              |
 
-```bash
-pip install pre-commit
-```
+## Commands
 
-### Setting up the hooks
+The commands are recipes in the [`justfile`](./justfile). Run `just` to list them.
 
-After installing pre-commit, `just setup` installs the git hooks, or run the following command from the repository root:
+| Command              | What it does                                                       |
+| -------------------- | ------------------------------------------------------------------ |
+| `just dev`           | Start the server and the web app in development mode               |
+| `just db`            | Make sure the server can reach MongoDB, starting it if needed      |
+| `just build`         | Build everything                                                   |
+| `just test`          | Run every package's tests                                          |
+| `just typecheck`     | Type check every package                                           |
+| `just lint`          | Lint, or fix what can be fixed with `just lint --fix`              |
+| `just fmt`           | Format, or check the formatting with `just fmt-check`              |
+| `just architecture`  | Check the architecture contracts in [`zenith.toml`](./zenith.toml) |
+| `just socket-client` | Regenerate the web app's socket client from the server             |
+| `just ci`            | Run every check that CI runs                                       |
 
-```bash
-pre-commit install
-```
+## Git hooks
 
-### What the hooks do
-
-The pre-commit configuration runs four checks on staged files:
-
-1. **oxlint** - Lints JavaScript/TypeScript files and auto-fixes issues where possible
-2. **oxfmt** - Formats JavaScript/TypeScript/JSON files
-3. **zenith** - Checks the architecture contracts in [`zenith.toml`](./zenith.toml) with [zenith](https://github.com/feds01/zenith)
-4. **typecheck** - Runs TypeScript type checking via `just typecheck`
-
-### Running hooks manually
-
-You can run the hooks manually on all files:
+`just setup` installs [pre-commit](https://pre-commit.com/) hooks, which check each commit's staged files with
+[oxlint](https://oxc.rs/docs/guide/usage/linter), [oxfmt](https://oxc.rs/docs/guide/usage/formatter),
+[zenith](https://github.com/feds01/zenith) and a type check. Install pre-commit with `brew install pre-commit` or
+`pip install pre-commit`, and run the hooks on every file with:
 
 ```bash
 pre-commit run --all-files
 ```
 
-Or run a specific hook:
+## Licence
 
-```bash
-pre-commit run oxlint --all-files
-pre-commit run oxfmt --all-files
-pre-commit run zenith --all-files
-pre-commit run typecheck --all-files
-```
-
-### Skipping hooks (not recommended)
-
-If you need to bypass the hooks for a specific commit:
-
-```bash
-git commit --no-verify -m "your message"
-```
-
-## Commands
-
-The project's commands are recipes in the [`justfile`](./justfile). Run `just` to list them:
-
-- `just dev` - Start all applications in development mode
-- `just db` - Make sure the server can reach MongoDB, starting it in Docker if needed
-- `just build` - Build all applications
-- `just test` - Run tests across all packages
-- `just typecheck` - Run TypeScript type checking
-- `just lint` - Lint the code, or fix what can be fixed with `just lint --fix`
-- `just fmt` - Format the code, or check it with `just fmt-check`
-- `just architecture` - Check the architecture contracts in `zenith.toml`
-- `just socket-client` - Regenerate the web app's socket client from the server
-- `just ci` - Run every check that CI runs
+[MIT](./LICENSE)
