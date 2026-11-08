@@ -5,7 +5,7 @@
  * and uses a database of its own, which it drops afterwards. Set `TEST_SERVER_LOG` to a
  * file to keep the server's logs.
  */
-import { canPlace, turnOf } from "@durachok/engine";
+import { canForfeit, canPlace, movesFor, turnOf } from "@durachok/engine";
 import { LobbyClient, type PlayerGameState, type PlayerMove } from "@durachok/transport";
 import type { Subprocess } from "bun";
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
@@ -814,4 +814,89 @@ describe.skipIf(!available)("Abuse", () => {
             trpc("lobbies.create", { settings: { maxPlayers: 2, roundTimeout: 120 } }, tokens),
         ).rejects.toThrow("401");
     });
+});
+
+/**
+ * Play a game to its end, each player making the first move that they can, and close the connection
+ * of each player who goes out while the game goes on without them.
+ *
+ * @returns The names of the players who left before the game ended.
+ */
+async function playWhileThoseOutLeave(pin: string, players: Socket[]): Promise<string[]> {
+    const views = new Map<Socket, { view: PlayerGameState; version: number }>();
+    const waiting = new Set<Socket>();
+    const tried = new Map<Socket, string[]>();
+    const left: string[] = [];
+    let over = false;
+
+    for (const socket of players) {
+        const take = ({ update, version }: { update: PlayerGameState; version: number }) => {
+            const known = views.get(socket);
+            if (known && version <= known.version) return;
+            views.set(socket, { view: update, version });
+            waiting.delete(socket);
+            tried.delete(socket);
+        };
+        socket.on("action", take).on("playerState", take);
+        socket.on("error", ({ type }: { type: string }) => type === "invalid_move" && waiting.delete(socket));
+        socket.on("victory", () => (over = true));
+    }
+    players[0]!.emit("start", pin);
+
+    for (const deadline = Date.now() + 30_000; !over && Date.now() < deadline; await Bun.sleep(10)) {
+        for (const socket of players) {
+            const known = views.get(socket);
+            if (!known || !socket.connected || waiting.has(socket)) continue;
+
+            const { view } = known;
+            if (view.player.out !== null) {
+                if (view.players.filter(({ out }) => out === null).length >= 2) {
+                    left.push(view.player.name);
+                    socket.close();
+                }
+                continue;
+            }
+            if (turnOf(view).kind === "attackDone") continue;
+
+            const moves: PlayerMove[] = [
+                ...view.player.deck.flatMap((card) => movesFor(view, card)),
+                ...(canForfeit(view) ? [{ type: "forfeit" as const }] : []),
+            ];
+            const move = moves.find((candidate) => !(tried.get(socket) ?? []).includes(JSON.stringify(candidate)));
+            if (!move) continue;
+
+            tried.set(socket, [...(tried.get(socket) ?? []), JSON.stringify(move)]);
+            waiting.add(socket);
+            socket.emit("move", pin, move);
+        }
+    }
+
+    for (let i = 0; i < 100 && (await stored(pin)).status !== "waiting"; i++) {
+        await Bun.sleep(20);
+    }
+    return left;
+}
+
+describe.skipIf(!available)("The end of a game", () => {
+    test("a player who left during it gives up their place, and the owner keeps theirs", async () => {
+        // Who goes out first is up to the deal, so games are played until one has a player
+        // other than the owner leave it while it goes on.
+        for (let attempt = 0; attempt < 10; attempt++) {
+            const { pin, tokens } = await createLobby("leaver", 3);
+            const owner = await enter(pin, tokens);
+            const ownerName = (await stored(pin)).players[0]!.name;
+            const left = await playWhileThoseOutLeave(pin, [owner, await joinAs(pin, "ana"), await joinAs(pin, "bo")]);
+            const guestsWhoLeft = left.filter((name) => name !== ownerName);
+            if (guestsWhoLeft.length === 0) continue;
+
+            const { status, players } = await stored(pin);
+            expect(status).toBe("waiting");
+            expect(names(players)).toContain(ownerName);
+            for (const name of guestsWhoLeft) {
+                expect(names(players)).not.toContain(name);
+            }
+            return;
+        }
+        throw new Error("No game had a player other than the owner leave it while it went on");
+    }, 120_000);
 });
