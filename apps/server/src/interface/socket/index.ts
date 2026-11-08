@@ -1,9 +1,7 @@
 import { Server as HTTPServer } from "http";
 import { Logger } from "pino";
-import { Server } from "socket.io";
 import { attachSockets } from "zod-sockets";
 
-import { WEB_ORIGINS } from "../../config";
 import { authenticate } from "../../lib/authentication";
 import { Context, createContext } from "../../lib/context";
 import { limits } from "../../lib/limits";
@@ -13,15 +11,7 @@ import { holderOf } from "../../schemas/auth";
 import { actions } from "./actions";
 import { Rooms } from "./actions/ctx";
 import { config as socketConfig } from "./config";
-
-const io = new Server({
-    cors: {
-        origin: WEB_ORIGINS,
-        credentials: true,
-    },
-    // What a client sends is small: a pin, a move, a message, the settings.
-    maxHttpBufferSize: 16 * 1024,
-});
+import { io } from "./io";
 
 /** How often a client that sends too much is told to slow down, rather than for each event that it floods. */
 const slowDowns = new RateLimiter(1, 5000);

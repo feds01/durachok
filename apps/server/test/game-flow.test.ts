@@ -756,8 +756,13 @@ describe.skipIf(!available)("Abuse", () => {
         const eve = await joinAs(pin, "eve");
 
         const kicked = next(eve, "close");
+        const cut = next(eve, "disconnect");
         owner.emit("kick", pin, { name: "eve" });
         expect(await kicked).toEqual({ reason: "kicked" });
+
+        // Her connection closes too, after she was told why, and her socket doesn't reconnect.
+        expect(await cut).toBe("io server disconnect");
+        expect(eve.active).toBe(false);
 
         await expect(trpc("lobbies.join", { pin, name: "eve" })).rejects.toThrow("kicked you out");
     });
