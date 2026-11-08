@@ -15,6 +15,8 @@ export const DBPlayerSchema = z.object({
     confirmed: z.boolean(),
     /** If it is a registered user, this is the ID of the user. */
     registered: z.string().optional(),
+    /** If it is a bot, this is the ID of the bot in the registry. */
+    bot: z.string().optional(),
 });
 
 export type DBPlayer = z.infer<typeof DBPlayerSchema>;

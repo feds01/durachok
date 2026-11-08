@@ -72,6 +72,7 @@ The commands are recipes in the [`justfile`](./justfile). Run `just` to list the
 | `just lint`         | Lint, or fix what can be fixed with `just lint --fix`              |
 | `just fmt`          | Format, or check the formatting with `just fmt-check`              |
 | `just architecture` | Check the architecture contracts in [`zenith.toml`](./zenith.toml) |
+| `just bots`         | Keep the registry of bots that may join lobbies                    |
 | `just ci`           | Run every check that CI runs                                       |
 
 ## Git hooks

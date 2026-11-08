@@ -50,6 +50,9 @@ export type UserStatistics = z.infer<typeof UserStatisticsSchema>;
  * A player that is currently within a lobby, the `id` of the player
  * is referring to their connection id.
  */
-export const PlayerSchema = UserSchema.omit({ email: true });
+export const PlayerSchema = UserSchema.omit({ email: true }).extend({
+    /** Whether the player is a bot, from the server's registry of bots. */
+    bot: z.boolean().optional(),
+});
 
 export type Player = z.infer<typeof PlayerSchema>;

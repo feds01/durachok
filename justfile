@@ -39,6 +39,10 @@ db:
     docker compose up --detach --wait mongo
     ping 10000
 
+# Keep the registry of bots that may join lobbies, e.g. `just bots add ivan "Plays by hand-written rules"`
+bots *args:
+    @cd apps/server && bun src/scripts/bot.ts "$@"
+
 # Install the dependencies from the lockfile, which also builds the internal packages
 install:
     bun install --frozen-lockfile

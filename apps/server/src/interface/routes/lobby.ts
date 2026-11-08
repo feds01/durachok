@@ -8,7 +8,7 @@ import { TRPCError } from "@trpc/server";
 
 import { authProcedure, publicProcedure, router, userProcedure } from "../../lib/trpc";
 import { DBPlayer } from "../../schemas/lobby";
-import { expr } from "../../utils";
+import { expr, isDef } from "../../utils";
 import { notifyLobbyClosed } from "../socket";
 
 export const lobbyRouter = router({
@@ -98,7 +98,8 @@ export const lobbyRouter = router({
             throw new TRPCError({ code: "UNAUTHORIZED", message: "Incorrect passphrase" });
         }
 
-        // Registered users play under their account's name, anonymous players under the one they chose.
+        // Registered users play under their account's name, bots under their name in the
+        // registry, and anonymous players under the one they chose.
         const player: DBPlayer = expr(() => {
             if (ctx.token?.kind === "registered") {
                 return {
@@ -108,22 +109,28 @@ export const lobbyRouter = router({
                     confirmed: false,
                 };
             }
+            if (ctx.token?.kind === "bot") {
+                return { name: ctx.token.bot.name, socket: null, bot: ctx.token.bot.id, confirmed: false };
+            }
+            if (!isDef(input.name)) {
+                throw new TRPCError({ code: "BAD_REQUEST", message: "A player without an account needs a name" });
+            }
             return { name: input.name, socket: null, confirmed: false };
         });
 
         // Add the player, if the lobby still has a place for them, and their name isn't taken.
         await ctx.lobbyService.addUserTo(input.pin, player);
 
-        // Okay, now we need to determine whether this is an "anonymous" user,
-        // or a registered user. If it's a registered user, we can just add them
-        // to the lobby, otherwise we need to generate a token for them.
+        // Registered users and bots play with the tokens that they joined with, and an
+        // anonymous player is given tokens for their place in this lobby.
         return {
-            ...(!player.registered && {
-                ...ctx.authService.createTokens({
-                    pin: input.pin,
-                    name: input.name,
+            ...(!player.registered &&
+                !player.bot && {
+                    ...ctx.authService.createTokens({
+                        pin: input.pin,
+                        name: player.name,
+                    }),
                 }),
-            }),
         };
     }),
 });

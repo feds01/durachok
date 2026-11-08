@@ -6,7 +6,7 @@
  * file to keep the server's logs.
  */
 import { canPlace, turnOf } from "@durachok/engine";
-import type { PlayerGameState, PlayerMove } from "@durachok/transport";
+import { LobbyClient, type PlayerGameState, type PlayerMove } from "@durachok/transport";
 import type { Subprocess } from "bun";
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import mongoose from "mongoose";
@@ -613,5 +613,83 @@ describe.skipIf(!available)("Players at the same time", () => {
         for (const messages of received.values()) {
             expect(messages.map((message) => message.version)).toEqual([version, version + 1]);
         }
+    }, 15_000);
+});
+
+/** Keep the server's registry of bots, as `just bots` does, and return what it printed. */
+function bots(...args: string[]): string {
+    const result = Bun.spawnSync(["bun", "src/scripts/bot.ts", ...args], {
+        cwd: `${import.meta.dir}/..`,
+        env: { ...process.env, MONGODB_URI: DB_URI },
+    });
+    return result.stdout.toString();
+}
+
+/** Add a bot to the server's registry, and return its tokens. */
+function registerBot(name: string): Tokens {
+    const output = bots("add", name, "A bot that plays in the tests");
+    const token = /^BOT_TOKEN=(.+)$/m.exec(output)?.[1];
+    const refreshToken = /^BOT_REFRESH_TOKEN=(.+)$/m.exec(output)?.[1];
+    if (!token || !refreshToken) {
+        throw new Error(`Couldn't add the bot: ${output}`);
+    }
+    return { token, refreshToken };
+}
+
+/** Bots, which the server knows from its registry, and which play through the lobby protocol like anyone else. */
+describe.skipIf(!available)("Bots", () => {
+    test("a bot from the registry joins a lobby under its name, and plays through the lobby client", async () => {
+        // A place to spare, so that the bot's second try at a seat isn't turned away for a full lobby.
+        const { pin, tokens } = await createLobby("host", 3);
+        const owner = await enter(pin, tokens);
+        const name = `bot-${crypto.randomUUID().slice(0, 8)}`;
+        const botTokens = registerBot(name);
+
+        // A bot plays under its name in the registry, so it doesn't choose one, and has one seat.
+        expect(await trpc("lobbies.join", { pin }, botTokens)).toEqual({});
+        await expect(trpc("lobbies.join", { pin }, botTokens)).rejects.toThrow("User already in lobby");
+
+        type LobbyUpdate = { lobby: { players: { name: string; bot?: boolean }[] } };
+        const ownerSeesBot = waitFor<LobbyUpdate>(owner, "lobbyState", ({ lobby }) =>
+            lobby.players.some((player) => player.name === name),
+        );
+        const bot = await enter(pin, botTokens);
+        const { lobby } = await ownerSeesBot;
+        expect(lobby.players.find((player) => player.name === name)?.bot).toBe(true);
+
+        // The bot is dealt in, and makes its moves as a person's client would.
+        const dealt = Promise.all([owner, bot].map((socket) => next<{ update: PlayerGameState }>(socket, "action")));
+        owner.emit("start", pin);
+        const [ownerView, botView] = (await dealt).map(({ update }) => update) as [PlayerGameState, PlayerGameState];
+        const client = new LobbyClient(bot, pin);
+        const botMoved = waitFor<{ actions: { player?: string }[] }>(owner, "action", ({ actions }) =>
+            actions.some((action) => action.player === name),
+        );
+
+        if (turnOf(botView).kind === "lead") {
+            client.move({ type: "place", card: botView.player.deck.find((card) => canPlace(botView, card))! });
+        } else {
+            // The owner leads, and the bot, which defends, takes the card.
+            const attacked = next(bot, "action");
+            owner.emit("move", pin, {
+                type: "place",
+                card: ownerView.player.deck.find((card) => canPlace(ownerView, card))!,
+            });
+            await attacked;
+            client.move({ type: "forfeit" });
+        }
+        await botMoved;
+    }, 15_000);
+
+    test("the server shuts out a bot once it is no longer in the registry", async () => {
+        const name = `gone-${crypto.randomUUID().slice(0, 8)}`;
+        const botTokens = registerBot(name);
+        expect(bots("remove", name)).toContain(`Removed ${name}`);
+
+        await expect(connect(botTokens)).rejects.toThrow("unauthorized");
+
+        // Without its tokens, the bot is a player without an account, who needs a name to join.
+        const { pin } = await createLobby("host", 2);
+        await expect(trpc("lobbies.join", { pin }, botTokens)).rejects.toThrow("needs a name");
     }, 15_000);
 });
