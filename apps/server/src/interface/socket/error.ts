@@ -16,7 +16,7 @@ export function transformErrorIntoMessage(error: Error): ErrorMessage {
     if (error instanceof InputValidationError) {
         return {
             type: "bad_request",
-            message: `invalid event ${error.name} sent`,
+            message: "That request isn't valid.",
             details: transformZodErrorIntoErrorSummary(error.cause),
         };
     } else if (error instanceof ApiError) {
@@ -45,8 +45,9 @@ export function transformErrorIntoMessage(error: Error): ErrorMessage {
     // @@Todo: determine which other error types can we transform into
     // a message.
 
+    // The error itself is logged, and what went wrong inside the server isn't the player's to read.
     return {
         type: "internal",
-        message: error.message,
+        message: "Something went wrong on the server.",
     };
 }
