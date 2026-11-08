@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import { PlayerGameState } from "@durachok/transport";
 
 /** A role that a round gives the player: they open the attack, or they defend against it. */
@@ -92,4 +94,26 @@ export function announcementFor(before: RoundView | null, after: RoundView): Ann
         opponent: after.role === "attack" ? after.defender : after.attacker,
         passedBy: null,
     };
+}
+
+export type Announcement = AnnouncementContent & {
+    /** Which announcement this is, so that the same one, a round later, shows again. */
+    id: number;
+};
+
+/** What the table tells the player as the round goes on: their role, and when the attack is passed on. */
+export function useRoundAnnouncement(game: PlayerGameState): [Announcement | null, () => void] {
+    const view = roundViewOf(game);
+    const [seen, setSeen] = useState<RoundView | null>(null);
+    const [announcement, setAnnouncement] = useState<Announcement | null>(null);
+
+    if (seen === null || !sameRoundView(seen, view)) {
+        setSeen(view);
+        const content = announcementFor(seen, view);
+        if (content) {
+            setAnnouncement({ ...content, id: (announcement?.id ?? 0) + 1 });
+        }
+    }
+
+    return [announcement, () => setAnnouncement(null)];
 }

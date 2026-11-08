@@ -1,4 +1,5 @@
 import PlayingCard from "@/components/game/PlayingCard";
+import { pileLean } from "@/lib/flight";
 import { trumpBorder } from "@/lib/trump";
 import { cn } from "@/lib/utils";
 import { cardName, isRedSuit, suitName, suitSymbol } from "@durachok/engine";
@@ -92,11 +93,6 @@ function TrumpSuit({ suit, className }: { suit: string; className?: string }) {
     );
 }
 
-/** How far a card of the discard pile leans, in degrees, from its place in the pile. */
-export function leanOf(index: number): number {
-    return ((index * 37) % 24) - 12;
-}
-
 /**
  * The cards that were beaten and put aside, face down in an untidy pile, with how many there
  * are, unless that's null, in mythic mode.
@@ -113,7 +109,7 @@ export function DiscardPile({ count }: { count: number | null }) {
                     // Where the pile goes, leaning like the card at its bottom will.
                     <span
                         className="absolute inset-0 rounded-[5%/3.6%] border-2 border-dashed"
-                        style={{ rotate: `${leanOf(0)}deg` }}
+                        style={{ rotate: `${pileLean(0)}deg` }}
                     />
                 ) : (
                     Array.from({ length: shown }, (_, index) => (
@@ -121,8 +117,7 @@ export function DiscardPile({ count }: { count: number | null }) {
                             // eslint-disable-next-line react/no-array-index-key -- the cards of a pile are alike
                             key={index}
                             className="absolute left-0 top-0"
-                            // The same untidiness each time, so that the pile doesn't shuffle as it grows.
-                            style={{ rotate: `${leanOf(index)}deg` }}
+                            style={{ rotate: `${pileLean(index)}deg` }}
                         />
                     ))
                 )}

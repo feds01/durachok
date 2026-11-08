@@ -1,15 +1,14 @@
 import { useDroppable } from "@dnd-kit/core";
 import { AnimatePresence, motion, useAnimate, usePresence, usePresenceData } from "framer-motion";
-import { ReactNode, useEffect } from "react";
+import { ReactNode, useEffect, useRef } from "react";
 
-import { leanOf } from "@/components/game/Piles";
 import PlayingCard from "@/components/game/PlayingCard";
-import { AWAY, DISCARD, offsetTo, seatOf, useArrival } from "@/lib/flight";
+import { AWAY, DISCARD, offsetTo, pileLean, seatOf, useArrival } from "@/lib/flight";
 import { cn } from "@/lib/utils";
 import { cardName, suitOf, TableCard } from "@durachok/engine";
 import { PlayerRole } from "@durachok/transport";
 
-/** Where the cards on the table go when it clears. */
+/** Where the cards on the table go as it clears at the end of a round. */
 export type ClearTo =
     /** The defender beat them all, so they're discarded. */
     | { to: "discard" }
@@ -44,7 +43,8 @@ type Props = {
     targets: Targets | null;
     /** Whether the player is defending, which says what placing a card does. */
     defending: boolean;
-    clearTo: ClearTo;
+    /** Where the table's cards go, if the last update clears the table, or nothing while the round goes on. */
+    clearTo: ClearTo | null;
     sources: CardSources;
     onPlace: () => void;
     onCover: (position: number) => void;
@@ -96,20 +96,29 @@ export default function TableArea({ cards, role, targets, defending, clearTo, so
 /**
  * An attack's place on the table, which flies away with its cards as the table clears: onto
  * the discard pile, or to the player who took them, one after another. Cards that the player
- * took fly into their hand from where they lie.
+ * took fly into their hand from where they lie, and so does a card that the server turned down.
  */
 function AttackSlot({ position, children }: { position: number; children: ReactNode }) {
     const [isPresent, safeToRemove] = usePresence();
     // Where the table's cards go, as the table says when it clears, after this attack last rendered.
-    const clearTo = usePresenceData() as ClearTo | undefined;
+    const clearTo = usePresenceData() as ClearTo | null | undefined;
     const [scope, animate] = useAnimate<HTMLDivElement>();
+    const leaving = useRef<{ stop: () => void } | null>(null);
 
     useEffect(() => {
+        const element = scope.current;
+
+        // An attack that comes back as it leaves, as when the server answers the player's move
+        // after another update, stays on the table.
         if (isPresent) {
+            if (leaving.current && element) {
+                leaving.current.stop();
+                leaving.current = null;
+                void animate(element, { x: 0, y: 0, scale: 1, rotate: 0, opacity: 1 }, { duration: 0 });
+            }
             return;
         }
 
-        const element = scope.current;
         const place =
             clearTo?.to === "discard"
                 ? document.querySelector(DISCARD)
@@ -122,10 +131,19 @@ function AttackSlot({ position, children }: { position: number; children: ReactN
         }
 
         const { x, y, scale } = offsetTo(element.firstElementChild ?? element, place);
-        const rotate = clearTo?.to === "discard" ? leanOf(position) : 0;
-        void animate(element, { x, y, scale, rotate, opacity: [1, 1, 0] }, { ...AWAY, delay: position * 0.06 }).then(
-            safeToRemove,
+        const rotate = clearTo?.to === "discard" ? pileLean(position) : 0;
+        const flight = animate(
+            element,
+            { x, y, scale, rotate, opacity: [1, 1, 0] },
+            { ...AWAY, delay: position * 0.06 },
         );
+        leaving.current = flight;
+        void flight.then(() => {
+            if (leaving.current === flight) {
+                leaving.current = null;
+                safeToRemove();
+            }
+        });
         // Once, as the attack leaves.
         // eslint-disable-next-line react-hooks/exhaustive-deps -- the exit is once
     }, [isPresent]);
@@ -199,25 +217,21 @@ function TableCardView({ card, sources, tilt = 0 }: TableCardViewProps) {
     const player = sources.playedBy.get(card);
     const arrival = useArrival<HTMLDivElement>(player ? seatOf(player) : null, { tilt });
 
-    if (card === sources.dropped) {
-        return <PlayingCard card={card} trump={trump} initial={{ scale: 1.08 }} animate={{ scale: 1 }} />;
-    }
-    if (player) {
-        return (
-            <div ref={arrival}>
-                <PlayingCard card={card} trump={trump} layoutId={card} />
-            </div>
-        );
-    }
-
+    // The same wrapper whichever way the card came, so that it stays put as later updates say less about it.
     return (
-        <PlayingCard
-            card={card}
-            trump={trump}
-            layoutId={card}
-            initial={sources.fromHand.has(card) ? false : { opacity: 0, y: -60, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ type: "spring", stiffness: 380, damping: 30 }}
-        />
+        <div ref={arrival}>
+            {card === sources.dropped ? (
+                <PlayingCard card={card} trump={trump} initial={{ scale: 1.08 }} animate={{ scale: 1 }} />
+            ) : (
+                <PlayingCard
+                    card={card}
+                    trump={trump}
+                    layoutId={card}
+                    initial={sources.fromHand.has(card) || player ? false : { opacity: 0, y: -60, scale: 0.9 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                />
+            )}
+        </div>
     );
 }

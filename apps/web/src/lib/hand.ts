@@ -1,3 +1,6 @@
+/** The id of the player's hand, for a card dragged over it, which goes back in among the others. */
+export const HAND_ID = "hand";
+
 /**
  * The player's cards in the order that they hold them: sorted, or in the order that they
  * arranged them by hand, with the cards that they got since on the end, as sorted.

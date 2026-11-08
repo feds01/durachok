@@ -3,15 +3,18 @@
  * card's edge says that it's a trump, and of which suit.
  */
 const TRUMP_TONES: Record<string, { edge: string; border: string }> = {
-    H: { edge: "ring-rose-400/90 shadow-[0_0_12px_rgba(251,113,133,0.45)]", border: "border-rose-400/70" },
-    D: { edge: "ring-orange-400/90 shadow-[0_0_12px_rgba(251,146,60,0.45)]", border: "border-orange-400/70" },
-    C: { edge: "ring-emerald-400/90 shadow-[0_0_12px_rgba(52,211,153,0.45)]", border: "border-emerald-400/70" },
-    S: { edge: "ring-violet-400/90 shadow-[0_0_12px_rgba(167,139,250,0.45)]", border: "border-violet-400/70" },
+    H: { edge: "ring-rose-400/90 shadow-rose-400/45", border: "border-rose-400/70" },
+    D: { edge: "ring-orange-400/90 shadow-orange-400/45", border: "border-orange-400/70" },
+    C: { edge: "ring-emerald-400/90 shadow-emerald-400/45", border: "border-emerald-400/70" },
+    S: { edge: "ring-violet-400/90 shadow-violet-400/45", border: "border-violet-400/70" },
 };
 
-/** The glowing edge of a trump card of a suit. */
+/**
+ * The glowing edge of a trump card of a suit: a glow whose colour is the suit's, which takes
+ * over from a card's own shadow and its colour.
+ */
 export function trumpEdge(suit: string): string {
-    return `ring-2 ${TRUMP_TONES[suit]?.edge ?? ""}`;
+    return `ring-2 shadow-[0_0_12px] ${TRUMP_TONES[suit]?.edge ?? ""}`;
 }
 
 /** The border of something that shows the trump suit, such as its label. */

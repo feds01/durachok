@@ -21,18 +21,20 @@ import { useShallow } from "zustand/react/shallow";
 import Logo from "@/components/Logo";
 import UserAvatar from "@/components/UserAvatar";
 import ActionCard from "@/components/game/ActionCard";
-import CardFlights, { CardFlight } from "@/components/game/CardFlights";
-import PlayerHand, { HAND_ID } from "@/components/game/Hand";
+import CardFlights from "@/components/game/CardFlights";
+import PlayerHand from "@/components/game/Hand";
 import OpponentSeat from "@/components/game/OpponentSeat";
 import { DeckPile, DiscardPile } from "@/components/game/Piles";
 import PlayingCard from "@/components/game/PlayingCard";
 import RoleBadge from "@/components/game/RoleBadge";
-import RoundAnnouncement, { useRoundAnnouncement } from "@/components/game/RoundAnnouncement";
+import RoundAnnouncement from "@/components/game/RoundAnnouncement";
 import SortControl from "@/components/game/SortControl";
 import TableArea, { CardSources, ClearTo, Targets } from "@/components/game/TableArea";
 import { Button } from "@/components/ui/button";
 import { useLobbyStore } from "@/contexts/lobby";
-import { arrangeHand } from "@/lib/hand";
+import { useRoundAnnouncement } from "@/lib/announcement";
+import { useDeal } from "@/lib/deal";
+import { arrangeHand, HAND_ID } from "@/lib/hand";
 import { usePreference } from "@/lib/preferences";
 import { playSound } from "@/lib/sound";
 import { cn } from "@/lib/utils";
@@ -43,9 +45,9 @@ import {
     canCover,
     canForfeit,
     canPlace,
-    handSize,
     movesFor,
     sortHand,
+    suitOf,
     tableCards,
     turnOf,
 } from "@durachok/engine";
@@ -60,12 +62,6 @@ type Pickup = Extract<Action, { type: "pickup" }>;
 
 /** How long the round waits on an attacker before it takes them as done, in seconds. */
 const DONE_TIMEOUT_SECONDS = 8;
-
-/** How long apart the cards dealt to the players fly from the deck, one after another, in seconds. */
-const DEAL_STEP = 0.06;
-
-/** How long the cards of a round take to leave the table, before the new ones are drawn, in seconds. */
-const CLEAR_SECONDS = 0.45;
 
 /** Whether a place to drop a card is one of the cards in the player's hand. */
 const inHand = ({ data }: DroppableContainer) => data.current?.sortable !== undefined;
@@ -118,15 +114,6 @@ export default function GameTable({ lobby, game }: Props) {
     // The order that the player put their cards in by hand, until they sort them again.
     const [arranged, setArranged] = useState<string[] | null>(null);
     const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
-    // The cards that the player has held this game, and the ones that they just drew, each
-    // with how long it waits before it flies in from the deck.
-    const [draws, setDraws] = useState<{ held: ReadonlySet<string>; drawn: ReadonlyMap<string, number> }>(() => ({
-        held: new Set(),
-        drawn: new Map(),
-    }));
-    // How many cards the other players held at the last update, to tell how many they drew since.
-    const [handSizes, setHandSizes] = useState<Record<string, number | null>>({});
-    const [flights, setFlights] = useState<CardFlight[]>([]);
     // The server's view, as the player's own move doesn't change their role or clear the table.
     const [announcement, dismissAnnouncement] = useRoundAnnouncement(game);
 
@@ -153,13 +140,16 @@ export default function GameTable({ lobby, game }: Props) {
             (action.type === "place" || action.type === "cover") && action.player === me ? [action.card] : [],
         ),
     ]);
-    const pickup = actions.find((action): action is Pickup => action.type === "pickup");
-    const clearTo: ClearTo = !pickup
-        ? { to: "discard" }
-        : pickup.player === me
-          ? { to: "hand" }
-          : { to: "seat", player: pickup.player };
-    const pickedUp = new Set(pickup?.player === me ? pickup.cards : []);
+    const pickup = actions.find((action): action is Pickup => action.type === "pickup") ?? null;
+    // A round ends with the defender taking the cards, or with a new round once they're beaten.
+    const newRound = actions.some(({ type }) => type === "new_round");
+    const clearTo: ClearTo | null = pickup
+        ? pickup.player === me
+            ? { to: "hand" }
+            : { to: "seat", player: pickup.player }
+        : newRound
+          ? { to: "discard" }
+          : null;
     const sources: CardSources = {
         fromHand,
         dropped,
@@ -173,36 +163,7 @@ export default function GameTable({ lobby, game }: Props) {
         trumpSuit: trump.suit,
     };
 
-    // The cards that each player draws from the deck fly to them from there, one player after
-    // another, as they're dealt, and once the last round's cards have left the table.
-    const dealFrom = actions.some(({ type }) => type === "new_round") ? CLEAR_SECONDS : 0;
-    const dealers = 1 + game.players.length;
-    const unseen = game.player.deck.filter((card) => !draws.held.has(card));
-    if (unseen.length > 0) {
-        const drawn = unseen.filter((card) => !pickedUp.has(card));
-        setDraws({
-            held: new Set([...draws.held, ...unseen]),
-            drawn: new Map(drawn.map((card, index) => [card, dealFrom + index * dealers * DEAL_STEP])),
-        });
-    }
-    if (game.players.some((other) => handSizes[other.name] !== handSize(other))) {
-        const dealt = game.players.flatMap((other, seat) => {
-            const before = handSizes[other.name] ?? 0;
-            const now = handSize(other);
-            const took = pickup?.player === other.name ? pickup.cards.length : 0;
-            // Nobody is told how many cards a player holds in mythic mode, nor so how many they drew.
-            const drew = now === null || before === null ? 0 : now - before - took;
-            return Array.from({ length: Math.max(drew, 0) }, (_, index) => ({
-                to: other.name,
-                delay: dealFrom + (index * dealers + seat + 1) * DEAL_STEP,
-            }));
-        });
-        const firstId = (flights.at(-1)?.id ?? 0) + 1;
-        setHandSizes(Object.fromEntries(game.players.map((other) => [other.name, handSize(other)])));
-        if (dealt.length > 0) {
-            setFlights([...flights, ...dealt.map((flight, index) => ({ ...flight, id: firstId + index }))]);
-        }
-    }
+    const deal = useDeal(game, { pickup, newRound });
 
     useEffect(() => playSound("begin"), []);
     useEffect(() => {
@@ -220,7 +181,9 @@ export default function GameTable({ lobby, game }: Props) {
         return () => window.removeEventListener("keydown", onKeyDown);
     }, [selected]);
 
-    const holding = dragging ?? selected;
+    // A card that can't be played now, as while the server hasn't answered the last move, can
+    // only be moved along the hand.
+    const holding = dragging && playable.has(dragging) ? dragging : selected;
     const targets: Targets | null = holding
         ? {
               place: canPlace(view, holding),
@@ -235,8 +198,7 @@ export default function GameTable({ lobby, game }: Props) {
 
     const play = (move: PlayerMove) => {
         setSelected(null);
-        // A card that the server turns down comes back from the table, not from the deck.
-        setDraws((current) => ({ ...current, drawn: new Map() }));
+        deal.forgetDrawn();
         dispatchMove(move);
     };
 
@@ -276,12 +238,14 @@ export default function GameTable({ lobby, game }: Props) {
             return;
         }
 
-        const move: PlayerMove | null =
-            target === "table" && canPlace(view, card)
-                ? { type: "place", card }
-                : target.startsWith("slot-") && canCover(view, card, position)
-                  ? { type: "cover", card, position }
-                  : null;
+        // Only a card that can be played now goes on the table: not while the server hasn't answered.
+        const move: PlayerMove | null = !playable.has(card)
+            ? null
+            : target === "table" && canPlace(view, card)
+              ? { type: "place", card }
+              : target.startsWith("slot-") && canCover(view, card, position)
+                ? { type: "cover", card, position }
+                : null;
 
         if (move) {
             setDropped(card);
@@ -377,7 +341,11 @@ export default function GameTable({ lobby, game }: Props) {
                                 onPlace={() => holding && play({ type: "place", card: holding })}
                                 onCover={(position) => holding && play({ type: "cover", card: holding, position })}
                             />
-                            <RoundAnnouncement announcement={announcement} onDone={dismissAnnouncement} />
+                            <RoundAnnouncement
+                                announcement={announcement}
+                                overCards={table.length > 0}
+                                onDone={dismissAnnouncement}
+                            />
                         </div>
                         <div className="justify-self-end sm:justify-self-start">
                             <DiscardPile count={view.discardSize} />
@@ -420,8 +388,7 @@ export default function GameTable({ lobby, game }: Props) {
                                 playable={playable}
                                 selected={selected}
                                 active={mustAct}
-                                pickedUp={pickedUp}
-                                drawn={draws.drawn}
+                                drawn={deal.drawn}
                                 trumpSuit={trump.suit}
                                 onPick={pick}
                             />
@@ -446,12 +413,15 @@ export default function GameTable({ lobby, game }: Props) {
                         </div>
                     </section>
 
-                    <CardFlights
-                        flights={flights}
-                        onLanded={(id) => setFlights((current) => current.filter((flight) => flight.id !== id))}
-                    />
+                    <CardFlights flights={deal.flights} onLanded={deal.landed} />
                     <DragOverlay dropAnimation={null}>
-                        {dragging && <PlayingCard card={dragging} className="rotate-6 shadow-2xl" />}
+                        {dragging && (
+                            <PlayingCard
+                                card={dragging}
+                                trump={suitOf(dragging) === trump.suit}
+                                className="rotate-6 shadow-2xl"
+                            />
+                        )}
                     </DragOverlay>
                 </div>
             </LayoutGroup>

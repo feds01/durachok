@@ -4,11 +4,9 @@ import { motion } from "framer-motion";
 
 import PlayingCard from "@/components/game/PlayingCard";
 import { DECK, useArrival } from "@/lib/flight";
+import { HAND_ID } from "@/lib/hand";
 import { cn } from "@/lib/utils";
 import { cardName, suitOf } from "@durachok/engine";
-
-/** The id of the hand, for a card dragged over it, which goes back in among the others. */
-export const HAND_ID = "hand";
 
 type Props = {
     /** The cards, in the order that the player holds them. */
@@ -19,9 +17,7 @@ type Props = {
     selected: string | null;
     /** Whether the player has a move to make, so that the cards they can't play step back. */
     active: boolean;
-    /** Cards that just came from the table, which fly in from there. */
-    pickedUp: ReadonlySet<string>;
-    /** Cards that were just drawn from the deck, which fly in from there, each after its delay in seconds. */
+    /** Cards just drawn from the deck, which fly in from there, each after its delay in seconds. */
     drawn: ReadonlyMap<string, number>;
     trumpSuit: string;
     onPick: (card: string) => void;
@@ -37,7 +33,7 @@ function fanStep(count: number): number {
  * the hand grows, so that it fits the screen. The player plays one by clicking it or by
  * dragging it onto the table, and moves one by dragging it along the hand.
  */
-export default function Hand({ cards, playable, selected, active, pickedUp, drawn, trumpSuit, onPick }: Props) {
+export default function Hand({ cards, playable, selected, active, drawn, trumpSuit, onPick }: Props) {
     const { setNodeRef } = useDroppable({ id: HAND_ID });
     const middle = (cards.length - 1) / 2;
     const step = fanStep(cards.length);
@@ -63,7 +59,7 @@ export default function Hand({ cards, playable, selected, active, pickedUp, draw
                             selected={selected === card}
                             dimmed={active && !playable.has(card)}
                             trump={suitOf(card) === trumpSuit}
-                            drawDelay={pickedUp.has(card) ? undefined : drawn.get(card)}
+                            drawDelay={drawn.get(card)}
                             onPick={onPick}
                         />
                     );

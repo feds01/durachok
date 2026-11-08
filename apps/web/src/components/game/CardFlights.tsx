@@ -3,10 +3,8 @@ import { useLayoutEffect } from "react";
 import { createPortal } from "react-dom";
 
 import PlayingCard from "@/components/game/PlayingCard";
+import { CardFlight } from "@/lib/deal";
 import { AWAY, DECK, offsetTo, seatOf } from "@/lib/flight";
-
-/** A card, face down, on its way from the deck to another player. */
-export type CardFlight = { id: number; to: string; delay: number };
 
 type Props = {
     flights: CardFlight[];
@@ -41,12 +39,21 @@ function Flight({ to, delay, onLanded }: { to: string; delay: number; onLanded: 
         element.style.top = `${from.top}px`;
         element.style.setProperty("--card-w", `${from.width}px`);
 
+        element.style.transform = "";
         const { x, y, scale } = offsetTo(element, seat);
-        void animate(
+        const flight = animate(
             element,
             { x: [0, x], y: [0, y], scale: [1, scale], opacity: [1, 1, 0] },
             { ...AWAY, duration: 0.5, delay },
-        ).then(onLanded);
+        );
+        // A flight that's cut short, as when the effect runs again, doesn't count as landed.
+        let cut = false;
+        void flight.then(() => !cut && onLanded());
+
+        return () => {
+            cut = true;
+            flight.stop();
+        };
         // Once, as the card sets off.
         // eslint-disable-next-line react-hooks/exhaustive-deps -- the flight is once
     }, []);

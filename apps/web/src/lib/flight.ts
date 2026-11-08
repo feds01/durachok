@@ -27,6 +27,14 @@ export const AWAY = { duration: 0.45, ease: [0.4, 0, 0.7, 1] } as const;
 export type Offset = { x: number; y: number; scale: number };
 
 /**
+ * How far a card of the discard pile leans, in degrees, from its place in the pile, the same
+ * each time, so that the pile doesn't shuffle as it grows.
+ */
+export function pileLean(index: number): number {
+    return ((index * 37) % 24) - 12;
+}
+
+/**
  * How far an element's centre is from a place's, in the frame of the element's parent when
  * that is turned by `tilt` degrees, and how much taller or shorter the place is: a place is a
  * card high, or a row of cards, such as the small cards of a player's seat.
@@ -61,10 +69,17 @@ export function useArrival<T extends HTMLElement>(from: string | null, { delay =
             return;
         }
 
+        // Measure where the element lands, rather than where an earlier run of this effect left it.
+        element.style.transform = "";
         const { x, y, scale } = offsetTo(element, place, tilt);
         // Set off from the place before the browser paints, rather than show the card where it lands first.
         element.style.transform = `translate(${x}px, ${y}px) scale(${scale})`;
-        animate(element, { x: [x, 0], y: [y, 0], scale: [scale, 1] }, { ...FLIGHT, delay });
+        const flight = animate(element, { x: [x, 0], y: [y, 0], scale: [scale, 1] }, { ...FLIGHT, delay });
+
+        return () => {
+            flight.stop();
+            element.style.transform = "";
+        };
         // Only as the element first appears: where it flies from later doesn't matter.
         // eslint-disable-next-line react-hooks/exhaustive-deps -- the arrival is once
     }, []);
