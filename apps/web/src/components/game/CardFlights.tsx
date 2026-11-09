@@ -1,5 +1,5 @@
-import { useAnimate } from "framer-motion";
-import { useLayoutEffect } from "react";
+import { animate } from "framer-motion";
+import { useEffectEvent, useLayoutEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 
 import PlayingCard from "@/components/game/PlayingCard";
@@ -23,14 +23,16 @@ export default function CardFlights({ flights, onLanded }: Props) {
 }
 
 function Flight({ to, delay, onLanded }: { to: string; delay: number; onLanded: () => void }) {
-    const [scope, animate] = useAnimate<HTMLDivElement>();
+    const scope = useRef<HTMLDivElement>(null);
+    // The parent passes a new function each render, which mustn't send the card off again.
+    const landed = useEffectEvent(onLanded);
 
     useLayoutEffect(() => {
         const element = scope.current;
         const deck = document.querySelector(DECK);
         const seat = document.querySelector(seatOf(to));
         if (!element || !deck || !seat) {
-            onLanded();
+            landed();
             return;
         }
 
@@ -48,15 +50,13 @@ function Flight({ to, delay, onLanded }: { to: string; delay: number; onLanded: 
         );
         // A flight that's cut short, as when the effect runs again, doesn't count as landed.
         let cut = false;
-        void flight.then(() => !cut && onLanded());
+        void flight.then(() => !cut && landed());
 
         return () => {
             cut = true;
             flight.stop();
         };
-        // Once, as the card sets off.
-        // eslint-disable-next-line react-hooks/exhaustive-deps -- the flight is once
-    }, []);
+    }, [to, delay]);
 
     return (
         <div ref={scope} aria-hidden="true" className="pointer-events-none fixed z-30 opacity-0">

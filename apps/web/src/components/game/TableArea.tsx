@@ -1,6 +1,6 @@
 import { useDroppable } from "@dnd-kit/core";
-import { AnimatePresence, motion, useAnimate, usePresence, usePresenceData } from "framer-motion";
-import { ReactNode, useEffect, useRef } from "react";
+import { AnimatePresence, animate, motion, usePresence, usePresenceData } from "framer-motion";
+import { ReactNode, useEffect, useEffectEvent, useRef } from "react";
 
 import PlayingCard from "@/components/game/PlayingCard";
 import { AWAY, DISCARD, offsetTo, pileLean, seatOf, useArrival } from "@/lib/flight";
@@ -84,23 +84,11 @@ function AttackSlot({ position, children }: { position: number; children: ReactN
     const [isPresent, safeToRemove] = usePresence();
     // Where the table's cards go, as the table says when it clears, after this attack last rendered.
     const clearTo = usePresenceData() as ClearTo | null | undefined;
-    const [scope, animate] = useAnimate<HTMLDivElement>();
+    const scope = useRef<HTMLDivElement>(null);
     const leaving = useRef<{ stop: () => void } | null>(null);
 
-    useEffect(() => {
-        const element = scope.current;
-
-        // An attack that comes back as it leaves, as when the server answers the player's move
-        // after another update, stays on the table.
-        if (isPresent) {
-            if (leaving.current && element) {
-                leaving.current.stop();
-                leaving.current = null;
-                void animate(element, { x: 0, y: 0, scale: 1, rotate: 0, opacity: 1 }, { duration: 0 });
-            }
-            return;
-        }
-
+    // Flies the attack away, to where the table clears to as it leaves, and in its place then.
+    const leave = useEffectEvent((element: HTMLDivElement | null) => {
         const place = expr(() => {
             switch (clearTo?.to) {
                 case "discard":
@@ -112,7 +100,7 @@ function AttackSlot({ position, children }: { position: number; children: ReactN
             }
         });
         if (!element || !place) {
-            safeToRemove();
+            safeToRemove?.();
             return;
         }
 
@@ -127,11 +115,25 @@ function AttackSlot({ position, children }: { position: number; children: ReactN
         void flight.then(() => {
             if (leaving.current === flight) {
                 leaving.current = null;
-                safeToRemove();
+                safeToRemove?.();
             }
         });
-        // Once, as the attack leaves.
-        // eslint-disable-next-line react-hooks/exhaustive-deps -- the exit is once
+    });
+
+    useEffect(() => {
+        const element = scope.current;
+        if (!isPresent) {
+            leave(element);
+            return;
+        }
+
+        // An attack that comes back as it leaves, as when the server answers the player's move
+        // after another update, stays on the table.
+        if (leaving.current && element) {
+            leaving.current.stop();
+            leaving.current = null;
+            void animate(element, { x: 0, y: 0, scale: 1, rotate: 0, opacity: 1 }, { duration: 0 });
+        }
     }, [isPresent]);
 
     return (
