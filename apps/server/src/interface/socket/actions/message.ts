@@ -1,7 +1,7 @@
 import { ClientEvents } from "@durachok/transport";
 
 import { limits } from "../../../lib/limits";
-import { tooManyRequests } from "../../../lib/trpc";
+import { tooManyRequests } from "../../trpc";
 import { ensureLobbyAccess } from "../common/auth";
 import { factory } from "./ctx";
 

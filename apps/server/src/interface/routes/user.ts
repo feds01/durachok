@@ -1,7 +1,7 @@
 import { UserUpdateSchema } from "@durachok/transport";
 
 import { limits } from "../../lib/limits";
-import { router, tooManyRequests, userProcedure } from "../../lib/trpc";
+import { router, tooManyRequests, userProcedure } from "../trpc";
 import { isDef } from "../../utils";
 
 export const userRouter = router({

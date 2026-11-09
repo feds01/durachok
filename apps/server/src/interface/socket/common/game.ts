@@ -1,7 +1,7 @@
 import { Game } from "@durachok/engine";
 import { Action } from "@durachok/transport";
 
-import { Context } from "../../../lib/context";
+import { Context } from "../../context";
 import { Rooms } from "../actions/ctx";
 
 /**

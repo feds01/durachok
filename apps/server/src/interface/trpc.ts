@@ -4,11 +4,11 @@ import superjson, { registerCustom } from "superjson";
 import { ZodError } from "zod";
 
 import { expr } from "../utils";
-import { RateLimiter } from "./rate-limit";
+import { RateLimiter } from "../lib/rate-limit";
 import { transformZodErrorIntoErrorSummary } from "../utils/error";
 import { getTokenFromHeaders, setTokensInResponse } from "./authentication";
 import { createContext } from "./context";
-import logger from "./logger";
+import logger from "../lib/logger";
 
 /** Function to construct the context that we need */
 export const createSessionContext = async ({ req, res }: trpcExpress.CreateExpressContextOptions) => {

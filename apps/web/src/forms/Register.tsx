@@ -5,7 +5,7 @@ import ControlledPasswordField from "@/components/ControlledPasswordField";
 import ControlledTextField from "@/components/ControlledTextField";
 import SubmitButton from "@/components/SubmitButton";
 import { APP_ENV, RE_CAPTCHA_SECRET } from "@/config";
-import { AuthResult, RegisterFormData, RegisterFormSchema } from "@/types/auth";
+import { AuthResult, RegisterFormData, RegisterFormSchema } from "@/validators/auth";
 import trpc from "@/utils/trpc";
 import { zodResolver } from "@hookform/resolvers/zod";
 

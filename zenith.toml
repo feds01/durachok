@@ -36,10 +36,11 @@ layers = [
     "apps/web/src/fragments",
     "apps/web/src/forms",
     "apps/web/src/components",
-    "apps/web/src/contexts | apps/web/src/lib",
-    "apps/web/src/assets : apps/web/src/types : apps/web/src/validators",
+    "apps/web/src/contexts",
+    "apps/web/src/validators",
+    "apps/web/src/lib",
     "apps/web/src/utils",
-    "apps/web/src/config",
+    "apps/web/src/config | apps/web/src/assets",
 ]
 guidance = "Move the shared code down to the lower folder, or pass it in from the higher one."
 
@@ -50,21 +51,18 @@ from = ["apps/web/src/components/ui"]
 to = [{ path = "apps/web/src", except = ["apps/web/src/components/ui", "apps/web/src/lib/utils"] }]
 guidance = "components/ui holds the shadcn primitives. Build what is particular to the game or a page in components/, on top of them."
 
-# The tRPC router and the socket handlers call the controllers, which keep the rules and read and
-# write the database through the models. lib/ has the wiring on top, and the database, the logger
-# and the rate limits underneath.
+# The tRPC router and the socket handlers, with the context that they share, call the controllers,
+# which keep the rules and read and write the database through the models. lib/ has the database,
+# the logger and the rate limits underneath.
 [contracts.server-layers]
 type = "layers"
 name = "The server stacks in layers, from its interfaces down to its helpers"
 layers = [
     "apps/server/src/index | apps/server/src/scripts",
     "apps/server/src/interface",
-    "apps/server/src/lib/trpc",
-    "apps/server/src/lib/context | apps/server/src/lib/authentication",
     "apps/server/src/controllers",
-    "apps/server/src/models | apps/server/src/repos",
-    "apps/server/src/lib/database : apps/server/src/lib/limits : apps/server/src/lib/rate-limit : apps/server/src/lib/logger",
-    "apps/server/src/schemas",
+    "apps/server/src/models : apps/server/src/schemas : apps/server/src/repos",
+    "apps/server/src/lib",
     "apps/server/src/config",
     "apps/server/src/utils",
 ]

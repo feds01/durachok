@@ -12,7 +12,7 @@ import { appRouter } from "./interface/routes";
 import { connectSocket } from "./interface/socket";
 import { connectDB } from "./lib/database";
 import logger from "./lib/logger";
-import { createSessionContext } from "./lib/trpc";
+import { createSessionContext } from "./interface/trpc";
 import { expr } from "./utils";
 
 // Tokens signed with a key that is missing, or shared, could be forged, so don't start without proper ones.

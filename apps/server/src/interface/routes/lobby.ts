@@ -15,7 +15,7 @@ import {
     router,
     tooManyRequests,
     userProcedure,
-} from "../../lib/trpc";
+} from "../trpc";
 import { DBPlayer } from "../../schemas/lobby";
 import { expr, isDef } from "../../utils";
 import { notifyLobbyClosed } from "../socket";

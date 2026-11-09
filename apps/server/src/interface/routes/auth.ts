@@ -3,7 +3,7 @@ import { TRPCError } from "@trpc/server";
 
 import { ENV } from "../../config";
 import { limits } from "../../lib/limits";
-import { authProcedure, failureLimitedProcedure, limitedProcedure, router } from "../../lib/trpc";
+import { authProcedure, failureLimitedProcedure, limitedProcedure, router } from "../trpc";
 import { UserTokensResponseSchema } from "../../schemas/auth";
 import { isDef } from "../../utils";
 

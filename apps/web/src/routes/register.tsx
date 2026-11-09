@@ -11,7 +11,7 @@ import { PANEL } from "@/lib/styles";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth";
 import RegisterForm from "@/forms/Register";
-import { AuthResult } from "@/types/auth";
+import { AuthResult } from "@/validators/auth";
 import { createFileRoute } from "@tanstack/react-router";
 import { Link, useNavigate } from "@tanstack/react-router";
 
