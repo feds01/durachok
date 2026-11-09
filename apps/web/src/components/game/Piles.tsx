@@ -1,7 +1,7 @@
 import PlayingCard from "@/components/game/PlayingCard";
 import { pileLean } from "@/lib/flight";
 import { cn } from "@/lib/utils";
-import { expr } from "@/utils";
+import { expr, range } from "@/utils";
 import { cardName, isRedSuit, suitName, suitSymbol } from "@durachok/engine";
 import { Card } from "@durachok/transport";
 
@@ -48,12 +48,11 @@ export function DeckPile({ size, trump }: DeckProps) {
                             className="absolute left-[calc(var(--card-w)*0.4)] top-0 rotate-90"
                             aria-hidden="true"
                         />
-                        {Array.from({ length: backs }, (_, index) => (
+                        {range(backs).map((depth) => (
                             <PlayingCard
-                                // eslint-disable-next-line react/no-array-index-key -- the cards of a pile are alike
-                                key={index}
+                                key={depth}
                                 className="absolute left-0 top-0"
-                                style={{ translate: `${index * -1.5}px ${index * -1.5}px` }}
+                                style={{ translate: `${depth * -1.5}px ${depth * -1.5}px` }}
                             />
                         ))}
                     </>
@@ -114,12 +113,11 @@ export function DiscardPile({ count }: { count: number | null }) {
                         style={{ rotate: `${pileLean(0)}deg` }}
                     />
                 ) : (
-                    Array.from({ length: shown }, (_, index) => (
+                    range(shown).map((depth) => (
                         <PlayingCard
-                            // eslint-disable-next-line react/no-array-index-key -- the cards of a pile are alike
-                            key={index}
+                            key={depth}
                             className="absolute left-0 top-0"
-                            style={{ rotate: `${pileLean(index)}deg` }}
+                            style={{ rotate: `${pileLean(depth)}deg` }}
                         />
                     ))
                 )}

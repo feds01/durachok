@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import ControlledPasswordField from "@/components/ControlledPasswordField";
 import ControlledTextField from "@/components/ControlledTextField";
 import SubmitButton from "@/components/SubmitButton";
-import { AuthResult, LoginFormData, LoginFormSchema } from "@/types/auth";
+import { AuthResult, LoginFormData, LoginFormSchema } from "@/validators/auth";
 import { expr } from "@/utils";
 import trpc from "@/utils/trpc";
 import { UserEmailSchema } from "@durachok/transport";

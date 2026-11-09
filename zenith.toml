@@ -26,3 +26,106 @@ exclude_kinds = ["type"]
 # `buffer` is the npm polyfill, which both packages depend on, not the builtin.
 ignore_imports = ["apps/web/src -> node:buffer", "packages/transport/src -> node:buffer"]
 guidance = "The web app bundles the engine and transport packages, so keep Node-only code in the server."
+
+# A page is made of fragments, which are made of forms and components, which read the contexts.
+[contracts.web-layers]
+type = "layers"
+name = "The web app's folders stack in layers, from the pages down"
+layers = [
+    "apps/web/src/routes",
+    "apps/web/src/fragments",
+    "apps/web/src/forms",
+    "apps/web/src/components",
+    "apps/web/src/contexts",
+    "apps/web/src/validators",
+    "apps/web/src/lib",
+    "apps/web/src/utils",
+    "apps/web/src/config | apps/web/src/assets",
+]
+guidance = "Move the shared code down to the lower folder, or pass it in from the higher one."
+
+[contracts.web-ui-primitives]
+type = "forbidden"
+name = "The UI primitives don't know about the app"
+from = ["apps/web/src/components/ui"]
+to = [{ path = "apps/web/src", except = ["apps/web/src/components/ui", "apps/web/src/lib/utils"] }]
+guidance = "components/ui holds the shadcn primitives. Build what is particular to the game or a page in components/, on top of them."
+
+# The tRPC router and the socket handlers, with the context that they share, call the controllers,
+# which keep the rules and read and write the database through the models. lib/ has the database,
+# the logger and the rate limits underneath.
+[contracts.server-layers]
+type = "layers"
+name = "The server stacks in layers, from its interfaces down to its helpers"
+layers = [
+    "apps/server/src/index | apps/server/src/scripts",
+    "apps/server/src/interface",
+    "apps/server/src/controllers",
+    "apps/server/src/models : apps/server/src/schemas : apps/server/src/repos",
+    "apps/server/src/lib",
+    "apps/server/src/config",
+    "apps/server/src/utils",
+]
+guidance = "Move the shared code down to the lower layer, or pass it in from the higher one."
+
+[contracts.server-models-behind-controllers]
+type = "protected"
+name = "Only the controllers use the database models"
+modules = ["apps/server/src/models"]
+allowed_importers = ["apps/server/src/controllers"]
+guidance = "Go through a controller, which keeps the rules about a document in one place."
+
+[contracts.engine-imports-no-libraries]
+type = "forbidden"
+name = "The engine is game logic, which imports no libraries"
+from = ["packages/engine/src"]
+to = ["npm:*", "node:*"]
+allow_indirect_imports = true
+guidance = "The browser, the server and the bots all run the engine, so keep what needs a library outside it."
+
+[contracts.mongoose-behind-database]
+type = "protected"
+name = "Only the models and the database module use Mongoose"
+modules = ["npm:mongoose"]
+allowed_importers = [
+    "apps/server/src/models",
+    "apps/server/src/lib/database",
+    "apps/server/src/scripts/ping-db",
+    "apps/server/test",
+]
+guidance = "Query through a model, or add what you need to lib/database.ts."
+
+[contracts.sharp-behind-images]
+type = "protected"
+name = "Only the image controller uses sharp"
+modules = ["npm:sharp"]
+allowed_importers = ["apps/server/src/controllers/image", "apps/server/src/controllers/image.spec"]
+guidance = "Process images in the image controller, which re-encodes every upload."
+
+[contracts.aws-behind-image-repo]
+type = "protected"
+name = "Only the image repository uses the AWS SDK"
+modules = ["npm:@aws-sdk/*"]
+allowed_importers = ["apps/server/src/repos/image"]
+guidance = "Store files through an image repository, which also has a local one for development."
+
+[contracts.credentials-behind-auth]
+type = "protected"
+name = "Only the auth controller hashes passwords and signs tokens"
+modules = ["npm:jsonwebtoken", "npm:argon2"]
+allowed_importers = ["apps/server/src/controllers/auth"]
+guidance = "Ask the auth controller to hash or check a password, or to make or verify tokens."
+
+[contracts.sockets-behind-socket-interface]
+type = "protected"
+name = "Only the socket interface uses the socket server"
+modules = ["npm:socket.io", "npm:zod-sockets"]
+allowed_importers = ["apps/server/src/interface/socket"]
+guidance = "Handle socket events in interface/socket, and call the controllers from there."
+
+[contracts.web-socket-behind-lobby-store]
+type = "protected"
+name = "In the web app, only the lobby store opens a socket"
+modules = ["npm:socket.io-client"]
+allowed_importers = ["apps/web/src/contexts/lobby", "apps/server/test"]
+guidance = "Read the lobby from the lobby store, and send through its actions."

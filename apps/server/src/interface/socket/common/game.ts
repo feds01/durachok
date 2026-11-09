@@ -1,7 +1,7 @@
 import { Game } from "@durachok/engine";
 import { Action } from "@durachok/transport";
 
-import { Context } from "../../../lib/context";
+import { Context } from "../../context";
 import { Rooms } from "../actions/ctx";
 
 /**
@@ -40,7 +40,7 @@ export async function emitActions(
 export async function emitVictory(withRooms: Rooms, pin: string, game: Game) {
     const players = Array.from(game.players.values())
         .map(({ name, out }) => ({ name, out }))
-        .sort((a, b) => (a.out ?? Number.MAX_SAFE_INTEGER) - (b.out ?? Number.MAX_SAFE_INTEGER));
+        .toSorted((a, b) => (a.out ?? Number.MAX_SAFE_INTEGER) - (b.out ?? Number.MAX_SAFE_INTEGER));
 
     await withRooms(pin).broadcast("victory", { players });
 }

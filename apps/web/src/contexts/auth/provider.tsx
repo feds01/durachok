@@ -1,6 +1,6 @@
 import { AuthStateContext } from "./context";
 import { AuthState, init, reducer } from "./reducer";
-import { useEffect, useReducer } from "react";
+import { useEffect, useMemo, useReducer } from "react";
 
 import { onRefreshedTokens } from "@/utils/auth";
 
@@ -18,15 +18,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Keep the tokens that the server refreshed, from tRPC responses or the socket.
     useEffect(() => onRefreshedTokens((tokens) => update({ type: "tokens", payload: tokens })), []);
 
-    return (
-        <AuthStateContext.Provider
-            value={{
-                state,
-                update,
-                isRegistered,
-            }}
-        >
-            {children}
-        </AuthStateContext.Provider>
-    );
+    // A new value only when the state changes, so that the context's readers render only then.
+    const value = useMemo(() => ({ state, update, isRegistered }), [state]);
+
+    return <AuthStateContext.Provider value={value}>{children}</AuthStateContext.Provider>;
 };

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import CopyButton from "@/components/CopyButton";
 import { PANEL } from "@/lib/styles";
 import { cn } from "@/lib/utils";
+import { range } from "@/utils";
 
 /** How often the owner's waiting room asks for a new passphrase. */
 const ROTATION_SECONDS = 20;
@@ -24,6 +25,8 @@ type Props = {
  * the cards turn over one after another to show the new one.
  */
 export default function LobbyPassphrase({ passphrase, onRotate }: Props) {
+    const symbols = Array.from(passphrase);
+
     return (
         <section className={cn(PANEL, "flex flex-col items-center gap-4")}>
             <h2 className="m-0 text-2xl">Passphrase</h2>
@@ -32,9 +35,8 @@ export default function LobbyPassphrase({ passphrase, onRotate }: Props) {
                 style={{ perspective: 600 }}
                 aria-label={`Passphrase ${passphrase}`}
             >
-                {Array.from(passphrase).map((symbol, index) => (
-                    // eslint-disable-next-line react/no-array-index-key -- each slot is a fixed position
-                    <div key={index} className="relative h-20 w-16">
+                {range(symbols.length).map((position) => (
+                    <div key={position} className="relative h-20 w-16">
                         <AnimatePresence mode="wait" initial={false}>
                             {/* Keyed by the passphrase, so that every card turns over when it changes. */}
                             <motion.span
@@ -44,15 +46,15 @@ export default function LobbyPassphrase({ passphrase, onRotate }: Props) {
                                 animate={{
                                     rotateY: 0,
                                     opacity: 1,
-                                    transition: { delay: index * FLIP_STAGGER, duration: 0.25, ease: "easeOut" },
+                                    transition: { delay: position * FLIP_STAGGER, duration: 0.25, ease: "easeOut" },
                                 }}
                                 exit={{
                                     rotateY: 90,
                                     opacity: 0.4,
-                                    transition: { delay: index * FLIP_STAGGER, duration: 0.2, ease: "easeIn" },
+                                    transition: { delay: position * FLIP_STAGGER, duration: 0.2, ease: "easeIn" },
                                 }}
                             >
-                                {symbol}
+                                {symbols[position]}
                             </motion.span>
                         </AnimatePresence>
                     </div>

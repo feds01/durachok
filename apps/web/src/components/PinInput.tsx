@@ -1,6 +1,7 @@
 import { OTPInput, REGEXP_ONLY_DIGITS, SlotProps } from "input-otp";
 
 import { cn } from "@/lib/utils";
+import { range } from "@/utils";
 
 type Props = {
     value: string;
@@ -26,16 +27,14 @@ export default function PinInput({ value, onChange, onComplete, invalid = false 
             render={({ slots }) => (
                 <>
                     <div className="flex gap-2">
-                        {slots.slice(0, 3).map((slot, index) => (
-                            // eslint-disable-next-line react/no-array-index-key -- each slot is a fixed position
-                            <Slot key={index} {...slot} invalid={invalid} />
+                        {range(0, 3).map((position) => (
+                            <Slot key={position} {...slots[position]} invalid={invalid} />
                         ))}
                     </div>
                     <div aria-hidden="true" className="size-2 rounded-full bg-muted-foreground/50" />
                     <div className="flex gap-2">
-                        {slots.slice(3).map((slot, index) => (
-                            // eslint-disable-next-line react/no-array-index-key -- each slot is a fixed position
-                            <Slot key={index} {...slot} invalid={invalid} />
+                        {range(3, slots.length).map((position) => (
+                            <Slot key={position} {...slots[position]} invalid={invalid} />
                         ))}
                     </div>
                 </>

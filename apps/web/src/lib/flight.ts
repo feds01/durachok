@@ -1,5 +1,5 @@
-import { useAnimate } from "framer-motion";
-import { useLayoutEffect } from "react";
+import { animate } from "framer-motion";
+import { useLayoutEffect, useRef, useState } from "react";
 
 /*
  * Cards that fly from one place at the table to another: from the deck into a hand, from a
@@ -60,29 +60,33 @@ export function offsetTo(element: Element, place: Element, tilt = 0): Offset {
  * after another. Without a place, or when the place isn't on the page, it just appears.
  */
 export function useArrival<T extends HTMLElement>(from: string | null, { delay = 0, tilt = 0 } = {}) {
-    const [scope, animate] = useAnimate<T>();
+    const scope = useRef<T>(null);
+    // Where and when it flies in from, as the element first appears: where it would fly from later doesn't matter.
+    const [arrival] = useState({ from, delay, tilt });
 
     useLayoutEffect(() => {
         const element = scope.current;
-        const place = from ? document.querySelector(from) : null;
+        const place = arrival.from ? document.querySelector(arrival.from) : null;
         if (!element || !place) {
             return;
         }
 
         // Measure where the element lands, rather than where an earlier run of this effect left it.
         element.style.transform = "";
-        const { x, y, scale } = offsetTo(element, place, tilt);
+        const { x, y, scale } = offsetTo(element, place, arrival.tilt);
         // Set off from the place before the browser paints, rather than show the card where it lands first.
         element.style.transform = `translate(${x}px, ${y}px) scale(${scale})`;
-        const flight = animate(element, { x: [x, 0], y: [y, 0], scale: [scale, 1] }, { ...FLIGHT, delay });
+        const flight = animate(
+            element,
+            { x: [x, 0], y: [y, 0], scale: [scale, 1] },
+            { ...FLIGHT, delay: arrival.delay },
+        );
 
         return () => {
             flight.stop();
             element.style.transform = "";
         };
-        // Only as the element first appears: where it flies from later doesn't matter.
-        // eslint-disable-next-line react-hooks/exhaustive-deps -- the arrival is once
-    }, []);
+    }, [arrival]);
 
     return scope;
 }

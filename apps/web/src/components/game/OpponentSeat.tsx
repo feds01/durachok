@@ -4,6 +4,7 @@ import PlayingCard from "@/components/game/PlayingCard";
 import RoleBadge from "@/components/game/RoleBadge";
 import UserAvatar from "@/components/UserAvatar";
 import { cn } from "@/lib/utils";
+import { range } from "@/utils";
 import { handSize } from "@durachok/engine";
 import { OpaquePlayerState } from "@durachok/transport";
 
@@ -37,12 +38,11 @@ export default function OpponentSeat({ player, image, place, onShowCards }: Prop
             </div>
             {/* Small cards, face up for a player who is out of the game and may see them. */}
             <div data-seat={player.name} className="flex h-[calc(var(--card-w)*1.4)] items-center [--card-w:22px]">
-                {Array.from({ length: shown }, (_, index) => (
+                {range(shown).map((position) => (
                     <PlayingCard
-                        // eslint-disable-next-line react/no-array-index-key -- a hidden hand's cards are alike
-                        key={index}
-                        card={player.deck.type === "visible" ? player.deck.cards[index] : undefined}
-                        className={cn("shadow-sm", index > 0 && "-ml-3.5")}
+                        key={position}
+                        card={player.deck.type === "visible" ? player.deck.cards[position] : undefined}
+                        className={cn("shadow-sm", position > 0 && "-ml-3.5")}
                         aria-hidden="true"
                     />
                 ))}

@@ -3,7 +3,7 @@ import { AuthState } from "../contexts/auth/reducer";
 import "../index.css";
 
 import { Outlet, createRootRouteWithContext } from "@tanstack/react-router";
-import { TanStackRouterDevtools } from "@tanstack/router-devtools";
+import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 
 /** Router context, available on all routes. */
 interface RouterContext {

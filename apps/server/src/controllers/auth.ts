@@ -1,9 +1,9 @@
 import { hash, verify } from "argon2";
 import jwt from "jsonwebtoken";
-import { isValidObjectId } from "mongoose";
 import { Logger } from "pino";
 
 import { JWT_REFRESH_SECRET, JWT_SECRET } from "../config";
+import { isDocumentId } from "../lib/database";
 import BotUsers from "../models/bot.model";
 import Users from "../models/user.model";
 import { RawTokenPayload, TokenPayload, UserTokensResponse } from "../schemas/auth";
@@ -80,9 +80,9 @@ export class AuthService {
             case "anonymous":
                 return true;
             case "bot":
-                return isValidObjectId(payload.bot.id) && isDef(await BotUsers.exists({ _id: payload.bot.id }));
+                return isDocumentId(payload.bot.id) && isDef(await BotUsers.exists({ _id: payload.bot.id }));
             case "registered":
-                return isValidObjectId(payload.user.id) && isDef(await Users.exists({ _id: payload.user.id }));
+                return isDocumentId(payload.user.id) && isDef(await Users.exists({ _id: payload.user.id }));
         }
     }
 
@@ -98,8 +98,8 @@ export class AuthService {
     /**
      * Verify a password.
      */
-    public verify(hash: string, password: string): Promise<boolean> {
-        return verify(hash, password);
+    public verify(stored: string, password: string): Promise<boolean> {
+        return verify(stored, password);
     }
 
     /**

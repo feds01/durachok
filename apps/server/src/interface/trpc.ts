@@ -4,11 +4,11 @@ import superjson, { registerCustom } from "superjson";
 import { ZodError } from "zod";
 
 import { expr } from "../utils";
-import { RateLimiter } from "./rate-limit";
+import { RateLimiter } from "../lib/rate-limit";
 import { transformZodErrorIntoErrorSummary } from "../utils/error";
 import { getTokenFromHeaders, setTokensInResponse } from "./authentication";
 import { createContext } from "./context";
-import logger from "./logger";
+import logger from "../lib/logger";
 
 /** Function to construct the context that we need */
 export const createSessionContext = async ({ req, res }: trpcExpress.CreateExpressContextOptions) => {
@@ -18,8 +18,8 @@ export const createSessionContext = async ({ req, res }: trpcExpress.CreateExpre
     const ctx = { ...createContext(logger, hostname), ip };
 
     // Try and read the user.
-    const tokens = await getTokenFromHeaders(ctx.authService, req.headers, (tokens) =>
-        setTokensInResponse(res, tokens),
+    const tokens = await getTokenFromHeaders(ctx.authService, req.headers, (refreshed) =>
+        setTokensInResponse(res, refreshed),
     );
     if (!tokens) {
         return { ...ctx, token: undefined, rawTokens: undefined };

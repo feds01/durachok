@@ -2,8 +2,8 @@ import { Server as HTTPServer } from "http";
 import { Logger } from "pino";
 import { attachSockets } from "zod-sockets";
 
-import { authenticate } from "../../lib/authentication";
-import { Context, createContext } from "../../lib/context";
+import { authenticate } from "../authentication";
+import { Context, createContext } from "../context";
 import { limits } from "../../lib/limits";
 import logger from "../../lib/logger";
 import { RateLimiter } from "../../lib/rate-limit";

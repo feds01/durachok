@@ -29,6 +29,11 @@
         // Disable noisy react-perf rules for now
         "react-perf/jsx-no-new-object-as-prop": "off",
         "react-perf/jsx-no-new-function-as-prop": "off",
+        "react-perf/jsx-no-new-array-as-prop": "off",
+        // MongoDB names a document's id `_id`
+        "no-underscore-dangle": ["warn", { "allow": ["_id"] }],
+        // The last callback of a chain, e.g. once an animation finishes, has nothing to return to
+        "promise/always-return": ["warn", { "ignoreLastCallback": true }],
         // Disable - remaining cases are API requirements (socket handlers, lock callbacks)
         "require-await": "off",
         "no-else-return": "warn",

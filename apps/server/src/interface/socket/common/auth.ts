@@ -1,4 +1,4 @@
-import { Context } from "../../../lib/context";
+import { Context } from "../../context";
 import { UserTokensResponse } from "../../../schemas/auth";
 import { DBPlayer, isPlayer } from "../../../schemas/lobby";
 import { isDef } from "../../../utils";

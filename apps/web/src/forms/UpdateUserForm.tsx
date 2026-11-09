@@ -8,7 +8,7 @@ import FieldLabel from "@/components/FieldLabel";
 import SubmitButton from "@/components/SubmitButton";
 import { RegisteredUser, useAuthDispatch } from "@/contexts/auth";
 import trpc from "@/utils/trpc";
-import { UserUpdate, UserUpdateSchema } from "@/valdiators/user";
+import { UserUpdate, UserUpdateSchema } from "@/validators/user";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { TRPCClientError } from "@trpc/client";
 

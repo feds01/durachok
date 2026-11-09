@@ -38,9 +38,8 @@ const App = () => {
     const [queryClient] = useState(() => new QueryClient());
     const [trpcClient] = useState(createReactQueryTRPClient);
 
-    useEffect(() => {
-        router.invalidate();
-    }, [state]);
+    // The routes' guards read the auth state, so the ones that read an older one run again.
+    useEffect(() => void router.invalidate({ filter: (match) => match.context.auth !== state }), [state]);
 
     return (
         // People who ask their system for less motion get fades, without movement.

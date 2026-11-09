@@ -9,11 +9,9 @@
  * A bot joins lobbies with these tokens, which its program hands to `playInLobby` from
  * `@durachok/bots`.
  */
-import mongoose from "mongoose";
-
-import { MONGO_URI } from "../config";
 import { AuthService, Tokens } from "../controllers/auth";
 import { BotService } from "../controllers/bot";
+import { closeDatabase, openDatabase } from "../lib/database";
 import logger from "../lib/logger";
 
 const USAGE = "usage: just bots add <name> [description] | token <name> | list | remove <name>";
@@ -26,7 +24,7 @@ function printTokens({ token, refreshToken }: Tokens) {
 const [command, name, ...description] = process.argv.slice(2);
 const bots = new BotService(new AuthService(logger));
 
-await mongoose.connect(MONGO_URI);
+await openDatabase();
 
 try {
     switch (command) {
@@ -55,5 +53,5 @@ try {
     console.error(`error: ${error instanceof Error ? error.message : String(error)}`);
     process.exitCode = 1;
 } finally {
-    await mongoose.disconnect();
+    await closeDatabase();
 }

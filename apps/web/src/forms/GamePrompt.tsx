@@ -13,7 +13,7 @@ import { PANEL } from "@/lib/styles";
 import { cn } from "@/lib/utils";
 import { expr, isDef } from "@/utils";
 import trpc, { trpcNativeClient } from "@/utils/trpc";
-import { GamePassPhraseSchema, GamePinSchema } from "@/valdiators/lobby";
+import { GamePassPhraseSchema, GamePinSchema } from "@/validators/lobby";
 import { LobbyInfo } from "@durachok/transport";
 import { UserNameSchema } from "@durachok/transport";
 import { zodResolver } from "@hookform/resolvers/zod";

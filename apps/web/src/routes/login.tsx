@@ -11,7 +11,7 @@ import LoginForm from "@/forms/Login";
 import { pageExit, settle } from "@/lib/motion";
 import { PANEL } from "@/lib/styles";
 import { cn } from "@/lib/utils";
-import { AuthResult } from "@/types/auth";
+import { AuthResult } from "@/validators/auth";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { Link, useNavigate } from "@tanstack/react-router";
 
@@ -33,7 +33,7 @@ export const Route = createFileRoute("/login")({
 
 export default function Login() {
     const navigate = useNavigate();
-    const { redirect } = Route.useSearch();
+    const search = Route.useSearch();
     const [state, dispatch] = useAuth();
     const [loggedIn, setLoggedIn] = useState<AuthResult | null>(null);
 
@@ -56,9 +56,9 @@ export default function Login() {
 
     useEffect(() => {
         if (state.kind === "logged-in") {
-            navigate({ to: redirect ?? "/user" });
+            navigate({ to: search.redirect ?? "/user" });
         }
-    }, [state.kind, redirect, navigate]);
+    }, [state.kind, search.redirect, navigate]);
 
     return (
         <div className="flex min-h-full flex-col items-center justify-center px-4 py-12">

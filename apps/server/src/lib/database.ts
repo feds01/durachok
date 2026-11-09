@@ -1,4 +1,4 @@
-import mongoose, { Query, Schema, UpdateQuery } from "mongoose";
+import mongoose, { Query, Schema, UpdateQuery, isValidObjectId } from "mongoose";
 
 import { MONGO_URI } from "../config";
 import { expr, isDef } from "../utils";
@@ -10,14 +10,35 @@ export async function hasTransactions(connection: mongoose.Connection): Promise<
     return isDef(hello?.setName) || hello?.msg === "isdbgrid";
 }
 
-export const connectDB = async () => {
-    logger.info("Attempting connection with MongoDB service");
+/**
+ * Connect to MongoDB with the settings that the queries rely on, without logging, e.g. for a
+ * script that prints to stdout. The server connects with connectDB, which logs and checks that
+ * MongoDB has transactions.
+ */
+export async function openDatabase(): Promise<mongoose.Connection> {
     mongoose.set("strictQuery", true);
     // The queries in a transaction take part in it without being handed its session.
     mongoose.set("transactionAsyncLocalStorage", true);
 
+    const { connection } = await mongoose.connect(MONGO_URI);
+    return connection;
+}
+
+/** Close the connection that openDatabase made. */
+export async function closeDatabase(): Promise<void> {
+    await mongoose.disconnect();
+}
+
+/** Whether a string is a document's id. A query by an `_id` that isn't one throws. */
+export function isDocumentId(id: string): boolean {
+    return isValidObjectId(id);
+}
+
+export const connectDB = async () => {
+    logger.info("Attempting connection with MongoDB service");
+
     try {
-        const { connection } = await mongoose.connect(MONGO_URI);
+        const connection = await openDatabase();
 
         if (!(await hasTransactions(connection))) {
             logger.error("MongoDB isn't a replica set, which the server needs for transactions. Run `just db`.");
