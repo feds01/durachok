@@ -29,6 +29,12 @@ export function secretProblems(): string[] {
     ];
 }
 
+/**
+ * Google reCAPTCHA's secret key, with which the server checks that whoever registers solved the
+ * reCAPTCHA. Without it, as in development, nobody is asked to, but production must have it.
+ */
+export const RE_CAPTCHA_SECRET = process.env.RE_CAPTCHA_KEY ?? "";
+
 /** Networking configurations */
 export const PORT = process.env.PORT || 8080;
 export const ENV = process.env.NODE_ENV || "dev";
