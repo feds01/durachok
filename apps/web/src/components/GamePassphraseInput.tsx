@@ -6,7 +6,7 @@ import { Control, FieldValues, Path, useController } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { isDef } from "@/utils";
+import { isDef, range } from "@/utils";
 
 /** The suits that make up a passphrase, and what to call them. */
 const SUITS = { "♡": "hearts", "♢": "diamonds", "♣": "clubs", "♤": "spades" } as const;
@@ -56,12 +56,11 @@ export default function GamePassphraseInput<T extends FieldValues>({ pin, name, 
                 <span className="font-display font-black italic lining-nums text-foreground">{pin}</span> sees them.
             </p>
             <div className={cn("flex gap-2", isDef(error) && "animate-shake")} aria-label="Your passphrase">
-                {Array.from({ length: PASSPHRASE_LENGTH }, (_, index) => {
-                    const symbol = order[index];
+                {range(PASSPHRASE_LENGTH).map((position) => {
+                    const symbol = order[position];
                     return (
                         <div
-                            // eslint-disable-next-line react/no-array-index-key -- each slot is a fixed position
-                            key={index}
+                            key={position}
                             className={cn(
                                 "flex h-16 w-12 items-center justify-center rounded-lg border-2 text-3xl",
                                 symbol
@@ -69,7 +68,7 @@ export default function GamePassphraseInput<T extends FieldValues>({ pin, name, 
                                     : "border-dashed border-border text-sm text-muted-foreground/40",
                             )}
                         >
-                            {symbol ?? index + 1}
+                            {symbol ?? position + 1}
                         </div>
                     );
                 })}
