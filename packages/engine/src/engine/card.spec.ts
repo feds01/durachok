@@ -155,14 +155,41 @@ describe("Card tests", () => {
 
 describe("arrangeHand", () => {
     test("keeps the sorted order until the player arranges the cards", () => {
-        expect(arrangeHand(["6S", "7S", "QH"], null)).toEqual(["6S", "7S", "QH"]);
+        expect(arrangeHand(["QH", "7S", "6S"], "D", "suit", null)).toEqual(["6S", "7S", "QH"]);
     });
 
     test("keeps the player's order, without the cards they played", () => {
-        expect(arrangeHand(["6S", "QH"], ["QH", "7S", "6S"])).toEqual(["QH", "6S"]);
+        expect(arrangeHand(["6S", "QH"], "D", "suit", ["QH", "7S", "6S"])).toEqual(["QH", "6S"]);
     });
 
-    test("puts the cards that the player got since on the end, as sorted", () => {
-        expect(arrangeHand(["6S", "7S", "8D", "QH", "AH"], ["QH", "6S"])).toEqual(["QH", "6S", "7S", "8D", "AH"]);
+    test("puts a card that the player took after the card of its suit that it follows", () => {
+        expect(arrangeHand(["6S", "7S", "QH"], "D", "suit", ["QH", "6S"])).toEqual(["QH", "6S", "7S"]);
+    });
+
+    test("puts a card that comes first in its suit before the others of the suit", () => {
+        expect(arrangeHand(["6S", "6H", "QH"], "D", "suit", ["QH", "6S"])).toEqual(["6H", "QH", "6S"]);
+    });
+
+    test("puts the trumps that the player took with the trumps, wherever the player put them", () => {
+        expect(arrangeHand(["6S", "QH", "6D", "7D", "AD"], "D", "suit", ["7D", "6S", "QH"])).toEqual([
+            "6D",
+            "7D",
+            "AD",
+            "6S",
+            "QH",
+        ]);
+    });
+
+    test("puts a card of a rank that the player holds with that rank, sorting by rank", () => {
+        expect(arrangeHand(["9S", "9H", "KS", "6D"], "D", "rank", ["KS", "9S", "6D"])).toEqual([
+            "KS",
+            "9S",
+            "9H",
+            "6D",
+        ]);
+    });
+
+    test("puts the cards of a suit that the player didn't hold on the end, as sorted", () => {
+        expect(arrangeHand(["6S", "QH", "9C", "8C"], "D", "suit", ["QH", "6S"])).toEqual(["QH", "6S", "8C", "9C"]);
     });
 });

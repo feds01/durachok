@@ -1,6 +1,6 @@
 import { CardNumerics, CardSuits } from "./consts";
 
-import { Card } from "@durachok/transport";
+import { Card, isDef } from "@durachok/transport";
 
 /**
  * Converts the card to a string.
@@ -101,18 +101,50 @@ export function sortHand(cards: string[], trumpSuit: string, by: HandSort = "sui
     return cards.toSorted((a, b) => order(a) - order(b));
 }
 
+/** The cards that a hand sorted this way keeps together: a suit, or a rank, with the trumps apart. */
+function groupOf(card: string, trumpSuit: string, by: HandSort): string {
+    const { suit, value } = cardFromString(card);
+    if (by === "suit" || suit === trumpSuit) {
+        return suit;
+    }
+    return String(value);
+}
+
 /**
  * A hand in the order that its player holds it: sorted, or in the order that they arranged
- * it themselves, without the cards that they no longer hold, and with the cards that they got
- * since on the end, in their sorted order.
+ * it themselves, without the cards that they no longer hold. A card that they got since, as
+ * by taking the table, joins the cards of its suit, or of its rank, where they put them, in
+ * its sorted place among them, and a card of a suit or rank that they didn't hold goes on the end.
  */
-export function arrangeHand(sorted: string[], arranged: string[] | null): string[] {
+export function arrangeHand(cards: string[], trumpSuit: string, by: HandSort, arranged: string[] | null): string[] {
+    const sorted = sortHand(cards, trumpSuit, by);
     if (!arranged) {
         return sorted;
     }
 
     const held = new Set(sorted);
-    const kept = arranged.filter((card) => held.has(card));
-    const placed = new Set(kept);
-    return [...kept, ...sorted.filter((card) => !placed.has(card))];
+    const hand = arranged.filter((card) => held.has(card));
+    const kept = new Set(hand);
+    const together = (a: string, b: string) => groupOf(a, trumpSuit, by) === groupOf(b, trumpSuit, by);
+
+    // In the sorted order, the card before a new one is in the hand by the time that it goes in.
+    const placeOf = (card: string, index: number): number => {
+        const before = sorted[index - 1];
+        if (isDef(before) && together(before, card)) {
+            return hand.indexOf(before) + 1;
+        }
+
+        const after = sorted.slice(index + 1).find((other) => kept.has(other));
+        if (isDef(after) && together(after, card)) {
+            return hand.indexOf(after);
+        }
+        return hand.length;
+    };
+
+    for (const [index, card] of sorted.entries()) {
+        if (!kept.has(card)) {
+            hand.splice(placeOf(card, index), 0, card);
+        }
+    }
+    return hand;
 }
