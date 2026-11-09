@@ -45,7 +45,6 @@ import {
     canForfeit,
     canPlace,
     movesFor,
-    sortHand,
     suitOf,
     tableCards,
     turnOf,
@@ -93,7 +92,7 @@ export default function GameTable({ lobby, game }: Props) {
     // Once out of the game, the player can see the hands still in it, the one they clicked first.
     const seenHands = visibleHands(view, shownHand ?? undefined);
     const hand = useMemo(
-        () => arrangeHand(sortHand(player.deck, trump.suit, byRank ? "rank" : "suit"), arranged),
+        () => arrangeHand(player.deck, trump.suit, byRank ? "rank" : "suit", arranged),
         [player.deck, trump.suit, byRank, arranged],
     );
     // Nothing more can be played until the server answers the last move.
