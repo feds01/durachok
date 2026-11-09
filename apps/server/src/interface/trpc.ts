@@ -1,6 +1,6 @@
+import { transformer } from "@durachok/transport";
 import { TRPCError, initTRPC } from "@trpc/server";
 import * as trpcExpress from "@trpc/server/adapters/express";
-import superjson, { registerCustom } from "superjson";
 import { ZodError } from "zod";
 
 import { expr } from "../utils";
@@ -35,25 +35,11 @@ export const createSessionContext = async ({ req, res }: trpcExpress.CreateExpre
 export type AuthenticatedContext = Awaited<ReturnType<typeof createSessionContext>>;
 
 /**
- * Register a hook to convert `Buffer`s to base64
- *
- * @@Todo: maybe move this to `packages/transport`?
- */
-registerCustom<Buffer, string>(
-    {
-        isApplicable: (value): value is Buffer => Buffer.isBuffer(value),
-        serialize: (value) => value.toString("base64"),
-        deserialize: (value) => Buffer.from(value, "base64"),
-    },
-    "buffer",
-);
-
-/**
  * Initialization of tRPC backend
  * Should be done only once per backend!
  */
 const t = initTRPC.context<AuthenticatedContext>().create({
-    transformer: superjson,
+    transformer,
     errorFormatter: ({ error, shape }) => {
         return {
             ...shape,

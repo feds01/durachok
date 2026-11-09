@@ -1,7 +1,5 @@
-import { Buffer } from "buffer";
 import { MotionConfig } from "framer-motion";
 import { useEffect, useState } from "react";
-import { registerCustom } from "superjson";
 
 import { useAuthDispatch, useAuthState } from "@/contexts/auth";
 import { routeTree } from "@/routeTree.gen";
@@ -22,15 +20,6 @@ declare module "@tanstack/react-router" {
         router: typeof router;
     }
 }
-
-registerCustom<Buffer, string>(
-    {
-        isApplicable: (value): value is Buffer => Buffer.isBuffer(value),
-        serialize: (value) => value.toString("base64"),
-        deserialize: (value) => Buffer.from(value, "base64"),
-    },
-    "buffer",
-);
 
 const App = () => {
     const { state } = useAuthState();
