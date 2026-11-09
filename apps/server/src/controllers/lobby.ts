@@ -100,9 +100,8 @@ export class LobbyService {
     }
 
     /**
-     * Convert a lobby into the lobby state object.
-     *
-     * @@Todo: perhaps unify the `LobbyInfo` and the `LobbyState` objects.
+     * Convert a lobby into the lobby state object, for the players in it. A dashboard lists a
+     * player's lobbies as `LobbyInfo` instead, which counts the players and leaves out the chat.
      */
     private async lobbyIntoState(lobby: DBLobby, { withPassphrase = false }: LobbyStateOptions = {}): Promise<Lobby> {
         return {
@@ -521,10 +520,6 @@ export class LobbyService {
     public async delete(pin: string): Promise<void> {
         try {
             await Lobbies.deleteOne({ pin });
-
-            // @@Todo: socket events!
-            // kick everyone from the lobby if any connections are present.
-            // emitLobbyEvent(pin, ClientEvents.CLOSE, { reason: "lobby_closed" });
         } catch (e: unknown) {
             this.logger.error(e, "Failed to delete lobby");
             throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });

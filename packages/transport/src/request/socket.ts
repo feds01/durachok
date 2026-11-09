@@ -46,9 +46,8 @@ export const PlayerJoinSchema = z
     })
     .refine(
         (value) => {
-            // @@Todo: potentially change the definition so that we can always
-            // assume when a `playing` status is set, that the game state is
-            // always present.
+            // The lobby's status says whether a game is on, and zod can't tell the two shapes
+            // apart by a field inside `lobby`, so this checks that a game comes with one.
             if (value.lobby.status === "playing") {
                 return isDef(value.game) && isDef(value.gameVersion);
             }

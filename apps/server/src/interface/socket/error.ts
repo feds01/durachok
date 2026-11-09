@@ -44,9 +44,6 @@ export function transformErrorIntoMessage(error: Error): ErrorMessage {
         }
     }
 
-    // @@Todo: determine which other error types can we transform into
-    // a message.
-
     // The error itself is logged, and what went wrong inside the server isn't the player's to read.
     return {
         type: "internal",
