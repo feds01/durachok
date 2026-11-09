@@ -16,6 +16,12 @@ import {
     SpectatorGameState,
 } from "@durachok/transport";
 
+/** The trump, as the game keeps and sends it: the card, and its suit. */
+function trumpOf(card: string): Card {
+    const { suit } = cardFromString(card);
+    return { card, suit };
+}
+
 /** Options for the game. */
 export interface GameSettings {
     /** Whether to randomise the player order. */
@@ -110,11 +116,11 @@ export class Game {
         // whole deck, the last card that was dealt sets the trump, and stays in its
         // player's hand.
         if (this.deck.length > 0) {
-            this.trump = cardFromString(this.deck[0]);
+            this.trump = trumpOf(this.deck[0]);
             this.deck.push(this.deck.shift()!);
         } else {
             const lastDealt = Array.from(this.players.values()).at(-1)!.deck.at(-1)!;
-            this.trump = cardFromString(lastDealt);
+            this.trump = trumpOf(lastDealt);
         }
 
         // initialise the history object if this game hasn't initialised a history
@@ -145,7 +151,6 @@ export class Game {
      * @return {Game} A game object from the game state.
      * */
     static fromState(state: GameState, history: HistoryState, settings: GameSettings = DEFAULT_SETTINGS): Game {
-        // @@Todo: add a schema for the `game` state.
         const game = new Game(Object.keys(state.players) as [string, ...string[]], history, settings);
 
         game.trump = state.trump;

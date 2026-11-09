@@ -22,7 +22,7 @@ const game = (deck: string[], ...players: ReturnType<typeof opponent>[]): Player
     tableTop: {},
     deckSize: 24,
     discardSize: 0,
-    trump: { suit: "H", card: "AH", value: 14 },
+    trump: { suit: "H", card: "AH" },
 });
 
 describe("drawnCount", () => {

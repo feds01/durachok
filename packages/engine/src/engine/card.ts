@@ -2,14 +2,20 @@ import { CardNumerics, CardSuits } from "./consts";
 
 import { Card, isDef } from "@durachok/transport";
 
+/** A card read from its string, with its value, which orders it within its suit. */
+export interface ParsedCard extends Card {
+    /** The value of the card, from 2 up to 14 for an ace. */
+    value: number;
+}
+
 /**
- * Converts the card to a string.
+ * Reads a card from its string.
  *
- * @param card The card to be converted to a string.
+ * @param card The card string, e.g. `10S` for the ten of spades.
  *
  * @throws Error if the card is invalid.
  */
-export function cardFromString(card: string): Card {
+export function cardFromString(card: string): ParsedCard {
     const suit = card.substring(card.length - 1);
     const rawNumeric = card.substring(0, card.length - 1);
 

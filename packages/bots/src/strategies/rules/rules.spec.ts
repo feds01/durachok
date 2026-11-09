@@ -29,7 +29,7 @@ function viewOf({ hand, action, table = {}, deckSize = 10 }: Seat): PlayerGameSt
         tableTop: table,
         deckSize,
         discardSize: 0,
-        trump: { suit: "H", card: "AH", value: 14 },
+        trump: { suit: "H", card: "AH" },
     };
 }
 
