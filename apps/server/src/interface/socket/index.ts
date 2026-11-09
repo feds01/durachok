@@ -3,7 +3,6 @@ import { Logger } from "pino";
 import { attachSockets } from "zod-sockets";
 
 import { authenticate } from "../authentication";
-import { Context, createContext } from "../context";
 import { limits } from "../../lib/limits";
 import logger from "../../lib/logger";
 import { RateLimiter } from "../../lib/rate-limit";
@@ -11,6 +10,7 @@ import { holderOf } from "../../schemas/auth";
 import { actions } from "./actions";
 import { Rooms } from "./actions/ctx";
 import { config as socketConfig } from "./config";
+import { context } from "./context";
 import { io } from "./io";
 
 /** How often a client that sends too much is told to slow down, rather than for each event that it floods. */
@@ -25,13 +25,6 @@ let rootContext: { withRooms: Rooms } | undefined;
 export async function connectSocket(server: HTTPServer) {
     logger.info("Attempting to connect socket server to HTTP server");
 
-    // Create the context, and prepare it for being passed into
-    // the sockets.
-    const loggerWithCtx = logger as Logger & {
-        ctx: Context;
-    };
-    loggerWithCtx.ctx = createContext(logger);
-
     // Authenticate every connection before it reaches the handlers. Clients send
     // their tokens in the handshake's `auth`, or, as the API takes them, in the
     // `x-token` and `x-refresh-token` headers. A rejected client receives a
@@ -39,7 +32,7 @@ export async function connectSocket(server: HTTPServer) {
     io.use(async (socket, next) => {
         const { auth, headers } = socket.handshake;
         const result = await authenticate(
-            loggerWithCtx.ctx.authService,
+            context.authService,
             auth.token ?? headers["x-token"],
             auth.refreshToken ?? headers["x-refresh-token"],
         );
@@ -71,7 +64,7 @@ export async function connectSocket(server: HTTPServer) {
         target: server,
         config: socketConfig,
         actions,
-        logger: loggerWithCtx,
+        logger,
     });
     rootContext = contexts["/"];
 }
@@ -88,14 +81,7 @@ export async function notifyLobbyClosed(pin: string): Promise<void> {
     }
 }
 
+/** The logger that zod-sockets hands the handlers, which is the server's. */
 declare module "zod-sockets" {
-    interface LoggerOverrides extends Logger {
-        /**
-         * The context of the current server execution, this is effectively a
-         * a dependency injection.
-         *
-         * @@Hack: this is a massive hack! Discussion: https://github.com/RobinTail/zod-sockets/discussions/272
-         */
-        ctx: Context;
-    }
+    interface LoggerOverrides extends Logger {}
 }
