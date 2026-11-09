@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { GamePlayer, OpaquePlayerState, PlayerGameState } from "@durachok/transport";
 
-import { applyMove, canCover, canForfeit, canPlace, movesFor, tableCards, turnOf, visibleHands } from "./view";
+import { applyMove, canCover, canForfeit, canPlace, movesFor, movesOf, tableCards, turnOf, visibleHands } from "./view";
 
 /** A game between "me" and "them", with hearts as trumps, me attacking and them defending. */
 function game(overrides: {
@@ -167,6 +167,25 @@ describe("forfeiting", () => {
     test("the defender can take the cards while some are unbeaten", () => {
         expect(canForfeit(game({ ...defending, tableTop: { "6D": null } }))).toBe(true);
         expect(canForfeit(game({ ...defending, tableTop: { "6D": "7D" } }))).toBe(false);
+    });
+});
+
+describe("every move that the player can make", () => {
+    test("an attacker adds a rank that's on the table, or says that they're done", () => {
+        const state = game({ tableTop: { "6D": null }, me: { deck: ["6S", "7S", "9H"] } });
+
+        expect(movesOf(state)).toEqual([{ type: "place", card: "6S" }, { type: "forfeit" }]);
+    });
+
+    test("the defender beats a card, passes the attack on, or takes the cards", () => {
+        const state = game({ tableTop: { "6D": null }, me: { ...defending.me, deck: ["7D", "6S", "9H"] } });
+
+        expect(movesOf(state)).toEqual([
+            { type: "cover", card: "7D", position: 0 },
+            { type: "place", card: "6S" },
+            { type: "cover", card: "9H", position: 0 },
+            { type: "forfeit" },
+        ]);
     });
 });
 

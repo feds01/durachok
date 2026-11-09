@@ -162,7 +162,7 @@ describe("lobby state", () => {
 
     test("a move waits for the server's answer, whether it takes the move or not", () => {
         const playing = reduceAll([
-            { type: "join", lobby: { ...lobby, status: "playing" }, game: { state: game, version: 1 } },
+            { type: "join", lobby: { ...lobby, status: "playing" }, game },
             { type: "move", move: { type: "place", card: "6S" } },
         ]);
         expect(playing.pending).toEqual({ type: "place", card: "6S" });
@@ -170,7 +170,6 @@ describe("lobby state", () => {
         const answered = reduceLobby(playing, {
             type: "game",
             game: { ...game, tableTop: { "6S": null } },
-            version: 2,
             actions: [{ type: "place", card: "6S", player: "owner" }],
         });
         expect(answered.pending).toBeNull();
@@ -194,7 +193,7 @@ describe("lobby state", () => {
             { name: "owner", out: null },
         ];
         const finished = reduceAll([
-            { type: "join", lobby: { ...lobby, status: "playing" }, game: { state: game, version: 1 } },
+            { type: "join", lobby: { ...lobby, status: "playing" }, game },
             { type: "victory", players },
         ]);
 
@@ -246,28 +245,5 @@ describe("lobby state", () => {
         ]);
 
         expect(state.lobby?.passphrase).toBe("♡♢♣♤");
-    });
-
-    test("an update of the game that arrives after a newer one is left out", () => {
-        const placed = { ...game, tableTop: { "6S": null } };
-        const state = reduceAll([
-            { type: "join", lobby: { ...lobby, status: "playing" }, game: { state: game, version: 1 } },
-            { type: "game", game: { ...placed, tableTop: { "6S": "7S" } }, version: 3 },
-            { type: "game", game: placed, version: 2 },
-        ]);
-
-        expect(state.game?.tableTop).toEqual({ "6S": "7S" });
-        expect(state.gameVersion).toBe(3);
-    });
-
-    test("the next game's updates are newer than the last game's", () => {
-        const state = reduceAll([
-            { type: "join", lobby: { ...lobby, status: "playing" }, game: { state: game, version: 40 } },
-            { type: "victory", players: [] },
-            { type: "game", game, version: 41 },
-        ]);
-
-        expect(state.game).toEqual(game);
-        expect(state.gameVersion).toBe(41);
     });
 });

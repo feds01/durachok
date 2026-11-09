@@ -123,9 +123,31 @@ modules = ["npm:socket.io", "npm:zod-sockets"]
 allowed_importers = ["apps/server/src/interface/socket"]
 guidance = "Handle socket events in interface/socket, and call the controllers from there."
 
-[contracts.web-socket-behind-lobby-store]
+[contracts.socket-client-behind-lobby-clients]
 type = "protected"
-name = "In the web app, only the lobby store opens a socket"
+name = "Only the web app's lobby store and a bot's connection open a socket"
 modules = ["npm:socket.io-client"]
-allowed_importers = ["apps/web/src/contexts/lobby", "apps/server/test"]
-guidance = "Read the lobby from the lobby store, and send through its actions."
+allowed_importers = ["apps/web/src/contexts/lobby", "packages/bots/src/connect", "apps/server/test"]
+guidance = "In the web app, read the lobby from the lobby store and send through its actions; a bot connects with `connectBot`."
+
+# Each bot strategy decides its moves its own way, so they have nothing to do with one another.
+[contracts.bot-strategies-independent]
+type = "independence"
+name = "The bot strategies have nothing to do with one another"
+modules = ["packages/bots/src/strategies/*"]
+guidance = "Share what strategies have in common through what a bot is, beside them, or pass one strategy to another, as the model strategy takes its fallback."
+
+[contracts.bots-know-no-strategy]
+type = "forbidden"
+name = "What a bot is doesn't depend on how any bot decides its moves"
+# The package's index hands the strategies on, and is no part of what a bot is.
+from = [{ path = "packages/bots/src", except = ["packages/bots/src/strategies", "packages/bots/src/index"] }]
+to = ["packages/bots/src/strategies"]
+guidance = "A strategy is a black box behind the `Strategy` interface, which a bot is handed when it is made."
+
+[contracts.game-knows-no-bots]
+type = "forbidden"
+name = "The game and its apps know nothing about bots"
+from = ["pkg:@durachok/web", "pkg:@durachok/server", "pkg:@durachok/engine", "pkg:@durachok/transport"]
+to = ["pkg:@durachok/bots"]
+guidance = "A bot is a client of the lobby protocol like any other; the server only knows that a player is a bot, from its registry."

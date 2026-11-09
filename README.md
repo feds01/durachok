@@ -63,20 +63,20 @@ Before the first `just dev`, configure the environment of the [server](./apps/se
 
 The commands are recipes in the [`justfile`](./justfile). Run `just` to list them.
 
-| Command             | What it does                                                       |
-| ------------------- | ------------------------------------------------------------------ |
-| `just dev`          | Start the server and the web app in development mode               |
-| `just db`           | Make sure the server can reach MongoDB, starting it if needed      |
-| `just build`        | Build everything                                                   |
-| `just host`         | Host a release on this machine, in production mode                 |
-| `just tunnel`       | Share it on a public Cloudflare link, for friends to play on       |
-| `just test`         | Run every package's tests                                          |
-| `just typecheck`    | Type check every package                                           |
-| `just lint`         | Lint, or fix what can be fixed with `just lint --fix`              |
-| `just fmt`          | Format, or check the formatting with `just fmt-check`              |
-| `just architecture` | Check the architecture contracts in [`zenith.toml`](./zenith.toml) |
-| `just bots`         | Keep the registry of bots that may join lobbies                    |
-| `just ci`           | Run every check that CI runs                                       |
+| Command             | What it does                                                                 |
+| ------------------- | ---------------------------------------------------------------------------- |
+| `just dev`          | Start the server and the web app in development mode                         |
+| `just db`           | Make sure the server can reach MongoDB, starting it if needed                |
+| `just build`        | Build everything                                                             |
+| `just host`         | Host a release on this machine, in production mode                           |
+| `just tunnel`       | Share it on a public Cloudflare link, for friends to play on                 |
+| `just test`         | Run every package's tests                                                    |
+| `just typecheck`    | Type check every package                                                     |
+| `just lint`         | Lint, or fix what can be fixed with `just lint --fix`                        |
+| `just fmt`          | Format, or check the formatting with `just fmt-check`                        |
+| `just architecture` | Check the architecture contracts in [`zenith.toml`](./zenith.toml)           |
+| `just bots`         | Keep the registry of bots that may join lobbies, see [bots](./packages/bots) |
+| `just ci`           | Run every check that CI runs                                                 |
 
 ## Git hooks
 

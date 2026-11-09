@@ -1,0 +1,34 @@
+{
+    "name": "@durachok/bots",
+    "version": "1.0.0",
+    "description": "Bots that play a seat in a lobby through the same client as a person, and the strategies that decide their moves.",
+    "license": "MIT",
+    "author": "Alexander. E. Fedotov",
+    "repository": "https://github.com/feds01/durachok",
+    "type": "module",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js"
+        }
+    },
+    "scripts": {
+        "build": "tsc --declaration",
+        "check": "tsc --noEmit",
+        "test": "bun test src"
+    },
+    "dependencies": {
+        "@durachok/engine": "workspace:*",
+        "@durachok/transport": "workspace:*",
+        "ai": "^7.0.166",
+        "socket.io-client": "4.8.4",
+        "zod": "^4.6.7"
+    },
+    "devDependencies": {
+        "@types/bun": "^1.4.4",
+        "@types/node": "^26.6.6",
+        "typescript": "^7.0.2"
+    }
+}

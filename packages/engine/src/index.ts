@@ -1,5 +1,5 @@
 export { shuffleArray, getRandomKey } from "./utils";
-export { Game } from "./engine/game";
+export { DEFAULT_SETTINGS, Game, type GameSettings } from "./engine/game";
 export {
     arrangeHand,
     cardFromString,
@@ -23,6 +23,7 @@ export {
     canPlace,
     handSize,
     movesFor,
+    movesOf,
     tableCards,
     turnOf,
     visibleHands,

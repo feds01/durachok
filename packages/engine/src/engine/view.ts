@@ -133,6 +133,12 @@ export function canForfeit(state: PlayerGameState): boolean {
     return player.action === "attack" || (player.action === "defend" && uncoveredCount(table) > 0);
 }
 
+/** Every move that the player can make now: with each card in their hand, and by forfeiting. */
+export function movesOf(state: PlayerGameState): PlayerMove[] {
+    const moves = state.player.deck.flatMap((card) => movesFor(state, card));
+    return canForfeit(state) ? [...moves, { type: "forfeit" }] : moves;
+}
+
 /** Where the player is in the round, which says what they can do. */
 export type Turn =
     /** The player has no cards left, and is out of the game. */

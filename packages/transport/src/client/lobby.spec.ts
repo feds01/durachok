@@ -67,4 +67,49 @@ describe("A lobby client", () => {
 
         expect(reasons).toEqual(["kicked"]);
     });
+
+    test("hands on an update of the game only if it's newer than the last", () => {
+        const socket = new FakeSocket();
+        const client = new LobbyClient(socket, "123456");
+        const seen: string[] = [];
+        client.on("action", ({ version }) => seen.push(`action ${version}`));
+        client.on("playerState", ({ version }) => seen.push(`state ${version}`));
+
+        socket.receive("action", { actions: [], update: {}, version: 1 });
+        socket.receive("action", { actions: [], update: {}, version: 3 });
+        // An action that arrived after a newer one, or again.
+        socket.receive("action", { actions: [], update: {}, version: 2 });
+        socket.receive("action", { actions: [], update: {}, version: 3 });
+        // The game again, after the server refused a move, and an older one.
+        socket.receive("playerState", { update: {}, version: 3 });
+        socket.receive("playerState", { update: {}, version: 2 });
+
+        expect(seen).toEqual(["action 1", "action 3", "state 3"]);
+    });
+
+    test("takes the game on joining as the newest, whose versions count on into the next game", () => {
+        const socket = new FakeSocket();
+        const client = new LobbyClient(socket, "123456");
+        const versions: number[] = [];
+        client.on("action", ({ version }) => versions.push(version));
+
+        socket.receive("join", { lobby: {}, game: {}, gameVersion: 40 });
+        socket.receive("action", { actions: [], update: {}, version: 39 });
+        socket.receive("action", { actions: [], update: {}, version: 41 });
+
+        expect(versions).toEqual([41]);
+    });
+
+    test("stops handing on the game's updates to a listener that stopped listening", () => {
+        const socket = new FakeSocket();
+        const client = new LobbyClient(socket, "123456");
+        const versions: number[] = [];
+
+        const stop = client.on("action", ({ version }) => versions.push(version));
+        socket.receive("action", { actions: [], update: {}, version: 1 });
+        stop();
+        socket.receive("action", { actions: [], update: {}, version: 2 });
+
+        expect(versions).toEqual([1]);
+    });
 });
