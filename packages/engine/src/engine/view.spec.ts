@@ -261,9 +261,11 @@ describe("a defender who takes the cards", () => {
     });
 });
 
+/** A hand whose cards the player sees. */
+const shown = (cards: string[]) => ({ type: "visible" as const, cards });
+
 describe("the hands that a player can see", () => {
     const out = { me: { out: 1, deck: [], action: "none" as const } };
-    const shown = (cards: string[]) => ({ type: "visible" as const, cards });
 
     test("none while the player is still in the game", () => {
         expect(visibleHands(game({}))).toEqual([]);

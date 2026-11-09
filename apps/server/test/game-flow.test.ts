@@ -342,7 +342,8 @@ describe.skipIf(!available)("Game flow", () => {
             return false;
         }
 
-        for (let moves = 0, idle = 0; !victory && moves < 500;) {
+        for (let moves = 0, idle = 0; moves < 500;) {
+            if (victory) break;
             let moved = false;
             for (const { socket } of players) {
                 if (!victory && (await play(socket))) {
@@ -364,7 +365,7 @@ describe.skipIf(!available)("Game flow", () => {
 
         await Bun.sleep(50);
         expect(victory).toBeDefined();
-        expect(victory!.players.map((p) => p.name).sort()).toEqual(players.map((p) => p.name).sort());
+        expect(victory!.players.map((p) => p.name).toSorted()).toEqual(players.map((p) => p.name).toSorted());
 
         expect(players.map(({ socket }) => gameOver.get(socket))).toEqual(players.map(() => "waiting"));
 
@@ -848,7 +849,8 @@ async function playWhileThoseOutLeave(pin: string, players: Socket[]): Promise<s
     }
     players[0]!.emit("start", pin);
 
-    for (const deadline = Date.now() + 30_000; !over && Date.now() < deadline; await Bun.sleep(10)) {
+    for (const deadline = Date.now() + 30_000; Date.now() < deadline; await Bun.sleep(10)) {
+        if (over) break;
         for (const socket of players) {
             const known = views.get(socket);
             if (!known || !socket.connected || waiting.has(socket)) continue;

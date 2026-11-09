@@ -640,9 +640,9 @@ export class Game {
 
         // If the defender forfeits, everybody can now attack
         if (attackingPlayer === name || defendingPlayerName === name) {
-            this.getActivePlayers().forEach(([name, player]) => {
-                if (name !== defendingPlayerName) {
-                    player.action = "attack";
+            this.getActivePlayers().forEach(([activeName, active]) => {
+                if (activeName !== defendingPlayerName) {
+                    active.action = "attack";
                 }
             });
         }
@@ -653,7 +653,7 @@ export class Game {
             this.askAttackersAgain();
         }
 
-        if (this.getActivePlayers().every(([_name, player]) => player.turned)) {
+        if (this.getActivePlayers().every(([, active]) => active.turned)) {
             return this.finaliseRound();
         }
 
@@ -662,8 +662,8 @@ export class Game {
         // finaliseRound since nobody can perform any additional action on the tabletop.
         let canFinalise = true;
 
-        this.getActivePlayers().forEach(([name, player]) => {
-            if (!player.turned && name !== defendingPlayerName) {
+        this.getActivePlayers().forEach(([activeName, active]) => {
+            if (!active.turned && activeName !== defendingPlayerName) {
                 canFinalise = false;
             }
         });
@@ -797,7 +797,7 @@ export class Game {
      * @return {String} the name of player 'offset' positions after the given one.
      * */
     private getPlayerNameByOffset(name: string, offset: number): string {
-        const playerNames = this.getActivePlayers().map(([name]) => name);
+        const playerNames = this.getActivePlayers().map(([playerName]) => playerName);
         const playerIndex = playerNames.indexOf(name);
 
         if (playerIndex < 0) {

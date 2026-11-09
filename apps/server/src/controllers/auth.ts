@@ -98,8 +98,8 @@ export class AuthService {
     /**
      * Verify a password.
      */
-    public verify(hash: string, password: string): Promise<boolean> {
-        return verify(hash, password);
+    public verify(stored: string, password: string): Promise<boolean> {
+        return verify(stored, password);
     }
 
     /**

@@ -18,8 +18,8 @@ export const createSessionContext = async ({ req, res }: trpcExpress.CreateExpre
     const ctx = { ...createContext(logger, hostname), ip };
 
     // Try and read the user.
-    const tokens = await getTokenFromHeaders(ctx.authService, req.headers, (tokens) =>
-        setTokensInResponse(res, tokens),
+    const tokens = await getTokenFromHeaders(ctx.authService, req.headers, (refreshed) =>
+        setTokensInResponse(res, refreshed),
     );
     if (!tokens) {
         return { ...ctx, token: undefined, rawTokens: undefined };
