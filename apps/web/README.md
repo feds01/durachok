@@ -16,8 +16,8 @@ REACT_APP_DEV_VERSION=$npm_package_gitHead
 # API
 REACT_APP_API_URL=
 
-# Google ReCaptcha Authentication (setting to "" will disable ReCaptcha)
-REACT_APP_RE_CAPTCHA_SECRET=""
+# Google reCAPTCHA's site key, the public one, for the register form ("" doesn't show it)
+REACT_APP_RE_CAPTCHA_SITE_KEY=""
 ```
 
 > **Note** You can copy the `.env.sample` file to `.env` and update the values accordingly. `cp .env.sample .env`

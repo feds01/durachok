@@ -46,8 +46,8 @@ function envSchema(origin: string) {
                         return z.NEVER;
                     }
                 }),
-            /** Google reCAPTCHA v3's key for the web app; empty turns reCAPTCHA off. */
-            REACT_APP_RE_CAPTCHA_SECRET: z.string().default(""),
+            /** Google reCAPTCHA's site key, which is public, for the widget; empty turns reCAPTCHA off. */
+            REACT_APP_RE_CAPTCHA_SITE_KEY: z.string().default(""),
         })
         .transform((env) => ({
             APP_ENV: env.NODE_ENV,
@@ -57,7 +57,7 @@ function envSchema(origin: string) {
             APP_VERSION_BRANCH: env.REACT_APP_BRANCH,
             API_URL: env.REACT_APP_API_URL,
             SOCKET_URL: new URL(env.REACT_APP_API_URL).origin,
-            RE_CAPTCHA_SECRET: env.REACT_APP_RE_CAPTCHA_SECRET,
+            RE_CAPTCHA_SITE_KEY: env.REACT_APP_RE_CAPTCHA_SITE_KEY,
         }));
 }
 
@@ -87,5 +87,5 @@ export const {
     APP_VERSION_BRANCH,
     API_URL,
     SOCKET_URL,
-    RE_CAPTCHA_SECRET,
+    RE_CAPTCHA_SITE_KEY,
 } = config;
