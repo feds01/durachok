@@ -1,7 +1,7 @@
-import { observe } from "@durachok/bots";
 import { PlayerGameState, PlayerRole } from "@durachok/transport";
 import { describe, expect, test } from "bun:test";
 
+import { observe } from "../../observation";
 import { RulesStrategy } from "./rules";
 
 interface Seat {

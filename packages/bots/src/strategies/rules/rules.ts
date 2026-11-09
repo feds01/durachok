@@ -1,6 +1,8 @@
-import { Observation, Strategy } from "@durachok/bots";
 import { TableCard, beats, cardFromString, turnOf } from "@durachok/engine";
 import { PlayerMove, isSameMove } from "@durachok/transport";
+
+import { Observation } from "../../observation";
+import { Strategy } from "../../strategy";
 
 type Place = Extract<PlayerMove, { type: "place" }>;
 type Cover = Extract<PlayerMove, { type: "cover" }>;

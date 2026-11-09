@@ -1,33 +1,7 @@
-/**
- * A function that returns the result of a callback.
- *
- * Useful for writing scoped expressions.
- *
- * Example:
- *
- * ```ts
- * const result = expr(() => {
- *    if ( ... ) {
- *      return ...;
- *    }
- *
- *    return ...;
- * });
- *
- * @param cb
- * @returns
- */
-export const expr = <T>(cb: () => T): T => cb();
+import { expr, isDef } from "@durachok/transport";
 
-/**
- * Check whether some item is not null and not undefined.
- *
- * @param o - The item to check.
- * @return Whether the item is defined, as a type assertion.
- */
-export function isDef<T>(o: T | null | undefined): o is T {
-    return typeof o !== "undefined" && o !== null;
-}
+// The helpers that every package shares, from the one that the others all depend on.
+export { expr, isDef };
 
 /**
  * Assert a condition.

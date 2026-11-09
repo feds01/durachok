@@ -1,7 +1,7 @@
 {
-    "name": "@durachok/bot-model",
+    "name": "@durachok/bots",
     "version": "1.0.0",
-    "description": "A bot strategy that asks a decision model which move to make.",
+    "description": "Bots that play a seat in a lobby through the same client as a person, and the strategies that decide their moves.",
     "license": "MIT",
     "author": "Alexander. E. Fedotov",
     "repository": "https://github.com/feds01/durachok",
@@ -20,8 +20,10 @@
         "test": "bun test src"
     },
     "dependencies": {
-        "@durachok/bots": "workspace:*",
+        "@durachok/engine": "workspace:*",
         "@durachok/transport": "workspace:*",
+        "ai": "^7.0.166",
+        "socket.io-client": "4.8.4",
         "zod": "^4.6.7"
     },
     "devDependencies": {

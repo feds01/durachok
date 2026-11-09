@@ -1,7 +1,7 @@
-import { Observation } from "@durachok/bots";
 import { PlayerMove } from "@durachok/transport";
 import { describe, expect, test } from "bun:test";
 
+import { Observation } from "../../observation";
 import { RandomStrategy } from "./random";
 
 const moves: PlayerMove[] = [{ type: "place", card: "6S" }, { type: "place", card: "7S" }, { type: "forfeit" }];

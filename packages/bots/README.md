@@ -5,15 +5,15 @@ same request, connects with the same `LobbyClient`, is sent the same updates, an
 moves through the same `move` request. The server only knows that a player is a bot, from
 its registry. How a bot decides its moves is up to the bot.
 
-| Package                   | What it is                                                                                                                 |
-| ------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `core` (`@durachok/bots`) | The `Strategy` interface, what a strategy is told, and how a bot plays a lobby, or plays other strategies without a server |
-| `strategies/random`       | `RandomStrategy`: any move it can, at random, as a baseline                                                                |
-| `strategies/rules`        | `RulesStrategy`: hand-written rules, of a careful player                                                                   |
-| `strategies/model`        | `ModelStrategy`: asks a decision model, such as one behind an HTTP endpoint                                                |
+| Module              | What it is                                                             |
+| ------------------- | ---------------------------------------------------------------------- |
+| `src`               | The `Strategy` interface, what a strategy is told, and how a bot plays |
+| `strategies/random` | `RandomStrategy`: any move it can, at random, as a baseline            |
+| `strategies/rules`  | `RulesStrategy`: hand-written rules, of a careful player               |
+| `strategies/model`  | `ModelStrategy`: asks a language model, through the AI SDK             |
 
-The strategies have nothing to do with one another, and `core` knows none of them, which
-[`zenith.toml`](../../zenith.toml) checks.
+The strategies have nothing to do with one another, and what a bot is knows none of them,
+which [`zenith.toml`](../../zenith.toml) checks.
 
 ## Writing a strategy
 
@@ -44,15 +44,16 @@ It is told only what its player is told:
 A strategy can take its time, and is handed an `AbortSignal`, which is aborted when the game
 moves on before it decides.
 
-## A decision model over HTTP
+## A language model
 
-`ModelStrategy` with an `HttpModel` POSTs the observation to a URL as JSON, and expects
-`{ "move": <index> }` back, the index of the move to make in `moves`. The model can be
-written in any language. When it fails, takes too long, or picks a move that isn't there,
-the strategy's fallback decides instead.
+`ModelStrategy` shows a language model the game, as JSON, and asks it to choose one of the
+moves that the player can make, through the [AI SDK](https://ai-sdk.dev), so that it can't
+choose one that isn't. The model can be any that the AI SDK can call, or the id of one on the
+AI Gateway, which reads its key from `AI_GATEWAY_API_KEY`. When the model fails, or takes too
+long, the strategy's fallback decides instead.
 
 ```ts
-new ModelStrategy(new HttpModel("http://localhost:5000/decide"), { fallback: new RulesStrategy() });
+new ModelStrategy({ model: "anthropic/claude-haiku-5.5", fallback: new RulesStrategy() });
 ```
 
 ## Playing in a lobby
@@ -75,16 +76,4 @@ const bot = await playInLobby(
     { strategy: new RulesStrategy() },
 );
 console.log(`Left the lobby: ${await bot.left}`);
-```
-
-## Playing strategies against each other
-
-`playGame` plays a game on the engine, without a server, and `tournament` plays many and
-counts how often each strategy lost:
-
-```ts
-import { tournament } from "@durachok/bots";
-
-await tournament({ rules: new RulesStrategy(), random: new RandomStrategy() }, 100);
-// e.g. { rules: 1, random: 99 }
 ```

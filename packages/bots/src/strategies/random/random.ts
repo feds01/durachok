@@ -1,5 +1,7 @@
-import { Observation, Strategy } from "@durachok/bots";
 import { PlayerMove } from "@durachok/transport";
+
+import { Observation } from "../../observation";
+import { Strategy } from "../../strategy";
 
 /** Makes any of the moves that the player can, at random: a baseline that other strategies should beat. */
 export class RandomStrategy implements Strategy {

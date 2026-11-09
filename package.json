@@ -13,8 +13,6 @@
     },
     "workspaces": [
         "packages/*",
-        "packages/bots/*",
-        "packages/bots/strategies/*",
         "apps/*"
     ],
     "type": "module",

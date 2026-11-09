@@ -47,11 +47,6 @@ export interface LobbyState {
     lobby: Lobby | null;
     /** This player's view of the game, once one is being played. */
     game: PlayerGameState | null;
-    /**
-     * The version of the newest game that the server sent, which goes on counting from one
-     * game to the next, so that an update which arrives after a newer one is left out.
-     */
-    gameVersion: number | null;
     /** The move that this player sent, which the server hasn't answered yet. */
     pending: PlayerMove | null;
     /** What happened in the game's last update, so that the table can show it happening. */
@@ -68,7 +63,6 @@ export const initialLobbyState: LobbyState = {
     connection: { kind: "connecting" },
     lobby: null,
     game: null,
-    gameVersion: null,
     pending: null,
     actions: [],
     results: null,
@@ -78,11 +72,11 @@ export const initialLobbyState: LobbyState = {
 
 /** What happened on the socket, as the lobby state sees it. */
 export type LobbyEvent =
-    | { type: "join"; lobby: Lobby; game?: { state: PlayerGameState; version: number } }
+    | { type: "join"; lobby: Lobby; game?: PlayerGameState }
     | { type: "lobby"; lobby: Lobby }
     | { type: "countdown" }
     | { type: "start" }
-    | { type: "game"; game: PlayerGameState; version: number; actions?: Action[] }
+    | { type: "game"; game: PlayerGameState; actions?: Action[] }
     | { type: "move"; move: PlayerMove }
     | { type: "victory"; players: VictoryMessage["players"] }
     | { type: "dismissResults" }
@@ -102,14 +96,12 @@ export function reduceLobby(state: LobbyState, event: LobbyEvent): LobbyState {
 
     switch (event.type) {
         case "join":
-            // The lobby and game as they are when the player (re)joins, which updates
-            // from before then can't replace.
+            // The lobby and game as they are when the player (re)joins.
             return {
                 ...state,
                 connection: { kind: "joined" },
                 lobby: event.lobby,
-                game: event.game?.state ?? null,
-                gameVersion: event.game?.version ?? state.gameVersion,
+                game: event.game ?? null,
                 pending: null,
             };
         case "lobby": {
@@ -132,16 +124,11 @@ export function reduceLobby(state: LobbyState, event: LobbyEvent): LobbyState {
         case "start":
             return { ...state, countingDown: false };
         case "game":
-            // An update that arrived after a newer one, whose game the player already sees.
-            if (state.gameVersion !== null && event.version < state.gameVersion) {
-                return state;
-            }
-
-            // The server answered the player's move, whether it took it or not.
+            // The lobby's client hands on only updates newer than the last, so this is the game now,
+            // and the server answered the player's move, whether it took it or not.
             return {
                 ...state,
                 game: event.game,
-                gameVersion: event.version,
                 actions: event.actions ?? [],
                 pending: null,
             };

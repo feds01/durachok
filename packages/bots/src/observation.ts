@@ -1,7 +1,5 @@
 import { TableCard, movesOf, tableCards, turnOf } from "@durachok/engine";
-import { Action, PlayerGameState, PlayerMove, isSameMove } from "@durachok/transport";
-
-import { isDef } from "./utils";
+import { Action, PlayerGameState, PlayerMove, expr, isDef, isSameMove } from "@durachok/transport";
 
 /** What a player is told about the deck, unless the game is in mythic mode. */
 export interface DeckState {
@@ -39,12 +37,20 @@ export interface Observation {
  * @param refused - Moves that the game refused since it last changed, which aren't offered again.
  */
 export function observe(view: PlayerGameState, history: Action[], refused: PlayerMove[] = []): Observation {
-    const deck =
-        isDef(view.deckSize) && isDef(view.discardSize) ? { size: view.deckSize, discarded: view.discardSize } : null;
-    const moves =
-        turnOf(view).kind === "attackDone"
-            ? []
-            : movesOf(view).filter((move) => !refused.some((other) => isSameMove(move, other)));
+    const deck = expr(() => {
+        // A player in mythic mode isn't told the deck's size.
+        if (!isDef(view.deckSize) || !isDef(view.discardSize)) {
+            return null;
+        }
+        return { size: view.deckSize, discarded: view.discardSize };
+    });
+    const moves = expr(() => {
+        // A player who said that they're done attacking makes no move, though they could still add a card.
+        if (turnOf(view).kind === "attackDone") {
+            return [];
+        }
+        return movesOf(view).filter((move) => !refused.some((other) => isSameMove(move, other)));
+    });
 
     return { view, table: tableCards(view), deck, moves, history };
 }

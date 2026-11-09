@@ -1,8 +1,7 @@
-import { Action, LobbyClient, PlayerGameState, PlayerMove, isMoveBy } from "@durachok/transport";
+import { Action, LobbyClient, PlayerGameState, PlayerMove, isDef, isMoveBy } from "@durachok/transport";
 
 import { Observation, observe } from "./observation";
 import { Strategy } from "./strategy";
-import { isDef } from "./utils";
 
 export interface BotPlayerOptions {
     /** How the bot decides its moves. */
@@ -25,9 +24,12 @@ const humanPace = () => 500 + Math.random() * 1000;
  * to answer it before it decides the next.
  */
 export class BotPlayer {
+    /** The player's newest view of the game, or none between games. */
     private view: PlayerGameState | null = null;
-    /** The version of the game that the view shows, @see ActionMessageSchema. */
-    private version = -1;
+    /**
+     * What the bot has seen happen in this game, which it keeps itself, since each update of the
+     * game brings only what happened in it. Its strategy is shown it to decide.
+     */
     private history: Action[] = [];
     /** The moves that the server refused since the game last changed, which the bot doesn't make again. */
     private refused: PlayerMove[] = [];
@@ -35,20 +37,22 @@ export class BotPlayer {
     private pending: { move: PlayerMove; timer: ReturnType<typeof setTimeout> } | null = null;
     /** The decision that the bot is making, which a newer update of the game calls off. */
     private thinking: AbortController | null = null;
+    /** Stop listening to the client, once the bot stops playing. */
     private readonly unsubscribe: (() => void)[];
 
     public constructor(
         private readonly client: LobbyClient,
         private readonly options: BotPlayerOptions,
     ) {
+        // The client hands on only updates of the game that are newer than the last.
         this.unsubscribe = [
-            client.on("join", ({ game, gameVersion }) => {
-                if (isDef(game) && isDef(gameVersion)) {
-                    this.update(game, gameVersion, []);
+            client.on("join", ({ game }) => {
+                if (isDef(game)) {
+                    this.follow(game, []);
                 }
             }),
-            client.on("action", ({ update, version, actions }) => this.update(update, version, actions)),
-            client.on("playerState", ({ update, version }) => this.update(update, version, [])),
+            client.on("action", ({ update, actions }) => this.follow(update, actions)),
+            client.on("playerState", ({ update }) => this.follow(update)),
             client.on("error", ({ type }) => {
                 this.answered(type === "invalid_move");
                 this.consider();
@@ -57,7 +61,7 @@ export class BotPlayer {
         ];
     }
 
-    /** Stop playing. */
+    /** Stop playing: call off the decision under way, stop waiting for an answer, and stop listening. */
     public stop(): void {
         this.thinking?.abort();
         if (this.pending) {
@@ -66,13 +70,15 @@ export class BotPlayer {
         this.unsubscribe.forEach((unsubscribe) => unsubscribe());
     }
 
-    private update(view: PlayerGameState, version: number, actions: Action[]): void {
-        // An update that arrived after a newer one.
-        if (version < this.version) {
-            return;
-        }
-
-        if (version > this.version) {
+    /**
+     * Follow the game to a newer view of it.
+     *
+     * @param actions - What happened since the last view, when the game changed: none when the
+     * bot joins, as the server only sends the game as it is then, and nothing when the server
+     * sends the same game again, after refusing a move.
+     */
+    private follow(view: PlayerGameState, actions?: Action[]): void {
+        if (isDef(actions)) {
             this.refused = [];
             this.history.push(...actions);
             if (actions.some((action) => isMoveBy(action, view.player.name))) {
@@ -81,7 +87,6 @@ export class BotPlayer {
         }
 
         this.view = view;
-        this.version = version;
         this.consider();
     }
 
@@ -98,7 +103,7 @@ export class BotPlayer {
         this.pending = null;
     }
 
-    /** The game finished. Its version counts on into the next game, so it stays. */
+    /** Forget the game, which finished. */
     private reset(): void {
         this.thinking?.abort();
         if (this.pending) {
@@ -128,6 +133,7 @@ export class BotPlayer {
         setTimeout(() => void this.decide(observation, thinking.signal), (this.options.thinkMs ?? humanPace)());
     }
 
+    /** Ask the strategy for a move, and make it, unless a newer update of the game called the decision off. */
     private async decide(observation: Observation, signal: AbortSignal): Promise<void> {
         if (signal.aborted) {
             return;
@@ -145,6 +151,7 @@ export class BotPlayer {
         }
     }
 
+    /** Send a move, and wait for the server to answer it. */
     private make(move: PlayerMove): void {
         this.thinking = null;
 

@@ -1,10 +1,8 @@
-import { DEFAULT_SETTINGS } from "@durachok/engine";
 import { ClientSocket, LobbyClient, PlayerGameState, PlayerMove } from "@durachok/transport";
 import { describe, expect, test } from "bun:test";
 
 import { observe } from "./observation";
 import { BotPlayer } from "./player";
-import { playGame, tournament } from "./selfplay";
 import { Strategy } from "./strategy";
 
 /** A view of the start of a round, which the bot leads, with hearts as trumps. */
@@ -151,22 +149,5 @@ describe("A bot player", () => {
         expect(strategy.shown).toEqual([led]);
         expect(socket.moves).toEqual([{ type: "forfeit" }]);
         bot.stop();
-    });
-});
-
-describe("Self-play", () => {
-    test("plays a whole game between strategies, until at most one of them holds cards", async () => {
-        const strategies = { a: new FirstMove(), b: new FirstMove(), c: new FirstMove() };
-        const { order, durak } = await playGame(strategies, { ...DEFAULT_SETTINGS, shortGameDeck: true });
-
-        // The last two players can go out at once, and then nobody is the durak.
-        expect([...order, ...(durak ? [durak] : [])].toSorted()).toEqual(["a", "b", "c"]);
-    });
-
-    test("counts how many games each strategy lost", async () => {
-        const losses = await tournament({ a: new FirstMove(), b: new FirstMove() }, 5);
-
-        expect(Object.keys(losses)).toEqual(["a", "b"]);
-        expect(losses.a! + losses.b!).toBeLessThanOrEqual(5);
     });
 });

@@ -1,0 +1,14 @@
+{
+    // The compiler options that the packages share, which each package's own tsconfig extends
+    // with where its sources and its build are.
+    "compilerOptions": {
+        "target": "esnext",
+        "module": "esnext",
+        "moduleResolution": "bundler",
+        "types": ["node", "bun"],
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "strict": true,
+        "skipLibCheck": true
+    }
+}
