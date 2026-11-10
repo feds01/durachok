@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from "node:async_hooks";
 import mongoose, { Query, Schema, UpdateQuery, isValidObjectId } from "mongoose";
 
 import { MONGO_URI } from "../config";
@@ -59,13 +60,24 @@ export const connectDB = async () => {
     }
 };
 
+/** Whether the code that runs now is in a transaction, @see transaction. */
+const inTransaction = new AsyncLocalStorage<true>();
+
 /**
  * Run a function in a transaction, which every query in it takes part in. When another
  * change gets to the same document first, the transaction is undone, and the function
  * runs again, on the documents as they are then. So a change that reads a document and
  * then writes it never acts on one that is out of date, whichever server makes it.
+ *
+ * A transaction in another takes part in that one, so that the two commit together, or
+ * run again together. A session of its own would commit on its own, and conflict with it.
  */
-export const transaction = <T>(func: () => Promise<T>): Promise<T> => mongoose.connection.transaction(func);
+export function transaction<T>(func: () => Promise<T>): Promise<T> {
+    if (inTransaction.getStore()) {
+        return func();
+    }
+    return mongoose.connection.transaction(() => inTransaction.run(true, func));
+}
 
 /** A document that counts its changes, @see versioning. */
 export interface Versioned {

@@ -487,6 +487,7 @@ async function joinAs(pin: string, name: string): Promise<Socket> {
 }
 
 type StoredPlayer = { name: string; socket: string | null };
+type StoredGamePlayer = { removed?: boolean };
 
 /** Read a lobby's players and status, and its game's players, as the database has them. */
 async function stored(pin: string) {
@@ -495,10 +496,12 @@ async function stored(pin: string) {
         const lobby = await connection.collection("lobbies").findOne({ pin });
         // A lobby's game has the lobby's id.
         const game = lobby && (await connection.collection("games").findOne({ _id: lobby._id }));
+        const gamePlayers = Object.entries((game?.state?.players ?? {}) as Record<string, StoredGamePlayer>);
         return {
             status: lobby?.status as string | undefined,
             players: (lobby?.players ?? []) as StoredPlayer[],
-            inGame: Object.keys(game?.state?.players ?? {}).toSorted(),
+            inGame: gamePlayers.map(([name]) => name).toSorted(),
+            removed: gamePlayers.filter(([, player]) => player.removed).map(([name]) => name),
         };
     } finally {
         await connection.close();
@@ -541,7 +544,7 @@ describe.skipIf(!available)("Players at the same time", () => {
         expect(new Set(names(players)).size).toBe(3);
     }, 15_000);
 
-    test("a player kicked as the game starts is in the game, or out of the lobby, as they were told", async () => {
+    test("a player kicked as the game starts is out of the lobby, and out of the game if they were dealt in", async () => {
         await Promise.all(
             DELAYS.map(async (delay) => {
                 const { pin, tokens } = await createLobby("kicker", 3);
@@ -549,22 +552,22 @@ describe.skipIf(!available)("Players at the same time", () => {
                 const kicked = await joinAs(pin, "a");
                 await joinAs(pin, "b");
 
-                // The player hears that they were kicked, or the owner that they couldn't kick them.
-                const outcome = new Promise<"kicked" | "refused">((resolve) => {
-                    kicked.once("close", () => resolve("kicked"));
-                    owner.once("error", () => resolve("refused"));
-                });
+                const told = next(kicked, "close");
                 const dealt = next(owner, "action");
                 owner.emit("kick", pin, { name: "a" });
                 await Bun.sleep(delay);
                 owner.emit("start", pin);
                 await dealt;
+                expect(await told).toEqual({ reason: "kicked" });
 
-                const wasKicked = (await outcome) === "kicked";
-                const { status, players, inGame } = await stored(pin);
+                // A kick that lands after the deal removes the player from the game, which the others play.
+                for (let i = 0; i < 50 && (await stored(pin)).players.some(({ name }) => name === "a"); i++) {
+                    await Bun.sleep(20);
+                }
+                const { status, players, inGame, removed } = await stored(pin);
                 expect(status).toBe("playing");
-                expect(inGame).toEqual(names(players));
-                expect(inGame.includes("a")).toBe(!wasKicked);
+                expect(names(players)).not.toContain("a");
+                expect(inGame.filter((name) => !removed.includes(name))).toEqual(names(players));
             }),
         );
     }, 20_000);
@@ -879,6 +882,104 @@ async function playWhileThoseOutLeave(pin: string, players: Socket[]): Promise<s
     }
     return left;
 }
+
+/** Start a lobby's game, resolving once each player has been dealt in. */
+async function startGame(pin: string, owner: Socket, players: Socket[]): Promise<Map<Socket, PlayerGameState>> {
+    const dealt = players.map((socket) => next<{ update: PlayerGameState }>(socket, "action"));
+    owner.emit("start", pin);
+    const views = await Promise.all(dealt);
+    return new Map(players.map((socket, index) => [socket, views[index]!.update]));
+}
+
+describe.skipIf(!available)("Kicking a player during a game", () => {
+    test("the owner kicks a player out of the game, which the others play on without them", async () => {
+        const { pin, tokens } = await createLobby("midkick", 3);
+        const owner = await enter(pin, tokens);
+        const ana = await joinAs(pin, "ana");
+        const bo = await joinAs(pin, "bo");
+        await startGame(pin, owner, [owner, ana, bo]);
+
+        const told = next(ana, "close");
+        const cut = next(ana, "disconnect");
+        const seen = [owner, bo].map((socket) =>
+            waitFor<{ actions: { type: string; player?: string }[]; update: PlayerGameState }>(
+                socket,
+                "action",
+                ({ actions }) => actions.some(({ type, player }) => type === "remove" && player === "ana"),
+            ),
+        );
+        owner.emit("kick", pin, { name: "ana" });
+
+        expect(await told).toEqual({ reason: "kicked" });
+        expect(await cut).toBe("io server disconnect");
+
+        // The others see her seat empty, out of the game without a place, and play on.
+        const [ownerView, boView] = await Promise.all(seen);
+        for (const { update } of [ownerView!, boView!]) {
+            const seat = update.players.find(({ name }) => name === "ana");
+            expect(seat).toMatchObject({ removed: true, deck: { size: 0 } });
+            expect(seat!.out).not.toBeNull();
+        }
+        const { status, players, removed } = await stored(pin);
+        expect(status).toBe("playing");
+        expect(names(players)).not.toContain("ana");
+        expect(removed).toEqual(["ana"]);
+
+        // Whoever plays next can make a move.
+        const views = new Map([
+            [owner, ownerView!.update],
+            [bo, boView!.update],
+        ]);
+        const [mover, view] = [...views].find(([, state]) => turnOf(state).kind === "lead")!;
+        const moved = next<{ actions: { type: string }[] }>(mover, "action");
+        mover.emit("move", pin, { type: "place", card: view.player.deck[0]! });
+        expect((await moved).actions[0]).toMatchObject({ type: "place" });
+    }, 20_000);
+
+    test("kicking the last other player ends the game, with the one left holding cards as the durak", async () => {
+        const { pin, tokens } = await createLobby("lastkick", 2);
+        const owner = await enter(pin, tokens);
+        const ownerName = (await stored(pin)).players[0]!.name;
+        const ana = await joinAs(pin, "ana");
+        await startGame(pin, owner, [owner, ana]);
+
+        const victory = next<{ players: { name: string; out: number | null }[] }>(owner, "victory");
+        const over = waitFor<{ update: { type: string } }>(
+            owner,
+            "lobbyState",
+            ({ update }) => update.type === "game_over",
+        );
+        owner.emit("kick", pin, { name: "ana" });
+
+        // The removed player has no place, so the owner is the only one in the results.
+        expect((await victory).players).toEqual([{ name: ownerName, out: null }]);
+        await over;
+        const { status, players } = await stored(pin);
+        expect(status).toBe("waiting");
+        expect(names(players)).toEqual([ownerName]);
+    }, 20_000);
+
+    test("only the owner kicks, and nobody kicks the owner", async () => {
+        const { pin, tokens } = await createLobby("nokick", 3);
+        const owner = await enter(pin, tokens);
+        const ownerName = (await stored(pin)).players[0]!.name;
+        const ana = await joinAs(pin, "ana");
+        const bo = await joinAs(pin, "bo");
+        await startGame(pin, owner, [owner, ana, bo]);
+
+        const refused = next<{ type: string }>(ana, "error");
+        ana.emit("kick", pin, { name: "bo" });
+        expect((await refused).type).toBe("unauthorized");
+
+        const ownerRefused = next<{ type: string; message: string }>(owner, "error");
+        owner.emit("kick", pin, { name: ownerName });
+        expect(await ownerRefused).toMatchObject({ type: "bad_request", message: "The owner can't leave their lobby" });
+
+        const { players, removed } = await stored(pin);
+        expect(names(players)).toEqual([ownerName, "ana", "bo"].toSorted());
+        expect(removed).toEqual([]);
+    }, 20_000);
+});
 
 describe.skipIf(!available)("The end of a game", () => {
     test("a player who left during it gives up their place, and the owner keeps theirs", async () => {

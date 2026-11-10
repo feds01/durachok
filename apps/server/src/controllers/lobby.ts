@@ -28,9 +28,21 @@ import {
     PlayerNotInLobbyError,
     TooManyLobbiesError,
 } from "./common";
+import { CreatedGame, GameService, MoveResult } from "./game";
 import { ImageService } from "./image";
 
 /** Options for reading a lobby's state. */
+/** A player whom the owner kicked out of their lobby, and what leaving its game did, if it was being played. */
+export interface KickResult {
+    player: DBPlayer;
+    removal: MoveResult | null;
+}
+
+/** A lobby's game, as it starts: who plays it, and the game itself. */
+export interface StartedGame extends CreatedGame {
+    players: string[];
+}
+
 interface LobbyStateOptions {
     /** Whether to include the passphrase, which only the owner may see. */
     withPassphrase?: boolean;
@@ -327,37 +339,62 @@ export class LobbyService {
     }
 
     /**
-     * Remove a player from a waiting lobby. The owner can't be removed. A player whom the owner
-     * kicks out can't join the lobby again, @see identityOf.
+     * Remove a player from a waiting lobby. The owner can't be removed.
      *
      * @returns The removed player, e.g. to notify their connection.
      */
-    public async removePlayer(pin: string, name: string, { kick = false } = {}): Promise<DBPlayer> {
+    public async removePlayer(pin: string, name: string): Promise<DBPlayer> {
         return transaction(async () => {
-            const lobby = await this.getRaw(pin);
-            if (!isDef(lobby)) {
-                throw new LobbyNotFoundError();
-            }
+            const { lobby, player } = await this.findRemovable(pin, name);
 
             if (lobby.status !== "waiting") {
                 throw new InvalidLobbyStateError("Players can only leave a lobby before the game starts");
             }
 
-            const player = lobby.players.find((p) => p.name === name);
-            if (!isDef(player)) {
-                throw new PlayerNotInLobbyError();
-            }
-
-            if (player.registered === lobby.owner.id) {
-                throw new InvalidLobbyStateError("The owner can't leave their lobby");
-            }
-
-            await Lobbies.updateOne(
-                { pin },
-                { $pull: { players: { name } }, ...(kick && { $addToSet: { kicked: identityOf(player) } }) },
-            );
+            await Lobbies.updateOne({ pin }, { $pull: { players: { name } } });
             return player;
         });
+    }
+
+    /**
+     * The owner kicks a player out of their lobby, who can't join it again, @see identityOf. During
+     * a game, the player leaves the game too, which goes on without them. The owner can't be kicked.
+     *
+     * @param game The lobby's game, which the player leaves if it's being played.
+     * @returns The kicked player, e.g. to notify their connection, and what leaving the game did.
+     */
+    public async kick(pin: string, name: string, game: GameService): Promise<KickResult> {
+        return transaction(async () => {
+            const { lobby, player } = await this.findRemovable(pin, name);
+
+            // The game and the lobby change together, so that nobody holds a place in a game
+            // whose lobby they're no longer in, from which nobody could remove them.
+            const removal = lobby.status === "playing" ? await game.removePlayer(name) : null;
+            await Lobbies.updateOne(
+                { pin },
+                { $pull: { players: { name } }, $addToSet: { kicked: identityOf(player) } },
+            );
+            return { player, removal };
+        });
+    }
+
+    /** A lobby, and a player in it who isn't its owner, who can be removed from it. */
+    private async findRemovable(pin: string, name: string): Promise<{ lobby: DBLobby; player: DBPlayer }> {
+        const lobby = await this.getRaw(pin);
+        if (!isDef(lobby)) {
+            throw new LobbyNotFoundError();
+        }
+
+        const player = lobby.players.find((p) => p.name === name);
+        if (!isDef(player)) {
+            throw new PlayerNotInLobbyError();
+        }
+
+        if (player.registered === lobby.owner.id) {
+            throw new InvalidLobbyStateError("The owner can't leave their lobby");
+        }
+
+        return { lobby, player };
     }
 
     /**
@@ -390,12 +427,14 @@ export class LobbyService {
     }
 
     /**
-     * Mark a waiting lobby as playing. Only the players who are connected take part,
-     * so everyone else loses their place.
+     * Mark a waiting lobby as playing, and create its game. Only the players who are connected
+     * take part, so everyone else loses their place. The lobby and its game change together, so
+     * that nothing sees a lobby that's playing without its game, e.g. a kick, @see kick.
      *
-     * @returns The names of the players in the game.
+     * @param game The lobby's game, to create.
+     * @returns The names of the players in the game, the game, and its version.
      */
-    public async startGame(pin: string): Promise<string[]> {
+    public async startGame(pin: string, game: GameService): Promise<StartedGame> {
         return transaction(async () => {
             const lobby = await this.getRaw(pin);
             if (!isDef(lobby)) {
@@ -412,7 +451,8 @@ export class LobbyService {
             }
 
             await Lobbies.updateOne({ pin }, { $set: { status: "playing", players } });
-            return players.map((p) => p.name);
+            const names = players.map((p) => p.name);
+            return { players: names, ...(await game.create(names)) };
         });
     }
 

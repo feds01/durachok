@@ -36,6 +36,8 @@ const ArchivedGameSchema = new Schema<IArchivedGame>({
                             action: { type: String, default: "none" },
                             beganRound: { type: Boolean, default: false },
                             out: { type: Number, default: null },
+                            // Whether the lobby's owner removed the player from the game, @see GamePlayer.removed.
+                            removed: { type: Boolean, required: false },
                             turned: { type: Boolean, default: false },
                         },
                     },
