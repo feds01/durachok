@@ -31,7 +31,6 @@ const GameSchema = new Schema<IGame>({
             status: { type: String, default: "waiting" },
             trump: {
                 type: {
-                    value: { type: Number },
                     suit: { type: String },
                     card: { type: String },
                 },

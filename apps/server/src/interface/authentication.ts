@@ -41,8 +41,9 @@ export async function authenticate(
         return null;
     }
 
+    // Refreshing checks that the server still lets the holder in, as for the access token above.
     const newTokens = await authService.refreshTokens(refresh);
-    if (!isDef(newTokens) || !(await authService.isAllowed(newTokens.payload))) {
+    if (!isDef(newTokens)) {
         return null;
     }
 

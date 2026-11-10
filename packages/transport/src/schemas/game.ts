@@ -76,14 +76,12 @@ export const ActionSchema = z.union([PlayerActionSchema, AutonomousActionSchema]
 
 export type Action = z.infer<typeof ActionSchema>;
 
-/** A card. */
+/** A card, with its suit, as the trump is sent. Its value comes from the card string, @see cardFromString. */
 export const CardSchema = z.object({
     /** The suit of the card. */
     suit: z.string(),
     /** The card string. */
     card: z.string(),
-    /** The value of the card. @@TODO: make this derivable? */
-    value: z.number(),
 });
 
 export type Card = z.infer<typeof CardSchema>;

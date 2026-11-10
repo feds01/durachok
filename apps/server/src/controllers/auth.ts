@@ -119,17 +119,16 @@ export class AuthService {
     }
 
     /**
-     * Refresh the tokens.
+     * Refresh the tokens, unless the server no longer lets their holder in, e.g. once their
+     * account was deleted, @see isAllowed.
      *
      * @param refreshToken - The refresh token to use.
-     * @returns The new tokens if the refresh token is valid, otherwise undefined.
-     *
-     * @@Todo: don't refresh if the user was deleted.
+     * @returns The new tokens if the refresh token is valid and its holder still allowed, otherwise undefined.
      */
-    public refreshTokens(refreshToken: string): UserTokensResponse | undefined {
+    public async refreshTokens(refreshToken: string): Promise<UserTokensResponse | undefined> {
         const decodedToken = this.verifyToken(refreshToken, JWT_REFRESH_SECRET);
 
-        if (!isDef(decodedToken)) {
+        if (!isDef(decodedToken) || !(await this.isAllowed(decodedToken))) {
             return undefined;
         }
 
@@ -163,8 +162,11 @@ export class AuthService {
         };
     }
 
+    /**
+     * Verify a token, as a client sent it. Anything that isn't a valid token, including no token
+     * at all, is as good as none, so it gives `undefined` rather than an error.
+     */
     verifyToken(token: unknown, secret: string = JWT_SECRET) {
-        // @@Todo: perhaps we should throw an error?
         if (typeof token !== "string") {
             return undefined;
         }

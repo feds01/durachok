@@ -36,7 +36,7 @@ function game(overrides: {
         tableTop: overrides.tableTop ?? {},
         deckSize: 20,
         discardSize: 0,
-        trump: { suit: "H", card: "AH", value: 14 },
+        trump: { suit: "H", card: "AH" },
     };
 }
 

@@ -1,11 +1,6 @@
-import packageJson from "../../../package.json";
+import { z } from "zod";
 
-/** Git & App version metadata. */
-export const APP_ENV = import.meta.env.NODE_ENV ?? "dev";
-export const APP_NAME = import.meta.env.REACT_APP_NAME ?? packageJson.name;
-export const APP_DEV_VERSION = import.meta.env.REACT_APP_DEV_VERSION ?? "";
-export const APP_VERSION = import.meta.env.REACT_APP_VERSION ?? packageJson.version;
-export const APP_VERSION_BRANCH = import.meta.env.REACT_APP_BRANCH ?? "";
+import packageJson from "../../../package.json";
 
 /**
  * Read the API's address: an absolute http(s) URL, or a path on the web app's own origin,
@@ -25,31 +20,72 @@ export function parseApiUrl(value: string, origin: string): string {
 }
 
 /**
- * API Endpoint. An empty value, as `.env.sample` has, means the web app's own origin, whose
- * server passes the API on, so that a single address serves the whole app, e.g. through a tunnel.
+ * The web app's configuration, read from the environment that Vite hands over. The API's
+ * address, which may be empty for the web app's own origin, comes out as an absolute URL,
+ * @see parseApiUrl, and the socket server's is the root of its origin.
  */
-export const API_URL = parseApiUrl(
-    import.meta.env.REACT_APP_API_URL || "/api/trpc",
-    // Outside a browser, as in the tests, there's no page to take the origin from.
-    globalThis.location?.origin ?? "http://localhost",
-);
-/** The socket server, which serves the API too, at the root of its origin. */
-export const SOCKET_URL = new URL(API_URL).origin;
+function envSchema(origin: string) {
+    return z
+        .object({
+            NODE_ENV: z.string().default("dev"),
+            REACT_APP_NAME: z.string().default(packageJson.name),
+            REACT_APP_DEV_VERSION: z.string().default(""),
+            REACT_APP_VERSION: z.string().default(packageJson.version),
+            REACT_APP_BRANCH: z.string().default(""),
+            REACT_APP_API_URL: z
+                .string()
+                .default("")
+                .transform((value, ctx) => {
+                    try {
+                        return parseApiUrl(value || "/api/trpc", origin);
+                    } catch (error: unknown) {
+                        ctx.addIssue({
+                            code: "custom",
+                            message: error instanceof Error ? error.message : String(error),
+                        });
+                        return z.NEVER;
+                    }
+                }),
+            /** Google reCAPTCHA v3's key for the web app; empty turns reCAPTCHA off. */
+            REACT_APP_RE_CAPTCHA_SECRET: z.string().default(""),
+        })
+        .transform((env) => ({
+            APP_ENV: env.NODE_ENV,
+            APP_NAME: env.REACT_APP_NAME,
+            APP_DEV_VERSION: env.REACT_APP_DEV_VERSION,
+            APP_VERSION: env.REACT_APP_VERSION,
+            APP_VERSION_BRANCH: env.REACT_APP_BRANCH,
+            API_URL: env.REACT_APP_API_URL,
+            SOCKET_URL: new URL(env.REACT_APP_API_URL).origin,
+            RE_CAPTCHA_SECRET: env.REACT_APP_RE_CAPTCHA_SECRET,
+        }));
+}
 
-/** Google ReCAPTCHA v3 secret key. */
-export const RE_CAPTCHA_SECRET = import.meta.env.REACT_APP_RE_CAPTCHA_SECRET ?? "";
+/** The configuration of the application, @see readConfig. */
+export type Config = z.output<ReturnType<typeof envSchema>>;
 
-/** The configuration of the application. */
-export const config = {
+/**
+ * Read the web app's configuration from its environment. A wrong one stops the app as it
+ * starts, with everything that's wrong with it, rather than with a request that fails later.
+ */
+export function readConfig(env: Record<string, unknown>, origin: string): Config {
+    const result = envSchema(origin).safeParse(env);
+    if (!result.success) {
+        throw new Error(`The web app's environment isn't right:\n${z.prettifyError(result.error)}`);
+    }
+    return result.data;
+}
+
+/** The configuration of the application. Outside a browser, as in the tests, there's no page to take the origin from. */
+export const config = readConfig(import.meta.env, globalThis.location?.origin ?? "http://localhost");
+
+export const {
     APP_ENV,
     APP_NAME,
     APP_DEV_VERSION,
     APP_VERSION,
+    APP_VERSION_BRANCH,
     API_URL,
     SOCKET_URL,
     RE_CAPTCHA_SECRET,
-} as const;
-
-// @@Todo: add a `zod` schema that can validate on boot-up that
-// the environment is correctly configured.
-export type Config = typeof config;
+} = config;

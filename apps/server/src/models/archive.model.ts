@@ -43,7 +43,6 @@ const ArchivedGameSchema = new Schema<IArchivedGame>({
                     status: { type: String, default: "waiting" },
                     trump: {
                         type: {
-                            value: { type: Number },
                             suit: { type: String },
                             card: { type: String },
                         },

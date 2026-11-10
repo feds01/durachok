@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { parseApiUrl } from "./config";
+import { parseApiUrl, readConfig } from "./config";
 
 const origin = "https://durachok.example";
 
@@ -20,5 +20,20 @@ describe("parseApiUrl", () => {
 
     test("rejects other schemes", () => {
         expect(() => parseApiUrl("ftp://localhost/api/trpc", origin)).toThrow("REACT_APP_API_URL");
+    });
+});
+
+describe("readConfig", () => {
+    test("fills in what the environment leaves out", () => {
+        const config = readConfig({}, origin);
+        expect(config.API_URL).toBe("https://durachok.example/api/trpc");
+        expect(config.SOCKET_URL).toBe("https://durachok.example");
+        expect(config.RE_CAPTCHA_SECRET).toBe("");
+    });
+
+    test("stops with what's wrong with the environment", () => {
+        expect(() => readConfig({ REACT_APP_API_URL: "localhost:8080", REACT_APP_VERSION: 2 }, origin)).toThrow(
+            /REACT_APP_API_URL[\s\S]*REACT_APP_VERSION|REACT_APP_VERSION[\s\S]*REACT_APP_API_URL/,
+        );
     });
 });

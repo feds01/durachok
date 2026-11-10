@@ -3,14 +3,13 @@ import { ClientEvents } from "@durachok/transport";
 
 import { ensureLobbyAccess } from "../common/auth";
 import { emitActions, emitVictory } from "../common/game";
+import { context } from "../context";
 import { factory } from "./ctx";
 
 const onMove = factory.build({
     event: "move",
     input: ClientEvents.move,
-    handler: async ({ input, withRooms, client, logger: $ctx }) => {
-        const { ctx } = $ctx;
-        const logger = $ctx;
+    handler: async ({ input, withRooms, client, logger }) => {
         const [pin, move] = input;
         const meta = {
             event: "move",
@@ -20,9 +19,9 @@ const onMove = factory.build({
         };
 
         logger.info(meta, "processing event");
-        const { name } = await ensureLobbyAccess(ctx, client, pin);
+        const { name } = await ensureLobbyAccess(context, client, pin);
 
-        const lobby = await ctx.lobbyService.get(pin);
+        const lobby = await context.lobbyService.get(pin);
 
         // We can only make moves in a game that's being played.
         if (lobby.status !== "playing") {
@@ -34,20 +33,20 @@ const onMove = factory.build({
             return;
         }
 
-        const gameService = ctx.gameService(lobby);
+        const gameService = context.gameService(lobby);
 
         try {
             const { game, actions, version } = await gameService.makeMove(name, move);
-            await emitActions(ctx, withRooms, pin, game, actions, version);
+            await emitActions(context, withRooms, pin, game, actions, version);
 
             if (game.isFinished()) {
                 logger.info(meta, "game finished");
-                await ctx.lobbyService.finishGame(pin);
+                await context.lobbyService.finishGame(pin);
                 await emitVictory(withRooms, pin, game);
                 // The lobby waits for another game, so the players go back to its waiting room.
                 await withRooms(pin).broadcast("lobbyState", {
                     update: { type: "game_over" },
-                    lobby: await ctx.lobbyService.get(pin),
+                    lobby: await context.lobbyService.get(pin),
                 });
             }
         } catch (e: unknown) {

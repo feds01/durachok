@@ -21,7 +21,7 @@ const leading: PlayerGameState = {
     tableTop: {},
     deckSize: 20,
     discardSize: 4,
-    trump: { suit: "H", card: "AH", value: 14 },
+    trump: { suit: "H", card: "AH" },
 };
 
 /** The view after the bot led with the six of spades, when it can't add anything else. */

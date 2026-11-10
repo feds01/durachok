@@ -35,8 +35,7 @@ export class GameService {
     private async enrich(game: GameDocument): Promise<Game> {
         const result = await DBGameSchema.safeParseAsync(game.toObject());
         if (!result.success) {
-            // @@Todo: add logging about why...
-            this.logger.error("Failed to parse game:\n" + result.error);
+            this.logger.error({ pin: this.lobby.pin, issues: result.error.issues }, "Failed to parse game");
             throw new Error("Could not parse game");
         }
 

@@ -819,6 +819,11 @@ describe.skipIf(!available)("Abuse", () => {
         await expect(
             trpc("lobbies.create", { settings: { maxPlayers: 2, roundTimeout: 120 } }, tokens),
         ).rejects.toThrow("401");
+
+        // Nor does its refresh token make new ones, as it would for an access token that expired.
+        const refreshOnly = { token: "", refreshToken: tokens.refreshToken };
+        await expect(connect(refreshOnly)).rejects.toThrow("unauthorized");
+        await expect(trpc("auth.refresh", undefined, refreshOnly)).rejects.toThrow("401");
     });
 });
 

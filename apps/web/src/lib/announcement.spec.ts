@@ -27,7 +27,7 @@ const game: PlayerGameState = {
     tableTop: {},
     deckSize: 24,
     discardSize: 0,
-    trump: { suit: "H", card: "AH", value: 14 },
+    trump: { suit: "H", card: "AH" },
 };
 
 const withPlayer = (player: Partial<PlayerGameState["player"]>, tableTop: PlayerGameState["tableTop"] = {}) => ({

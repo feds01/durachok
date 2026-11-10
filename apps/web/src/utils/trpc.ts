@@ -1,28 +1,13 @@
 import type { AppRouter } from "../../../server/src/interface/routes";
-import { Buffer } from "buffer";
-import { SuperJSON, registerCustom } from "superjson";
 
 import { API_URL } from "@/config";
 import { getAuthHeader, saveRefreshedTokens } from "@/utils/auth";
+import { transformer } from "@durachok/transport";
 import * as native from "@trpc/client";
 import * as rq from "@trpc/react-query";
 
 /** Define our tRPC instance from the server definition. */
 const trpc = rq.createTRPCReact<AppRouter>();
-
-/**
- * Register a hook to convert `Buffer`s to base64
- *
- * @@Todo: maybe move this to `packages/transport`?
- */
-registerCustom<Buffer, string>(
-    {
-        isApplicable: (value): value is Buffer => Buffer.isBuffer(value),
-        serialize: (value) => value.toString("base64"),
-        deserialize: (value) => Buffer.from(value, "base64"),
-    },
-    "buffer",
-);
 
 /**
  * Fetch for the tRPC links, which keeps the tokens that the server sends back in the
@@ -49,7 +34,7 @@ export const trpcNativeClient = native.createTRPCClient<AppRouter>({
                 return getAuthHeader();
             },
             fetch: fetchKeepingRefreshedTokens,
-            transformer: SuperJSON,
+            transformer,
         }),
     ],
 });
@@ -64,7 +49,7 @@ export const createReactQueryTRPClient = () => {
                     return getAuthHeader();
                 },
                 fetch: fetchKeepingRefreshedTokens,
-                transformer: SuperJSON,
+                transformer,
             }),
         ],
     });

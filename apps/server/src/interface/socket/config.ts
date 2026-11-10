@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createSimpleConfig } from "zod-sockets";
 
 import { UserTokensResponseSchema } from "../../schemas/auth";
+import { context } from "./context";
 import { transformErrorIntoMessage } from "./error";
 
 export const config = createSimpleConfig({
@@ -67,11 +68,11 @@ export const config = createSimpleConfig({
         onDisconnect: async ({ client, withRooms, logger }) => {
             logger.info({ id: client.id }, "disconnected");
 
-            const pin = await logger.ctx.lobbyService.disconnect(client.id);
+            const pin = await context.lobbyService.disconnect(client.id);
             if (pin) {
                 await withRooms(pin).broadcast("lobbyState", {
                     update: { type: "player_exit" },
-                    lobby: await logger.ctx.lobbyService.get(pin),
+                    lobby: await context.lobbyService.get(pin),
                 });
             }
         },
