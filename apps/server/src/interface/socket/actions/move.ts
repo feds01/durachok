@@ -1,4 +1,4 @@
-import { InvalidGameState } from "@durachok/engine";
+import { InaccessibleOperation, InvalidGameState } from "@durachok/engine";
 import { ClientEvents } from "@durachok/transport";
 
 import { ensureLobbyAccess } from "../common/auth";
@@ -38,7 +38,7 @@ const onMove = factory.build({
         try {
             await emitGameChange(context, withRooms, pin, await gameService.makeMove(name, move));
         } catch (e: unknown) {
-            if (!(e instanceof InvalidGameState)) {
+            if (!(e instanceof InvalidGameState) && !(e instanceof InaccessibleOperation)) {
                 throw e;
             }
 

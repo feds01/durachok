@@ -1,4 +1,5 @@
 import { cardFromString } from "./card";
+import { InaccessibleOperation } from "./errors/InaccessibleOperation";
 import { DEFAULT_SETTINGS, Game } from "./game";
 import { describe, expect, test } from "bun:test";
 
@@ -466,6 +467,6 @@ describe("Removing a player", () => {
         const game = twoPlayers({ a: ["6S"], b: ["8S"] });
         game.status = "finished";
 
-        expect(() => game.removePlayer("a")).toThrow("Can't mutate game state after victory.");
+        expect(() => game.removePlayer("a")).toThrow(InaccessibleOperation);
     });
 });

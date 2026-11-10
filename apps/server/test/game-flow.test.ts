@@ -6,12 +6,20 @@
  * file to keep the server's logs.
  */
 import { canForfeit, canPlace, gameResult, movesFor, turnOf } from "@durachok/engine";
-import { LobbyClient, type PlayerGameState, type PlayerMove, type UserStatistics } from "@durachok/transport";
+import {
+    type GamePlayer,
+    LobbyClient,
+    type PlayerGameState,
+    type PlayerMove,
+    range,
+    type UserStatistics,
+} from "@durachok/transport";
 import type { Subprocess } from "bun";
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import mongoose from "mongoose";
 import { io, Socket } from "socket.io-client";
 
+import type { DBPlayer } from "../src/schemas/lobby";
 import { available, dropDatabase, testDatabaseUri } from "./database";
 
 const DB_URI = testDatabaseUri();
@@ -486,9 +494,6 @@ async function joinAs(pin: string, name: string): Promise<Socket> {
     return enter(pin, await trpc<Tokens>("lobbies.join", { pin, name }));
 }
 
-type StoredPlayer = { name: string; socket: string | null };
-type StoredGamePlayer = { removed?: boolean };
-
 /** Read a lobby's players and status, and its game's players, as the database has them. */
 async function stored(pin: string) {
     const connection = await mongoose.createConnection(DB_URI).asPromise();
@@ -496,10 +501,10 @@ async function stored(pin: string) {
         const lobby = await connection.collection("lobbies").findOne({ pin });
         // A lobby's game has the lobby's id.
         const game = lobby && (await connection.collection("games").findOne({ _id: lobby._id }));
-        const gamePlayers = Object.entries((game?.state?.players ?? {}) as Record<string, StoredGamePlayer>);
+        const gamePlayers = Object.entries((game?.state?.players ?? {}) as Record<string, Pick<GamePlayer, "removed">>);
         return {
             status: lobby?.status as string | undefined,
-            players: (lobby?.players ?? []) as StoredPlayer[],
+            players: (lobby?.players ?? []) as Pick<DBPlayer, "name" | "socket">[],
             inGame: gamePlayers.map(([name]) => name).toSorted(),
             removed: gamePlayers.filter(([, player]) => player.removed).map(([name]) => name),
         };
@@ -508,7 +513,22 @@ async function stored(pin: string) {
     }
 }
 
-const names = (players: StoredPlayer[]) => players.map((p) => p.name).toSorted();
+/** A lobby as the database has it, @see stored. */
+type Stored = Awaited<ReturnType<typeof stored>>;
+
+/** Read a lobby as the database has it until `check` holds of it, every 20 ms, or until `tries` reads have been made. */
+async function storedWhen(pin: string, check: (state: Stored) => boolean, tries = 50): Promise<Stored> {
+    for (const attempt of range(tries)) {
+        const state = await stored(pin);
+        if (check(state) || attempt === tries - 1) {
+            return state;
+        }
+        await Bun.sleep(20);
+    }
+    return stored(pin);
+}
+
+const names = (players: Pick<DBPlayer, "name">[]) => players.map((p) => p.name).toSorted();
 
 /**
  * Players who do things at the same time, which the server takes one at a time: each
@@ -561,10 +581,10 @@ describe.skipIf(!available)("Players at the same time", () => {
                 expect(await told).toEqual({ reason: "kicked" });
 
                 // A kick that lands after the deal removes the player from the game, which the others play.
-                for (let i = 0; i < 50 && (await stored(pin)).players.some(({ name }) => name === "a"); i++) {
-                    await Bun.sleep(20);
-                }
-                const { status, players, inGame, removed } = await stored(pin);
+                const { status, players, inGame, removed } = await storedWhen(
+                    pin,
+                    (state) => !state.players.some(({ name }) => name === "a"),
+                );
                 expect(status).toBe("playing");
                 expect(names(players)).not.toContain("a");
                 expect(inGame.filter((name) => !removed.includes(name))).toEqual(names(players));

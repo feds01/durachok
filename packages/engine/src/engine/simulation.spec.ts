@@ -1,4 +1,5 @@
 import { generateCardDeck } from "./card";
+import { InaccessibleOperation } from "./errors/InaccessibleOperation";
 import { InvalidGameState } from "./errors/InvalidGameState";
 import { DEFAULT_SETTINGS, Game, GameSettings } from "./game";
 import { movesFor } from "./view";
@@ -86,6 +87,7 @@ function tryMove(game: Game, settings: GameSettings, move: Move): Game | null {
         const message = error instanceof Error ? error.message : String(error);
         const illegalMove =
             (error instanceof InvalidGameState && !BROKEN_STATE.some((pattern) => pattern.test(message))) ||
+            error instanceof InaccessibleOperation ||
             // A plain `Error` is only expected when the table is full.
             (error instanceof Error && message === "Player deck already full.");
 

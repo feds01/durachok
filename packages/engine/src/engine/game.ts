@@ -2,6 +2,7 @@ import { getRandomKey, shuffleArray } from "../utils";
 import { cardFromString, generateCardDeck } from "./card";
 import { TableSize } from "./consts";
 import { GameInitError } from "./errors/GameInitError";
+import { InaccessibleOperation } from "./errors/InaccessibleOperation";
 import { InvalidGameState } from "./errors/InvalidGameState";
 import { History, HistoryState } from "./history";
 import { Table, beats, passesAttack, rankOnTable, roomForAttack } from "./rules";
@@ -223,7 +224,7 @@ export class Game {
      * */
     finaliseRound() {
         if (this.status === "finished") {
-            throw new InvalidGameState("Can't mutate game state after victory.");
+            throw new InaccessibleOperation("The game has finished");
         }
 
         // the round cannot be finalised if no cards were ever put down on to the table
@@ -337,7 +338,7 @@ export class Game {
      * */
     addCardToTableTop(name: string, card: string) {
         if (this.status === "finished") {
-            throw new InvalidGameState("Can't mutate game state after victory.");
+            throw new InaccessibleOperation("The game has finished");
         }
 
         // check if the deck is already filled up.
@@ -486,7 +487,7 @@ export class Game {
         }
 
         if (this.status === "finished") {
-            throw new InvalidGameState("Can't mutate game state after victory.");
+            throw new InaccessibleOperation("The game has finished");
         }
 
         // check that the 'card' is present on the table top...
@@ -592,7 +593,7 @@ export class Game {
      * */
     private setDefendingPlayer(name: string) {
         if (this.status === "finished") {
-            throw new InvalidGameState("Can't mutate game state after victory.");
+            throw new InaccessibleOperation("The game has finished");
         }
 
         // Specify that the game has started.
@@ -625,7 +626,7 @@ export class Game {
      * */
     public finalisePlayerTurn(name: string) {
         if (this.status === "finished") {
-            throw new InvalidGameState("Can't mutate game state after victory.");
+            throw new InaccessibleOperation("The game has finished");
         }
 
         if (this.tableTop.size === 0) {
@@ -740,7 +741,7 @@ export class Game {
      */
     public removePlayer(name: string): boolean {
         if (this.isFinished()) {
-            throw new InvalidGameState("Can't mutate game state after victory.");
+            throw new InaccessibleOperation("The game has finished");
         }
 
         const player = this.getPlayer(name);
@@ -801,15 +802,24 @@ export class Game {
      * has beaten every card or is taking them, or the defender who takes them can't be given more.
      */
     private finaliseRoundIfSettled() {
+        // Nothing has been played in the round yet, so there's nothing to settle.
         if (this.tableTop.size === 0) {
             return;
         }
 
-        const defender = this.getPlayer(this.getDefendingPlayerName());
-        const attackersDone = this.getAttackingPlayers().every(([, player]) => player.turned);
-        const allBeaten = this.getCoveredCount() === this.tableTop.size;
+        // The defender takes the cards and can't be given any more, whatever the attackers do.
+        if (this.shouldAutoSkipWhenDefenderForfeits()) {
+            this.finaliseRound();
+            return;
+        }
 
-        if ((attackersDone && (allBeaten || defender.turned)) || this.shouldAutoSkipWhenDefenderForfeits()) {
+        // An attacker who isn't done can still add to the round.
+        if (this.getAttackingPlayers().some(([, player]) => !player.turned)) {
+            return;
+        }
+
+        // Every attacker is done: the round ends once the defender has beaten every card, or takes them.
+        if (this.getCoveredCount() === this.tableTop.size || this.getPlayer(this.getDefendingPlayerName()).turned) {
             this.finaliseRound();
         }
     }
@@ -981,7 +991,7 @@ export class Game {
      * */
     private transferCardOntoTable(name: string, card: string) {
         if (this.status == "finished") {
-            throw new InvalidGameState("Can't mutate game state after victory.");
+            throw new InaccessibleOperation("The game has finished");
         }
 
         const defender = this.getPlayer(this.getDefendingPlayerName());
@@ -1015,7 +1025,7 @@ export class Game {
      * */
     private transferTableTop(to: string) {
         if (this.status == "finished") {
-            throw new InvalidGameState("Can't mutate game state after victory.");
+            throw new InaccessibleOperation("The game has finished");
         }
 
         const player = this.getPlayer(to);
@@ -1075,10 +1085,11 @@ export class Game {
      * they're done, and the defender beats a card, passes the attack on, or takes the cards.
      *
      * @throws InvalidGameState if the player can't make the move.
+     * @throws InaccessibleOperation if the game has finished.
      */
     public makeMove(name: string, move: PlayerMove): void {
         if (this.isFinished()) {
-            throw new InvalidGameState("The game has finished");
+            throw new InaccessibleOperation("The game has finished");
         }
 
         const player = this.getPlayer(name);
