@@ -33,23 +33,23 @@ function total(amount: (outcome: PlayerOutcome) => number): Statistic {
     return { amount };
 }
 
-/** Every statistic that the server keeps for a registered player, by the name that it's kept under. */
-export const STATISTICS = {
+/** The names that the statistics are kept under, @see STATISTICS. */
+export const STATISTIC_NAMES = ["gamesPlayed", "gamesWon", "gamesLost", "gamesHosted", "roundsPlayed"] as const;
+
+/** The name that a statistic is kept under. */
+export type StatisticName = (typeof STATISTIC_NAMES)[number];
+
+/** Every statistic that the server keeps for a registered player, one for each of its names. */
+export const STATISTICS: Record<StatisticName, Statistic> = {
     gamesPlayed: games(() => true),
     gamesWon: games(({ name, result }) => result.winners.includes(name)),
     gamesLost: games(({ name, result }) => result.durak === name),
     gamesHosted: games(({ owner }) => owner),
     roundsPlayed: total(({ rounds }) => rounds),
-} satisfies Record<string, Statistic>;
-
-/** The name that a statistic is kept under, @see STATISTICS. */
-export type StatisticName = keyof typeof STATISTICS;
+};
 
 /** A player's statistics, as the server keeps them, @see STATISTICS. */
 export type StoredStatistics = Record<StatisticName, number>;
-
-/** The names of the statistics, in the order that they're defined. */
-export const STATISTIC_NAMES = Object.keys(STATISTICS) as StatisticName[];
 
 /** What a finished game adds to a player's statistics: only the ones that it changes. */
 export function countOutcome(outcome: PlayerOutcome): Partial<StoredStatistics> {
