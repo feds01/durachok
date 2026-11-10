@@ -94,7 +94,8 @@ MONGODB_URI=mongodb://localhost:27017/durachok
 JWT_SECRET_KEY=your-secret-key-here
 JWT_REFRESH_SECRET_KEY=your-refresh-secret-key-here
 
-# Google ReCaptcha (optional for development)
+# Google reCAPTCHA's secret key, which checks registering (optional for development,
+# and production lets nobody register without it)
 RE_CAPTCHA_KEY=
 
 # AWS S3 for user avatars (optional - falls back to local storage)

@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import ControlledPasswordField from "@/components/ControlledPasswordField";
 import ControlledTextField from "@/components/ControlledTextField";
 import SubmitButton from "@/components/SubmitButton";
-import { APP_ENV, RE_CAPTCHA_SECRET } from "@/config";
+import { RE_CAPTCHA_SITE_KEY } from "@/config";
 import { AuthResult, RegisterFormData, RegisterFormSchema } from "@/validators/auth";
 import trpc from "@/utils/trpc";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -52,9 +52,10 @@ export default function Register({ onSuccess }: Props) {
                 control={form.control}
                 placeholder="Confirm Password"
             />
-            {APP_ENV !== "dev" && (
+            {/* The server checks the reCAPTCHA when it has the secret key that goes with this one. */}
+            {RE_CAPTCHA_SITE_KEY !== "" && (
                 <ReCAPTCHA
-                    sitekey={RE_CAPTCHA_SECRET ?? ""}
+                    sitekey={RE_CAPTCHA_SITE_KEY}
                     onChange={(token) => {
                         form.setValue("reCaptchaToken", token ?? "");
                     }}

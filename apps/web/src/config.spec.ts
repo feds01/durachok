@@ -28,7 +28,7 @@ describe("readConfig", () => {
         const config = readConfig({}, origin);
         expect(config.API_URL).toBe("https://durachok.example/api/trpc");
         expect(config.SOCKET_URL).toBe("https://durachok.example");
-        expect(config.RE_CAPTCHA_SECRET).toBe("");
+        expect(config.RE_CAPTCHA_SITE_KEY).toBe("");
     });
 
     test("stops with what's wrong with the environment", () => {
