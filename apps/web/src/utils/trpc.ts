@@ -7,6 +7,7 @@ import { transformer } from "@durachok/transport";
 import * as native from "@trpc/client";
 import type { Operation } from "@trpc/client";
 import * as rq from "@trpc/react-query";
+import { z } from "zod";
 
 /** Define our tRPC instance from the server definition. */
 const trpc = rq.createTRPCReact<AppRouter>();
@@ -28,12 +29,12 @@ async function fetchKeepingRefreshedTokens(input: RequestInfo | URL, init?: Requ
     return response;
 }
 
+/** A call about a lobby, by its pin. */
+const LobbyCallSchema = z.object({ pin: z.string() });
+
 /** The lobby that a call is about, which picks the seat whose tokens it sends, @see getAuthHeader. */
 function pinOf(op: Operation): string | undefined {
-    const { input } = op;
-    if (typeof input === "object" && input !== null && "pin" in input && typeof input.pin === "string") {
-        return input.pin;
-    }
+    return LobbyCallSchema.safeParse(op.input).data?.pin;
 }
 
 /**

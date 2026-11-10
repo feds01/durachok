@@ -27,10 +27,8 @@ function seat(name: string, refreshToken: string = LIVE): Seat {
 function storage(entries: Record<string, string> = {}) {
     const items = new Map(Object.entries(entries));
     return {
-        items,
         getItem: (key: string) => items.get(key) ?? null,
         setItem: (key: string, value: string) => void items.set(key, value),
-        removeItem: (key: string) => void items.delete(key),
     };
 }
 
@@ -57,45 +55,6 @@ describe("readAuth", () => {
         writeAuth(kept, { account: null, seats: { "111111": seat("sam"), "222222": seat("tom", EXPIRED) } });
 
         expect(Object.keys(readAuth(kept, NOW).seats)).toEqual(["111111"]);
-    });
-
-    test("migrates an account kept before seats", () => {
-        const legacy = storage({
-            token: account.token,
-            refreshToken: account.refreshToken,
-            user: JSON.stringify(account.user),
-        });
-
-        expect(readAuth(legacy, NOW)).toEqual({ account, seats: {} });
-    });
-
-    test("migrates an anonymous session kept before seats into a seat in its lobby", () => {
-        const legacy = storage({
-            token: "sam-token",
-            refreshToken: LIVE,
-            user: JSON.stringify({ kind: "anonymous", lobby: "111111", name: "sam" }),
-        });
-
-        expect(readAuth(legacy, NOW)).toEqual({ account: null, seats: { "111111": seat("sam") } });
-    });
-
-    test("drops an anonymous session kept before it had the player's name", () => {
-        const legacy = storage({
-            token: "sam-token",
-            refreshToken: LIVE,
-            user: JSON.stringify({ kind: "anonymous", lobby: "111111" }),
-        });
-
-        expect(readAuth(legacy, NOW)).toEqual(NO_AUTH);
-    });
-});
-
-describe("writeAuth", () => {
-    test("removes the keys kept before seats", () => {
-        const legacy = storage({ token: "t", refreshToken: "r", user: "{}" });
-        writeAuth(legacy, NO_AUTH);
-
-        expect([...legacy.items.keys()]).toEqual(["auth"]);
     });
 });
 

@@ -46,7 +46,7 @@ export type AuthAction =
           type: "logout";
       };
 
-/** The auth that the browser kept, which is kept again, as it may have been migrated or pruned, @see readAuth. */
+/** The auth that the browser kept, which is kept again, as reading it may have pruned it, @see readAuth. */
 export function init(): AuthState {
     const auth = loadAuth();
     saveAuth(auth);

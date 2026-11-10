@@ -1,6 +1,7 @@
+import { InvalidTokenError, jwtDecode } from "jwt-decode";
 import { z } from "zod";
 
-import { expr, isDef } from "@durachok/transport";
+import { isDef } from "@durachok/transport";
 
 const AuthTokensSchema = z.object({
     token: z.string(),
@@ -58,69 +59,30 @@ export const NO_AUTH: StoredAuth = { account: null, seats: {} };
 /** Where the auth is kept in the browser's storage. */
 const STORAGE_KEY = "auth";
 
-/** The keys of the auth kept before it had seats, which held one session, either kind. */
-const LEGACY_KEYS = ["token", "refreshToken", "user"] as const;
-
-const LegacyUserSchema = z.union([
-    RegisteredUserSchema,
-    // Anonymous sessions saved before they kept the player's name can't tell which player is
-    // theirs, so the name is required, and the session dropped without one.
-    AnonymousUserSchema.extend({ lobby: z.string() }),
-]);
-
-/** Parse JSON, or nothing for text that isn't. */
-function parseJson(text: string): unknown {
-    try {
-        return JSON.parse(text);
-    } catch {
-        return undefined;
-    }
-}
-
-/** The auth kept before it had seats, as it is kept now. */
-function readLegacyAuth(storage: Pick<Storage, "getItem">): StoredAuth {
-    const [token, refreshToken, user] = LEGACY_KEYS.map((key) => storage.getItem(key));
-    if (!token || !refreshToken || !user) {
-        return NO_AUTH;
-    }
-
-    const parsed = LegacyUserSchema.safeParse(parseJson(user));
-    if (!parsed.success) {
-        return NO_AUTH;
-    }
-
-    const legacy = parsed.data;
-    if (legacy.kind === "registered") {
-        return { account: { token, refreshToken, user: legacy }, seats: {} };
-    }
-    return {
-        account: null,
-        seats: { [legacy.lobby]: { token, refreshToken, user: { kind: "anonymous", name: legacy.name } } },
-    };
-}
-
-/** Decode base64url, as a JWT's parts are, or nothing for text that isn't. */
-function decodeBase64Url(text: string): string | undefined {
-    try {
-        return atob(text.replace(/-/g, "+").replace(/_/g, "/"));
-    } catch {
-        return undefined;
-    }
-}
+/** The auth as the browser keeps it, as JSON, which reading checks against its schema. */
+const StoredAuthJson = z.codec(z.string(), StoredAuthSchema, {
+    decode: (text, ctx) => {
+        try {
+            return JSON.parse(text);
+        } catch (error: unknown) {
+            ctx.issues.push({ code: "invalid_format", format: "json", input: text, message: String(error) });
+            return z.NEVER;
+        }
+    },
+    encode: (auth) => JSON.stringify(auth),
+});
 
 /** When a token runs out, in milliseconds since the epoch, or nothing for one that can't be read. */
 export function expiryOf(token: string): number | undefined {
-    const [, payload] = token.split(".");
-    const decoded = isDef(payload) ? decodeBase64Url(payload) : undefined;
-    if (!isDef(decoded)) {
-        return undefined;
+    try {
+        const { exp } = jwtDecode(token);
+        return isDef(exp) ? exp * 1000 : undefined;
+    } catch (error: unknown) {
+        if (error instanceof InvalidTokenError) {
+            return undefined;
+        }
+        throw error;
     }
-
-    const claims = parseJson(decoded);
-    if (typeof claims !== "object" || claims === null || !("exp" in claims) || typeof claims.exp !== "number") {
-        return undefined;
-    }
-    return claims.exp * 1000;
 }
 
 /** The seats whose refresh token hasn't run out, as a seat in a lobby long gone can't renew its tokens. */
@@ -131,28 +93,25 @@ function liveSeats(seats: StoredAuth["seats"], now: number): StoredAuth["seats"]
 }
 
 /**
- * Read the auth from the browser's storage, or from what it kept before it had seats. Anything
- * that isn't valid is dropped, as are seats whose refresh token has run out.
+ * Read the auth from the browser's storage. Anything that isn't valid is dropped, as are seats
+ * whose refresh token has run out.
  */
 export function readAuth(storage: Pick<Storage, "getItem">, now: number = Date.now()): StoredAuth {
     const raw = storage.getItem(STORAGE_KEY);
-    const auth = expr(() => {
-        if (raw === null) {
-            return readLegacyAuth(storage);
-        }
-        const parsed = StoredAuthSchema.safeParse(parseJson(raw));
-        return parsed.success ? parsed.data : NO_AUTH;
-    });
+    if (raw === null) {
+        return NO_AUTH;
+    }
 
-    return { ...auth, seats: liveSeats(auth.seats, now) };
+    const parsed = StoredAuthJson.safeDecode(raw);
+    if (!parsed.success) {
+        return NO_AUTH;
+    }
+    return { ...parsed.data, seats: liveSeats(parsed.data.seats, now) };
 }
 
-/** Keep the auth in the browser's storage, in place of what it kept before it had seats. */
-export function writeAuth(storage: Pick<Storage, "setItem" | "removeItem">, auth: StoredAuth): void {
-    storage.setItem(STORAGE_KEY, JSON.stringify(auth));
-    for (const key of LEGACY_KEYS) {
-        storage.removeItem(key);
-    }
+/** Keep the auth in the browser's storage. */
+export function writeAuth(storage: Pick<Storage, "setItem">, auth: StoredAuth): void {
+    storage.setItem(STORAGE_KEY, StoredAuthJson.encode(auth));
 }
 
 /**
