@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { PlayerOutcome, countOutcome, toUserStatistics } from "./statistics";
+import { PlayerOutcome, STATISTICS, countOutcome, toUserStatistics } from ".";
 
 /** A player's part in a game of 12 rounds, which anna won, and boris lost as the durak. */
 function outcome(name: string, owner = false): PlayerOutcome {
@@ -18,6 +18,18 @@ describe("countOutcome", () => {
 
     test("counts a game that the player neither won nor lost as played, and hosted by its owner", () => {
         expect(countOutcome(outcome("clara", true))).toEqual({ gamesPlayed: 1, gamesHosted: 1, roundsPlayed: 12 });
+    });
+});
+
+describe("the registry", () => {
+    test("gives every statistic an id of its own, a name and a description", () => {
+        const ids = STATISTICS.map(({ id }) => id);
+
+        expect(new Set(ids).size).toBe(ids.length);
+        for (const { name, description } of STATISTICS) {
+            expect(name).not.toBe("");
+            expect(description).not.toBe("");
+        }
     });
 });
 
