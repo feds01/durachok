@@ -218,14 +218,20 @@ export function applyMove(state: PlayerGameState, move: PlayerMove): PlayerGameS
     }
 }
 
-/** A player as their place goes by: their name, and when they went out of the game, if they have. */
+/** A player as their place goes by: their name, when they went out of the game, and whether the owner removed them. */
 export interface Finisher {
     name: string;
     out: number | null;
+    removed?: boolean;
 }
 
-/** The places of the players who are out of the game, by name: the first out is first. */
+/**
+ * The places of the players who are out of the game, by name: the first out is first. A player
+ * whom the lobby's owner removed didn't go out by playing, so they have none.
+ */
 export function placesOf(players: readonly Finisher[]): ReadonlyMap<string, number> {
-    const finished = players.filter(({ out }) => out !== null).toSorted((a, b) => (a.out ?? 0) - (b.out ?? 0));
+    const finished = players
+        .filter(({ out, removed }) => out !== null && !removed)
+        .toSorted((a, b) => (a.out ?? 0) - (b.out ?? 0));
     return new Map(finished.map(({ name }, index) => [name, index + 1]));
 }

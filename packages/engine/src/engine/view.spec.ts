@@ -332,4 +332,13 @@ describe("the players' places", () => {
             ["b", 2],
         ]);
     });
+
+    test("leave out a player whom the owner removed", () => {
+        const places = placesOf([
+            { name: "removed", out: 5, removed: true },
+            { name: "first", out: 10 },
+        ]);
+
+        expect([...places]).toEqual([["first", 1]]);
+    });
 });

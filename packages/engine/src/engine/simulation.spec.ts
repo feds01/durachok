@@ -165,7 +165,26 @@ function countCards(game: Game): string[] {
     return [...game.deck, ...hands, ...table];
 }
 
-function playGame(seed: number, playerCount: number, settings: GameSettings, onStep?: (game: Game) => void) {
+/** Remove one of the players still in the game, chosen at random, as the lobby's owner may. */
+function removeRandomPlayer(game: Game) {
+    const active = Array.from(game.players.values()).filter(({ out }) => out === null);
+    const { name } = active[Math.floor(Math.random() * active.length)];
+    game.removePlayer(name);
+}
+
+interface PlayOptions {
+    /** Called before each move, e.g. to check the game. */
+    onStep?: (game: Game) => void;
+    /** How likely it is that the owner removes a player before a move. */
+    removeChance?: number;
+}
+
+function playGame(
+    seed: number,
+    playerCount: number,
+    settings: GameSettings,
+    { onStep, removeChance = 0 }: PlayOptions = {},
+) {
     Math.random = mulberry32(seed);
 
     const names = Array.from({ length: playerCount }, (_, i) => `p${i}`) as [string, ...string[]];
@@ -183,11 +202,20 @@ function playGame(seed: number, playerCount: number, settings: GameSettings, onS
         if (game.status === "finished") {
             const left = Array.from(game.players.values()).filter((player) => player.out === null);
             expect(left.length).toBeLessThanOrEqual(1);
+            // Every player has a place, but those who were removed.
+            const removed = Array.from(game.players.values()).filter((player) => player.removed);
+            expect(game.getResults()).toHaveLength(playerCount - removed.length);
             return;
         }
 
         expect(() => game.getDefendingPlayerName()).not.toThrow();
         onStep?.(game);
+
+        if (Math.random() < removeChance) {
+            removeRandomPlayer(game);
+            continue;
+        }
+
         const next = playRandomMove(game, settings);
         if (!next) {
             throw new Error(`Game with seed ${seed} got stuck: nobody can make a move.`);
@@ -211,6 +239,28 @@ describe("Simulated games", () => {
     }
 });
 
+describe("Simulated games in which the owner removes players", () => {
+    for (const playerCount of [2, 3, 4, 6]) {
+        test(`${playerCount} players`, () => {
+            for (let seed = 1; seed <= 10; seed++) {
+                const settings = { ...DEFAULT_SETTINGS, shortGameDeck: seed % 2 === 0 };
+                playGame(seed * 6151 + playerCount, playerCount, settings, { removeChance: 0.03 });
+            }
+        }, 30_000);
+    }
+
+    test("still offer the players the moves that the engine accepts", () => {
+        for (const playerCount of [3, 4]) {
+            const gameSeed = 7741 + playerCount;
+            const settings = { ...DEFAULT_SETTINGS };
+            playGame(gameSeed, playerCount, settings, {
+                onStep: (game) => checkViewsAgree(game, settings, gameSeed),
+                removeChance: 0.03,
+            });
+        }
+    }, 30_000);
+});
+
 describe("A player's view of a simulated game", () => {
     for (const playerCount of [2, 3, 4, 6]) {
         // Trying every move at every step of a whole game takes a while, so two games, one with each deck.
@@ -218,14 +268,16 @@ describe("A player's view of a simulated game", () => {
             for (let seed = 1; seed <= 2; seed++) {
                 const gameSeed = seed * 104729 + playerCount;
                 const settings = { ...DEFAULT_SETTINGS, shortGameDeck: seed % 2 === 0 };
-                playGame(gameSeed, playerCount, settings, (game) => checkViewsAgree(game, settings, gameSeed));
+                playGame(gameSeed, playerCount, settings, {
+                    onStep: (game) => checkViewsAgree(game, settings, gameSeed),
+                });
             }
         }, 30_000);
 
         test(`offers ${playerCount} players in mythic mode every move that the engine accepts`, () => {
             const gameSeed = 15485863 + playerCount;
             const settings = { ...DEFAULT_SETTINGS, mythicMode: true };
-            playGame(gameSeed, playerCount, settings, (game) => checkViewsAgree(game, settings, gameSeed));
+            playGame(gameSeed, playerCount, settings, { onStep: (game) => checkViewsAgree(game, settings, gameSeed) });
         }, 30_000);
     }
 });

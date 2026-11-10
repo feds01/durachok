@@ -11,9 +11,11 @@ import {
     GamePlayer,
     GameState,
     GameStatus,
+    PlayerExit,
     PlayerGameState,
     PlayerMove,
     SpectatorGameState,
+    isDef,
 } from "@durachok/transport";
 
 /** The trump, as the game keeps and sends it: the card, and its suit. */
@@ -218,20 +220,14 @@ export class Game {
      * on the fact if the current defending player managed to successfully defend
      * themselves or has decided to pickup the cards. Additionally, the method should
      * iterate over all the players to replenish the player card decks.
-     *
-     * @param {boolean} resignPlayer - This is a boolean flag to represent if a player has resigned (who
-     * is a defender for the current round). In that situation, we must treat the end of the round as if
-     * the defender 'exited' the game, but the defenders cards are now re-inserted into the table
-     * deck.
-     *
      * */
-    finaliseRound(resignPlayer: boolean = false) {
+    finaliseRound() {
         if (this.status === "finished") {
             throw new InvalidGameState("Can't mutate game state after victory.");
         }
 
         // the round cannot be finalised if no cards were ever put down on to the table
-        if (!resignPlayer && this.tableTop.size === 0) {
+        if (this.tableTop.size === 0) {
             throw new InvalidGameState("Cannot finalise round before any cards have been played.");
         }
 
@@ -240,7 +236,7 @@ export class Game {
         const defender = this.getDefendingPlayerName();
 
         // Check that all of the cards have been covered by the defending player...
-        const forfeitRound = !resignPlayer && Array.from(this.tableTop.values()).some((card) => card === null);
+        const forfeitRound = Array.from(this.tableTop.values()).some((card) => card === null);
 
         if (forfeitRound) {
             // Take the cards from the table top and move them into the players
@@ -250,29 +246,43 @@ export class Game {
             this.voidTableTop();
         }
 
-        // Check if the 'spare' deck size is greater than zero and therefore we can
-        // replenish the players' card decks.
-        if (this.deck.length > 0) {
-            // we need to transpose the player list to begin with the player
-            // who began the round and the rest following in a clockwise manner.
-            for (let offset = 0; offset < this.getActivePlayers().length; offset++) {
-                const playerName = this.getPlayerNameByOffset(roundStarter, offset);
-                const playerByOffset = this.getPlayer(playerName);
-
-                if (playerByOffset.deck.length < 6) {
-                    playerByOffset.deck = [
-                        ...playerByOffset.deck,
-                        ...this.deck.splice(0, 6 - playerByOffset.deck.length),
-                    ];
-                }
-
-                // no point of distributing the cards if there are no cards left.
-                if (this.deck.length === 0) break;
-            }
+        this.replenishHands(roundStarter);
+        if (this.declareOutAndFinish()) {
+            return;
         }
 
-        // Declare the players without cards as 'out', before choosing who plays the next
-        // round, so that a player who is out can't become the defender.
+        // When the defender picked up the cards, the player after them attacks, so the one
+        // after that defends. Otherwise, the player after the defender defends, so that the
+        // defender attacks next. With two players left, a defender who picked up defends again.
+        const nextPlayers = this.getPlayerOrderFrom(defender).filter((name) => !this.getPlayer(name).out);
+        const nextDefender = forfeitRound ? (nextPlayers[1] ?? defender) : nextPlayers[0];
+        this.startRound(nextDefender);
+    }
+
+    /**
+     * Fill up the players' hands from the deck at the end of a round, six cards each while
+     * the deck lasts, starting with the player who began the round and going round from them.
+     */
+    private replenishHands(roundStarter: string) {
+        for (let offset = 0; offset < this.getActivePlayers().length; offset++) {
+            // no point of distributing the cards if there are no cards left.
+            if (this.deck.length === 0) break;
+
+            const player = this.getPlayer(this.getPlayerNameByOffset(roundStarter, offset));
+            if (player.deck.length < 6) {
+                player.deck = [...player.deck, ...this.deck.splice(0, 6 - player.deck.length)];
+            }
+        }
+    }
+
+    /**
+     * Declare the players without cards out once the deck is gone, before anyone is chosen to
+     * play the next round, so that a player who is out can't defend, and finish the game once
+     * at most one player is left in it.
+     *
+     * @returns Whether the game finished.
+     */
+    private declareOutAndFinish(): boolean {
         if (this.deck.length === 0) {
             this.getActivePlayers().forEach(([name, player]) => {
                 if (player.deck.length === 0) {
@@ -282,22 +292,18 @@ export class Game {
             });
         }
 
-        // victory condition: at most one player is left in the game.
-        if (this.getActivePlayers().length <= 1) {
-            // Add history entry for the victory
-            this.history.addEntry({ type: "victory" });
-            this.status = "finished";
-            return;
+        if (this.getActivePlayers().length > 1) {
+            return false;
         }
 
-        // When the defender picked up the cards, the player after them attacks, so the one
-        // after that defends. Otherwise, the player after the defender defends, so that the
-        // defender attacks next. With two players left, a defender who picked up defends again.
-        const nextPlayers = this.getPlayerOrderFrom(defender).filter((name) => !this.getPlayer(name).out);
-        const nextDefender = forfeitRound ? (nextPlayers[1] ?? defender) : nextPlayers[0];
-        this.setDefendingPlayer(nextDefender);
+        this.history.addEntry({ type: "victory" });
+        this.status = "finished";
+        return true;
+    }
 
-        // since it's a new round, we need to create a new node.
+    /** Start the next round, against the given defender, which the player before them opens. */
+    private startRound(defender: string) {
+        this.setDefendingPlayer(defender);
         this.history.addEntry({
             type: "new_round",
             actors: {
@@ -719,38 +725,105 @@ export class Game {
     }
 
     /**
-     * @version 1.0.0
-     * This method will resign a player from the game. The player will be removed
-     * from the player list, the player's cards will be moved to the bottom of the
-     * stack
+     * Remove a player from the game, as the lobby's owner may. Their cards leave play, and they
+     * are out of the game without a place, @see getResults. The game goes on without them:
      *
-     * @param {String} name - The name of the player that the defending status
-     *        is being transferred to.
+     * - The defender's round ends as though they had beaten it. The table leaves play, the others
+     *   fill up their hands, and the player after the defender opens the next round, as the
+     *   defender would have.
+     * - When the player who opened the attack leaves, the player before the defender opens it
+     *   instead, and the round goes on. Any other attacker just leaves it.
+     * - When one player is left, the game finishes, and they're the durak.
      *
-     * */
-    public resignPlayer(name: string) {
+     * @param name - The player to remove.
+     * @returns Whether the player was in the game, rather than already out of it.
+     */
+    public removePlayer(name: string): boolean {
+        if (this.isFinished()) {
+            throw new InvalidGameState("Can't mutate game state after victory.");
+        }
+
         const player = this.getPlayer(name);
+        if (player.out !== null) {
+            return false;
+        }
 
-        // don't do anything if the player is already out, since this doesn't change the state of the game
-        if (player.out) return;
-        // player.out = "resigned";
+        // The round as it was, before the player leaves it.
+        const wasDefending = player.action === "defend";
+        const openedAttack = player.beganRound;
+        const roundStarter = this.getRoundStarter();
 
-        // push the player's deck and the table top card onto the back of the deck
-        this.deck.push(...player.deck);
+        Object.assign(player, {
+            deck: [],
+            out: Date.now(),
+            removed: true,
+            action: "none",
+            beganRound: false,
+            turned: false,
+        });
+        this.history.addEntry({ type: "remove", player: name });
 
-        if (this.getActivePlayers().length === 1) {
+        if (wasDefending) {
+            this.voidTableTop();
+            this.replenishHands(roundStarter);
+            if (!this.declareOutAndFinish()) {
+                const attacker = this.getPlayerOrderFrom(name).find((other) => this.getPlayer(other).out === null);
+                if (!isDef(attacker)) {
+                    throw new InvalidGameState("No players are left to play the next round.");
+                }
+                this.startRound(this.getPlayerNameByOffset(attacker, 1));
+            }
+            return true;
+        }
+
+        // With nobody left to play against, the cards on the table leave play with the game.
+        if (this.getActivePlayers().length <= 1) {
+            this.voidTableTop();
+            this.history.addEntry({ type: "victory" });
             this.status = "finished";
+            return true;
+        }
+
+        if (openedAttack) {
+            const opener = this.getPlayer(this.getPlayerNameByOffset(this.getDefendingPlayerName(), -1));
+            opener.beganRound = true;
+            if (opener.action === "none") {
+                opener.action = "attack";
+            }
+        }
+
+        this.finaliseRoundIfSettled();
+        return true;
+    }
+
+    /**
+     * End the round if nothing more can happen in it: every attacker is done, and the defender
+     * has beaten every card or is taking them, or the defender who takes them can't be given more.
+     */
+    private finaliseRoundIfSettled() {
+        if (this.tableTop.size === 0) {
             return;
         }
 
-        if (player.action === "defend") {
-            this.deck.push(...this.getTableTopDeck());
-            this.finaliseRound(true);
-        } else if (player.beganRound) {
-            // @Hack: just reset everybody's state by setting the same defending player as the
-            // the current defending player
-            this.setDefendingPlayer(this.getDefendingPlayerName());
+        const defender = this.getPlayer(this.getDefendingPlayerName());
+        const attackersDone = this.getAttackingPlayers().every(([, player]) => player.turned);
+        const allBeaten = this.getCoveredCount() === this.tableTop.size;
+
+        if ((attackersDone && (allBeaten || defender.turned)) || this.shouldAutoSkipWhenDefenderForfeits()) {
+            this.finaliseRound();
         }
+    }
+
+    /**
+     * The players in their places: those who went out, in the order that they did, so the first
+     * won, and the player left holding cards, the durak, last. A player who was removed from
+     * the game didn't go out by playing, so they have no place.
+     */
+    public getResults(): PlayerExit[] {
+        return Array.from(this.players.values())
+            .filter(({ removed }) => !removed)
+            .map(({ name, out }) => ({ name, out }))
+            .toSorted((a, b) => (a.out ?? Number.MAX_SAFE_INTEGER) - (b.out ?? Number.MAX_SAFE_INTEGER));
     }
 
     /**

@@ -54,6 +54,11 @@ export const AutonomousActionSchema = z.union([
         type: z.literal("exit"),
         player: UserNameSchema,
     }),
+    /** The lobby's owner removes a player from the game, whose cards leave play. */
+    z.object({
+        type: z.literal("remove"),
+        player: UserNameSchema,
+    }),
     /** The completion of a game. */
     z.object({
         type: z.literal("victory"),
@@ -126,6 +131,11 @@ export const OpaquePlayerStateSchema = z.object({
     deck: PlayerDeckStateSchema,
     /** Whether the player has finished the game. */
     out: z.number().nullable(),
+    /**
+     * Whether the lobby's owner removed the player from the game. They're out of it, as
+     * `out` says, but they didn't go out by playing, so they have no place.
+     */
+    removed: z.boolean().optional(),
     /** Whether the player has finished the round. */
     turned: z.boolean(),
     /** Whether the player has started the round. */
