@@ -14,11 +14,11 @@ import { isDef } from "../../utils";
  * development lets anyone register, and production nobody, as it can't tell people from bots.
  */
 async function ensureSolvedReCaptcha(logger: Logger, token: string, ip: string): Promise<void> {
-    if (RE_CAPTCHA_SECRET === "") {
-        if (ENV !== "production") {
-            return;
-        }
-
+    const configured = RE_CAPTCHA_SECRET !== "";
+    if (!configured && ENV !== "production") {
+        return;
+    }
+    if (!configured) {
         logger.error("RE_CAPTCHA_KEY isn't set, so nobody can register");
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Registering isn't possible right now." });
     }
