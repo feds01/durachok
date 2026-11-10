@@ -9,7 +9,7 @@ import {
     saveAuth,
 } from "../../utils/auth";
 
-export type { AnonymousUser, RegisteredUser } from "../../utils/auth";
+export type { AnonymousUser, RegisteredUser, Seat, SpectatorUser } from "../../utils/auth";
 
 /** The authentication state: the account that the person logged in to, and their seats in lobbies. */
 export type AuthState = StoredAuth;

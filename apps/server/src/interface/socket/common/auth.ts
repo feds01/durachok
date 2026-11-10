@@ -21,6 +21,11 @@ export function ensureAuth(client: Client): UserTokensResponse {
     return auth;
 }
 
+/** Whether a client watches the lobby's games rather than playing in it, @see LobbyService.canWatch. */
+export function isSpectator(client: Pick<Client, "getData">): boolean {
+    return client.getData().auth?.payload.kind === "spectator";
+}
+
 /**
  * Ensure that a client is one of the players of a lobby.
  *

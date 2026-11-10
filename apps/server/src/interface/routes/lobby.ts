@@ -2,20 +2,14 @@ import {
     ByPinRequestSchema,
     GameCreateRequestSchema,
     GameJoinRequestSchema,
+    GameWatchRequestSchema,
     NameFreeInLobbyRequestSchema,
 } from "@durachok/transport";
 import { TRPCError } from "@trpc/server";
 import { randomUUID } from "node:crypto";
 
 import { limits } from "../../lib/limits";
-import {
-    authProcedure,
-    failureLimitedProcedure,
-    limitedProcedure,
-    router,
-    tooManyRequests,
-    userProcedure,
-} from "../trpc";
+import { authProcedure, limitedProcedure, passphraseLimitedProcedure, router, userProcedure } from "../trpc";
 import { DBPlayer } from "../../schemas/lobby";
 import { expr, isDef } from "../../utils";
 import { notifyLobbyClosed } from "../socket";
@@ -61,8 +55,11 @@ export const lobbyRouter = router({
             input,
         } = req;
 
-        // Ensure that the player can read the lobby, i.e. they are one of its players.
-        if (!(await ctx.lobbyService.hasAccess(token, input.pin))) {
+        // Only the lobby's players, and those who watch its games, can read it.
+        if (
+            !(await ctx.lobbyService.hasAccess(token, input.pin)) &&
+            !(await ctx.lobbyService.canWatch(token, input.pin))
+        ) {
             throw new TRPCError({ code: "UNAUTHORIZED" });
         }
 
@@ -91,7 +88,7 @@ export const lobbyRouter = router({
     }),
 
     // Joins that fail are limited, so that a script can't go through the pins, names or passphrases.
-    join: failureLimitedProcedure(limits.failedJoins)
+    join: passphraseLimitedProcedure(limits.failedJoins, limits.wrongPassphrases)
         .input(GameJoinRequestSchema)
         .mutation(async (req) => {
             const { ctx, input } = req;
@@ -115,15 +112,10 @@ export const lobbyRouter = router({
             }
 
             // Check that the passphrase is correct. A lobby takes only so many wrong ones a minute,
-            // from anywhere, so that many addresses can't guess it together.
-            if (info.passphrase) {
-                if (limits.wrongPassphrases.isLimited(input.pin)) {
-                    throw tooManyRequests();
-                }
-                if (!(await ctx.lobbyService.checkPassphrase(input.pin, input.passphrase))) {
-                    limits.wrongPassphrases.hit(input.pin);
-                    throw new TRPCError({ code: "UNAUTHORIZED", message: "Incorrect passphrase" });
-                }
+            // from anywhere, so that many addresses can't guess it together, @see passphraseLimitedProcedure.
+            if (info.passphrase && !(await ctx.lobbyService.checkPassphrase(input.pin, input.passphrase))) {
+                limits.wrongPassphrases.hit(input.pin);
+                throw new TRPCError({ code: "UNAUTHORIZED", message: "Incorrect passphrase" });
             }
 
             // Registered users play under their account's name, bots under their name in the
@@ -156,5 +148,33 @@ export const lobbyRouter = router({
                 ...(isDef(player.seat) &&
                     ctx.authService.createTokens({ pin: input.pin, name: player.name, seat: player.seat })),
             };
+        }),
+
+    /**
+     * Watch a lobby's games, which anyone with its pin, and its passphrase if it has one, can do
+     * while it lets them. A spectator doesn't take a place, so even a full lobby, or one whose game
+     * has started, can be watched. Failures are limited, as for joining.
+     */
+    watch: passphraseLimitedProcedure(limits.failedJoins, limits.wrongPassphrases)
+        .input(GameWatchRequestSchema)
+        .mutation(async (req) => {
+            const { ctx, input } = req;
+
+            const info = await ctx.lobbyService.getInfo(input.pin);
+            if (!info) {
+                throw new TRPCError({ code: "NOT_FOUND" });
+            }
+            if (!info.spectators) {
+                throw new TRPCError({ code: "BAD_REQUEST", message: "This lobby doesn't let anyone watch" });
+            }
+
+            if (info.passphrase && !(await ctx.lobbyService.checkPassphrase(input.pin, input.passphrase))) {
+                limits.wrongPassphrases.hit(input.pin);
+                throw new TRPCError({ code: "UNAUTHORIZED", message: "Incorrect passphrase" });
+            }
+
+            // Everyone watches with tokens for this lobby, with or without an account, as watching
+            // is not playing, and the tokens say that they passed the passphrase.
+            return ctx.authService.createTokens({ pin: input.pin, watcher: randomUUID() });
         }),
 });

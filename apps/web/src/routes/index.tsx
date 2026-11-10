@@ -23,10 +23,10 @@ function Index() {
     const auth = useAuthDispatch();
     const navigator = useNavigate();
 
-    const redirectToLobby = ({ pin, name, tokens }: LobbyAuthInfo) => {
-        // Anonymous players get tokens for the lobby that they joined.
-        if (isDef(tokens)) {
-            auth({ type: "join", pin, payload: { user: { kind: "anonymous", name }, ...tokens } });
+    const redirectToLobby = ({ pin, seat }: LobbyAuthInfo) => {
+        // Anonymous players, and spectators, get tokens for the lobby that they joined or watch.
+        if (isDef(seat)) {
+            auth({ type: "join", pin, payload: seat });
         }
 
         navigator({

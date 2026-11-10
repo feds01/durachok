@@ -45,6 +45,14 @@ describe("readAuth", () => {
         expect(readAuth(kept, NOW)).toEqual(auth);
     });
 
+    test("reads a spectator's seat, which has no name", () => {
+        const spectator: Seat = { token: "watcher-token", refreshToken: LIVE, user: { kind: "spectator" } };
+        const kept = storage();
+        writeAuth(kept, { account: null, seats: { "111111": spectator } });
+
+        expect(readAuth(kept, NOW).seats["111111"]).toEqual(spectator);
+    });
+
     test("drops what isn't valid", () => {
         expect(readAuth(storage({ auth: "{not json" }), NOW)).toEqual(NO_AUTH);
         expect(readAuth(storage({ auth: JSON.stringify({ account: { token: 1 } }) }), NOW)).toEqual(NO_AUTH);

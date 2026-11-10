@@ -61,6 +61,9 @@ export class AuthService {
         if ("bot" in data) {
             return { kind: "bot", bot: { id: data.bot, name: data.name } };
         }
+        if ("watcher" in data) {
+            return { kind: "spectator", pin: data.pin, watcher: data.watcher };
+        }
         return {
             kind: "anonymous",
             name: data.name,
@@ -78,6 +81,7 @@ export class AuthService {
     public async isAllowed(payload: TokenPayload): Promise<boolean> {
         switch (payload.kind) {
             case "anonymous":
+            case "spectator":
                 return true;
             case "bot":
                 return isDocumentId(payload.bot.id) && isDef(await BotUsers.exists({ _id: payload.bot.id }));
@@ -134,21 +138,16 @@ export class AuthService {
 
         // We need to convert the token into a raw payload.
         const rawPayload = expr(() => {
-            if (decodedToken.kind === "anonymous") {
-                return {
-                    name: decodedToken.name,
-                    pin: decodedToken.pin,
-                    seat: decodedToken.seat,
-                };
+            switch (decodedToken.kind) {
+                case "anonymous":
+                    return { name: decodedToken.name, pin: decodedToken.pin, seat: decodedToken.seat };
+                case "bot":
+                    return { name: decodedToken.bot.name, bot: decodedToken.bot.id };
+                case "spectator":
+                    return { pin: decodedToken.pin, watcher: decodedToken.watcher };
+                case "registered":
+                    return { name: decodedToken.user.name, email: decodedToken.user.email, id: decodedToken.user.id };
             }
-            if (decodedToken.kind === "bot") {
-                return { name: decodedToken.bot.name, bot: decodedToken.bot.id };
-            }
-            return {
-                name: decodedToken.user.name,
-                email: decodedToken.user.email,
-                id: decodedToken.user.id,
-            };
         });
 
         const newTokens = this.createTokens(rawPayload);

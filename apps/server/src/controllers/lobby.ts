@@ -86,6 +86,7 @@ export class LobbyService {
             players: lobby.players.length,
             maxPlayers: lobby.maxPlayers,
             status: lobby.status,
+            spectators: lobby.allowSpectators,
         };
     }
 
@@ -116,6 +117,7 @@ export class LobbyService {
             randomisePlayerOrder: lobby.randomisePlayerOrder,
             roundTimeout: lobby.roundTimeout,
             mythicMode: lobby.mythicMode,
+            allowSpectators: lobby.allowSpectators,
 
             /** State */
             version: lobby.version,
@@ -157,6 +159,19 @@ export class LobbyService {
 
         const lobby = await this.getRaw(pin);
         return lobby?.players.find((player) => isPlayer(token, player));
+    }
+
+    /**
+     * Whether a token lets its holder watch a lobby's games: a spectator's, for that lobby, while
+     * the lobby lets anyone watch, so that turning it off keeps out anyone who comes back.
+     */
+    public async canWatch(token: TokenPayload, pin: string): Promise<boolean> {
+        if (token.kind !== "spectator" || token.pin !== pin) {
+            return false;
+        }
+
+        const lobby = await this.getRaw(pin);
+        return lobby?.allowSpectators ?? false;
     }
 
     /** Check if a user has access to a lobby, i.e. they are one of its players. */
@@ -472,6 +487,7 @@ export class LobbyService {
             randomisePlayerOrder,
             roundTimeout,
             mythicMode,
+            allowSpectators,
         } = settings;
 
         if ((await Lobbies.countDocuments({ owner: userId })) >= MAX_LOBBIES_PER_OWNER) {
@@ -498,6 +514,7 @@ export class LobbyService {
                 randomisePlayerOrder,
                 roundTimeout,
                 mythicMode,
+                allowSpectators,
                 status: "waiting",
                 // Automatically add the owner to the lobby.
                 players: [ownerAsPlayer],

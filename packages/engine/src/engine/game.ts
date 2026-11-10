@@ -1083,8 +1083,8 @@ export class Game {
      * state and information on player decks.
      * */
     public getStateForSpectator(): SpectatorGameState {
-        // transpose the array to match the position of the player on the table
-        const playerOrder = [this.getDefendingPlayerName(), ...this.getPlayerOrderFrom(this.getDefendingPlayerName())];
+        // The players in their seats, which stay put from one round to the next, as a player's opponents do.
+        const playerOrder = Array.from(this.players.keys());
 
         return {
             trump: this.trump,

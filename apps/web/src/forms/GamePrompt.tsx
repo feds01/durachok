@@ -7,7 +7,7 @@ import GamePassphraseInput from "@/components/GamePassphraseInput";
 import PinInput from "@/components/PinInput";
 import SubmitButton from "@/components/SubmitButton";
 import { Input } from "@/components/ui/input";
-import { sessionFor, useAuth } from "@/contexts/auth";
+import { Seat, sessionFor, useAuth } from "@/contexts/auth";
 import { fadeUp } from "@/lib/motion";
 import { PANEL } from "@/lib/styles";
 import { cn } from "@/lib/utils";
@@ -19,15 +19,14 @@ import { UserNameSchema } from "@durachok/transport";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useController } from "react-hook-form";
 
-export type LobbyAuthInfo = {
+export interface LobbyAuthInfo {
     pin: string;
-    /** The name that the player is in the lobby under. */
-    name: string;
-    tokens?: {
-        token: string;
-        refreshToken: string;
-    };
-};
+    /**
+     * A new seat in the lobby: an anonymous player's place in it, or a spectator's, whose tokens
+     * are for this lobby. A player with an account, or who is already in the lobby, has none.
+     */
+    seat?: Seat;
+}
 
 type Props = {
     startPin?: string;
@@ -57,9 +56,12 @@ const STAGE_TITLES: Record<StageKind["kind"], string> = {
 
 export default function GamePrompt({ startPin, onSuccess }: Props) {
     const [stage, setStage] = useState<StageKind>({ kind: "pin" });
+    // Whether the person watches the lobby's game, which they can't join, rather than joining it.
+    const [watching, setWatching] = useState(false);
     const [auth, updateAuth] = useAuth();
 
     const joinLobbyMutation = trpc.lobbies.join.useMutation();
+    const watchLobbyMutation = trpc.lobbies.watch.useMutation();
 
     const form = useForm<GamePromptInput>({
         resolver: zodResolver(GamePromptFormInputSchema),
@@ -82,13 +84,14 @@ export default function GamePrompt({ startPin, onSuccess }: Props) {
                     passphrase: info.security,
                 });
 
-                const tokens = expr(() => {
+                // A player without an account is given tokens for their place in the lobby.
+                const seat = expr((): Seat | undefined => {
                     if (isDef(token) && isDef(refreshToken)) {
-                        return { token, refreshToken };
+                        return { token, refreshToken, user: { kind: "anonymous", name: info.name } };
                     }
                 });
 
-                onSuccess({ pin: info.pin, name: info.name, ...(tokens && { tokens }) });
+                onSuccess({ pin: info.pin, ...(seat && { seat }) });
             } catch (e: unknown) {
                 if (e instanceof Error) {
                     form.setError(stage.kind, {
@@ -100,6 +103,19 @@ export default function GamePrompt({ startPin, onSuccess }: Props) {
         },
         [joinLobbyMutation, onSuccess, form, stage.kind],
     );
+
+    /** Watch the lobby's games, with the passphrase if it has one, and go in with the spectator's tokens. */
+    const watch = useCallback(async () => {
+        const { pin, security } = form.getValues();
+        try {
+            const tokens = await watchLobbyMutation.mutateAsync({ pin, passphrase: security });
+            onSuccess({ pin, seat: { ...tokens, user: { kind: "spectator" } } });
+        } catch (e: unknown) {
+            if (e instanceof Error) {
+                form.setError(stage.kind, { type: "manual", message: e.message });
+            }
+        }
+    }, [watchLobbyMutation, onSuccess, form, stage.kind]);
 
     const next = useMemo(
         () => async () => {
@@ -137,18 +153,26 @@ export default function GamePrompt({ startPin, onSuccess }: Props) {
                         );
 
                         if (isMember) {
-                            onSuccess({ pin, name: session.user.name });
+                            onSuccess({ pin });
                             return;
                         }
 
                         // A seat that the lobby no longer has, e.g. one given up on disconnecting,
                         // goes, so that joining again gets a new one.
-                        if (session.user.kind === "anonymous") {
+                        if (session.user.kind !== "registered") {
                             updateAuth({ type: "leave", pin });
                         }
                     }
 
-                    if (!info.joinable) {
+                    if (!info.joinable && info.spectators) {
+                        // The lobby is full, or its game has started, but anyone can watch it.
+                        setWatching(true);
+                        if (info.passphrase) {
+                            setStage({ kind: "security", info });
+                        } else {
+                            await watch();
+                        }
+                    } else if (!info.joinable) {
                         form.setError("pin", {
                             type: "manual",
                             message: "This lobby is full, or its game has started.",
@@ -198,12 +222,14 @@ export default function GamePrompt({ startPin, onSuccess }: Props) {
                     } else {
                         await form.handleSubmit(onSubmit)();
                     }
+                } else if (watching) {
+                    await watch();
                 } else {
                     await form.handleSubmit(onSubmit)();
                 }
             }
         },
-        [auth, updateAuth, form, onSubmit, onSuccess, stage],
+        [auth, updateAuth, form, onSubmit, onSuccess, stage, watching, watch],
     );
 
     // A pin from a shared link is checked straight away, once.
@@ -265,6 +291,7 @@ export default function GamePrompt({ startPin, onSuccess }: Props) {
                 </motion.div>
             )}
             <SubmitButton
+                {...(watching && { label: "Watch" })}
                 disabled={!isDef(form.formState.dirtyFields[stage.kind])}
                 isSubmitting={form.formState.isSubmitting}
                 className="h-16 text-2xl"

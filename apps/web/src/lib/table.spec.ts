@@ -15,6 +15,25 @@ const took = (player: string) =>
     );
 
 describe("readActions", () => {
+    test("for a spectator, every card is another player's, and taken cards go to the seat of whoever took them", () => {
+        const update = readActions(
+            [
+                { type: "place", card: "6S", player: "katya" },
+                { type: "cover", card: "7S", player: "misha", on: 0 },
+            ],
+            null,
+        );
+        expect(update.mine).toEqual([]);
+        expect([...update.playedBy]).toEqual([
+            ["6S", "katya"],
+            ["7S", "misha"],
+        ]);
+        expect(readActions([{ type: "pickup", cards: ["6S"], player: "misha" }], null).clearTo).toEqual({
+            to: "seat",
+            player: "misha",
+        });
+    });
+
     test("tells the player's cards from the ones that others played, while the round goes on", () => {
         const update = readActions(
             [

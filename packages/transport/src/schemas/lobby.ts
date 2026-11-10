@@ -60,6 +60,8 @@ export const LobbySettingsSchema = z.object({
     roundTimeout: z.number().min(60).max(600),
     /** Whether to play in mythic mode, where nobody is told how many cards anyone holds. */
     mythicMode: z.boolean(),
+    /** Whether anyone with the pin, and the passphrase if there is one, can watch the lobby's games. */
+    allowSpectators: z.boolean(),
 });
 
 export type LobbySettings = z.infer<typeof LobbySettingsSchema>;

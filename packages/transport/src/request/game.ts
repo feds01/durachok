@@ -22,6 +22,8 @@ export const GameSettingsSchema = z
          * deck, discarded, or in another player's hand, so that the players keep count themselves.
          */
         mythicMode: z.boolean().default(false),
+        /** Whether anyone with the pin, and the passphrase if there is one, can watch the lobby's games. */
+        allowSpectators: z.boolean().default(false),
     })
     .refine(
         (data) => {

@@ -102,6 +102,12 @@ export default function GameSettingsForm({ defaultValues, submitLabel, onSubmit:
                 label="Nobody is told how many cards are left, discarded or in another hand. Keep count yourself."
             />
             <ControlledSwitchInput
+                name="allowSpectators"
+                control={form.control}
+                legend="Spectators"
+                label="Anyone with the pin, and the passphrase if there is one, can watch the game, though not the cards in anyone's hand."
+            />
+            <ControlledSwitchInput
                 name="disableChat"
                 control={form.control}
                 legend="No chat"

@@ -1,7 +1,8 @@
 import { ClientEvents } from "@durachok/transport";
 
 import { PlayerNotInLobbyError } from "../../../controllers/common";
-import { ensureLobbyAccess } from "../common/auth";
+import { ApiError } from "../../../utils/error";
+import { ensureAuth, ensureLobbyAccess } from "../common/auth";
 import { context } from "../context";
 import { factory } from "./ctx";
 
@@ -13,9 +14,28 @@ const onJoin = factory.build({
         const meta = { event: "join", pin, clientId: client.id };
         logger.info(meta, "processing event");
 
-        // @@Todo: support spectators, if we the game allows for spectators, and
-        // if the game is currently in progress, we can send the specific connection
-        // the spectator version of the game.
+        // A spectator watches from the lobby's room, and is sent the game without anyone's cards.
+        // They don't take a place, so nobody else is told.
+        const { payload } = ensureAuth(client);
+        if (payload.kind === "spectator") {
+            if (!(await context.lobbyService.canWatch(payload, pin))) {
+                throw ApiError.http(401, "This lobby doesn't let anyone watch");
+            }
+
+            await client.join(pin);
+            logger.info(meta, "spectator watching lobby");
+
+            const lobby = await context.lobbyService.get(pin);
+            if (lobby.status !== "playing") {
+                await client.emit("join", { as: "spectator", lobby });
+                return;
+            }
+
+            const game = await context.gameService(lobby).getSpectatorState();
+            await client.emit("join", { as: "spectator", lobby, game: game.update, gameVersion: game.version });
+            return;
+        }
+
         const { name, isOwner } = await ensureLobbyAccess(context, client, pin);
 
         logger.info({ ...meta, name }, "user joining lobby");
@@ -39,7 +59,11 @@ const onJoin = factory.build({
         // they rejoin. Only the owner sees the passphrase.
         const lobby = await context.lobbyService.get(pin, { withPassphrase: isOwner });
         const game = lobby.status === "playing" ? await context.gameService(lobby).getGameStateFor(name) : undefined;
-        await client.emit("join", { lobby, ...(game && { game: game.update, gameVersion: game.version }) });
+        await client.emit("join", {
+            as: "player",
+            lobby,
+            ...(game && { game: game.update, gameVersion: game.version }),
+        });
 
         await withRooms(pin).broadcast("lobbyState", {
             update: {

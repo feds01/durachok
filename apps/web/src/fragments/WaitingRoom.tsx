@@ -4,6 +4,8 @@ import {
     Bot,
     Check,
     Crown,
+    Eye,
+    EyeOff,
     Layers,
     LayoutDashboard,
     Link2,
@@ -200,6 +202,7 @@ function settingsOf(lobby: Lobby): GameSettings {
         disableChat: lobby.disableChat,
         randomisePlayerOrder: lobby.randomisePlayerOrder,
         mythicMode: lobby.mythicMode,
+        allowSpectators: lobby.allowSpectators,
     };
 }
 
@@ -263,6 +266,13 @@ function SettingsSummary({ lobby, onChange }: SettingsSummaryProps) {
                 : "Everyone sees how many cards each player holds",
             off: !lobby.mythicMode,
             next: { ...settings, mythicMode: !lobby.mythicMode },
+        },
+        {
+            id: "spectators",
+            icon: lobby.allowSpectators ? Eye : EyeOff,
+            description: lobby.allowSpectators ? "Anyone with the pin can watch" : "Only the players see the game",
+            off: !lobby.allowSpectators,
+            next: { ...settings, allowSpectators: !lobby.allowSpectators },
         },
         {
             id: "chat",

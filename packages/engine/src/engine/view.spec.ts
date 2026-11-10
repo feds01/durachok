@@ -2,7 +2,18 @@ import { describe, expect, test } from "bun:test";
 
 import { GamePlayer, OpaquePlayerState, PlayerGameState } from "@durachok/transport";
 
-import { applyMove, canCover, canForfeit, canPlace, movesFor, movesOf, tableCards, turnOf, visibleHands } from "./view";
+import {
+    applyMove,
+    canCover,
+    canForfeit,
+    canPlace,
+    movesFor,
+    movesOf,
+    placesOf,
+    tableCards,
+    turnOf,
+    visibleHands,
+} from "./view";
 
 /** A game between "me" and "them", with hearts as trumps, me attacking and them defending. */
 function game(overrides: {
@@ -305,5 +316,20 @@ describe("the hands that a player can see", () => {
             { name: "third", cards: ["7C"] },
         ]);
         expect(visibleHands(state, "third").map(({ name }) => name)).toEqual(["third", "them"]);
+    });
+});
+
+describe("the players' places", () => {
+    test("go to the players who are out, in the order they went out", () => {
+        const places = placesOf([
+            { name: "a", out: null },
+            { name: "b", out: 20 },
+            { name: "c", out: 10 },
+        ]);
+
+        expect([...places]).toEqual([
+            ["c", 1],
+            ["b", 2],
+        ]);
     });
 });

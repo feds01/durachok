@@ -45,6 +45,7 @@ import {
     canForfeit,
     canPlace,
     movesFor,
+    placesOf,
     suitOf,
     tableCards,
     turnOf,
@@ -212,12 +213,9 @@ export default function GameTable({ lobby, game }: Props) {
         }
     };
 
-    // The players who are out, in the order they went out, which is their place.
-    const outOrder = [player, ...players]
-        .filter(({ out }) => out !== null)
-        .toSorted((a, b) => (a.out ?? 0) - (b.out ?? 0))
-        .map(({ name }) => name);
-    const placeOf = (name: string) => (outOrder.includes(name) ? outOrder.indexOf(name) + 1 : undefined);
+    // The players who are out, by the order they went out, which is their place.
+    const places = placesOf([player, ...players]);
+    const placeOf = (name: string) => places.get(name);
     const imageOf = (name: string) => lobby.players.find((other) => other.name === name)?.image;
 
     const canPass = player.action === "defend" && hand.some((card) => canPlace(view, card));

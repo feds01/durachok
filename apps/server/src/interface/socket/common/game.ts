@@ -3,10 +3,12 @@ import { Action } from "@durachok/transport";
 
 import { Context } from "../../context";
 import { Rooms } from "../actions/ctx";
+import { isSpectator } from "./auth";
 
 /**
  * Send each player of a lobby the actions that happened, with the game state
  * that they led to, from that player's perspective, and the game's version after them.
+ * Spectators are sent the game as a spectator sees it, without anyone's cards.
  */
 export async function emitActions(
     ctx: Context,
@@ -18,12 +20,17 @@ export async function emitActions(
 ) {
     const players = await ctx.lobbyService.getPlayers(pin);
     const clients = await withRooms(pin).getClients();
+    const spectatorState = game.getStateForSpectator();
 
     await Promise.all(
         clients.map(async (client) => {
-            const player = players.find((p) => p.socket === client.id);
+            if (isSpectator(client)) {
+                await client.emit("spectate", { actions, update: spectatorState, version });
+                return;
+            }
 
-            // Spectators aren't supported yet, and the update carries the player's own state.
+            // The update carries the player's own state, so only the game's players are sent one.
+            const player = players.find((p) => p.socket === client.id);
             if (!player || !game.players.has(player.name)) {
                 return;
             }

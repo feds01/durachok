@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { Lobby, PlayerGameState } from "@durachok/transport";
+import { Lobby, PlayerGameState, SpectatorGameState } from "@durachok/transport";
 
 import { LobbyEvent, LobbyState, initialLobbyState, reduceLobby } from "./state";
 
@@ -16,6 +16,7 @@ const lobby: Lobby = {
     randomisePlayerOrder: true,
     roundTimeout: 120,
     mythicMode: false,
+    allowSpectators: false,
     status: "waiting",
     players: [{ id: "owner-id", name: "owner" }],
     chat: [],
@@ -39,13 +40,25 @@ const game: PlayerGameState = {
     trump: { suit: "H", card: "AH" },
 };
 
+/** The game as a spectator watches it, without anyone's cards. */
+const watched: SpectatorGameState = {
+    players: [
+        { ...game.players[0]!, name: "owner", action: "attack" },
+        { ...game.players[0]!, name: "guest", action: "defend" },
+    ],
+    tableTop: {},
+    deckSize: 24,
+    discardSize: 0,
+    trump: game.trump,
+};
+
 function reduceAll(events: LobbyEvent[], state: LobbyState = initialLobbyState): LobbyState {
     return events.reduce(reduceLobby, state);
 }
 
 describe("lobby state", () => {
     test("joining a lobby stores it", () => {
-        const state = reduceAll([{ type: "join", lobby }]);
+        const state = reduceAll([{ type: "join", as: "player", lobby }]);
 
         expect(state.connection).toEqual({ kind: "joined" });
         expect(state.lobby).toEqual(lobby);
@@ -56,7 +69,7 @@ describe("lobby state", () => {
         const withPassphrase = { ...lobby, hasPassphrase: true, passphrase: "♡♢♣♤" };
         const guest = { id: "guest", name: "guest" };
         const state = reduceAll([
-            { type: "join", lobby: withPassphrase },
+            { type: "join", as: "player", lobby: withPassphrase },
             { type: "lobby", lobby: { ...lobby, hasPassphrase: true, players: [...lobby.players, guest] } },
         ]);
 
@@ -66,7 +79,7 @@ describe("lobby state", () => {
 
     test("a new passphrase replaces the old one", () => {
         const state = reduceAll([
-            { type: "join", lobby: { ...lobby, hasPassphrase: true, passphrase: "♡♢♣♤" } },
+            { type: "join", as: "player", lobby: { ...lobby, hasPassphrase: true, passphrase: "♡♢♣♤" } },
             { type: "lobby", lobby: { ...lobby, hasPassphrase: true, passphrase: "♤♣♢♡" } },
         ]);
 
@@ -75,7 +88,7 @@ describe("lobby state", () => {
 
     test("the owner's passphrase goes once the lobby no longer has one", () => {
         const state = reduceAll([
-            { type: "join", lobby: { ...lobby, hasPassphrase: true, passphrase: "♡♢♣♤" } },
+            { type: "join", as: "player", lobby: { ...lobby, hasPassphrase: true, passphrase: "♡♢♣♤" } },
             { type: "lobby", lobby: { ...lobby, hasPassphrase: false } },
         ]);
 
@@ -84,7 +97,7 @@ describe("lobby state", () => {
 
     test("players who never had the passphrase don't get one", () => {
         const state = reduceAll([
-            { type: "join", lobby },
+            { type: "join", as: "player", lobby },
             { type: "lobby", lobby },
         ]);
 
@@ -92,14 +105,14 @@ describe("lobby state", () => {
     });
 
     test("the countdown runs until the game starts", () => {
-        const counting = reduceAll([{ type: "join", lobby }, { type: "countdown" }]);
+        const counting = reduceAll([{ type: "join", as: "player", lobby }, { type: "countdown" }]);
         expect(counting.countingDown).toBe(true);
 
         expect(reduceLobby(counting, { type: "start" }).countingDown).toBe(false);
     });
 
     test("the server's close reasons close the lobby, and unknown ones read as a closed lobby", () => {
-        const joined = reduceAll([{ type: "join", lobby }]);
+        const joined = reduceAll([{ type: "join", as: "player", lobby }]);
 
         expect(reduceLobby(joined, { type: "close", reason: "kicked" }).connection).toEqual({
             kind: "closed",
@@ -113,10 +126,10 @@ describe("lobby state", () => {
 
     test("a closed lobby stays closed as the socket shuts down", () => {
         const state = reduceAll([
-            { type: "join", lobby },
+            { type: "join", as: "player", lobby },
             { type: "close", reason: "kicked" },
             { type: "disconnected", reconnecting: true },
-            { type: "join", lobby },
+            { type: "join", as: "player", lobby },
         ]);
 
         expect(state.connection).toEqual({ kind: "closed", reason: "kicked" });
@@ -134,12 +147,12 @@ describe("lobby state", () => {
 
     test("a dropped connection reconnects and rejoins", () => {
         const dropped = reduceAll([
-            { type: "join", lobby },
+            { type: "join", as: "player", lobby },
             { type: "disconnected", reconnecting: true },
         ]);
         expect(dropped.connection).toEqual({ kind: "reconnecting" });
 
-        expect(reduceLobby(dropped, { type: "join", lobby }).connection).toEqual({ kind: "joined" });
+        expect(reduceLobby(dropped, { type: "join", as: "player", lobby }).connection).toEqual({ kind: "joined" });
     });
 
     test("being turned away while joining closes the lobby, and later errors are shown", () => {
@@ -154,7 +167,7 @@ describe("lobby state", () => {
             reason: "unauthorized",
         });
 
-        const joined = reduceAll([{ type: "join", lobby }]);
+        const joined = reduceAll([{ type: "join", as: "player", lobby }]);
         const state = reduceLobby(joined, { type: "error", code: "bad_request", message: "Not enough players", at: 2 });
         expect(state.connection).toEqual({ kind: "joined" });
         expect(state.error).toEqual({ message: "Not enough players", at: 2 });
@@ -162,7 +175,7 @@ describe("lobby state", () => {
 
     test("a move waits for the server's answer, whether it takes the move or not", () => {
         const playing = reduceAll([
-            { type: "join", lobby: { ...lobby, status: "playing" }, game },
+            { type: "join", as: "player", lobby: { ...lobby, status: "playing" }, game },
             { type: "move", move: { type: "place", card: "6S" } },
         ]);
         expect(playing.pending).toEqual({ type: "place", card: "6S" });
@@ -181,7 +194,7 @@ describe("lobby state", () => {
 
     test("a move without a game is ignored", () => {
         const state = reduceAll([
-            { type: "join", lobby },
+            { type: "join", as: "player", lobby },
             { type: "move", move: { type: "forfeit" } },
         ]);
         expect(state.pending).toBeNull();
@@ -193,7 +206,7 @@ describe("lobby state", () => {
             { name: "owner", out: null },
         ];
         const finished = reduceAll([
-            { type: "join", lobby: { ...lobby, status: "playing" }, game },
+            { type: "join", as: "player", lobby: { ...lobby, status: "playing" }, game },
             { type: "victory", players },
         ]);
 
@@ -207,7 +220,7 @@ describe("lobby state", () => {
     test("a message joins the lobby's chat", () => {
         const message = { name: "guest", time: 1, message: "hello" };
         const state = reduceAll([
-            { type: "join", lobby },
+            { type: "join", as: "player", lobby },
             { type: "message", message },
         ]);
 
@@ -217,7 +230,7 @@ describe("lobby state", () => {
     test("a message that an update of the lobby already brought isn't added again", () => {
         const message = { name: "guest", time: 1, message: "hello" };
         const state = reduceAll([
-            { type: "join", lobby },
+            { type: "join", as: "player", lobby },
             { type: "lobby", lobby: { ...lobby, version: 2, chat: [message] } },
             { type: "message", message },
         ]);
@@ -228,7 +241,7 @@ describe("lobby state", () => {
     test("an update of the lobby that arrives after a newer one is left out", () => {
         const guest = { id: "guest", name: "guest" };
         const state = reduceAll([
-            { type: "join", lobby },
+            { type: "join", as: "player", lobby },
             { type: "lobby", lobby: { ...lobby, version: 3, players: [...lobby.players, guest] } },
             { type: "lobby", lobby: { ...lobby, version: 2 } },
         ]);
@@ -239,11 +252,32 @@ describe("lobby state", () => {
 
     test("the owner is sent the lobby again at the same version, with the passphrase", () => {
         const state = reduceAll([
-            { type: "join", lobby },
+            { type: "join", as: "player", lobby },
             { type: "lobby", lobby: { ...lobby, version: 2, hasPassphrase: true } },
             { type: "lobby", lobby: { ...lobby, version: 2, hasPassphrase: true, passphrase: "♡♢♣♤" } },
         ]);
 
         expect(state.lobby?.passphrase).toBe("♡♢♣♤");
+    });
+
+    test("a spectator watches the game that's on, and each update of it, until it ends", () => {
+        const playing = { ...lobby, status: "playing" as const };
+        const watching = reduceAll([{ type: "join", as: "spectator", lobby: playing, game: watched }]);
+        expect(watching.connection).toEqual({ kind: "joined" });
+        expect(watching.watching).toEqual(watched);
+        expect(watching.game).toBeNull();
+
+        const moved = { ...watched, tableTop: { "6S": null } };
+        const actions = [{ type: "place" as const, card: "6S", player: "owner" }];
+        const updated = reduceAll([{ type: "spectate", game: moved, actions }], watching);
+        expect(updated.watching).toEqual(moved);
+        expect(updated.actions).toEqual(actions);
+
+        const over = reduceAll([{ type: "victory", players: [] }], updated);
+        expect(over.watching).toBeNull();
+    });
+
+    test("a spectator who starts watching before a game waits for it", () => {
+        expect(reduceAll([{ type: "join", as: "spectator", lobby }]).watching).toBeNull();
     });
 });

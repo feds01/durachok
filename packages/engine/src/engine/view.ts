@@ -14,7 +14,7 @@ import { Table, beats, passesAttack, rankOnTable, roomForAttack, uncoveredCount 
 export type TableCard = { card: string; coveredBy: string | null };
 
 /** The cards on the table, in the order that they were played, which is their position. */
-export function tableCards(state: PlayerGameState): TableCard[] {
+export function tableCards(state: Pick<PlayerGameState, "tableTop">): TableCard[] {
     return Object.entries(state.tableTop).map(([card, coveredBy]) => ({ card, coveredBy }));
 }
 
@@ -216,4 +216,16 @@ export function applyMove(state: PlayerGameState, move: PlayerMove): PlayerGameS
         case "forfeit":
             return { ...state, player: { ...state.player, turned: true } };
     }
+}
+
+/** A player as their place goes by: their name, and when they went out of the game, if they have. */
+export interface Finisher {
+    name: string;
+    out: number | null;
+}
+
+/** The places of the players who are out of the game, by name: the first out is first. */
+export function placesOf(players: readonly Finisher[]): ReadonlyMap<string, number> {
+    const finished = players.filter(({ out }) => out !== null).toSorted((a, b) => (a.out ?? 0) - (b.out ?? 0));
+    return new Map(finished.map(({ name }, index) => [name, index + 1]));
 }

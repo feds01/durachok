@@ -33,6 +33,7 @@ export const config = createSimpleConfig({
         victory: { schema: ServerEvents.victory },
         close: { schema: ServerEvents.close },
         playerState: { schema: ServerEvents.playerState },
+        spectate: { schema: ServerEvents.spectate },
         action: { schema: ServerEvents.action },
         error: { schema: ServerEvents.error },
     },

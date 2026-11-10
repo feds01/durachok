@@ -1,9 +1,11 @@
 import {
     Action,
+    JoinMessage,
     Lobby,
     Message,
     PlayerGameState,
     PlayerMove,
+    SpectatorGameState,
     VictoryMessage,
     isSameMessage,
 } from "@durachok/transport";
@@ -47,6 +49,8 @@ export interface LobbyState {
     lobby: Lobby | null;
     /** This player's view of the game, once one is being played. */
     game: PlayerGameState | null;
+    /** The game as a spectator watches it, without anyone's cards, once one is being played. */
+    watching: SpectatorGameState | null;
     /** The move that this player sent, which the server hasn't answered yet. */
     pending: PlayerMove | null;
     /** What happened in the game's last update, so that the table can show it happening. */
@@ -63,6 +67,7 @@ export const initialLobbyState: LobbyState = {
     connection: { kind: "connecting" },
     lobby: null,
     game: null,
+    watching: null,
     pending: null,
     actions: [],
     results: null,
@@ -72,11 +77,12 @@ export const initialLobbyState: LobbyState = {
 
 /** What happened on the socket, as the lobby state sees it. */
 export type LobbyEvent =
-    | { type: "join"; lobby: Lobby; game?: PlayerGameState }
+    | ({ type: "join" } & JoinMessage)
     | { type: "lobby"; lobby: Lobby }
     | { type: "countdown" }
     | { type: "start" }
     | { type: "game"; game: PlayerGameState; actions?: Action[] }
+    | { type: "spectate"; game: SpectatorGameState; actions: Action[] }
     | { type: "move"; move: PlayerMove }
     | { type: "victory"; players: VictoryMessage["players"] }
     | { type: "dismissResults" }
@@ -87,6 +93,20 @@ export type LobbyEvent =
     | { type: "disconnected"; reconnecting: boolean }
     | { type: "connectError"; retrying: boolean };
 
+/**
+ * The lobby and its game as they are when the client (re)joins: as a player, with the game as
+ * they see it, or as a spectator, with the game that they watch.
+ */
+function joined(state: LobbyState, event: JoinMessage): LobbyState {
+    const lobby = { ...state, connection: { kind: "joined" } as const, lobby: event.lobby };
+    switch (event.as) {
+        case "player":
+            return { ...lobby, game: event.game ?? null, pending: null };
+        case "spectator":
+            return { ...lobby, watching: event.game ?? null };
+    }
+}
+
 /** Apply what happened on the socket to the lobby state. */
 export function reduceLobby(state: LobbyState, event: LobbyEvent): LobbyState {
     // Once closed, the lobby stays closed, whatever the socket does as it shuts down.
@@ -96,14 +116,10 @@ export function reduceLobby(state: LobbyState, event: LobbyEvent): LobbyState {
 
     switch (event.type) {
         case "join":
-            // The lobby and game as they are when the player (re)joins.
-            return {
-                ...state,
-                connection: { kind: "joined" },
-                lobby: event.lobby,
-                game: event.game ?? null,
-                pending: null,
-            };
+            return joined(state, event);
+        case "spectate":
+            // The lobby's client hands on only updates newer than the last, as for a player's.
+            return { ...state, watching: event.game, actions: event.actions };
         case "lobby": {
             // An update that arrived after a newer one. The same version can come again,
             // e.g. with the passphrase for the owner, so only an older one is left out.
@@ -140,6 +156,7 @@ export function reduceLobby(state: LobbyState, event: LobbyEvent): LobbyState {
                 ...state,
                 lobby: state.lobby && { ...state.lobby, status: "waiting" },
                 game: null,
+                watching: null,
                 pending: null,
                 actions: [],
                 results: event.players,
