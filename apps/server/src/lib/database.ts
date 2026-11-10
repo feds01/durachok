@@ -1,5 +1,5 @@
 import { AsyncLocalStorage } from "node:async_hooks";
-import mongoose, { Query, Schema, UpdateQuery, isValidObjectId } from "mongoose";
+import mongoose, { Query, Schema, isValidObjectId } from "mongoose";
 
 import { MONGO_URI } from "../config";
 import { expr, isDef } from "../utils";
@@ -92,7 +92,12 @@ export interface Versioned {
 export function versioning(schema: Schema): void {
     schema.add({ version: { type: Number, required: true, default: 0 } });
     schema.pre(["updateOne", "findOneAndUpdate"], function (this: Query<unknown, Versioned>) {
-        const update = (this.getUpdate() ?? {}) as UpdateQuery<Versioned>;
-        this.setUpdate({ ...update, $inc: { ...update.$inc, version: 1 } });
+        const update = this.getUpdate();
+        // An update that's an aggregation pipeline counts the change in a stage of its own.
+        if (Array.isArray(update)) {
+            this.setUpdate([...update, { $set: { version: { $add: ["$version", 1] } } }]);
+            return;
+        }
+        this.setUpdate({ ...update, $inc: { ...update?.$inc, version: 1 } });
     });
 }
