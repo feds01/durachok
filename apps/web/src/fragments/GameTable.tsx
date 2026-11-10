@@ -22,6 +22,7 @@ import PlayerHand from "@/components/game/Hand";
 import OpponentSeat from "@/components/game/OpponentSeat";
 import { DeckPile, DiscardPile } from "@/components/game/Piles";
 import PlayingCard from "@/components/game/PlayingCard";
+import RemovePlayerDialog from "@/components/game/RemovePlayerDialog";
 import RoleBadge from "@/components/game/RoleBadge";
 import RoundAnnouncement from "@/components/game/RoundAnnouncement";
 import SortControl from "@/components/game/SortControl";
@@ -56,6 +57,8 @@ import { Lobby, PlayerGameState, PlayerMove } from "@durachok/transport";
 type Props = {
     lobby: Lobby;
     game: PlayerGameState;
+    /** Whether the player owns the lobby, and so may remove another player from the game. */
+    isOwner: boolean;
 };
 
 /** How long the round waits on an attacker before it takes them as done, in seconds. */
@@ -66,10 +69,17 @@ const DONE_TIMEOUT_SECONDS = 8;
  * the discarded cards across the middle, and the player's own cards along the bottom. The
  * engine says what the player can do, and the table shows it.
  */
-export default function GameTable({ lobby, game }: Props) {
-    const { pending, actions, dispatchMove } = useLobbyStore(
-        useShallow((state) => ({ pending: state.pending, actions: state.actions, dispatchMove: state.dispatchMove })),
+export default function GameTable({ lobby, game, isOwner }: Props) {
+    const { pending, actions, dispatchMove, kick } = useLobbyStore(
+        useShallow((state) => ({
+            pending: state.pending,
+            actions: state.actions,
+            dispatchMove: state.dispatchMove,
+            kick: state.kick,
+        })),
     );
+    // The player whom the owner asked to remove from the game, until they confirm it.
+    const [removing, setRemoving] = useState<string | null>(null);
     const [selected, setSelected] = useState<string | null>(null);
     const [dragging, setDragging] = useState<string | null>(null);
     const [dropped, setDropped] = useState<string | null>(null);
@@ -277,15 +287,24 @@ export default function GameTable({ lobby, game }: Props) {
                                 key={other.name}
                                 player={other}
                                 image={imageOf(other.name)}
-                                place={placeOf(other.name)}
+                                place={places.get(other.name)}
                                 onShowCards={
                                     seenHands.some(({ name }) => name === other.name)
                                         ? () => setShownHand(other.name)
                                         : undefined
                                 }
+                                {...(isOwner && !other.removed && { onRemove: () => setRemoving(other.name) })}
                             />
                         ))}
                     </ul>
+                    <RemovePlayerDialog
+                        player={removing}
+                        onConfirm={(name) => {
+                            setRemoving(null);
+                            kick(name);
+                        }}
+                        onClose={() => setRemoving(null)}
+                    />
                     <HandsDialog
                         hands={seenHands}
                         focus={shownHand}
@@ -341,7 +360,7 @@ export default function GameTable({ lobby, game }: Props) {
                         <div className="flex items-center gap-3 px-4">
                             <UserAvatar image={imageOf(me)} size={32} />
                             <span className="font-semibold">{me}</span>
-                            <RoleBadge action={player.action} turned={player.turned} place={placeOf(me)} />
+                            <RoleBadge action={player.action} turned={player.turned} place={places.get(me)} />
                         </div>
                         {/* Out of the game, the player can look at the hands still in it, whether or not hints are on. */}
                         {seenHands.length > 0 && (

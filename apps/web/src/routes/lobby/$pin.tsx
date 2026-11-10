@@ -132,7 +132,7 @@ function LobbyPage() {
                     onLeave={onLeave}
                 />
             ) : game ? (
-                <GameTable lobby={lobby} game={game} />
+                <GameTable lobby={lobby} game={game} isOwner={isOwner} />
             ) : (
                 // The game starts once the countdown ends, and its first update deals the cards.
                 <Loader label="Dealing the cards" />
