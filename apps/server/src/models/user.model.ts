@@ -7,7 +7,7 @@ export interface IUser {
     password: string;
     image: boolean;
     createdAt: Date;
-    statistics?: UserStatistics;
+    statistics: UserStatistics;
 }
 
 export type UserDocument = HydratedDocument<IUser>;
@@ -17,7 +17,12 @@ const UserSchema = new Schema<IUser>({
     email: { type: String, required: true, unique: true },
     name: { type: String, required: false, unique: true },
     password: { type: String, required: true, minLength: 12 },
-    statistics: { type: Object, required: false },
+    // What they've done in the games that they finished, which a game adds to as it ends.
+    statistics: {
+        gamesPlayed: { type: Number, required: true, default: 0 },
+        gamesWon: { type: Number, required: true, default: 0 },
+        gamesLost: { type: Number, required: true, default: 0 },
+    },
     createdAt: { type: Date, required: false, default: Date.now },
 });
 

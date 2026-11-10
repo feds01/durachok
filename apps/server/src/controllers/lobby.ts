@@ -1,4 +1,4 @@
-import { CardSuits } from "@durachok/engine";
+import { CardSuits, GameResult, gameResult } from "@durachok/engine";
 import { GameSettings, LobbyInfo } from "@durachok/transport";
 import { GameStatus } from "@durachok/transport";
 import { Lobby, Message } from "@durachok/transport";
@@ -11,7 +11,9 @@ import { Logger } from "pino";
 import { transaction } from "../lib/database";
 import { CHAT_HISTORY, MAX_LOBBIES_PER_OWNER } from "../lib/limits";
 import Lobbies, { PopulatedLobbyDocument, PopulatedLobbyFields } from "../models/lobby.model";
+import Users from "../models/user.model";
 import { TokenPayload } from "../schemas/auth";
+import { DBGameSchema } from "../schemas/game";
 import { DBLobby, DBLobbySchema, DBPlayer, identityOf, isPlayer } from "../schemas/lobby";
 import { assert, expr, isDef } from "../utils";
 import {
@@ -401,21 +403,56 @@ export class LobbyService {
     /**
      * Mark a lobby as waiting again, after its game finished, so that its players can play another.
      * A player who left during the game kept their place in it, so that they could come back, and
-     * gives it up now, as they would have in the waiting room, except the owner.
+     * gives it up now, as they would have in the waiting room, except the owner. The game counts
+     * in its registered players' statistics in the same transaction, and only once, since only a
+     * lobby that's still playing finishes its game, @see countGame.
      */
     public async finishGame(pin: string): Promise<void> {
-        const lobby = await Lobbies.findOne({ pin }, { owner: 1 });
-        if (!isDef(lobby)) {
-            throw new LobbyNotFoundError();
-        }
+        await transaction(async () => {
+            const lobby = await Lobbies.findOne({ pin }, { owner: 1, players: 1 });
+            if (!isDef(lobby)) {
+                throw new LobbyNotFoundError();
+            }
 
-        await Lobbies.updateOne(
-            { pin },
-            {
-                $set: { status: "waiting" },
-                $pull: { players: { socket: null, registered: { $ne: lobby.owner.toString() } } },
-            },
-        );
+            // Only a lobby that's still playing finishes its game, so that the game counts once.
+            const finished = await Lobbies.updateOne(
+                { pin, status: "playing" },
+                {
+                    $set: { status: "waiting" },
+                    $pull: { players: { socket: null, registered: { $ne: lobby.owner.toString() } } },
+                },
+            );
+            if (finished.modifiedCount === 0) {
+                return;
+            }
+
+            const game = DBGameSchema.parse((await this.commonService.getGameDbObject(pin)).toObject());
+            await this.countGame(lobby.players, gameResult(game.state.players.values()));
+        });
+    }
+
+    /**
+     * Count a finished game in the statistics of its registered players, @see UserStatistics:
+     * that they played it, and whether they won it or were the durak. Anonymous players and
+     * bots have no account to count it in.
+     */
+    private async countGame(players: DBPlayer[], { winners, durak }: GameResult): Promise<void> {
+        const accounts = new Map(players.flatMap(({ name, registered }) => (registered ? [[name, registered]] : [])));
+        const accountsOf = (names: string[]) => names.flatMap((name) => accounts.get(name) ?? []);
+
+        const counts = [
+            { field: "statistics.gamesPlayed", ids: [...accounts.values()] },
+            { field: "statistics.gamesWon", ids: accountsOf(winners) },
+            { field: "statistics.gamesLost", ids: accountsOf(durak === null ? [] : [durak]) },
+        ];
+        const updates = counts
+            .filter(({ ids }) => ids.length > 0)
+            .map(({ field, ids }) => ({
+                updateMany: { filter: { _id: { $in: ids } }, update: { $inc: { [field]: 1 } } },
+            }));
+        if (updates.length > 0) {
+            await Users.bulkWrite(updates);
+        }
     }
 
     /**

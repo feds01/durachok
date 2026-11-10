@@ -5,8 +5,8 @@
  * and uses a database of its own, which it drops afterwards. Set `TEST_SERVER_LOG` to a
  * file to keep the server's logs.
  */
-import { canForfeit, canPlace, movesFor, turnOf } from "@durachok/engine";
-import { LobbyClient, type PlayerGameState, type PlayerMove } from "@durachok/transport";
+import { canForfeit, canPlace, gameResult, movesFor, turnOf } from "@durachok/engine";
+import { LobbyClient, type PlayerGameState, type PlayerMove, type UserStatistics } from "@durachok/transport";
 import type { Subprocess } from "bun";
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import mongoose from "mongoose";
@@ -198,6 +198,9 @@ describe.skipIf(!available)("Game flow", () => {
             { settings: { maxPlayers: 2, passphrase: true, shortGameDeck: true, roundTimeout: 120 } },
             ownerTokens,
         );
+        const statistics = async () =>
+            (await trpc<{ statistics: UserStatistics }>("users.get", undefined, ownerTokens, "GET")).statistics;
+        expect(await statistics()).toEqual({ gamesPlayed: 0, gamesWon: 0, gamesLost: 0 });
 
         // Sockets need tokens.
         await expect(connect()).rejects.toThrow("unauthorized");
@@ -379,6 +382,14 @@ describe.skipIf(!available)("Game flow", () => {
         const after = await trpc<{ status: string; players: unknown[] }>("lobbies.get", { pin }, ownerTokens, "GET");
         expect(after.status).toBe("waiting");
         expect(after.players).toHaveLength(2);
+
+        // The game counts in the owner's statistics, as the guest has no account to count it in.
+        const { winners, durak } = gameResult(victory!.players);
+        expect(await statistics()).toEqual({
+            gamesPlayed: 1,
+            gamesWon: winners.includes(`owner-${id}`) ? 1 : 0,
+            gamesLost: durak === `owner-${id}` ? 1 : 0,
+        });
     }, 60_000);
 
     test("the owner changes the lobby's settings before the game", async () => {

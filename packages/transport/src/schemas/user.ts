@@ -35,13 +35,17 @@ export const UserSchema = z.object({
 
 export type User = z.infer<typeof UserSchema>;
 
+/**
+ * What a registered player has done in the games that they played to the end, counted from
+ * when the server began to keep score.
+ */
 export const UserStatisticsSchema = z.object({
+    /** The games that they played to the end. */
     gamesPlayed: z.number().int(),
-    gamesHosted: z.number().int(),
-    gamesResigned: z.number().int(),
+    /** The games that they won, by going out first. */
     gamesWon: z.number().int(),
+    /** The games that they lost, as the durak, who is left holding cards. */
     gamesLost: z.number().int(),
-    averageRounds: z.number().int(),
 });
 
 export type UserStatistics = z.infer<typeof UserStatisticsSchema>;

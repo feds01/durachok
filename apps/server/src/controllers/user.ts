@@ -78,8 +78,11 @@ export class UserService {
             email: user.email,
             image: await this.getUserImageURL(user),
             games,
-            // @@Todo: compute statistics.
-            // statistics: {}
+            statistics: {
+                gamesPlayed: user.statistics.gamesPlayed,
+                gamesWon: user.statistics.gamesWon,
+                gamesLost: user.statistics.gamesLost,
+            },
         };
     }
 
