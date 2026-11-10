@@ -22,7 +22,7 @@ const LoginSearchSchema = z.object({
 export const Route = createFileRoute("/login")({
     validateSearch: (search) => LoginSearchSchema.parse(search),
     beforeLoad: ({ context, search }) => {
-        if (context.auth.kind === "logged-in" && context.auth.user.kind === "registered") {
+        if (context.auth.account) {
             throw redirect({
                 to: search.redirect ?? "/user",
             });
@@ -54,11 +54,12 @@ export default function Login() {
         });
     };
 
+    const hasAccount = state.account !== null;
     useEffect(() => {
-        if (state.kind === "logged-in") {
+        if (hasAccount) {
             navigate({ to: search.redirect ?? "/user" });
         }
-    }, [state.kind, search.redirect, navigate]);
+    }, [hasAccount, search.redirect, navigate]);
 
     return (
         <div className="flex min-h-full flex-col items-center justify-center px-4 py-12">

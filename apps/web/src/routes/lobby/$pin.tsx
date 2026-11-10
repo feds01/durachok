@@ -5,7 +5,7 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import Loader from "@/components/Loader";
 import LobbyChat from "@/components/LobbyChat";
 import LobbyNotices from "@/components/LobbyNotices";
-import { useAuthDispatch, useAuthState } from "@/contexts/auth";
+import { sessionFor, useAuthDispatch, useAuthState } from "@/contexts/auth";
 import { useLobbyConnection, useLobbyStore } from "@/contexts/lobby";
 import GameResults from "@/fragments/GameResults";
 import GameTable from "@/fragments/GameTable";
@@ -16,13 +16,13 @@ import { TRPCClientError } from "@trpc/client";
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/lobby/$pin")({
-    // Visitors without a session join from the home page, with the pin filled in.
+    // Visitors without a seat in the lobby or an account join from the home page, with the pin filled in.
     beforeLoad: ({ context, params }) => {
-        if (context.auth.kind === "logged-out") {
+        if (!sessionFor(context.auth, params.pin)) {
             throw redirect({ to: "/", search: { startPin: params.pin } });
         }
     },
-    // So do players who aren't in the lobby, e.g. with a session for another lobby.
+    // So do players who aren't in the lobby, e.g. with an account that never joined it.
     loader: async ({ params: { pin } }) => {
         const isMember = await trpcNativeClient.lobbies.get.query({ pin }).then(
             () => true,
@@ -74,16 +74,16 @@ function LobbyPage() {
         return <Loader label={`Joining lobby ${pin}`} />;
     }
 
-    const user = auth.kind === "logged-in" ? auth.user : null;
+    const user = sessionFor(auth, pin)?.user ?? null;
     const isOwner = user?.kind === "registered" && user.id === lobby.owner.id;
 
     const onLeave = async () => {
         leave();
         await navigate({ to: "/" });
 
-        // An anonymous session only belongs to the lobby that the player just left.
+        // An anonymous player's seat belongs to the lobby that they just left, and the others stay.
         if (user?.kind === "anonymous") {
-            updateAuth({ type: "logout" });
+            updateAuth({ type: "leave", pin });
         }
     };
 

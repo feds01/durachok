@@ -16,7 +16,7 @@ import { Link, createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/user/settings")({
     beforeLoad: ({ context, location }) => {
-        if (context.auth.kind === "logged-out" || context.auth.user.kind === "anonymous") {
+        if (!context.auth.account) {
             throw redirect({
                 to: "/login",
                 search: {
@@ -26,7 +26,7 @@ export const Route = createFileRoute("/user/settings")({
         }
 
         return {
-            user: context.auth.user,
+            user: context.auth.account.user,
         };
     },
     component: UserSettingsRoute,

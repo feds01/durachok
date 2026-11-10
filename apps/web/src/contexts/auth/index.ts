@@ -1,6 +1,7 @@
 import { useAuth, useAuthDispatch, useAuthState } from "./context";
 import { AuthProvider } from "./provider";
-import { RegisteredUser } from "./reducer";
+import { AnonymousUser, RegisteredUser } from "./reducer";
 
-export type { RegisteredUser };
+export type { AnonymousUser, RegisteredUser };
+export { sessionFor } from "../../utils/auth";
 export { AuthProvider, useAuthState, useAuthDispatch, useAuth };

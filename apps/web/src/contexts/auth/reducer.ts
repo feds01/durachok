@@ -1,112 +1,91 @@
-import { assert } from "../../utils";
+import {
+    Account,
+    RefreshedTokens,
+    RegisteredUser,
+    Seat,
+    StoredAuth,
+    loadAuth,
+    replaceTokens,
+    saveAuth,
+} from "../../utils/auth";
 
-/** Information that a registered user contextually stores. */
-export type RegisteredUser = {
-    kind: "registered";
-    id: string;
-    name: string;
-    email: string;
-    image?: string;
-};
+export type { AnonymousUser, RegisteredUser } from "../../utils/auth";
 
-/** Information that a anonymous user contextually stores. */
-type AnonymousUser = {
-    kind: "anonymous";
-    // @@Todo: support anonymous users entering multiple lobbies.
-    lobby: string;
-    /** The name that they joined the lobby under. */
-    name: string;
-};
-
-/** The state when we have a logged in user, whether that is anonymous or not. */
-type LoggedInAuthState = {
-    kind: "logged-in";
-    token: string;
-    refreshToken: string;
-    user: RegisteredUser | AnonymousUser;
-};
-
-/** The state when we are logged out. */
-type LoggedOutAuthState = {
-    kind: "logged-out";
-};
-
-/** The authentication state, either "logged-in" or "logged-out" */
-export type AuthState = LoggedInAuthState | LoggedOutAuthState;
+/** The authentication state: the account that the person logged in to, and their seats in lobbies. */
+export type AuthState = StoredAuth;
 
 /** An action that indicates what happened to the auth-state. */
 export type AuthAction =
     | {
+          /** The person logged in to their account. */
           type: "login";
-          payload: Omit<LoggedInAuthState, "kind">;
+          payload: Account;
+      }
+    | {
+          /** The person joined a lobby without an account, and got a seat in it. */
+          type: "join";
+          pin: string;
+          payload: Seat;
+      }
+    | {
+          /** The person gave up their seat in a lobby. */
+          type: "leave";
+          pin: string;
       }
     | {
           type: "update";
           payload: Omit<RegisteredUser, "kind">;
       }
     | {
-          /** The server refreshed the user's expired tokens. */
+          /** The server refreshed a session's expired tokens. */
           type: "tokens";
-          payload: Pick<LoggedInAuthState, "token" | "refreshToken">;
+          payload: RefreshedTokens;
       }
     | {
+          /** The person logged out of their account. Their seats stay theirs. */
           type: "logout";
       };
 
+/** The auth that the browser kept, which is kept again, as it may have been migrated or pruned, @see readAuth. */
 export function init(): AuthState {
-    // @@Cleanup: use zod to validate this.
-    const token = localStorage.getItem("token");
-    const refreshToken = localStorage.getItem("refreshToken");
-    const user = localStorage.getItem("user");
+    const auth = loadAuth();
+    saveAuth(auth);
+    return auth;
+}
 
-    if (!token || !refreshToken || !user) {
-        return { kind: "logged-out" };
+/** The auth-state after an action. */
+export function reduceAuth(state: AuthState, action: AuthAction): AuthState {
+    switch (action.type) {
+        case "login":
+            return { ...state, account: action.payload };
+        case "join":
+            return { ...state, seats: { ...state.seats, [action.pin]: action.payload } };
+        case "leave":
+            return {
+                ...state,
+                seats: Object.fromEntries(Object.entries(state.seats).filter(([pin]) => pin !== action.pin)),
+            };
+        case "update":
+            if (!state.account) {
+                return state;
+            }
+            return { ...state, account: { ...state.account, user: { ...action.payload, kind: "registered" } } };
+        case "tokens":
+            return replaceTokens(state, action.payload);
+        case "logout":
+            return { ...state, account: null };
     }
-
-    // Anonymous sessions saved before they kept the player's name can't tell which player
-    // is theirs, and only belong to one lobby, so they are dropped.
-    const parsed: LoggedInAuthState["user"] = JSON.parse(user);
-    if (parsed.kind === "anonymous" && !parsed.name) {
-        return { kind: "logged-out" };
-    }
-
-    return {
-        kind: "logged-in",
-        token,
-        refreshToken,
-        user: parsed,
-    };
 }
 
 /**
- * Function to reduce the current state of the auth-context based on the action
- * that was dispatched.
- * */
+ * Function to reduce the current state of the auth-context based on the action that was
+ * dispatched. The browser keeps the new state straight away, as the requests that follow,
+ * such as the next page's, read their tokens from it.
+ */
 export const reducer = (state: AuthState, action: AuthAction): AuthState => {
-    switch (action.type) {
-        case "login":
-            localStorage.setItem("token", action.payload.token);
-            localStorage.setItem("refreshToken", action.payload.refreshToken);
-            localStorage.setItem("user", JSON.stringify(action.payload.user));
-            return { kind: "logged-in", ...action.payload };
-        case "update":
-            assert(state.kind === "logged-in");
-            localStorage.setItem("user", JSON.stringify(action.payload));
-            return {
-                ...state,
-                user: { ...action.payload, kind: "registered" },
-            };
-        case "tokens":
-            if (state.kind !== "logged-in") {
-                return state;
-            }
-            localStorage.setItem("token", action.payload.token);
-            localStorage.setItem("refreshToken", action.payload.refreshToken);
-            return { ...state, ...action.payload };
-        case "logout":
-            localStorage.removeItem("token");
-            localStorage.removeItem("refreshToken");
-            localStorage.removeItem("user");
-            return { kind: "logged-out" };
+    const next = reduceAuth(state, action);
+    if (next !== state) {
+        saveAuth(next);
     }
+    return next;
 };

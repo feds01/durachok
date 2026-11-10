@@ -26,10 +26,7 @@ function Index() {
     const redirectToLobby = ({ pin, name, tokens }: LobbyAuthInfo) => {
         // Anonymous players get tokens for the lobby that they joined.
         if (isDef(tokens)) {
-            auth({
-                type: "login",
-                payload: { user: { kind: "anonymous", lobby: pin, name }, ...tokens },
-            });
+            auth({ type: "join", pin, payload: { user: { kind: "anonymous", name }, ...tokens } });
         }
 
         navigator({

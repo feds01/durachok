@@ -2,7 +2,7 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/logout")({
     beforeLoad: ({ context }) => {
-        if (context.auth.kind === "logged-in" && context.auth.user.kind === "registered") {
+        if (context.auth.account) {
             context.logout();
 
             throw redirect({
