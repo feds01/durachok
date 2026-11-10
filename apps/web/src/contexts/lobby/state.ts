@@ -1,5 +1,6 @@
 import {
     Action,
+    JoinMessage,
     Lobby,
     Message,
     PlayerGameState,
@@ -76,12 +77,11 @@ export const initialLobbyState: LobbyState = {
 
 /** What happened on the socket, as the lobby state sees it. */
 export type LobbyEvent =
-    | { type: "join"; lobby: Lobby; game?: PlayerGameState }
+    | ({ type: "join" } & JoinMessage)
     | { type: "lobby"; lobby: Lobby }
     | { type: "countdown" }
     | { type: "start" }
     | { type: "game"; game: PlayerGameState; actions?: Action[] }
-    | { type: "watch"; lobby: Lobby; game?: SpectatorGameState }
     | { type: "spectate"; game: SpectatorGameState; actions: Action[] }
     | { type: "move"; move: PlayerMove }
     | { type: "victory"; players: VictoryMessage["players"] }
@@ -93,6 +93,20 @@ export type LobbyEvent =
     | { type: "disconnected"; reconnecting: boolean }
     | { type: "connectError"; retrying: boolean };
 
+/**
+ * The lobby and its game as they are when the client (re)joins: as a player, with the game as
+ * they see it, or as a spectator, with the game that they watch.
+ */
+function joined(state: LobbyState, event: JoinMessage): LobbyState {
+    const lobby = { ...state, connection: { kind: "joined" } as const, lobby: event.lobby };
+    switch (event.as) {
+        case "player":
+            return { ...lobby, game: event.game ?? null, pending: null };
+        case "spectator":
+            return { ...lobby, watching: event.game ?? null };
+    }
+}
+
 /** Apply what happened on the socket to the lobby state. */
 export function reduceLobby(state: LobbyState, event: LobbyEvent): LobbyState {
     // Once closed, the lobby stays closed, whatever the socket does as it shuts down.
@@ -102,22 +116,7 @@ export function reduceLobby(state: LobbyState, event: LobbyEvent): LobbyState {
 
     switch (event.type) {
         case "join":
-            // The lobby and game as they are when the player (re)joins.
-            return {
-                ...state,
-                connection: { kind: "joined" },
-                lobby: event.lobby,
-                game: event.game ?? null,
-                pending: null,
-            };
-        case "watch":
-            // The lobby and its game as they are when the spectator starts watching, again or for the first time.
-            return {
-                ...state,
-                connection: { kind: "joined" },
-                lobby: event.lobby,
-                watching: event.game ?? null,
-            };
+            return joined(state, event);
         case "spectate":
             // The lobby's client hands on only updates newer than the last, as for a player's.
             return { ...state, watching: event.game, actions: event.actions };

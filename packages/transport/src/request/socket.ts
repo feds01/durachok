@@ -31,12 +31,14 @@ export const LobbyMessageSchema = z.object({
 export type LobbyMessage = z.infer<typeof LobbyMessageSchema>;
 
 /**
- * What a client is sent once they join a lobby: the lobby, and the game if one is being played,
- * as `game` shows it, to a player or to a spectator.
+ * What a client is sent once they join a lobby, as `as` says they joined: the lobby, and the
+ * game if one is being played, as `game` shows it to them.
  */
-function joinSchema<G extends z.ZodType>(game: G) {
+function joinSchema<A extends string, G extends z.ZodType>(as: A, game: G) {
     return z
         .object({
+            /** Whether the client plays in the lobby or watches it, which says how `game` shows the game. */
+            as: z.literal(as),
             lobby: LobbySchema,
             game: game.optional(),
             /** The version of the game that `game` shows, @see ActionMessageSchema. */
@@ -58,11 +60,16 @@ function joinSchema<G extends z.ZodType>(game: G) {
         );
 }
 
-/** An event that's emitted to a player once they have joined the lobby. */
-export const PlayerJoinSchema = joinSchema(PlayerGameStateSchema);
+/**
+ * What a client is sent once they join a lobby: a player, with the game as they see it, and a
+ * spectator, with the game without anyone's cards.
+ */
+export const JoinMessageSchema = z.discriminatedUnion("as", [
+    joinSchema("player", PlayerGameStateSchema),
+    joinSchema("spectator", SpectatorGameStateSchema),
+]);
 
-/** An event that's emitted to a spectator once they start watching the lobby, with nobody's cards. */
-export const SpectatorJoinSchema = joinSchema(SpectatorGameStateSchema);
+export type JoinMessage = z.infer<typeof JoinMessageSchema>;
 
 /** A player at the end of a game, and when they went out of it. */
 const PlayerExitSchema = z.object({

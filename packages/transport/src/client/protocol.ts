@@ -4,9 +4,8 @@ import {
     CloseGameMessageSchema,
     ErrorMessageSchema,
     LobbyMessageSchema,
-    PlayerJoinSchema,
+    JoinMessageSchema,
     SpectatorActionMessageSchema,
-    SpectatorJoinSchema,
     StateUpdateMessageSchema,
     TokensMessageSchema,
     VictoryMessageSchema,
@@ -47,7 +46,7 @@ export const ServerEvents = {
     /** New tokens for the client, when the ones that it connected with had expired. */
     tokens: z.tuple([TokensMessageSchema]),
     /** The lobby, and the game if one is being played, once the client joins the lobby. */
-    join: z.tuple([PlayerJoinSchema]),
+    join: z.tuple([JoinMessageSchema]),
     /** The lobby, whenever it changes: a player joins or leaves, the settings change, or a game ends. */
     lobbyState: z.tuple([LobbyMessageSchema]),
     /** The countdown before the game starts began. */
@@ -64,8 +63,6 @@ export const ServerEvents = {
     playerState: z.tuple([StateUpdateMessageSchema]),
     /** What happened in the game, with this player's view of the game that it led to. */
     action: z.tuple([ActionMessageSchema]),
-    /** The lobby, and the game without anyone's cards, once a spectator starts watching it. */
-    watch: z.tuple([SpectatorJoinSchema]),
     /** What happened in the game, with the game that it led to as a spectator sees it. */
     spectate: z.tuple([SpectatorActionMessageSchema]),
     /** Something went wrong, e.g. a move that isn't allowed, or a request that isn't the client's to make. */

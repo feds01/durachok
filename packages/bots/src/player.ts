@@ -46,9 +46,10 @@ export class BotPlayer {
     ) {
         // The client hands on only updates of the game that are newer than the last.
         this.unsubscribe = [
-            client.on("join", ({ game }) => {
-                if (isDef(game)) {
-                    this.follow(game, []);
+            // A bot plays, so it's sent the game as a player sees it.
+            client.on("join", (joined) => {
+                if (joined.as === "player" && isDef(joined.game)) {
+                    this.follow(joined.game, []);
                 }
             }),
             client.on("action", ({ update, actions }) => this.follow(update, actions)),

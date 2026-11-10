@@ -16,9 +16,6 @@ export interface ClientSocket {
 /** The events that update the game, each with the version of the game that it shows. */
 type GameUpdate = "action" | "playerState" | "spectate";
 
-/** The events that answer joining, with the game as it is then. */
-type JoinAnswer = "join" | "watch";
-
 type Listener<E extends ServerEvent> = (...args: ServerEventArgs<E>) => void;
 
 /**
@@ -48,14 +45,12 @@ export class LobbyClient {
         // new connection, e.g. after the last one dropped, joins again.
         socket.on("connect", () => this.send("join"));
         // Joining, as a player or a spectator, brings the game as it is now, which no update from before can replace.
-        for (const answer of ["join", "watch"] satisfies JoinAnswer[]) {
-            socket.on(answer, (...args) => {
-                const [{ gameVersion }] = args as ServerEventArgs<JoinAnswer>;
-                if (isDef(gameVersion)) {
-                    this.gameVersion = gameVersion;
-                }
-            });
-        }
+        socket.on("join", (...args) => {
+            const [{ gameVersion }] = args as ServerEventArgs<"join">;
+            if (isDef(gameVersion)) {
+                this.gameVersion = gameVersion;
+            }
+        });
         socket.on("action", (...args) => this.update("action", args as ServerEventArgs<"action">));
         socket.on("playerState", (...args) => this.update("playerState", args as ServerEventArgs<"playerState">));
         socket.on("spectate", (...args) => this.update("spectate", args as ServerEventArgs<"spectate">));
@@ -67,15 +62,20 @@ export class LobbyClient {
      * @returns A function that stops listening.
      */
     public on<E extends ServerEvent>(event: E, listener: Listener<E>): () => void {
-        if (event === "action" || event === "playerState" || event === "spectate") {
-            const listeners = this.updates[event as GameUpdate] as unknown as Set<Listener<E>>;
-            listeners.add(listener);
-            return () => listeners.delete(listener);
+        switch (event) {
+            case "action":
+            case "playerState":
+            case "spectate": {
+                const listeners = this.updates[event as GameUpdate] as unknown as Set<Listener<E>>;
+                listeners.add(listener);
+                return () => listeners.delete(listener);
+            }
+            default: {
+                const handler = (...args: unknown[]) => listener(...(args as ServerEventArgs<E>));
+                this.socket.on(event, handler);
+                return () => this.socket.off(event, handler);
+            }
         }
-
-        const handler = (...args: unknown[]) => listener(...(args as ServerEventArgs<E>));
-        this.socket.on(event, handler);
-        return () => this.socket.off(event, handler);
     }
 
     /** Leave the lobby, which a player can only do before the game starts, and the owner can't. */

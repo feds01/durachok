@@ -138,24 +138,16 @@ export class AuthService {
 
         // We need to convert the token into a raw payload.
         const rawPayload = expr(() => {
-            if (decodedToken.kind === "anonymous") {
-                return {
-                    name: decodedToken.name,
-                    pin: decodedToken.pin,
-                    seat: decodedToken.seat,
-                };
+            switch (decodedToken.kind) {
+                case "anonymous":
+                    return { name: decodedToken.name, pin: decodedToken.pin, seat: decodedToken.seat };
+                case "bot":
+                    return { name: decodedToken.bot.name, bot: decodedToken.bot.id };
+                case "spectator":
+                    return { pin: decodedToken.pin, watcher: decodedToken.watcher };
+                case "registered":
+                    return { name: decodedToken.user.name, email: decodedToken.user.email, id: decodedToken.user.id };
             }
-            if (decodedToken.kind === "bot") {
-                return { name: decodedToken.bot.name, bot: decodedToken.bot.id };
-            }
-            if (decodedToken.kind === "spectator") {
-                return { pin: decodedToken.pin, watcher: decodedToken.watcher };
-            }
-            return {
-                name: decodedToken.user.name,
-                email: decodedToken.user.email,
-                id: decodedToken.user.id,
-            };
         });
 
         const newTokens = this.createTokens(rawPayload);

@@ -934,12 +934,16 @@ async function createWatchableLobby(prefix: string, { passphrase = false } = {})
 async function watch(pin: string, tokens: Tokens) {
     const socket = await connect(tokens);
     sockets.push(socket);
-    const watching = next<{ lobby: { players: unknown[] }; game?: SpectatorUpdate["update"]; gameVersion?: number }>(
-        socket,
-        "watch",
-    );
+    const watching = next<{
+        as: string;
+        lobby: { players: unknown[] };
+        game?: SpectatorUpdate["update"];
+        gameVersion?: number;
+    }>(socket, "join");
     socket.emit("join", pin);
-    return { socket, watching: await watching };
+    const answer = await watching;
+    expect(answer.as).toBe("spectator");
+    return { socket, watching: answer };
 }
 
 describe.skipIf(!available)("Spectators", () => {

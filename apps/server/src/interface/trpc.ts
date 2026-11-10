@@ -1,4 +1,4 @@
-import { transformer } from "@durachok/transport";
+import { ByPinRequestSchema, transformer } from "@durachok/transport";
 import { TRPCError, initTRPC } from "@trpc/server";
 import * as trpcExpress from "@trpc/server/adapters/express";
 import { ZodError } from "zod";
@@ -110,6 +110,23 @@ export function failureLimitedProcedure(limiter: RateLimiter) {
         }
         return result;
     });
+}
+
+/**
+ * A procedure about a lobby, by its pin, that may have a passphrase: one that each address may
+ * fail at only so often, @see failureLimitedProcedure, and that refuses a lobby whose passphrase
+ * was guessed wrong too often, from anywhere, before the procedure reads anything. The
+ * procedure counts each wrong guess on `guesses`.
+ */
+export function passphraseLimitedProcedure(failures: RateLimiter, guesses: RateLimiter) {
+    return failureLimitedProcedure(failures)
+        .input(ByPinRequestSchema)
+        .use((opts) => {
+            if (guesses.isLimited(opts.input.pin)) {
+                throw tooManyRequests();
+            }
+            return opts.next();
+        });
 }
 
 /** A procedure that requires the request to send tokens. */

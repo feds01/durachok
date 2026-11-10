@@ -93,7 +93,7 @@ describe("A lobby client", () => {
         const versions: number[] = [];
         client.on("action", ({ version }) => versions.push(version));
 
-        socket.receive("join", { lobby: {}, game: {}, gameVersion: 40 });
+        socket.receive("join", { as: "player", lobby: {}, game: {}, gameVersion: 40 });
         socket.receive("action", { actions: [], update: {}, version: 39 });
         socket.receive("action", { actions: [], update: {}, version: 41 });
 
@@ -106,7 +106,7 @@ describe("A lobby client", () => {
         const versions: number[] = [];
         client.on("spectate", ({ version }) => versions.push(version));
 
-        socket.receive("watch", { lobby: {}, game: {}, gameVersion: 10 });
+        socket.receive("join", { as: "spectator", lobby: {}, game: {}, gameVersion: 10 });
         socket.receive("spectate", { actions: [], update: {}, version: 10 });
         socket.receive("spectate", { actions: [], update: {}, version: 12 });
         socket.receive("spectate", { actions: [], update: {}, version: 11 });

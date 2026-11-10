@@ -23,10 +23,16 @@ const onJoin = factory.build({
             }
 
             await client.join(pin);
-            const lobby = await context.lobbyService.get(pin);
-            const game = lobby.status === "playing" ? await context.gameService(lobby).getSpectatorState() : undefined;
-            await client.emit("watch", { lobby, ...(game && { game: game.update, gameVersion: game.version }) });
             logger.info(meta, "spectator watching lobby");
+
+            const lobby = await context.lobbyService.get(pin);
+            if (lobby.status !== "playing") {
+                await client.emit("join", { as: "spectator", lobby });
+                return;
+            }
+
+            const game = await context.gameService(lobby).getSpectatorState();
+            await client.emit("join", { as: "spectator", lobby, game: game.update, gameVersion: game.version });
             return;
         }
 
@@ -53,7 +59,11 @@ const onJoin = factory.build({
         // they rejoin. Only the owner sees the passphrase.
         const lobby = await context.lobbyService.get(pin, { withPassphrase: isOwner });
         const game = lobby.status === "playing" ? await context.gameService(lobby).getGameStateFor(name) : undefined;
-        await client.emit("join", { lobby, ...(game && { game: game.update, gameVersion: game.version }) });
+        await client.emit("join", {
+            as: "player",
+            lobby,
+            ...(game && { game: game.update, gameVersion: game.version }),
+        });
 
         await withRooms(pin).broadcast("lobbyState", {
             update: {

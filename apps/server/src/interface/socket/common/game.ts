@@ -3,6 +3,7 @@ import { Action } from "@durachok/transport";
 
 import { Context } from "../../context";
 import { Rooms } from "../actions/ctx";
+import { isSpectator } from "./auth";
 
 /**
  * Send each player of a lobby the actions that happened, with the game state
@@ -23,7 +24,7 @@ export async function emitActions(
 
     await Promise.all(
         clients.map(async (client) => {
-            if (client.getData().auth?.payload.kind === "spectator") {
+            if (isSpectator(client)) {
                 await client.emit("spectate", { actions, update: spectatorState, version });
                 return;
             }
