@@ -1,10 +1,12 @@
 import { ByPinRequestSchema, transformer } from "@durachok/transport";
 import { TRPCError, initTRPC } from "@trpc/server";
 import * as trpcExpress from "@trpc/server/adapters/express";
+import { getHTTPStatusCodeFromError } from "@trpc/server/http";
 import { ZodError } from "zod";
 
 import { expr } from "../utils";
 import { RateLimiter } from "../lib/rate-limit";
+import { type ErrorKind, inSpan, recordError, traceError } from "../lib/tracing";
 import { transformZodErrorIntoErrorSummary } from "../utils/error";
 import { getTokenFromHeaders, setTokensInResponse } from "./authentication";
 import { createContext } from "./context";
@@ -60,24 +62,62 @@ const t = initTRPC.context<AuthenticatedContext>().create({
  */
 export const router = t.router;
 
+/** Call a router's procedures directly, as the tests do. */
+export const createCallerFactory = t.createCallerFactory;
+
+/**
+ * What kind of error a request failed with: its tRPC code, and whether it's the server's own
+ * fault, as a 5xx status says, rather than one that the client caused.
+ */
+export function trpcErrorKind(error: unknown): ErrorKind {
+    if (!(error instanceof TRPCError)) {
+        return { type: "INTERNAL_SERVER_ERROR", fault: true };
+    }
+    return { type: error.code, fault: getHTTPStatusCodeFromError(error) >= 500 };
+}
+
+/**
+ * Record an error that tRPC handled outside of a procedure, as in making a request's context,
+ * which no procedure's span saw, @see publicProcedure.
+ */
+export function onTrpcError({ error, path }: { error: TRPCError; path?: string }): void {
+    const kind = trpcErrorKind(error);
+    if (kind.fault) {
+        traceError(`trpc ${path ?? "request"}`, error, kind.type);
+    }
+}
+
 /**
  * A procedure than any one can access.
  *
+ * - Runs in a span of its own, which records an error that is the server's own.
  * - Logs the request timing.
  * - Logs if the request was successful or not.
  */
-export const publicProcedure = t.procedure.use(async (opts) => {
-    const start = Date.now();
+export const publicProcedure = t.procedure.use((opts) =>
+    inSpan(
+        `trpc ${opts.path}`,
+        { "rpc.system": "trpc", "rpc.method": opts.path, "rpc.trpc.type": opts.type },
+        async (span) => {
+            const start = Date.now();
 
-    const result = await opts.next();
+            const result = await opts.next();
 
-    const durationMs = Date.now() - start;
-    const meta = { path: opts.path, type: opts.type, durationMs };
+            const durationMs = Date.now() - start;
+            const meta = { path: opts.path, type: opts.type, durationMs };
 
-    void (result.ok ? logger.info(meta, "OK request timing:") : logger.error(meta, "Non-OK request timing"));
+            if (result.ok) {
+                logger.info(meta, "OK request timing:");
+            } else {
+                logger.error(meta, "Non-OK request timing");
+                recordError(span, result.error, trpcErrorKind(result.error));
+            }
 
-    return result;
-});
+            return result;
+        },
+        trpcErrorKind,
+    ),
+);
 
 /** The error for a client that did more than a limit lets it, @see limits. */
 export function tooManyRequests(): TRPCError {

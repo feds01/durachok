@@ -53,9 +53,11 @@ export const config = createSimpleConfig({
                 });
             }
         },
+        /**
+         * An error in handling an event. If it's the server's own, the event's span has recorded
+         * it already, @see TracedAction, so log it, and tell the client what went wrong.
+         */
         onError: async ({ client, error, logger }) => {
-            // Log the problem (@@Todo: sentry) and then emit the error
-            // to the client.
             logger.error(error, "something went wrong");
 
             if (client) {

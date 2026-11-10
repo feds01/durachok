@@ -6,6 +6,9 @@ import onMove from "./move";
 import onPassphrase from "./passphrase";
 import onSettings from "./settings";
 import onStart from "./start";
+import { TracedAction } from "../tracing";
 
-/** Export all of the actions. */
-export const actions = [onJoin, onLeave, onKick, onMessage, onMove, onStart, onPassphrase, onSettings];
+/** All of the actions, each of which handles its events in a span of its own, @see TracedAction. */
+export const actions = [onJoin, onLeave, onKick, onMessage, onMove, onStart, onPassphrase, onSettings].map(
+    (action) => new TracedAction(action),
+);

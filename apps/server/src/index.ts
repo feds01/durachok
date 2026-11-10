@@ -12,7 +12,8 @@ import { appRouter } from "./interface/routes";
 import { connectSocket } from "./interface/socket";
 import { connectDB } from "./lib/database";
 import logger from "./lib/logger";
-import { createSessionContext } from "./interface/trpc";
+import { startTracing } from "./lib/tracing";
+import { createSessionContext, onTrpcError } from "./interface/trpc";
 import { expr } from "./utils";
 
 // Tokens signed with a key that is missing, or shared, could be forged, so don't start without proper ones.
@@ -24,6 +25,9 @@ if (problems.length > 0) {
     );
     process.exit(1);
 }
+
+// Traces go out over OTLP, if the environment says where to, @see startTracing.
+await startTracing();
 
 const app = express();
 
@@ -52,6 +56,7 @@ app.use(
     createExpressMiddleware({
         router: appRouter,
         createContext: createSessionContext,
+        onError: onTrpcError,
     }),
 );
 
