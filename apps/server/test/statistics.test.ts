@@ -16,7 +16,7 @@ const { openDatabase, closeDatabase } = await import("../src/lib/database");
 const { createContext } = await import("../src/interface/context");
 const { default: logger } = await import("../src/lib/logger");
 
-const { lobbyService, userService } = createContext(logger);
+const { lobbyService, userService, gameService } = createContext(logger);
 
 beforeAll(async () => {
     if (available) {
@@ -109,6 +109,7 @@ describe.skipIf(!available)("A finished game", () => {
             gamesWon: 1,
             gamesLost: 0,
             gamesHosted: 1,
+            gamesResigned: 0,
             averageRounds: 3,
         });
         expect(await statisticsOf(boris)).toEqual({
@@ -116,6 +117,7 @@ describe.skipIf(!available)("A finished game", () => {
             gamesWon: 0,
             gamesLost: 1,
             gamesHosted: 0,
+            gamesResigned: 0,
             averageRounds: 3,
         });
         expect((await lobbyService.get("123456")).status).toBe("waiting");
@@ -127,7 +129,93 @@ describe.skipIf(!available)("A finished game", () => {
             gamesWon: 0,
             gamesLost: 0,
             gamesHosted: 0,
+            gamesResigned: 0,
             averageRounds: 0,
         });
+    });
+});
+
+describe.skipIf(!available)("A game that the owner removes a registered player from", () => {
+    test("counts in that player's statistics as resigned, and in nobody else's yet", async () => {
+        const [anya, cleo] = await Promise.all([account("anya"), account("cleo")]);
+        const lobby = new mongoose.Types.ObjectId();
+        await mongoose.connection.collection("lobbies").insertOne({
+            _id: lobby,
+            __v: 0,
+            pin: "654321",
+            createdAt: new Date(),
+            status: "playing",
+            maxPlayers: 3,
+            shortGameDeck: false,
+            freeForAll: true,
+            disableChat: false,
+            randomisePlayerOrder: false,
+            roundTimeout: 120,
+            mythicMode: false,
+            allowSpectators: false,
+            owner: new mongoose.Types.ObjectId(anya),
+            game: lobby,
+            version: 0,
+            chat: [],
+            kicked: [],
+            players: [
+                { name: "anya", confirmed: true, registered: anya, socket: "a" },
+                { name: "cleo", confirmed: true, registered: cleo, socket: "c" },
+                { name: "guest", confirmed: true, seat: "s", socket: "g" },
+            ],
+        });
+        // anya attacks the guest, and cleo waits for her turn, with cards still in the deck.
+        const hand = (suit: string) => ["6", "7", "8", "9", "10", "J"].map((rank) => `${rank}${suit}`);
+        await mongoose.connection.collection("games").insertOne({
+            _id: lobby,
+            version: 0,
+            history: { nodes: [{ type: "start", actors: { attacker: "anya", defender: "guest" } }] },
+            state: {
+                status: "playing",
+                trump: { suit: "H", card: "6H" },
+                deck: ["QS", "KS", "AS", "QD", "KD", "AD", "QC", "KC", "AC", "6H"],
+                tableTop: {},
+                players: {
+                    anya: {
+                        name: "anya",
+                        deck: hand("S"),
+                        action: "attack",
+                        beganRound: true,
+                        out: null,
+                        turned: false,
+                    },
+                    cleo: {
+                        name: "cleo",
+                        deck: hand("D"),
+                        action: "none",
+                        beganRound: false,
+                        out: null,
+                        turned: false,
+                    },
+                    guest: {
+                        name: "guest",
+                        deck: hand("C"),
+                        action: "defend",
+                        beganRound: false,
+                        out: null,
+                        turned: false,
+                    },
+                },
+            },
+        });
+
+        await lobbyService.kick("654321", "cleo", gameService(await lobbyService.get("654321")));
+
+        expect(await statisticsOf(cleo)).toEqual({
+            gamesPlayed: 0,
+            gamesWon: 0,
+            gamesLost: 0,
+            gamesHosted: 0,
+            gamesResigned: 1,
+            averageRounds: 0,
+        });
+        // The game goes on without her, so it isn't counted for anybody else until it ends.
+        expect((await statisticsOf(anya)).gamesPlayed).toBe(0);
+        expect((await lobbyService.get("654321")).status).toBe("playing");
     });
 });

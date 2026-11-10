@@ -1,4 +1,4 @@
-import { CardSuits, gameResult, roundsOf } from "@durachok/engine";
+import { CardSuits, Game, gameResult, roundsOf } from "@durachok/engine";
 import { GameSettings, LobbyInfo } from "@durachok/transport";
 import { GameStatus } from "@durachok/transport";
 import { Lobby, Message } from "@durachok/transport";
@@ -10,7 +10,7 @@ import { Logger } from "pino";
 
 import { transaction } from "../lib/database";
 import { CHAT_HISTORY, MAX_LOBBIES_PER_OWNER } from "../lib/limits";
-import { countOutcome } from "../lib/statistics";
+import { PlayerOutcome, countOutcome } from "../lib/statistics";
 import Lobbies, { PopulatedLobbyDocument, PopulatedLobbyFields } from "../models/lobby.model";
 import Users from "../models/user.model";
 import { TokenPayload } from "../schemas/auth";
@@ -30,6 +30,13 @@ import {
 } from "./common";
 import { CreatedGame, GameService, MoveResult } from "./game";
 import { ImageService } from "./image";
+
+/** The update that adds what a player's part in a game counts for to their account's statistics, @see countOutcome. */
+function statisticsUpdate(account: string, outcome: PlayerOutcome) {
+    const counts = countOutcome(outcome);
+    const $inc = Object.fromEntries(Object.entries(counts).map(([field, amount]) => [`statistics.${field}`, amount]));
+    return { updateOne: { filter: { _id: account }, update: { $inc } } };
+}
 
 /** A player whom the owner kicked out of their lobby, and what leaving its game did, if it was being played. */
 export interface KickResult {
@@ -408,6 +415,9 @@ export class LobbyService {
                 { pin },
                 { $pull: { players: { name } }, $addToSet: { kicked: identityOf(player) } },
             );
+            if (isDef(removal) && isDef(player.registered)) {
+                await this.countRemoval(player.registered, name, removal.game);
+            }
             return { player, removal };
         });
     }
@@ -516,21 +526,36 @@ export class LobbyService {
                 return [];
             }
 
-            const counts = countOutcome({
+            const outcome = {
                 name,
                 owner: registered === owner,
+                removed: false,
                 result,
                 rounds,
                 history: game.history.nodes,
-            });
-            const $inc = Object.fromEntries(
-                Object.entries(counts).map(([field, amount]) => [`statistics.${field}`, amount]),
-            );
-            return [{ updateOne: { filter: { _id: registered }, update: { $inc } } }];
+            };
+            return [statisticsUpdate(registered, outcome)];
         });
         if (updates.length > 0) {
             await Users.bulkWrite(updates);
         }
+    }
+
+    /**
+     * Count a game that the owner removed a registered player from in their statistics, as it
+     * happens: they leave the lobby too, so the game's end doesn't count them, @see countGame.
+     */
+    private async countRemoval(account: string, name: string, game: Game): Promise<void> {
+        const history = game.history.serialize().nodes;
+        const outcome = {
+            name,
+            owner: false,
+            removed: true,
+            result: gameResult(game.players.values()),
+            rounds: roundsOf(history),
+            history,
+        };
+        await Users.bulkWrite([statisticsUpdate(account, outcome)]);
     }
 
     /**

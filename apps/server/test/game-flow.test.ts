@@ -176,6 +176,7 @@ describe.skipIf(!available)("Game flow", () => {
             gamesWon: 0,
             gamesLost: 0,
             gamesHosted: 0,
+            gamesResigned: 0,
             averageRounds: 0,
         });
 
@@ -368,6 +369,7 @@ describe.skipIf(!available)("Game flow", () => {
             gamesWon: winners.includes(`owner-${id}`) ? 1 : 0,
             gamesLost: durak === `owner-${id}` ? 1 : 0,
             gamesHosted: 1,
+            gamesResigned: 0,
             averageRounds: expect.any(Number),
         });
         // A whole game has at least the round that starts it.

@@ -13,6 +13,16 @@ describe("gameResult", () => {
         expect(gameResult(players)).toEqual({ winners: ["clara"], durak: "boris" });
     });
 
+    test("leaves out a player whom the owner removed, even one removed before anyone went out", () => {
+        const result = gameResult([
+            { name: "removed", out: 5, removed: true },
+            { name: "first", out: 10 },
+            { name: "left", out: null },
+        ]);
+
+        expect(result).toEqual({ winners: ["first"], durak: "left" });
+    });
+
     test("names every player who went out first in the same round as a winner", () => {
         const players = [
             { name: "anna", out: 100 },

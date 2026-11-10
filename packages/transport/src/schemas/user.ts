@@ -48,6 +48,8 @@ export const UserStatisticsSchema = z.object({
     gamesLost: z.number().int(),
     /** The games that they played in a lobby of their own. */
     gamesHosted: z.number().int(),
+    /** The games that they left before the end, when the lobby's owner removed them. */
+    gamesResigned: z.number().int(),
     /** How many rounds their games had, on average, or none without any games. */
     averageRounds: z.number().nonnegative(),
 });
