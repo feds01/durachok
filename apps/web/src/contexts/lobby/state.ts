@@ -4,6 +4,7 @@ import {
     Message,
     PlayerGameState,
     PlayerMove,
+    SpectatorGameState,
     VictoryMessage,
     isSameMessage,
 } from "@durachok/transport";
@@ -47,6 +48,8 @@ export interface LobbyState {
     lobby: Lobby | null;
     /** This player's view of the game, once one is being played. */
     game: PlayerGameState | null;
+    /** The game as a spectator watches it, without anyone's cards, once one is being played. */
+    watching: SpectatorGameState | null;
     /** The move that this player sent, which the server hasn't answered yet. */
     pending: PlayerMove | null;
     /** What happened in the game's last update, so that the table can show it happening. */
@@ -63,6 +66,7 @@ export const initialLobbyState: LobbyState = {
     connection: { kind: "connecting" },
     lobby: null,
     game: null,
+    watching: null,
     pending: null,
     actions: [],
     results: null,
@@ -77,6 +81,8 @@ export type LobbyEvent =
     | { type: "countdown" }
     | { type: "start" }
     | { type: "game"; game: PlayerGameState; actions?: Action[] }
+    | { type: "watch"; lobby: Lobby; game?: SpectatorGameState }
+    | { type: "spectate"; game: SpectatorGameState; actions: Action[] }
     | { type: "move"; move: PlayerMove }
     | { type: "victory"; players: VictoryMessage["players"] }
     | { type: "dismissResults" }
@@ -104,6 +110,17 @@ export function reduceLobby(state: LobbyState, event: LobbyEvent): LobbyState {
                 game: event.game ?? null,
                 pending: null,
             };
+        case "watch":
+            // The lobby and its game as they are when the spectator starts watching, again or for the first time.
+            return {
+                ...state,
+                connection: { kind: "joined" },
+                lobby: event.lobby,
+                watching: event.game ?? null,
+            };
+        case "spectate":
+            // The lobby's client hands on only updates newer than the last, as for a player's.
+            return { ...state, watching: event.game, actions: event.actions };
         case "lobby": {
             // An update that arrived after a newer one. The same version can come again,
             // e.g. with the passphrase for the owner, so only an older one is left out.
@@ -140,6 +157,7 @@ export function reduceLobby(state: LobbyState, event: LobbyEvent): LobbyState {
                 ...state,
                 lobby: state.lobby && { ...state.lobby, status: "waiting" },
                 game: null,
+                watching: null,
                 pending: null,
                 actions: [],
                 results: event.players,

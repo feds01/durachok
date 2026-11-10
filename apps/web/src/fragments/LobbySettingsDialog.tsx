@@ -30,6 +30,7 @@ export default function LobbySettingsDialog({ lobby, open, onClose }: Props) {
                         freeForAll: lobby.freeForAll,
                         disableChat: lobby.disableChat,
                         mythicMode: lobby.mythicMode,
+                        allowSpectators: lobby.allowSpectators,
                     }}
                     submitLabel="Save"
                     onSubmit={(settings) => {

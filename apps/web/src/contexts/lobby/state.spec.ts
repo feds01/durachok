@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { Lobby, PlayerGameState } from "@durachok/transport";
+import { Lobby, PlayerGameState, SpectatorGameState } from "@durachok/transport";
 
 import { LobbyEvent, LobbyState, initialLobbyState, reduceLobby } from "./state";
 
@@ -16,6 +16,7 @@ const lobby: Lobby = {
     randomisePlayerOrder: true,
     roundTimeout: 120,
     mythicMode: false,
+    allowSpectators: false,
     status: "waiting",
     players: [{ id: "owner-id", name: "owner" }],
     chat: [],
@@ -37,6 +38,18 @@ const game: PlayerGameState = {
     deckSize: 24,
     discardSize: 0,
     trump: { suit: "H", card: "AH" },
+};
+
+/** The game as a spectator watches it, without anyone's cards. */
+const watched: SpectatorGameState = {
+    players: [
+        { ...game.players[0]!, name: "owner", action: "attack" },
+        { ...game.players[0]!, name: "guest", action: "defend" },
+    ],
+    tableTop: {},
+    deckSize: 24,
+    discardSize: 0,
+    trump: game.trump,
 };
 
 function reduceAll(events: LobbyEvent[], state: LobbyState = initialLobbyState): LobbyState {
@@ -245,5 +258,26 @@ describe("lobby state", () => {
         ]);
 
         expect(state.lobby?.passphrase).toBe("♡♢♣♤");
+    });
+
+    test("a spectator watches the game that's on, and each update of it, until it ends", () => {
+        const playing = { ...lobby, status: "playing" as const };
+        const watching = reduceAll([{ type: "watch", lobby: playing, game: watched }]);
+        expect(watching.connection).toEqual({ kind: "joined" });
+        expect(watching.watching).toEqual(watched);
+        expect(watching.game).toBeNull();
+
+        const moved = { ...watched, tableTop: { "6S": null } };
+        const actions = [{ type: "place" as const, card: "6S", player: "owner" }];
+        const updated = reduceAll([{ type: "spectate", game: moved, actions }], watching);
+        expect(updated.watching).toEqual(moved);
+        expect(updated.actions).toEqual(actions);
+
+        const over = reduceAll([{ type: "victory", players: [] }], updated);
+        expect(over.watching).toBeNull();
+    });
+
+    test("a spectator who starts watching before a game waits for it", () => {
+        expect(reduceAll([{ type: "watch", lobby }]).watching).toBeNull();
     });
 });

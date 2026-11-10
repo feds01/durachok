@@ -912,3 +912,138 @@ describe.skipIf(!available)("The end of a game", () => {
         throw new Error("No game had a player other than the owner leave it while it went on");
     }, 120_000);
 });
+
+/** A game's update, as a spectator is sent it, without anyone's cards. */
+type SpectatorUpdate = {
+    update: Record<string, unknown> & { players: { name: string; deck: unknown }[] };
+    version: number;
+};
+
+/** Create a lobby that lets anyone watch its games, with a passphrase if asked. */
+async function createWatchableLobby(prefix: string, { passphrase = false } = {}) {
+    const tokens = await register(prefix);
+    const { pin } = await trpc<{ pin: string }>(
+        "lobbies.create",
+        { settings: { maxPlayers: 2, passphrase, shortGameDeck: true, roundTimeout: 120, allowSpectators: true } },
+        tokens,
+    );
+    return { pin, tokens };
+}
+
+/** Start watching a lobby from a socket, resolving with what the server sent on watching. */
+async function watch(pin: string, tokens: Tokens) {
+    const socket = await connect(tokens);
+    sockets.push(socket);
+    const watching = next<{ lobby: { players: unknown[] }; game?: SpectatorUpdate["update"]; gameVersion?: number }>(
+        socket,
+        "watch",
+    );
+    socket.emit("join", pin);
+    return { socket, watching: await watching };
+}
+
+describe.skipIf(!available)("Spectators", () => {
+    test("anyone with the pin watches the game as it's played, without anyone's cards, and can't play", async () => {
+        const { pin, tokens } = await createWatchableLobby("watched");
+        const owner = await enter(pin, tokens);
+        const guest = await joinAs(pin, "guest");
+
+        // The lobby is full, but a spectator doesn't take a place, and needs no account.
+        const spectatorTokens = await trpc<Tokens>("lobbies.watch", { pin });
+        const info = await trpc<{ joinable: boolean; spectators: boolean }>(
+            "lobbies.getInfo",
+            { pin },
+            undefined,
+            "GET",
+        );
+        expect(info).toMatchObject({ joinable: false, spectators: true });
+        const lobby = await trpc<{ players: unknown[] }>("lobbies.get", { pin }, spectatorTokens, "GET");
+        expect(lobby.players).toHaveLength(2);
+
+        const { socket: spectator, watching } = await watch(pin, spectatorTokens);
+        expect(watching.game).toBeUndefined();
+        expect((await stored(pin)).players).toHaveLength(2);
+
+        // The game starts: the players are sent their hands, and the spectator the table.
+        const views = new Map<Socket, PlayerGameState>();
+        for (const player of [owner, guest]) {
+            player.on("action", ({ update }: { update: PlayerGameState }) => views.set(player, update));
+        }
+        const started = next<SpectatorUpdate>(spectator, "spectate");
+        const ownerStarted = next(owner, "action");
+        const guestStarted = next(guest, "action");
+        owner.emit("start", pin);
+        const first = await started;
+        await Promise.all([ownerStarted, guestStarted]);
+
+        expect(first.update).not.toHaveProperty("player");
+        expect(first.update.players.map(({ deck }) => deck)).toEqual([
+            { type: "hidden", size: 6 },
+            { type: "hidden", size: 6 },
+        ]);
+        for (const view of views.values()) {
+            for (const card of view.player.deck) {
+                expect(JSON.stringify(first)).not.toContain(`"${card}"`);
+            }
+        }
+
+        // A move reaches the spectator, as a newer version of the game.
+        const [attacker, view] = [...views].find(([, state]) => turnOf(state).kind === "lead")!;
+        const move = view.player.deck.flatMap((card) => movesFor(view, card))[0]!;
+        const moved = next<SpectatorUpdate>(spectator, "spectate");
+        attacker.emit("move", pin, move);
+        const after = await moved;
+        expect(after.version).toBeGreaterThan(first.version);
+        expect(Object.keys(after.update.tableTop as Record<string, unknown>)).toEqual([
+            (move as { card: string }).card,
+        ]);
+
+        // The spectator can't play, or talk.
+        const refused = next<{ type: string }>(spectator, "error");
+        spectator.emit("move", pin, { type: "forfeit" });
+        expect((await refused).type).toBe("unauthorized");
+
+        // Coming back, the spectator is sent the game as it is.
+        const { watching: again } = await watch(pin, spectatorTokens);
+        expect(again.gameVersion).toBe(after.version);
+        expect(again.game).not.toHaveProperty("player");
+    });
+
+    test("a lobby keeps spectators out unless it lets them watch, and with the wrong passphrase", async () => {
+        // A lobby doesn't let anyone watch unless its owner says so.
+        const closed = await createLobby("closed", 4);
+        await expect(trpc("lobbies.watch", { pin: closed.pin })).rejects.toThrow("400");
+
+        // Watching takes the passphrase, as joining does.
+        const { pin, tokens } = await createWatchableLobby("locked", { passphrase: true });
+        const owner = await connect(tokens);
+        sockets.push(owner);
+        const ownerJoin = next<{ lobby: { passphrase: string } }>(owner, "join");
+        owner.emit("join", pin);
+        const { passphrase } = (await ownerJoin).lobby;
+        const wrong = `${passphrase.startsWith("♡") ? "♢" : "♡"}${passphrase.slice(1)}`;
+        await expect(trpc("lobbies.watch", { pin, passphrase: wrong })).rejects.toThrow("401");
+        const spectatorTokens = await trpc<Tokens>("lobbies.watch", { pin, passphrase });
+
+        // A spectator's tokens are for their lobby only.
+        await expect(trpc("lobbies.get", { pin: closed.pin }, spectatorTokens, "GET")).rejects.toThrow("401");
+
+        // Once the owner stops letting anyone watch, a spectator who comes back is turned away.
+        const settingsChanged = next(owner, "lobbyState");
+        owner.emit("settings", pin, {
+            maxPlayers: 2,
+            passphrase: true,
+            shortGameDeck: true,
+            roundTimeout: 120,
+            allowSpectators: false,
+        });
+        await settingsChanged;
+
+        const spectator = await connect(spectatorTokens);
+        sockets.push(spectator);
+        const turnedAway = next<{ type: string }>(spectator, "error");
+        spectator.emit("join", pin);
+        expect((await turnedAway).type).toBe("unauthorized");
+        await expect(trpc("lobbies.get", { pin }, spectatorTokens, "GET")).rejects.toThrow("401");
+    });
+});

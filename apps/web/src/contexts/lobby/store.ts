@@ -76,6 +76,8 @@ export const useLobbyStore = create<LobbyStore>((set, get) => {
             client.on("start", () => dispatch({ type: "start" }));
             client.on("action", ({ actions, update }) => dispatch({ type: "game", game: update, actions }));
             client.on("playerState", ({ update }) => dispatch({ type: "game", game: update }));
+            client.on("watch", ({ lobby, game }) => dispatch({ type: "watch", lobby, ...(game && { game }) }));
+            client.on("spectate", ({ actions, update }) => dispatch({ type: "spectate", game: update, actions }));
             client.on("victory", ({ players }) => dispatch({ type: "victory", players }));
             client.on("message", (message) => dispatch({ type: "message", message }));
             client.on("close", ({ reason }) => dispatch({ type: "close", reason }));

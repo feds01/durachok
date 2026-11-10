@@ -100,6 +100,20 @@ describe("A lobby client", () => {
         expect(versions).toEqual([41]);
     });
 
+    test("hands on a spectator's updates as it does a player's, from the game that watching brought", () => {
+        const socket = new FakeSocket();
+        const client = new LobbyClient(socket, "123456");
+        const versions: number[] = [];
+        client.on("spectate", ({ version }) => versions.push(version));
+
+        socket.receive("watch", { lobby: {}, game: {}, gameVersion: 10 });
+        socket.receive("spectate", { actions: [], update: {}, version: 10 });
+        socket.receive("spectate", { actions: [], update: {}, version: 12 });
+        socket.receive("spectate", { actions: [], update: {}, version: 11 });
+
+        expect(versions).toEqual([12]);
+    });
+
     test("stops handing on the game's updates to a listener that stopped listening", () => {
         const socket = new FakeSocket();
         const client = new LobbyClient(socket, "123456");

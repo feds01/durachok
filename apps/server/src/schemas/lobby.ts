@@ -41,6 +41,8 @@ export function isPlayer(token: TokenPayload, player: DBPlayer): boolean {
             return player.bot === token.bot.id;
         case "anonymous":
             return isDef(player.seat) && player.seat === token.seat && player.name === token.name;
+        case "spectator":
+            return false;
     }
 }
 

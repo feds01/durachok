@@ -22,6 +22,14 @@ export const RawTokenPayload = z.object({
                 /** The ID of the bot in the registry. */
                 bot: z.string(),
             }),
+        )
+        .or(
+            z.object({
+                /** The lobby that the spectator watches. */
+                pin: z.string(),
+                /** Who the spectator is, which only their tokens carry, to tell one from another. */
+                watcher: z.string(),
+            }),
         ),
     iat: z.number(),
     exp: z.number(),
@@ -46,6 +54,12 @@ const TokenPayloadSchema = z.union([
         kind: z.literal("bot"),
         bot: z.object({ id: z.string(), name: z.string() }),
     }),
+    /** Someone watching a lobby's games, who doesn't play in it, @see LobbyService.canWatch. */
+    z.object({
+        kind: z.literal("spectator"),
+        pin: z.string(),
+        watcher: z.string(),
+    }),
 ]);
 
 export type TokenPayload = z.infer<typeof TokenPayloadSchema>;
@@ -62,6 +76,8 @@ export function holderOf(token: TokenPayload): string {
             return `bot:${token.bot.id}`;
         case "anonymous":
             return `seat:${token.seat}`;
+        case "spectator":
+            return `watcher:${token.watcher}`;
     }
 }
 

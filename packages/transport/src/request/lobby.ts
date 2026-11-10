@@ -24,6 +24,11 @@ export const GameJoinRequestSchema = z.object({
 
 export type GameJoinRequest = z.infer<typeof GameJoinRequestSchema>;
 
+/** A request to watch a lobby's games, which takes its passphrase, if it has one. */
+export const GameWatchRequestSchema = GameJoinRequestSchema.omit({ name: true });
+
+export type GameWatchRequest = z.infer<typeof GameWatchRequestSchema>;
+
 /**
  * The information that must be provided in order to
  * create a game.
@@ -56,6 +61,8 @@ export const LobbyInfoSchema = z.object({
     players: z.number(),
     status: GameStatusSchema,
     maxPlayers: z.number(),
+    /** Whether anyone can watch the lobby's games, @see GameWatchRequestSchema. */
+    spectators: z.boolean(),
 });
 
 export type LobbyInfo = z.infer<typeof LobbyInfoSchema>;

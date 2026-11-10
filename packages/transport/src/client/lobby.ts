@@ -14,7 +14,10 @@ export interface ClientSocket {
 }
 
 /** The events that update the game, each with the version of the game that it shows. */
-type GameUpdate = "action" | "playerState";
+type GameUpdate = "action" | "playerState" | "spectate";
+
+/** The events that answer joining, with the game as it is then. */
+type JoinAnswer = "join" | "watch";
 
 type Listener<E extends ServerEvent> = (...args: ServerEventArgs<E>) => void;
 
@@ -33,6 +36,7 @@ export class LobbyClient {
     private readonly updates: { [E in GameUpdate]: Set<Listener<E>> } = {
         action: new Set(),
         playerState: new Set(),
+        spectate: new Set(),
     };
 
     public constructor(
@@ -43,15 +47,18 @@ export class LobbyClient {
         // The server sends a player's updates to the connection that they joined from, so a
         // new connection, e.g. after the last one dropped, joins again.
         socket.on("connect", () => this.send("join"));
-        // Joining brings the game as it is now, which no update from before can replace.
-        socket.on("join", (...args) => {
-            const [{ gameVersion }] = args as ServerEventArgs<"join">;
-            if (isDef(gameVersion)) {
-                this.gameVersion = gameVersion;
-            }
-        });
+        // Joining, as a player or a spectator, brings the game as it is now, which no update from before can replace.
+        for (const answer of ["join", "watch"] satisfies JoinAnswer[]) {
+            socket.on(answer, (...args) => {
+                const [{ gameVersion }] = args as ServerEventArgs<JoinAnswer>;
+                if (isDef(gameVersion)) {
+                    this.gameVersion = gameVersion;
+                }
+            });
+        }
         socket.on("action", (...args) => this.update("action", args as ServerEventArgs<"action">));
         socket.on("playerState", (...args) => this.update("playerState", args as ServerEventArgs<"playerState">));
+        socket.on("spectate", (...args) => this.update("spectate", args as ServerEventArgs<"spectate">));
     }
 
     /**
@@ -60,7 +67,7 @@ export class LobbyClient {
      * @returns A function that stops listening.
      */
     public on<E extends ServerEvent>(event: E, listener: Listener<E>): () => void {
-        if (event === "action" || event === "playerState") {
+        if (event === "action" || event === "playerState" || event === "spectate") {
             const listeners = this.updates[event as GameUpdate] as unknown as Set<Listener<E>>;
             listeners.add(listener);
             return () => listeners.delete(listener);
@@ -112,7 +119,7 @@ export class LobbyClient {
      */
     private update<E extends GameUpdate>(event: E, args: ServerEventArgs<E>): void {
         const [{ version }] = args;
-        const isNew = event === "action" ? version > this.gameVersion : version >= this.gameVersion;
+        const isNew = event === "playerState" ? version >= this.gameVersion : version > this.gameVersion;
         if (!isNew) {
             return;
         }

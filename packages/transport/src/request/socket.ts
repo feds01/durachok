@@ -1,4 +1,4 @@
-import { ActionSchema, PlayerGameStateSchema } from "../schemas/game";
+import { ActionSchema, PlayerGameStateSchema, SpectatorGameStateSchema } from "../schemas/game";
 import { LobbySchema } from "../schemas/lobby";
 import { isDef } from "../utils";
 import { z } from "zod";
@@ -12,9 +12,6 @@ const LobbyUpdateSchema = z.union([
     }),
     z.object({
         type: z.literal("player_exit"),
-    }),
-    z.object({
-        type: z.literal("new_spectator"),
     }),
     /** The game finished, and the lobby is waiting for another. */
     z.object({
@@ -34,30 +31,38 @@ export const LobbyMessageSchema = z.object({
 export type LobbyMessage = z.infer<typeof LobbyMessageSchema>;
 
 /**
- * An event that's emitted to a client once they have joined the
- * lobby.
+ * What a client is sent once they join a lobby: the lobby, and the game if one is being played,
+ * as `game` shows it, to a player or to a spectator.
  */
-export const PlayerJoinSchema = z
-    .object({
-        lobby: LobbySchema,
-        game: PlayerGameStateSchema.optional(),
-        /** The version of the game that `game` shows, @see ActionMessageSchema. */
-        gameVersion: z.number().int().optional(),
-    })
-    .refine(
-        (value) => {
-            // The lobby's status says whether a game is on, and zod can't tell the two shapes
-            // apart by a field inside `lobby`, so this checks that a game comes with one.
-            if (value.lobby.status === "playing") {
-                return isDef(value.game) && isDef(value.gameVersion);
-            }
+function joinSchema<G extends z.ZodType>(game: G) {
+    return z
+        .object({
+            lobby: LobbySchema,
+            game: game.optional(),
+            /** The version of the game that `game` shows, @see ActionMessageSchema. */
+            gameVersion: z.number().int().optional(),
+        })
+        .refine(
+            (value) => {
+                // The lobby's status says whether a game is on, and zod can't tell the two shapes
+                // apart by a field inside `lobby`, so this checks that a game comes with one.
+                if (value.lobby.status === "playing") {
+                    return isDef(value.game) && isDef(value.gameVersion);
+                }
 
-            return true;
-        },
-        {
-            message: "Expected a game state when the game is playing.",
-        },
-    );
+                return true;
+            },
+            {
+                message: "Expected a game state when the game is playing.",
+            },
+        );
+}
+
+/** An event that's emitted to a player once they have joined the lobby. */
+export const PlayerJoinSchema = joinSchema(PlayerGameStateSchema);
+
+/** An event that's emitted to a spectator once they start watching the lobby, with nobody's cards. */
+export const SpectatorJoinSchema = joinSchema(SpectatorGameStateSchema);
 
 /** A player at the end of a game, and when they went out of it. */
 const PlayerExitSchema = z.object({
@@ -107,6 +112,13 @@ export const ActionMessageSchema = z.object({
 });
 
 export type ActionMessage = z.infer<typeof ActionMessageSchema>;
+
+/** Indicate to a spectator that actions have occurred, with the game that they led to, without anyone's cards. */
+export const SpectatorActionMessageSchema = ActionMessageSchema.extend({
+    update: SpectatorGameStateSchema,
+});
+
+export type SpectatorActionMessage = z.infer<typeof SpectatorActionMessageSchema>;
 
 /** New tokens for the client, after the server refreshed its expired ones. */
 export const TokensMessageSchema = z.object({

@@ -20,6 +20,7 @@ export interface ILobby extends Versioned {
     roundTimeout: number;
     /** Whether nobody is told how many cards are left in the deck or another player's hand. */
     mythicMode: boolean;
+    allowSpectators: boolean;
 
     /* === Game state === */
     players: DBPlayer[];
@@ -74,6 +75,7 @@ const LobbySchema = new Schema<ILobby>({
     freeForAll: { type: Boolean, required: true, default: true },
     roundTimeout: { type: Number, required: false, default: 120 },
     mythicMode: { type: Boolean, required: true, default: false },
+    allowSpectators: { type: Boolean, required: true, default: false },
 
     owner: {
         type: mongoose.Schema.Types.ObjectId,

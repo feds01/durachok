@@ -163,6 +163,20 @@ describe("Game tests", () => {
         expect(game.getStateForPlayer("a").deckSize).toBe(0);
     });
 
+    test("a spectator sees every player in their seat, with how many cards they hold, and nobody's cards", () => {
+        const game = new Game(["a", "b", "c"], null, { ...DEFAULT_SETTINGS, randomisePlayerOrder: false });
+        const view = game.getStateForSpectator();
+
+        expect(view).not.toHaveProperty("player");
+        expect(view.players.map(({ name }) => name)).toEqual(["a", "b", "c"]);
+        expect(view.players.every(({ deck }) => deck.type === "hidden" && deck.size === 6)).toBe(true);
+        expect(JSON.stringify(view)).not.toContain(JSON.stringify(game.getPlayer("a").deck));
+
+        // The seats stay put whoever defends, as a player's opponents do.
+        setUpRound(game, { hands: { a: ["7S"], b: ["8S"], c: ["9S"] }, attacker: "b", defender: "c", deck: [] });
+        expect(game.getStateForSpectator().players.map(({ name }) => name)).toEqual(["a", "b", "c"]);
+    });
+
     test("the players are told how many cards were discarded, and in mythic mode only whether any were", () => {
         for (const mythicMode of [false, true]) {
             const game = new Game(["a", "b"], null, { ...DEFAULT_SETTINGS, randomisePlayerOrder: false, mythicMode });

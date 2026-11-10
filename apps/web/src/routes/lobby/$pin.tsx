@@ -10,6 +10,7 @@ import { useLobbyConnection, useLobbyStore } from "@/contexts/lobby";
 import GameResults from "@/fragments/GameResults";
 import GameTable from "@/fragments/GameTable";
 import LobbyClosed from "@/fragments/LobbyClosed";
+import SpectatorTable from "@/fragments/SpectatorTable";
 import WaitingRoom from "@/fragments/WaitingRoom";
 import { trpcNativeClient } from "@/utils/trpc";
 import { TRPCClientError } from "@trpc/client";
@@ -49,11 +50,25 @@ function LobbyPage() {
     const { pin } = Route.useLoaderData();
     useLobbyConnection(pin);
 
-    const { connection, lobby, game, results, countingDown, error, leave, dismissResults, sendMessage } = useLobbyStore(
+    const {
+        connection,
+        lobby,
+        game,
+        watching,
+        actions,
+        results,
+        countingDown,
+        error,
+        leave,
+        dismissResults,
+        sendMessage,
+    } = useLobbyStore(
         useShallow((state) => ({
             connection: state.connection,
             lobby: state.lobby,
             game: state.game,
+            watching: state.watching,
+            actions: state.actions,
             results: state.results,
             countingDown: state.countingDown,
             error: state.error,
@@ -75,6 +90,24 @@ function LobbyPage() {
     }
 
     const user = sessionFor(auth, pin)?.user ?? null;
+
+    // A spectator watches the game, and the results at its end, and their seat goes once they stop.
+    if (user?.kind === "spectator") {
+        const stopWatching = async () => {
+            await navigate({ to: "/" });
+            updateAuth({ type: "leave", pin });
+        };
+
+        return (
+            <>
+                <LobbyNotices reconnecting={connection.kind === "reconnecting"} error={error} />
+                <SpectatorTable lobby={lobby} game={watching} actions={actions} onStop={stopWatching} />
+                {results && <GameResults results={results} me={null} onClose={dismissResults} />}
+                {countingDown && <CountdownOverlay />}
+            </>
+        );
+    }
+
     const isOwner = user?.kind === "registered" && user.id === lobby.owner.id;
 
     const onLeave = async () => {

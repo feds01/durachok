@@ -39,8 +39,11 @@ export type TableUpdate = {
     clearTo: ClearTo | null;
 };
 
-/** Read what the last update's actions did at the table, from the player's side of it. */
-export function readActions(actions: readonly Action[], me: string): TableUpdate {
+/**
+ * Read what the last update's actions did at the table, from the player's side of it, or a
+ * spectator's, from whose side every card is another player's.
+ */
+export function readActions(actions: readonly Action[], me: string | null): TableUpdate {
     const played = actions.filter((action): action is Played => action.type === "place" || action.type === "cover");
     const pickup = actions.find((action): action is Pickup => action.type === "pickup") ?? null;
     const newRound = actions.some(({ type }) => type === "new_round");

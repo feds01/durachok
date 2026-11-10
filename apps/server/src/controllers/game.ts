@@ -1,5 +1,5 @@
 import { Game } from "@durachok/engine";
-import { Action, PlayerMove, StateUpdateMessage } from "@durachok/transport";
+import { Action, PlayerMove, SpectatorGameState, StateUpdateMessage } from "@durachok/transport";
 import { Lobby } from "@durachok/transport";
 import { TRPCError } from "@trpc/server";
 import { MongoError } from "mongodb";
@@ -9,6 +9,12 @@ import { transaction } from "../lib/database";
 import Games, { GameDocument } from "../models/game.model";
 import { DBGameSchema } from "../schemas/game";
 import { CommonService, PlayerNotInLobbyError } from "./common";
+
+/** The game as a spectator sees it, and the version of the game that it shows. */
+interface SpectatorUpdate {
+    update: SpectatorGameState;
+    version: number;
+}
 
 /** The result of a move: the game after it, the actions that it caused, and the game's version after it. */
 export interface MoveResult {
@@ -58,6 +64,13 @@ export class GameService {
         const raw = await this.commonService.getGameDbObject(this.lobby.pin);
         const game = await this.enrich(raw);
         return { update: game.getStateForPlayer(player), version: raw.version };
+    }
+
+    /** Get the game as a spectator sees it, without anyone's cards, with the version of the game that it shows. */
+    public async getSpectatorState(): Promise<SpectatorUpdate> {
+        const raw = await this.commonService.getGameDbObject(this.lobby.pin);
+        const game = await this.enrich(raw);
+        return { update: game.getStateForSpectator(), version: raw.version };
     }
 
     /**

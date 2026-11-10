@@ -31,14 +31,24 @@ const AnonymousUserSchema = z.object({
 /** A player without an account, in one lobby. */
 export type AnonymousUser = z.infer<typeof AnonymousUserSchema>;
 
+const SpectatorUserSchema = z.object({ kind: z.literal("spectator") });
+
+/** Someone watching one lobby's games, with or without an account, who doesn't play in it. */
+export type SpectatorUser = z.infer<typeof SpectatorUserSchema>;
+
 const AccountSchema = AuthTokensSchema.extend({ user: RegisteredUserSchema });
 
 /** The account that the person logged in to, with its tokens. */
 export type Account = z.infer<typeof AccountSchema>;
 
-const SeatSchema = AuthTokensSchema.extend({ user: AnonymousUserSchema });
+const SeatSchema = AuthTokensSchema.extend({
+    user: z.discriminatedUnion("kind", [AnonymousUserSchema, SpectatorUserSchema]),
+});
 
-/** A place in one lobby that the person joined without an account, with the tokens for it. */
+/**
+ * A place in one lobby that the person joined without an account, or where they watch its games,
+ * with the tokens for it.
+ */
 export type Seat = z.infer<typeof SeatSchema>;
 
 const StoredAuthSchema = z.object({
@@ -49,7 +59,7 @@ const StoredAuthSchema = z.object({
 
 /**
  * Who the person is: their account, if they logged in to one, and their seats in the lobbies
- * that they joined without one, so that joining one lobby doesn't take them out of another.
+ * that they joined without one, or watch, so that joining one lobby doesn't take them out of another.
  */
 export type StoredAuth = z.infer<typeof StoredAuthSchema>;
 

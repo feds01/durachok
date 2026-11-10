@@ -5,6 +5,8 @@ import {
     ErrorMessageSchema,
     LobbyMessageSchema,
     PlayerJoinSchema,
+    SpectatorActionMessageSchema,
+    SpectatorJoinSchema,
     StateUpdateMessageSchema,
     TokensMessageSchema,
     VictoryMessageSchema,
@@ -62,6 +64,10 @@ export const ServerEvents = {
     playerState: z.tuple([StateUpdateMessageSchema]),
     /** What happened in the game, with this player's view of the game that it led to. */
     action: z.tuple([ActionMessageSchema]),
+    /** The lobby, and the game without anyone's cards, once a spectator starts watching it. */
+    watch: z.tuple([SpectatorJoinSchema]),
+    /** What happened in the game, with the game that it led to as a spectator sees it. */
+    spectate: z.tuple([SpectatorActionMessageSchema]),
     /** Something went wrong, e.g. a move that isn't allowed, or a request that isn't the client's to make. */
     error: z.tuple([ErrorMessageSchema]),
 } satisfies Record<string, z.ZodTuple>;
