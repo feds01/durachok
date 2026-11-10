@@ -8,10 +8,10 @@ type Props = {
     statistics: Statistics;
 };
 
-/** The player's record on their dashboard: the games that they finished, won, and lost as the durak. */
+/** The player's record on their dashboard, @see statisticTiles. */
 export default function UserStatistics({ statistics }: Props) {
     return (
-        <dl className="m-0 grid grid-cols-3 gap-4">
+        <dl className="m-0 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
             {statisticTiles(statistics).map(({ label, value }) => (
                 <div key={label} className={cn(PANEL, "flex flex-col-reverse gap-1")}>
                     <dt className="text-xs uppercase tracking-[0.25em] text-muted-foreground">{label}</dt>

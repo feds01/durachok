@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { gameResult } from "./result";
+import { gameResult, roundsOf } from "./result";
 
 describe("gameResult", () => {
     test("names the first player out as the winner, and the one left with cards as the durak", () => {
@@ -31,5 +31,25 @@ describe("gameResult", () => {
         ];
 
         expect(gameResult(players)).toEqual({ winners: ["anna"], durak: null });
+    });
+});
+
+describe("roundsOf", () => {
+    const actors = { attacker: "anna", defender: "boris" };
+
+    test("counts the round that starts the game and each new one after it", () => {
+        const history = [
+            { type: "start", actors },
+            { type: "place", player: "anna", card: "6H" },
+            { type: "new_round", actors },
+            { type: "new_round", actors },
+            { type: "victory" },
+        ] as const;
+
+        expect(roundsOf(history)).toBe(3);
+    });
+
+    test("counts no rounds in a history without any", () => {
+        expect(roundsOf([])).toBe(0);
     });
 });

@@ -6,28 +6,16 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import mongoose from "mongoose";
 
-const MONGO = process.env.TEST_MONGODB_URI ?? "mongodb://localhost:27017";
-const DB = `durachok-test-${crypto.randomUUID().slice(0, 8)}`;
+import { available, dropDatabase, testDatabaseUri } from "./database";
+
+const DB_URI = testDatabaseUri();
 
 // The config reads where the database is as it loads, so it's set before the server's modules are.
-process.env.MONGODB_URI = `${MONGO}/${DB}`;
+process.env.MONGODB_URI = DB_URI;
 const { openDatabase, closeDatabase } = await import("../src/lib/database");
 const { createContext } = await import("../src/interface/context");
 const { default: logger } = await import("../src/lib/logger");
 
-/** Whether MongoDB answers, as a replica set, which transactions need. */
-async function mongoAvailable(): Promise<boolean> {
-    try {
-        const connection = await mongoose.createConnection(MONGO, { serverSelectionTimeoutMS: 1000 }).asPromise();
-        const hello = await connection.db?.admin().command({ hello: 1 });
-        await connection.close();
-        return Boolean(hello?.setName);
-    } catch {
-        return false;
-    }
-}
-
-const available = await mongoAvailable();
 const { lobbyService, userService } = createContext(logger);
 
 beforeAll(async () => {
@@ -38,8 +26,8 @@ beforeAll(async () => {
 
 afterAll(async () => {
     if (available) {
-        await mongoose.connection.dropDatabase();
         await closeDatabase();
+        await dropDatabase(DB_URI);
     }
 });
 
@@ -62,7 +50,7 @@ async function statisticsOf(id: string) {
 }
 
 describe.skipIf(!available)("A finished game", () => {
-    test("counts once in each registered player's statistics: played, won and lost", async () => {
+    test("counts once in each registered player's statistics: played, won, lost, hosted and its rounds", async () => {
         const [anna, boris] = await Promise.all([account("anna"), account("boris")]);
         const lobby = new mongoose.Types.ObjectId();
         await mongoose.connection.collection("lobbies").insertOne({
@@ -93,7 +81,15 @@ describe.skipIf(!available)("A finished game", () => {
         await mongoose.connection.collection("games").insertOne({
             _id: lobby,
             version: 0,
-            history: { nodes: [{ type: "victory" }] },
+            // Three rounds: the first, which starts the game, and two more.
+            history: {
+                nodes: [
+                    { type: "start", actors: { attacker: "anna", defender: "boris" } },
+                    { type: "new_round", actors: { attacker: "boris", defender: "guest" } },
+                    { type: "new_round", actors: { attacker: "guest", defender: "anna" } },
+                    { type: "victory" },
+                ],
+            },
             state: {
                 status: "finished",
                 trump: { suit: "H", card: "AH" },
@@ -107,12 +103,31 @@ describe.skipIf(!available)("A finished game", () => {
         await lobbyService.finishGame("123456");
         await lobbyService.finishGame("123456");
 
-        expect(await statisticsOf(anna)).toEqual({ gamesPlayed: 1, gamesWon: 1, gamesLost: 0 });
-        expect(await statisticsOf(boris)).toEqual({ gamesPlayed: 1, gamesWon: 0, gamesLost: 1 });
+        // anna owns the lobby, so she hosted it.
+        expect(await statisticsOf(anna)).toEqual({
+            gamesPlayed: 1,
+            gamesWon: 1,
+            gamesLost: 0,
+            gamesHosted: 1,
+            averageRounds: 3,
+        });
+        expect(await statisticsOf(boris)).toEqual({
+            gamesPlayed: 1,
+            gamesWon: 0,
+            gamesLost: 1,
+            gamesHosted: 0,
+            averageRounds: 3,
+        });
         expect((await lobbyService.get("123456")).status).toBe("waiting");
     });
 
     test("leaves an account from before statistics were kept with none", async () => {
-        expect(await statisticsOf(await account("clara"))).toEqual({ gamesPlayed: 0, gamesWon: 0, gamesLost: 0 });
+        expect(await statisticsOf(await account("clara"))).toEqual({
+            gamesPlayed: 0,
+            gamesWon: 0,
+            gamesLost: 0,
+            gamesHosted: 0,
+            averageRounds: 0,
+        });
     });
 });

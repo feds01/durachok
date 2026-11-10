@@ -6,16 +6,26 @@ export interface StatisticTile {
     value: string;
 }
 
-const NUMBER = new Intl.NumberFormat("en-GB");
+const COUNT = new Intl.NumberFormat("en-GB");
+const AVERAGE = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 1 });
 
 /**
  * A player's statistics, as their dashboard shows them: the games that they finished, the ones
- * that they won by going out first, and the ones that they lost as the durak.
+ * that they won by going out first, the ones that they lost as the durak, the ones that they
+ * hosted, and how many rounds their games had on average.
  */
-export function statisticTiles({ gamesPlayed, gamesWon, gamesLost }: UserStatistics): StatisticTile[] {
+export function statisticTiles({
+    gamesPlayed,
+    gamesWon,
+    gamesLost,
+    gamesHosted,
+    averageRounds,
+}: UserStatistics): StatisticTile[] {
     return [
-        { label: "Played", value: NUMBER.format(gamesPlayed) },
-        { label: "Won", value: NUMBER.format(gamesWon) },
-        { label: "Durak", value: NUMBER.format(gamesLost) },
+        { label: "Played", value: COUNT.format(gamesPlayed) },
+        { label: "Won", value: COUNT.format(gamesWon) },
+        { label: "Durak", value: COUNT.format(gamesLost) },
+        { label: "Hosted", value: COUNT.format(gamesHosted) },
+        { label: "Rounds a game", value: AVERAGE.format(averageRounds) },
     ];
 }

@@ -16,7 +16,7 @@ export { CardNumerics, CardSuits, TableSize } from "./engine/consts";
 export { HistoryState, History } from "./engine/history";
 export * from "./engine/errors";
 export { beats } from "./engine/rules";
-export { gameResult, type GameResult } from "./engine/result";
+export { gameResult, roundsOf, type GameResult } from "./engine/result";
 export {
     applyMove,
     canCover,

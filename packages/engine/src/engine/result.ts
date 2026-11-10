@@ -1,4 +1,4 @@
-import { GamePlayer } from "@durachok/transport";
+import { Action, GamePlayer } from "@durachok/transport";
 
 /** How a game came out: who won it, by going out first, and the durak, who was left holding cards. */
 export interface GameResult {
@@ -18,4 +18,9 @@ export function gameResult(players: Iterable<Pick<GamePlayer, "name" | "out">>):
         winners: all.filter(({ out }) => out === first).map(({ name }) => name),
         durak: all.find(({ out }) => out === null)?.name ?? null,
     };
+}
+
+/** How many rounds a game had, from its history: the first, which starts it, and each one after. */
+export function roundsOf(history: Iterable<Action>): number {
+    return Array.from(history).filter(({ type }) => type === "start" || type === "new_round").length;
 }
