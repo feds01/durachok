@@ -1,6 +1,6 @@
 import { AbstractAction } from "zod-sockets";
 
-import { type ErrorKind, inSpan } from "../../lib/tracing";
+import { type ErrorKind, inSpan, toError } from "../../lib/tracing";
 import { transformErrorIntoMessage } from "./error";
 
 /** An action, as zod-sockets attaches it: the event that it handles, and in which namespace. */
@@ -17,8 +17,14 @@ type EventParams = Parameters<AbstractAction["execute"]>[0];
  * whether it's the server's own fault, as an `internal` one is, rather than the client's.
  */
 export function socketErrorKind(error: unknown): ErrorKind {
-    const { type } = transformErrorIntoMessage(error instanceof Error ? error : new Error(String(error)));
+    const { type } = transformErrorIntoMessage(toError(error));
     return { type, fault: type === "internal" };
+}
+
+/** Handle a client's event in a span of its own, which records what the handling throws, @see socketErrorKind. */
+export function traceEvent(event: string, clientId: string, handle: () => Promise<void>): Promise<void> {
+    const attributes = { "rpc.system": "socket.io", "rpc.method": event, "socket.io.client_id": clientId };
+    return inSpan(`socket ${event}`, attributes, handle, socketErrorKind);
 }
 
 /**
@@ -42,11 +48,6 @@ export class TracedAction extends AbstractAction {
     }
 
     public execute(params: EventParams): Promise<void> {
-        const attributes = {
-            "rpc.system": "socket.io",
-            "rpc.method": this.event,
-            "socket.io.client_id": params.client.id,
-        };
-        return inSpan(`socket ${this.event}`, attributes, () => this.#action.execute(params), socketErrorKind);
+        return traceEvent(this.event, params.client.id, () => this.#action.execute(params));
     }
 }

@@ -40,6 +40,14 @@ export interface ErrorKind {
     fault: boolean;
 }
 
+/** What was thrown, as an error: itself if it is one, and otherwise an error that says what it was. */
+export function toError(thrown: unknown): Error {
+    if (thrown instanceof Error) {
+        return thrown;
+    }
+    return new Error(String(thrown));
+}
+
 /** Tells what kind of error it is, @see ErrorKind. */
 export type ClassifyError = (error: unknown) => ErrorKind;
 
@@ -58,7 +66,7 @@ export function recordError(span: Span, error: unknown, { type, fault }: ErrorKi
         return;
     }
 
-    const exception = error instanceof Error ? error : new Error(String(error));
+    const exception = toError(error);
     span.recordException(exception);
     span.setStatus({ code: SpanStatusCode.ERROR, message: exception.message });
     recorded.add(exception);

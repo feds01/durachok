@@ -106,8 +106,10 @@ export const publicProcedure = t.procedure.use((opts) =>
             const durationMs = Date.now() - start;
             const meta = { path: opts.path, type: opts.type, durationMs };
 
-            void (result.ok ? logger.info(meta, "OK request timing:") : logger.error(meta, "Non-OK request timing"));
-            if (!result.ok) {
+            if (result.ok) {
+                logger.info(meta, "OK request timing:");
+            } else {
+                logger.error(meta, "Non-OK request timing");
                 recordError(span, result.error, trpcErrorKind(result.error));
             }
 

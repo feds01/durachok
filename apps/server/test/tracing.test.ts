@@ -14,8 +14,10 @@ import { TRPCError } from "@trpc/server";
 import { afterEach, beforeAll, describe, expect, test } from "bun:test";
 
 import { inSpan, traceError, tracer } from "../src/lib/tracing";
-import { TracedAction } from "../src/interface/socket/tracing";
+import { createContext } from "../src/interface/context";
+import { traceEvent } from "../src/interface/socket/tracing";
 import { type AuthenticatedContext, createCallerFactory, publicProcedure, router } from "../src/interface/trpc";
+import logger from "../src/lib/logger";
 
 const exporter = new InMemorySpanExporter();
 
@@ -38,17 +40,9 @@ function hasException(finished: ReadableSpan): boolean {
     return finished.events.some(({ name }) => name === "exception");
 }
 
-/** A socket action whose handling does what the test says. */
-function action(event: string, handle: () => Promise<void>): TracedAction {
-    return new TracedAction({ event, namespace: "/", execute: handle });
-}
-
-/** What zod-sockets hands an action, of which the spans only read the client's id. */
-const params = { params: [], client: { id: "client-1" } } as unknown as Parameters<TracedAction["execute"]>[0];
-
 describe("A socket event", () => {
     test("is handled in a span of its own", async () => {
-        await action("join", async () => {}).execute(params);
+        await traceEvent("join", "client-1", async () => {});
 
         const finished = span("socket join");
         expect(finished.status.code).toBe(SpanStatusCode.UNSET);
@@ -56,11 +50,12 @@ describe("A socket event", () => {
     });
 
     test("fails its span with an error that is the server's own", async () => {
-        const failing = action("move", async () => {
-            throw new Error("the database went away");
-        });
+        const failing = () =>
+            traceEvent("move", "client-1", async () => {
+                throw new Error("the database went away");
+            });
 
-        await expect(failing.execute(params)).rejects.toThrow("the database went away");
+        await expect(failing()).rejects.toThrow("the database went away");
 
         const finished = span("socket move");
         expect(finished.status).toEqual({ code: SpanStatusCode.ERROR, message: "the database went away" });
@@ -68,11 +63,12 @@ describe("A socket event", () => {
     });
 
     test("leaves its span unfailed for an error that the client caused, and names it", async () => {
-        const failing = action("kick", async () => {
-            throw new TRPCError({ code: "UNAUTHORIZED", message: "Only the owner can kick" });
-        });
+        const failing = () =>
+            traceEvent("kick", "client-1", async () => {
+                throw new TRPCError({ code: "UNAUTHORIZED", message: "Only the owner can kick" });
+            });
 
-        await expect(failing.execute(params)).rejects.toThrow("Only the owner can kick");
+        await expect(failing()).rejects.toThrow("Only the owner can kick");
 
         const finished = span("socket kick");
         expect(finished.status.code).toBe(SpanStatusCode.UNSET);
@@ -91,7 +87,13 @@ describe("A tRPC procedure", () => {
             throw new Error("the disk is full");
         }),
     });
-    const caller = createCallerFactory(appRouter)({} as AuthenticatedContext);
+    const session: AuthenticatedContext = {
+        ...createContext(logger),
+        ip: "127.0.0.1",
+        token: undefined,
+        rawTokens: undefined,
+    };
+    const caller = createCallerFactory(appRouter)(session);
 
     test("runs in a span of its own", async () => {
         expect(await caller.ok()).toBe("ok");
