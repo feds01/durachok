@@ -225,7 +225,6 @@ export default function GameTable({ lobby, game, isOwner }: Props) {
 
     // The players who are out, by the order they went out, which is their place.
     const places = placesOf([player, ...players]);
-    const placeOf = (name: string) => places.get(name);
     const imageOf = (name: string) => lobby.players.find((other) => other.name === name)?.image;
 
     const canPass = player.action === "defend" && hand.some((card) => canPlace(view, card));

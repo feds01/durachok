@@ -6,18 +6,12 @@
  * file to keep the server's logs.
  */
 import { canForfeit, canPlace, gameResult, movesFor, turnOf } from "@durachok/engine";
-import {
-    type GamePlayer,
-    LobbyClient,
-    type PlayerGameState,
-    type PlayerMove,
-    range,
-    type UserStatistics,
-} from "@durachok/transport";
+import { LobbyClient, type PlayerGameState, type PlayerMove, range, type UserStatistics } from "@durachok/transport";
 import type { Subprocess } from "bun";
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import mongoose from "mongoose";
 import { io, Socket } from "socket.io-client";
+import { z } from "zod";
 
 import type { DBPlayer } from "../src/schemas/lobby";
 import { available, dropDatabase, testDatabaseUri } from "./database";
@@ -494,17 +488,44 @@ async function joinAs(pin: string, name: string): Promise<Socket> {
     return enter(pin, await trpc<Tokens>("lobbies.join", { pin, name }));
 }
 
+/** What the tests read of a lobby, as the database keeps it. */
+const StoredLobbySchema = z.object({
+    status: z.string(),
+    players: z.array(z.object({ name: z.string(), socket: z.string().nullish() })),
+});
+
+/** What the tests read of a lobby's game, as the database keeps it: its players, by name. */
+const StoredGameSchema = z.object({
+    state: z.object({ players: z.record(z.string(), z.object({ removed: z.boolean().optional() })) }),
+});
+
+/** A lobby as the database has it, @see stored. */
+interface Stored {
+    /** The lobby's status, or nothing once the lobby is gone. */
+    status: string | undefined;
+    players: z.output<typeof StoredLobbySchema>["players"];
+    /** The names of the game's players, sorted. */
+    inGame: string[];
+    /** The names of the game's players whom the owner removed. */
+    removed: string[];
+}
+
 /** Read a lobby's players and status, and its game's players, as the database has them. */
-async function stored(pin: string) {
+async function stored(pin: string): Promise<Stored> {
     const connection = await mongoose.createConnection(DB_URI).asPromise();
     try {
-        const lobby = await connection.collection("lobbies").findOne({ pin });
+        const document = await connection.collection("lobbies").findOne({ pin });
+        if (!document) {
+            return { status: undefined, players: [], inGame: [], removed: [] };
+        }
+
+        const lobby = StoredLobbySchema.parse(document);
         // A lobby's game has the lobby's id.
-        const game = lobby && (await connection.collection("games").findOne({ _id: lobby._id }));
-        const gamePlayers = Object.entries((game?.state?.players ?? {}) as Record<string, Pick<GamePlayer, "removed">>);
+        const game = await connection.collection("games").findOne({ _id: document._id });
+        const gamePlayers = game ? Object.entries(StoredGameSchema.parse(game).state.players) : [];
         return {
-            status: lobby?.status as string | undefined,
-            players: (lobby?.players ?? []) as Pick<DBPlayer, "name" | "socket">[],
+            status: lobby.status,
+            players: lobby.players,
             inGame: gamePlayers.map(([name]) => name).toSorted(),
             removed: gamePlayers.filter(([, player]) => player.removed).map(([name]) => name),
         };
@@ -512,9 +533,6 @@ async function stored(pin: string) {
         await connection.close();
     }
 }
-
-/** A lobby as the database has it, @see stored. */
-type Stored = Awaited<ReturnType<typeof stored>>;
 
 /** Read a lobby as the database has it until `check` holds of it, every 20 ms, or until `tries` reads have been made. */
 async function storedWhen(pin: string, check: (state: Stored) => boolean, tries = 50): Promise<Stored> {

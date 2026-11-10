@@ -397,7 +397,13 @@ export class LobbyService {
 
             // The game and the lobby change together, so that nobody holds a place in a game
             // whose lobby they're no longer in, from which nobody could remove them.
-            const removal = lobby.status === "playing" ? await game.removePlayer(name) : null;
+            const removal = await expr(async () => {
+                // Only a game in progress has a place for the player to leave.
+                if (lobby.status !== "playing") {
+                    return null;
+                }
+                return game.removePlayer(name);
+            });
             await Lobbies.updateOne(
                 { pin },
                 { $pull: { players: { name } }, $addToSet: { kicked: identityOf(player) } },
