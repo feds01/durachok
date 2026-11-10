@@ -20,54 +20,60 @@ export function parseApiUrl(value: string, origin: string): string {
 }
 
 /**
- * The environment that the web app is built with, as Vite hands it over. The API's address,
- * which may be empty for the web app's own origin, comes out as an absolute URL, @see parseApiUrl.
+ * The web app's configuration, read from the environment that Vite hands over. The API's
+ * address, which may be empty for the web app's own origin, comes out as an absolute URL,
+ * @see parseApiUrl, and the socket server's is the root of its origin.
  */
 function envSchema(origin: string) {
-    return z.object({
-        NODE_ENV: z.string().default("dev"),
-        REACT_APP_NAME: z.string().default(packageJson.name),
-        REACT_APP_DEV_VERSION: z.string().default(""),
-        REACT_APP_VERSION: z.string().default(packageJson.version),
-        REACT_APP_BRANCH: z.string().default(""),
-        REACT_APP_API_URL: z
-            .string()
-            .default("")
-            .transform((value, ctx) => {
-                try {
-                    return parseApiUrl(value || "/api/trpc", origin);
-                } catch (error: unknown) {
-                    ctx.addIssue({ code: "custom", message: error instanceof Error ? error.message : String(error) });
-                    return z.NEVER;
-                }
-            }),
-        /** Google reCAPTCHA v3's key for the web app; empty turns reCAPTCHA off. */
-        REACT_APP_RE_CAPTCHA_SECRET: z.string().default(""),
-    });
+    return z
+        .object({
+            NODE_ENV: z.string().default("dev"),
+            REACT_APP_NAME: z.string().default(packageJson.name),
+            REACT_APP_DEV_VERSION: z.string().default(""),
+            REACT_APP_VERSION: z.string().default(packageJson.version),
+            REACT_APP_BRANCH: z.string().default(""),
+            REACT_APP_API_URL: z
+                .string()
+                .default("")
+                .transform((value, ctx) => {
+                    try {
+                        return parseApiUrl(value || "/api/trpc", origin);
+                    } catch (error: unknown) {
+                        ctx.addIssue({
+                            code: "custom",
+                            message: error instanceof Error ? error.message : String(error),
+                        });
+                        return z.NEVER;
+                    }
+                }),
+            /** Google reCAPTCHA v3's key for the web app; empty turns reCAPTCHA off. */
+            REACT_APP_RE_CAPTCHA_SECRET: z.string().default(""),
+        })
+        .transform((env) => ({
+            APP_ENV: env.NODE_ENV,
+            APP_NAME: env.REACT_APP_NAME,
+            APP_DEV_VERSION: env.REACT_APP_DEV_VERSION,
+            APP_VERSION: env.REACT_APP_VERSION,
+            APP_VERSION_BRANCH: env.REACT_APP_BRANCH,
+            API_URL: env.REACT_APP_API_URL,
+            SOCKET_URL: new URL(env.REACT_APP_API_URL).origin,
+            RE_CAPTCHA_SECRET: env.REACT_APP_RE_CAPTCHA_SECRET,
+        }));
 }
+
+/** The configuration of the application, @see readConfig. */
+export type Config = z.output<ReturnType<typeof envSchema>>;
 
 /**
  * Read the web app's configuration from its environment. A wrong one stops the app as it
  * starts, with everything that's wrong with it, rather than with a request that fails later.
  */
-export function readConfig(env: Record<string, unknown>, origin: string) {
+export function readConfig(env: Record<string, unknown>, origin: string): Config {
     const result = envSchema(origin).safeParse(env);
     if (!result.success) {
         throw new Error(`The web app's environment isn't right:\n${z.prettifyError(result.error)}`);
     }
-
-    const { data } = result;
-    return {
-        APP_ENV: data.NODE_ENV,
-        APP_NAME: data.REACT_APP_NAME,
-        APP_DEV_VERSION: data.REACT_APP_DEV_VERSION,
-        APP_VERSION: data.REACT_APP_VERSION,
-        APP_VERSION_BRANCH: data.REACT_APP_BRANCH,
-        API_URL: data.REACT_APP_API_URL,
-        /** The socket server, which serves the API too, at the root of its origin. */
-        SOCKET_URL: new URL(data.REACT_APP_API_URL).origin,
-        RE_CAPTCHA_SECRET: data.REACT_APP_RE_CAPTCHA_SECRET,
-    } as const;
+    return result.data;
 }
 
 /** The configuration of the application. Outside a browser, as in the tests, there's no page to take the origin from. */
@@ -83,5 +89,3 @@ export const {
     SOCKET_URL,
     RE_CAPTCHA_SECRET,
 } = config;
-
-export type Config = typeof config;
