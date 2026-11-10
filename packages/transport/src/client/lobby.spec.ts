@@ -1,5 +1,71 @@
+import { PlayerGameState, SpectatorGameState } from "../schemas/game";
+import { Lobby } from "../schemas/lobby";
 import { ClientSocket, LobbyClient } from "./lobby";
 import { describe, expect, test } from "bun:test";
+
+/** A lobby, as the server sends it. */
+const lobby: Lobby = {
+    pin: "123456",
+    owner: { id: "owner-id", name: "owner" },
+    hasPassphrase: false,
+    version: 1,
+    maxPlayers: 4,
+    shortGameDeck: false,
+    freeForAll: false,
+    disableChat: false,
+    randomisePlayerOrder: true,
+    roundTimeout: 120,
+    mythicMode: false,
+    allowSpectators: true,
+    status: "waiting",
+    players: [{ id: "owner-id", name: "owner" }],
+    chat: [],
+};
+
+/** The game, as its player sees it. */
+const game: PlayerGameState = {
+    player: { name: "owner", deck: ["6S", "7S"], out: null, turned: false, beganRound: true, action: "attack" },
+    players: [
+        {
+            name: "guest",
+            deck: { type: "hidden", size: 6 },
+            out: null,
+            turned: false,
+            beganRound: false,
+            action: "defend",
+        },
+    ],
+    tableTop: {},
+    deckSize: 24,
+    discardSize: 0,
+    trump: { suit: "H", card: "AH" },
+};
+
+/** The game, as a spectator watches it, without anyone's cards. */
+const watched: SpectatorGameState = {
+    players: [
+        {
+            name: "owner",
+            deck: { type: "hidden", size: 2 },
+            out: null,
+            turned: false,
+            beganRound: true,
+            action: "attack",
+        },
+        {
+            name: "guest",
+            deck: { type: "hidden", size: 6 },
+            out: null,
+            turned: false,
+            beganRound: false,
+            action: "defend",
+        },
+    ],
+    tableTop: {},
+    deckSize: 24,
+    discardSize: 0,
+    trump: game.trump,
+};
 
 /** A socket that records what is sent on it, and hands on what a test says that the server sent. */
 class FakeSocket implements ClientSocket {
@@ -72,17 +138,17 @@ describe("A lobby client", () => {
         const socket = new FakeSocket();
         const client = new LobbyClient(socket, "123456");
         const seen: string[] = [];
-        client.on("action", ({ version }) => seen.push(`action ${version}`));
-        client.on("playerState", ({ version }) => seen.push(`state ${version}`));
+        client.onUpdate("action", ({ version }) => seen.push(`action ${version}`));
+        client.onUpdate("playerState", ({ version }) => seen.push(`state ${version}`));
 
-        socket.receive("action", { actions: [], update: {}, version: 1 });
-        socket.receive("action", { actions: [], update: {}, version: 3 });
+        socket.receive("action", { actions: [], update: game, version: 1 });
+        socket.receive("action", { actions: [], update: game, version: 3 });
         // An action that arrived after a newer one, or again.
-        socket.receive("action", { actions: [], update: {}, version: 2 });
-        socket.receive("action", { actions: [], update: {}, version: 3 });
+        socket.receive("action", { actions: [], update: game, version: 2 });
+        socket.receive("action", { actions: [], update: game, version: 3 });
         // The game again, after the server refused a move, and an older one.
-        socket.receive("playerState", { update: {}, version: 3 });
-        socket.receive("playerState", { update: {}, version: 2 });
+        socket.receive("playerState", { update: game, version: 3 });
+        socket.receive("playerState", { update: game, version: 2 });
 
         expect(seen).toEqual(["action 1", "action 3", "state 3"]);
     });
@@ -91,11 +157,11 @@ describe("A lobby client", () => {
         const socket = new FakeSocket();
         const client = new LobbyClient(socket, "123456");
         const versions: number[] = [];
-        client.on("action", ({ version }) => versions.push(version));
+        client.onUpdate("action", ({ version }) => versions.push(version));
 
-        socket.receive("join", { as: "player", lobby: {}, game: {}, gameVersion: 40 });
-        socket.receive("action", { actions: [], update: {}, version: 39 });
-        socket.receive("action", { actions: [], update: {}, version: 41 });
+        socket.receive("join", { as: "player", lobby, game, gameVersion: 40 });
+        socket.receive("action", { actions: [], update: game, version: 39 });
+        socket.receive("action", { actions: [], update: game, version: 41 });
 
         expect(versions).toEqual([41]);
     });
@@ -104,12 +170,12 @@ describe("A lobby client", () => {
         const socket = new FakeSocket();
         const client = new LobbyClient(socket, "123456");
         const versions: number[] = [];
-        client.on("spectate", ({ version }) => versions.push(version));
+        client.onUpdate("spectate", ({ version }) => versions.push(version));
 
-        socket.receive("join", { as: "spectator", lobby: {}, game: {}, gameVersion: 10 });
-        socket.receive("spectate", { actions: [], update: {}, version: 10 });
-        socket.receive("spectate", { actions: [], update: {}, version: 12 });
-        socket.receive("spectate", { actions: [], update: {}, version: 11 });
+        socket.receive("join", { as: "spectator", lobby, game: watched, gameVersion: 10 });
+        socket.receive("spectate", { actions: [], update: watched, version: 10 });
+        socket.receive("spectate", { actions: [], update: watched, version: 12 });
+        socket.receive("spectate", { actions: [], update: watched, version: 11 });
 
         expect(versions).toEqual([12]);
     });
@@ -119,10 +185,10 @@ describe("A lobby client", () => {
         const client = new LobbyClient(socket, "123456");
         const versions: number[] = [];
 
-        const stop = client.on("action", ({ version }) => versions.push(version));
-        socket.receive("action", { actions: [], update: {}, version: 1 });
+        const stop = client.onUpdate("action", ({ version }) => versions.push(version));
+        socket.receive("action", { actions: [], update: game, version: 1 });
         stop();
-        socket.receive("action", { actions: [], update: {}, version: 2 });
+        socket.receive("action", { actions: [], update: game, version: 2 });
 
         expect(versions).toEqual([1]);
     });

@@ -1,11 +1,17 @@
+import { z } from "zod";
+
 import { GameSettings } from "../request/game";
 import { PlayerMove } from "../schemas/game";
 import { isDef } from "../utils";
-import { ClientEvent, ClientEventArgs, ServerEvent, ServerEventArgs } from "./protocol";
+import { ClientEvent, ClientEventArgs, ServerEvent, ServerEventArgs, ServerEvents } from "./protocol";
+
+/** Listens for an event from the server, with what the server sends with it. */
+type Listener<E extends ServerEvent> = (...args: ServerEventArgs<E>) => void;
 
 /**
  * The parts of a socket.io client socket that a lobby client uses, so that any socket will
- * do: one in the browser, in a bot, or a fake one in a test.
+ * do: one in the browser, in a bot, or a fake one in a test. What arrives on it is checked
+ * against the protocol, @see argsOf.
  */
 export interface ClientSocket {
     on(event: string, listener: (...args: unknown[]) => void): unknown;
@@ -13,10 +19,19 @@ export interface ClientSocket {
     emit(event: string, ...args: unknown[]): unknown;
 }
 
-/** The events that update the game, each with the version of the game that it shows. */
-type GameUpdate = "action" | "playerState" | "spectate";
+/** The protocol's schema for each event from the server, by the event, @see argsOf. */
+const SERVER_EVENT_SCHEMAS: { [E in ServerEvent]: z.ZodType<ServerEventArgs<E>> } = ServerEvents;
 
-type Listener<E extends ServerEvent> = (...args: ServerEventArgs<E>) => void;
+/** What the server sent with an event, checked against the protocol, which throws if it isn't. */
+function argsOf<E extends ServerEvent>(event: E, args: unknown[]): ServerEventArgs<E> {
+    return SERVER_EVENT_SCHEMAS[event].parse(args);
+}
+
+/** The events that update the game, each with the version of the game that it shows, @see LobbyClient.onUpdate. */
+export type GameUpdate = "action" | "playerState" | "spectate";
+
+/** The events from the server that the client hands on as they come, @see LobbyClient.on. */
+export type DirectEvent = Exclude<ServerEvent, GameUpdate>;
 
 /**
  * A client of one lobby, over a socket. It joins the lobby whenever the socket connects,
@@ -46,36 +61,36 @@ export class LobbyClient {
         socket.on("connect", () => this.send("join"));
         // Joining, as a player or a spectator, brings the game as it is now, which no update from before can replace.
         socket.on("join", (...args) => {
-            const [{ gameVersion }] = args as ServerEventArgs<"join">;
+            const [{ gameVersion }] = argsOf("join", args);
             if (isDef(gameVersion)) {
                 this.gameVersion = gameVersion;
             }
         });
-        socket.on("action", (...args) => this.update("action", args as ServerEventArgs<"action">));
-        socket.on("playerState", (...args) => this.update("playerState", args as ServerEventArgs<"playerState">));
-        socket.on("spectate", (...args) => this.update("spectate", args as ServerEventArgs<"spectate">));
+        socket.on("action", (...args) => this.update("action", argsOf("action", args)));
+        socket.on("playerState", (...args) => this.update("playerState", argsOf("playerState", args)));
+        socket.on("spectate", (...args) => this.update("spectate", argsOf("spectate", args)));
     }
 
     /**
-     * Listen for an event from the server.
+     * Listen for an event from the server, other than an update of the game, @see onUpdate.
      *
      * @returns A function that stops listening.
      */
-    public on<E extends ServerEvent>(event: E, listener: Listener<E>): () => void {
-        switch (event) {
-            case "action":
-            case "playerState":
-            case "spectate": {
-                const listeners = this.updates[event as GameUpdate] as unknown as Set<Listener<E>>;
-                listeners.add(listener);
-                return () => listeners.delete(listener);
-            }
-            default: {
-                const handler = (...args: unknown[]) => listener(...(args as ServerEventArgs<E>));
-                this.socket.on(event, handler);
-                return () => this.socket.off(event, handler);
-            }
-        }
+    public on<E extends DirectEvent>(event: E, listener: Listener<E>): () => void {
+        const handler = (...args: unknown[]) => listener(...argsOf(event, args));
+        this.socket.on(event, handler);
+        return () => this.socket.off(event, handler);
+    }
+
+    /**
+     * Listen for an update of the game, which the client hands on only if it's newer than the last.
+     *
+     * @returns A function that stops listening.
+     */
+    public onUpdate<E extends GameUpdate>(event: E, listener: Listener<E>): () => void {
+        const listeners = this.updates[event];
+        listeners.add(listener);
+        return () => listeners.delete(listener);
     }
 
     /** Leave the lobby, which a player can only do before the game starts, and the owner can't. */
@@ -119,8 +134,11 @@ export class LobbyClient {
      */
     private update<E extends GameUpdate>(event: E, args: ServerEventArgs<E>): void {
         const [{ version }] = args;
-        const isNew = event === "playerState" ? version >= this.gameVersion : version > this.gameVersion;
-        if (!isNew) {
+        if (version < this.gameVersion) {
+            return;
+        }
+        // The server sends the player's state again, at the same version, when it refuses a move.
+        if (version === this.gameVersion && event !== "playerState") {
             return;
         }
 

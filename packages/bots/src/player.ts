@@ -52,8 +52,8 @@ export class BotPlayer {
                     this.follow(joined.game, []);
                 }
             }),
-            client.on("action", ({ update, actions }) => this.follow(update, actions)),
-            client.on("playerState", ({ update }) => this.follow(update)),
+            client.onUpdate("action", ({ update, actions }) => this.follow(update, actions)),
+            client.onUpdate("playerState", ({ update }) => this.follow(update)),
             client.on("error", ({ type }) => {
                 this.answered(type === "invalid_move");
                 this.consider();
