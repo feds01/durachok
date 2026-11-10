@@ -4,6 +4,7 @@ import { useState } from "react";
 import AppHeader from "@/components/AppHeader";
 import Loader from "@/components/Loader";
 import UserMenu from "@/components/UserMenu";
+import UserStatistics from "@/components/UserStatistics";
 import { useAuthDispatch } from "@/contexts/auth";
 import CreateGameDialog from "@/fragments/CreateGameDialog";
 import GameLinkCard from "@/fragments/GameLinkCard";
@@ -92,6 +93,10 @@ function UserRoute() {
                         </motion.button>
                     </AnimatePresence>
                 </motion.div>
+            </motion.section>
+            <motion.section variants={fadeUp} className="mx-auto mt-10 w-full max-w-5xl text-left">
+                <h2 className="mb-4 mt-0 text-2xl">Your record</h2>
+                <UserStatistics statistics={data.statistics} />
             </motion.section>
             <CreateGameDialog open={createGameDialogOpen} onClose={toggleCreateGameDialog} />
         </motion.div>

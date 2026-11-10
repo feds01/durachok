@@ -2,6 +2,7 @@ import { type UserInfo, type UserRegistration, UserUpdate } from "@durachok/tran
 import { TRPCError } from "@trpc/server";
 import { Logger } from "pino";
 
+import { toUserStatistics } from "../lib/statistics";
 import User, { UserDocument } from "../models/user.model";
 import { isDef } from "../utils";
 import { AuthService } from "./auth";
@@ -78,8 +79,7 @@ export class UserService {
             email: user.email,
             image: await this.getUserImageURL(user),
             games,
-            // @@Todo: compute statistics.
-            // statistics: {}
+            statistics: toUserStatistics(user.statistics),
         };
     }
 

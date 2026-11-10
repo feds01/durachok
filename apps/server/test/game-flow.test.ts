@@ -5,47 +5,18 @@
  * and uses a database of its own, which it drops afterwards. Set `TEST_SERVER_LOG` to a
  * file to keep the server's logs.
  */
-import { canForfeit, canPlace, movesFor, turnOf } from "@durachok/engine";
-import { LobbyClient, type PlayerGameState, type PlayerMove } from "@durachok/transport";
+import { canForfeit, canPlace, gameResult, movesFor, turnOf } from "@durachok/engine";
+import { LobbyClient, type PlayerGameState, type PlayerMove, type UserStatistics } from "@durachok/transport";
 import type { Subprocess } from "bun";
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import mongoose from "mongoose";
 import { io, Socket } from "socket.io-client";
 
-const MONGO = process.env.TEST_MONGODB_URI ?? "mongodb://localhost:27017";
-const DB_URI = `${MONGO}/durachok-test-${crypto.randomUUID().slice(0, 8)}`;
+import { available, dropDatabase, testDatabaseUri } from "./database";
+
+const DB_URI = testDatabaseUri();
 const PORT = 20000 + Math.floor(Math.random() * 10000);
 const BASE = `http://localhost:${PORT}`;
-
-/**
- * Whether MongoDB answers. CI must have it, so waits for it to start there. It must be a
- * replica set, since the server changes lobbies in transactions.
- */
-async function mongoAvailable(): Promise<boolean> {
-    let connection: mongoose.Connection;
-    try {
-        connection = await mongoose
-            .createConnection(MONGO, { serverSelectionTimeoutMS: process.env.CI ? 30_000 : 1000 })
-            .asPromise();
-    } catch {
-        return false;
-    }
-
-    try {
-        const hello = await connection.db?.admin().command({ hello: 1 });
-        if (!hello?.setName) {
-            throw new Error(`MongoDB at ${MONGO} isn't a replica set, which the server needs. Run \`just db\`.`);
-        }
-        return true;
-    } finally {
-        await connection.close();
-    }
-}
-
-const available = await mongoAvailable();
-if (!available && process.env.CI) {
-    throw new Error(`MongoDB isn't reachable at ${MONGO}.`);
-}
 
 type Tokens = { token: string; refreshToken: string };
 
@@ -177,9 +148,7 @@ afterAll(async () => {
     sockets.forEach((socket) => socket.close());
 
     if (available) {
-        const connection = await mongoose.createConnection(DB_URI).asPromise();
-        await connection.dropDatabase();
-        await connection.close();
+        await dropDatabase(DB_URI);
     }
 });
 
@@ -198,6 +167,15 @@ describe.skipIf(!available)("Game flow", () => {
             { settings: { maxPlayers: 2, passphrase: true, shortGameDeck: true, roundTimeout: 120 } },
             ownerTokens,
         );
+        const statistics = async () =>
+            (await trpc<{ statistics: UserStatistics }>("users.get", undefined, ownerTokens, "GET")).statistics;
+        expect(await statistics()).toEqual({
+            gamesPlayed: 0,
+            gamesWon: 0,
+            gamesLost: 0,
+            gamesHosted: 0,
+            averageRounds: 0,
+        });
 
         // Sockets need tokens.
         await expect(connect()).rejects.toThrow("unauthorized");
@@ -379,6 +357,19 @@ describe.skipIf(!available)("Game flow", () => {
         const after = await trpc<{ status: string; players: unknown[] }>("lobbies.get", { pin }, ownerTokens, "GET");
         expect(after.status).toBe("waiting");
         expect(after.players).toHaveLength(2);
+
+        // The game counts in the owner's statistics, as the guest has no account to count it in.
+        const { winners, durak } = gameResult(victory!.players);
+        const record = await statistics();
+        expect(record).toEqual({
+            gamesPlayed: 1,
+            gamesWon: winners.includes(`owner-${id}`) ? 1 : 0,
+            gamesLost: durak === `owner-${id}` ? 1 : 0,
+            gamesHosted: 1,
+            averageRounds: expect.any(Number),
+        });
+        // A whole game has at least the round that starts it.
+        expect(record.averageRounds).toBeGreaterThanOrEqual(1);
     }, 60_000);
 
     test("the owner changes the lobby's settings before the game", async () => {

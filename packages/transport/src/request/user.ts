@@ -55,8 +55,8 @@ export const UserUpdateSchema = UserSchema.partial().extend({
 export type UserUpdate = z.infer<typeof UserUpdateSchema>;
 
 export const UserInfoSchema = UserSchema.extend({
-    /** Player statistics that are accumulated over time. */
-    statistics: UserStatisticsSchema.optional(),
+    /** What the user has done in the games that they finished, @see UserStatisticsSchema. */
+    statistics: UserStatisticsSchema,
     /** The list of currently active games that the user is in. */
     games: z.array(LobbyInfoSchema),
 }).strict();

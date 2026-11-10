@@ -1,4 +1,4 @@
-import { CardSuits } from "@durachok/engine";
+import { CardSuits, gameResult, roundsOf } from "@durachok/engine";
 import { GameSettings, LobbyInfo } from "@durachok/transport";
 import { GameStatus } from "@durachok/transport";
 import { Lobby, Message } from "@durachok/transport";
@@ -10,8 +10,11 @@ import { Logger } from "pino";
 
 import { transaction } from "../lib/database";
 import { CHAT_HISTORY, MAX_LOBBIES_PER_OWNER } from "../lib/limits";
+import { countOutcome } from "../lib/statistics";
 import Lobbies, { PopulatedLobbyDocument, PopulatedLobbyFields } from "../models/lobby.model";
+import Users from "../models/user.model";
 import { TokenPayload } from "../schemas/auth";
+import { DBGame, DBGameSchema } from "../schemas/game";
 import { DBLobby, DBLobbySchema, DBPlayer, identityOf, isPlayer } from "../schemas/lobby";
 import { assert, expr, isDef } from "../utils";
 import {
@@ -416,21 +419,63 @@ export class LobbyService {
     /**
      * Mark a lobby as waiting again, after its game finished, so that its players can play another.
      * A player who left during the game kept their place in it, so that they could come back, and
-     * gives it up now, as they would have in the waiting room, except the owner.
+     * gives it up now, as they would have in the waiting room, except the owner. The game counts
+     * in its registered players' statistics in the same transaction, and only once, since only a
+     * lobby that's still playing finishes its game, @see countGame.
      */
     public async finishGame(pin: string): Promise<void> {
-        const lobby = await Lobbies.findOne({ pin }, { owner: 1 });
-        if (!isDef(lobby)) {
-            throw new LobbyNotFoundError();
-        }
+        await transaction(async () => {
+            const lobby = await Lobbies.findOne({ pin }, { owner: 1, players: 1 });
+            if (!isDef(lobby)) {
+                throw new LobbyNotFoundError();
+            }
 
-        await Lobbies.updateOne(
-            { pin },
-            {
-                $set: { status: "waiting" },
-                $pull: { players: { socket: null, registered: { $ne: lobby.owner.toString() } } },
-            },
-        );
+            // Only a lobby that's still playing finishes its game, so that the game counts once.
+            const finished = await Lobbies.updateOne(
+                { pin, status: "playing" },
+                {
+                    $set: { status: "waiting" },
+                    $pull: { players: { socket: null, registered: { $ne: lobby.owner.toString() } } },
+                },
+            );
+            if (finished.modifiedCount === 0) {
+                return;
+            }
+
+            const game = DBGameSchema.parse((await this.commonService.getGameDbObject(pin)).toObject());
+            await this.countGame(lobby.players, lobby.owner.toString(), game);
+        });
+    }
+
+    /**
+     * Count a finished game in the statistics of its registered players, by each statistic's
+     * definition of what a game adds to it, @see STATISTICS. Anonymous players and bots have no
+     * account to count it in.
+     */
+    private async countGame(players: DBPlayer[], owner: string, game: DBGame): Promise<void> {
+        const result = gameResult(game.state.players.values());
+        const rounds = roundsOf(game.history.nodes);
+
+        const updates = players.flatMap(({ name, registered }) => {
+            if (!isDef(registered)) {
+                return [];
+            }
+
+            const counts = countOutcome({
+                name,
+                owner: registered === owner,
+                result,
+                rounds,
+                history: game.history.nodes,
+            });
+            const $inc = Object.fromEntries(
+                Object.entries(counts).map(([field, amount]) => [`statistics.${field}`, amount]),
+            );
+            return [{ updateOne: { filter: { _id: registered }, update: { $inc } } }];
+        });
+        if (updates.length > 0) {
+            await Users.bulkWrite(updates);
+        }
     }
 
     /**

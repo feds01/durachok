@@ -34,3 +34,6 @@ export const DBGameSchema = GameSchema.extend({
 }).transform(({ _id, ...data }) => {
     return { ...data, id: _id.toString() };
 });
+
+/** A game as the database keeps it, once parsed, @see DBGameSchema. */
+export type DBGame = z.output<typeof DBGameSchema>;
