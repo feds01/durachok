@@ -109,6 +109,13 @@ modules = ["npm:@aws-sdk/*"]
 allowed_importers = ["apps/server/src/repos/image"]
 guidance = "Store files through an image repository, which also has a local one for development."
 
+[contracts.opentelemetry-behind-tracing]
+type = "protected"
+name = "Only the tracing module uses OpenTelemetry"
+modules = ["npm:@opentelemetry/*"]
+allowed_importers = ["apps/server/src/lib/tracing", "apps/server/test"]
+guidance = "Trace through lib/tracing.ts: inSpan for work in a span of its own, recordError and traceError for errors."
+
 [contracts.credentials-behind-auth]
 type = "protected"
 name = "Only the auth controller hashes passwords and signs tokens"

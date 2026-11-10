@@ -107,6 +107,10 @@ AWS_BUCKET_NAME=
 # Image storage mode: "s3" or "local" (default: local)
 IMAGE_STORAGE=local
 
+# OpenTelemetry traces over OTLP/HTTP (optional - without an endpoint, nothing is traced)
+OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
+OTEL_SERVICE_NAME=durachok-server
+
 # Server configuration (optional)
 PORT=8080
 NODE_ENV=dev
@@ -122,6 +126,14 @@ bun run dev
 ```
 
 The server will start on `http://localhost:8080` by default.
+
+## Tracing
+
+The server traces each tRPC request and each socket event with [OpenTelemetry](https://opentelemetry.io/docs/languages/js/), in a span of its own, and records an error that is the server's own on its span: an exception, and an error status. An error that the client caused, such as a request that isn't valid, only names its type in the span's `error.type`, since the server did what it should.
+
+Traces go out over OTLP/HTTP once `OTEL_EXPORTER_OTLP_ENDPOINT` (or `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`) is set, to an [OpenTelemetry Collector](https://opentelemetry.io/docs/collector/) or a service that takes OTLP. The exporter reads the rest of [OpenTelemetry's variables](https://opentelemetry.io/docs/specs/otel/configuration/sdk-environment-variables/) itself, such as `OTEL_EXPORTER_OTLP_HEADERS` for a key, and `OTEL_SERVICE_NAME` names the service, `durachok-server` by default. Without an endpoint, or with `OTEL_SDK_DISABLED=true`, the server doesn't load the SDK, and its spans cost next to nothing. On `SIGINT` or `SIGTERM`, it sends the spans that are left, waiting up to three seconds, before it stops.
+
+The server runs on Bun, so it instruments itself, rather than through OpenTelemetry's automatic instrumentation for Node.js. Only `src/lib/tracing.ts` imports OpenTelemetry, which zenith checks.
 
 ## Development Features
 
