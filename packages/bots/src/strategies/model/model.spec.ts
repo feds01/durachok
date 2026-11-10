@@ -2,12 +2,12 @@ import { PlayerMove } from "@durachok/transport";
 import { MockLanguageModelV4 } from "ai/test";
 import { describe, expect, test } from "bun:test";
 
-import { Observation } from "../../observation";
+import { observationWith } from "../../testing";
 import { Strategy } from "../../strategy";
 import { ModelStrategy } from "./model";
 
 const moves: PlayerMove[] = [{ type: "place", card: "6S" }, { type: "place", card: "7S" }, { type: "forfeit" }];
-const observation = { moves } as Observation;
+const observation = observationWith(moves);
 
 /** A fallback that always gives up the round, so that a test can tell when it decided. */
 const fallback: Strategy = { decide: () => ({ type: "forfeit" }) };

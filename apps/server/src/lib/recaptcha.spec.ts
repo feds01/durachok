@@ -20,7 +20,10 @@ describe("verifyReCaptcha", () => {
         const [url, init] = fetch.mock.calls[0]!;
         expect(String(url)).toBe(SITEVERIFY_URL);
         expect(init?.method).toBe("POST");
-        const body = init?.body as URLSearchParams;
+        const body = init?.body;
+        if (!(body instanceof URLSearchParams)) {
+            throw new Error(`Expected a form to be sent, not ${String(body)}`);
+        }
         expect(Object.fromEntries(body)).toEqual({ secret: "the-secret", response: "the-token", remoteip: "10.0.0.1" });
     });
 

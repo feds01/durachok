@@ -1,13 +1,13 @@
 import { PlayerMove } from "@durachok/transport";
 import { describe, expect, test } from "bun:test";
 
-import { Observation } from "../../observation";
+import { observationWith } from "../../testing";
 import { RandomStrategy } from "./random";
 
 const moves: PlayerMove[] = [{ type: "place", card: "6S" }, { type: "place", card: "7S" }, { type: "forfeit" }];
 
-/** An observation with only the moves in it, which is all that the random strategy looks at. */
-const observation = { moves } as Observation;
+/** An observation with these moves, which is all that the random strategy looks at. */
+const observation = observationWith(moves);
 
 describe("The random strategy", () => {
     test("makes one of the moves that it can, at random", () => {

@@ -1,5 +1,5 @@
 import { ErrorMessage, ErrorMessageType, ErrorSummary } from "@durachok/transport";
-import { z, ZodError } from "zod";
+import { ZodError } from "zod";
 
 import { expr } from ".";
 
@@ -11,9 +11,9 @@ import { expr } from ".";
  * @returns A transformed readable error map
  */
 export function transformZodErrorIntoErrorSummary<T>(error: ZodError<T>): ErrorSummary {
-    const errorMap = new Map();
+    const errorMap = new Map<string, ErrorSummary[string]>();
 
-    error.issues.forEach((issue) => {
+    for (const issue of error.issues) {
         const path = issue.path.join(".");
 
         // Perform some transformation on the ZodError to get into a more readable format
@@ -31,15 +31,9 @@ export function transformZodErrorIntoErrorSummary<T>(error: ZodError<T>): ErrorS
         });
 
         errorMap.set(path, responseError);
+    }
 
-        return {
-            message: error.message,
-            description: z.prettifyError(error),
-            path: issue.path.map((item) => item.toString()),
-        };
-    });
-
-    return Object.fromEntries(errorMap) as ErrorSummary;
+    return Object.fromEntries(errorMap);
 }
 
 /**

@@ -8,10 +8,13 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { isDef, range } from "@/utils";
 
-/** The suits that make up a passphrase, and what to call them. */
-const SUITS = { "♡": "hearts", "♢": "diamonds", "♣": "clubs", "♤": "spades" } as const;
+/** The suits that make up a passphrase, in the order that they're offered. */
+const SUITS = ["♡", "♢", "♣", "♤"] as const;
 
-type Suit = keyof typeof SUITS;
+type Suit = (typeof SUITS)[number];
+
+/** What to call each suit. */
+const SUIT_NAMES: Record<Suit, string> = { "♡": "hearts", "♢": "diamonds", "♣": "clubs", "♤": "spades" };
 
 interface Props<T extends FieldValues> {
     pin: string;
@@ -28,7 +31,6 @@ export default function GamePassphraseInput<T extends FieldValues>({ pin, name, 
         field: { onChange },
         fieldState: { error },
     } = useController({ name, control });
-    const suits = Object.keys(SUITS) as Suit[];
 
     // A wrong passphrase starts the picking again, since the owner's has likely changed.
     const [lastError, setLastError] = useState(error);
@@ -75,14 +77,14 @@ export default function GamePassphraseInput<T extends FieldValues>({ pin, name, 
             </div>
             <div className="flex items-center gap-3">
                 {/* A suit can come up more than once, so each stays to be picked again. */}
-                {suits.map((suit) => (
+                {SUITS.map((suit) => (
                     <motion.button
                         type="button"
                         key={suit}
                         onClick={() => pick(suit)}
                         whileHover={{ y: -4 }}
                         whileTap={{ scale: 0.95 }}
-                        aria-label={`Pick ${SUITS[suit]}`}
+                        aria-label={`Pick ${SUIT_NAMES[suit]}`}
                         className="flex h-20 w-16 cursor-pointer select-none items-center justify-center rounded-lg border-2 border-primary bg-card text-5xl text-primary shadow-md max-sm:h-16 max-sm:w-12 max-sm:text-4xl"
                     >
                         {suit}

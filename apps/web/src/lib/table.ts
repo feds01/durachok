@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 import { Action } from "@durachok/transport";
 
 import { expr } from "../utils";
@@ -13,6 +15,24 @@ export type ClearTo =
     | { to: "hand" }
     /** Another player took them, so they fly to their seat. */
     | { to: "seat"; player: string };
+
+const ClearToSchema: z.ZodType<ClearTo> = z.discriminatedUnion("to", [
+    z.object({ to: z.literal("discard") }),
+    z.object({ to: z.literal("hand") }),
+    z.object({ to: z.literal("seat"), player: z.string() }),
+]);
+
+/**
+ * Where the table clears to, from what an animation was handed, which isn't typed, @see ClearTo.
+ * Anything else, such as nothing while the round goes on, is nowhere.
+ */
+export function readClearTo(data: unknown): ClearTo | null {
+    const parsed = ClearToSchema.safeParse(data);
+    if (!parsed.success) {
+        return null;
+    }
+    return parsed.data;
+}
 
 /** Where the table's cards came from, which says where they fly in from, and which are trumps. */
 export type CardSources = {

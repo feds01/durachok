@@ -4,7 +4,7 @@ import { ReactNode, useEffect, useEffectEvent, useRef } from "react";
 
 import PlayingCard from "@/components/game/PlayingCard";
 import { AWAY, DISCARD, offsetTo, pileLean, seatOf, useArrival } from "@/lib/flight";
-import { CardSources, ClearTo } from "@/lib/table";
+import { CardSources, ClearTo, readClearTo } from "@/lib/table";
 import { cn } from "@/lib/utils";
 import { expr } from "@/utils";
 import { cardName, suitOf, TableCard } from "@durachok/engine";
@@ -83,7 +83,7 @@ export default function TableArea({ cards, role, targets, defending, clearTo, so
 function AttackSlot({ position, children }: { position: number; children: ReactNode }) {
     const [isPresent, safeToRemove] = usePresence();
     // Where the table's cards go, as the table says when it clears, after this attack last rendered.
-    const clearTo = usePresenceData() as ClearTo | null | undefined;
+    const clearTo = readClearTo(usePresenceData());
     const scope = useRef<HTMLDivElement>(null);
     const leaving = useRef<{ stop: () => void } | null>(null);
 

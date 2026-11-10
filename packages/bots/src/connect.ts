@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { LobbyClient, TokensMessage } from "@durachok/transport";
 import { io } from "socket.io-client";
 
@@ -88,6 +89,9 @@ export function connectBot({ url, pin, tokens }: BotSeat, options: BotPlayerOpti
 /** The result of calling the server's API, with the tokens as the server left them. */
 type CallResult = { ok: true; tokens: TokensMessage } | { ok: false; message: string; tokens: TokensMessage };
 
+/** What the server answers a failed tRPC request with, of which a bot reads the message. */
+const TrpcFailureSchema = z.object({ error: z.object({ json: z.object({ message: z.string() }) }) });
+
 /** Call one of the server's API procedures, as the web app's client does. */
 async function call(
     url: string,
@@ -117,6 +121,10 @@ async function call(
         return { ok: true, tokens: renewed };
     }
 
-    const result = (await response.json().catch(() => null)) as { error?: { json?: { message?: string } } } | null;
-    return { ok: false, message: result?.error?.json?.message ?? `HTTP ${response.status}`, tokens: renewed };
+    // tRPC says what went wrong in the body, which a proxy's error page, say, doesn't have.
+    const failure = TrpcFailureSchema.safeParse(await response.json().catch(() => null));
+    if (!failure.success) {
+        return { ok: false, message: `HTTP ${response.status}`, tokens: renewed };
+    }
+    return { ok: false, message: failure.data.error.json.message, tokens: renewed };
 }
