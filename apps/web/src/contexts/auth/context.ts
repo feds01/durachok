@@ -1,4 +1,5 @@
 import { isDef } from "../../utils";
+import { NO_AUTH } from "../../utils/auth";
 import { AuthAction, AuthState } from "./reducer";
 import React, { createContext } from "react";
 
@@ -9,11 +10,9 @@ type AuthStateContextType = {
 };
 
 export const AuthStateContext = createContext<AuthStateContextType>({
-    state: { kind: "logged-out" },
+    state: NO_AUTH,
     update: () => {},
-    isRegistered: (state) => {
-        return state.kind === "logged-in" && state.user.kind === "registered";
-    },
+    isRegistered: (state) => state.account !== null,
 });
 
 export function useAuthState() {

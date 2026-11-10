@@ -7,7 +7,7 @@ import GamePassphraseInput from "@/components/GamePassphraseInput";
 import PinInput from "@/components/PinInput";
 import SubmitButton from "@/components/SubmitButton";
 import { Input } from "@/components/ui/input";
-import { useAuthState } from "@/contexts/auth";
+import { sessionFor, useAuth } from "@/contexts/auth";
 import { fadeUp } from "@/lib/motion";
 import { PANEL } from "@/lib/styles";
 import { cn } from "@/lib/utils";
@@ -57,7 +57,7 @@ const STAGE_TITLES: Record<StageKind["kind"], string> = {
 
 export default function GamePrompt({ startPin, onSuccess }: Props) {
     const [stage, setStage] = useState<StageKind>({ kind: "pin" });
-    const { state: auth } = useAuthState();
+    const [auth, updateAuth] = useAuth();
 
     const joinLobbyMutation = trpc.lobbies.join.useMutation();
 
@@ -129,15 +129,22 @@ export default function GamePrompt({ startPin, onSuccess }: Props) {
                     const { pin } = form.getValues();
 
                     // A player who is already in the lobby, such as its owner, goes straight in.
-                    if (auth.kind === "logged-in") {
+                    const session = sessionFor(auth, pin);
+                    if (session) {
                         const isMember = await trpcNativeClient.lobbies.get.query({ pin }).then(
                             () => true,
                             () => false,
                         );
 
                         if (isMember) {
-                            onSuccess({ pin, name: auth.user.name });
+                            onSuccess({ pin, name: session.user.name });
                             return;
+                        }
+
+                        // A seat that the lobby no longer has, e.g. one given up on disconnecting,
+                        // goes, so that joining again gets a new one.
+                        if (session.user.kind === "anonymous") {
+                            updateAuth({ type: "leave", pin });
                         }
                     }
 
@@ -146,9 +153,9 @@ export default function GamePrompt({ startPin, onSuccess }: Props) {
                             type: "manual",
                             message: "This lobby is full, or its game has started.",
                         });
-                    } else if (auth.kind === "logged-in" && auth.user.kind === "registered") {
+                    } else if (auth.account) {
                         // Registered users play under their account's name.
-                        form.setValue("name", auth.user.name);
+                        form.setValue("name", auth.account.user.name);
 
                         if (info.passphrase) {
                             setStage({ kind: "security", info });
@@ -196,7 +203,7 @@ export default function GamePrompt({ startPin, onSuccess }: Props) {
                 }
             }
         },
-        [auth, form, onSubmit, onSuccess, stage],
+        [auth, updateAuth, form, onSubmit, onSuccess, stage],
     );
 
     // A pin from a shared link is checked straight away, once.

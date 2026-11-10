@@ -24,11 +24,11 @@ export default function UserMenu({ onLogout }: Props) {
     const [state, dispatch] = useAuth();
     const navigate = useNavigate();
 
-    if (state.kind !== "logged-in" || state.user.kind !== "registered") {
+    if (!state.account) {
         return null;
     }
 
-    const { user } = state;
+    const { user } = state.account;
     const logout =
         onLogout ??
         (() => {

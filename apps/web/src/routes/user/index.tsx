@@ -15,7 +15,7 @@ import { Plus } from "lucide-react";
 
 export const Route = createFileRoute("/user/")({
     beforeLoad: ({ context, location }) => {
-        if (context.auth.kind === "logged-out" || context.auth.user.kind === "anonymous") {
+        if (!context.auth.account) {
             throw redirect({
                 to: "/login",
                 search: {

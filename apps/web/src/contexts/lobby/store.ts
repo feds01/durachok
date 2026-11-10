@@ -52,9 +52,15 @@ export const useLobbyStore = create<LobbyStore>((set, get) => {
         client: null,
 
         connect: (pin) => {
+            // The tokens of the person's seat in the lobby, or of their account, as the socket last
+            // sent them, so that the ones the server refreshes replace them.
+            let sent = getAuthTokens(pin);
             const socket = io(SOCKET_URL, {
                 // A function, so that each reconnection sends the tokens as they are then.
-                auth: (cb) => cb(getAuthTokens()),
+                auth: (cb) => {
+                    sent = getAuthTokens(pin);
+                    cb(sent);
+                },
             });
             const client = new LobbyClient(socket, pin);
 
@@ -62,7 +68,7 @@ export const useLobbyStore = create<LobbyStore>((set, get) => {
             // the tokens, or disconnected the client itself.
             socket.on("connect_error", () => dispatch({ type: "connectError", retrying: socket.active }));
             socket.on("disconnect", () => dispatch({ type: "disconnected", reconnecting: socket.active }));
-            client.on("tokens", saveRefreshedTokens);
+            client.on("tokens", (tokens) => saveRefreshedTokens(sent.refreshToken, tokens));
 
             client.on("join", ({ lobby, game }) => dispatch({ type: "join", lobby, ...(game && { game }) }));
             client.on("lobbyState", ({ lobby }) => dispatch({ type: "lobby", lobby }));

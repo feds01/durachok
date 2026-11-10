@@ -45,11 +45,12 @@ export default function Register() {
         [dispatch],
     );
 
+    const hasAccount = state.account !== null;
     useEffect(() => {
-        if (state.kind === "logged-in") {
+        if (hasAccount) {
             navigate({ to: redirect ?? "/user" });
         }
-    }, [state.kind, redirect, navigate]);
+    }, [hasAccount, redirect, navigate]);
 
     return (
         <div className="flex min-h-full flex-col items-center justify-center px-4 py-12">
