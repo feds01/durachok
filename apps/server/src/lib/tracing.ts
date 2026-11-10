@@ -105,9 +105,17 @@ const FLUSH_TIMEOUT_MS = 3000;
 
 /**
  * Start exporting traces over OTLP/HTTP, if the environment says where to, @see tracingEnabled.
- * The exporter reads the rest of OpenTelemetry's variables itself, such as its headers and its
- * timeout, and `OTEL_SERVICE_NAME` and `OTEL_RESOURCE_ATTRIBUTES` name the service. The spans
- * that are left go out when the server is stopped.
+ * To turn it on:
+ *
+ * 1. Set `OTEL_EXPORTER_OTLP_ENDPOINT`, or `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` for traces alone,
+ *    to a collector or a service that takes OTLP over HTTP.
+ * 2. If it needs a key, set `OTEL_EXPORTER_OTLP_HEADERS`, e.g. `api-key=<key>`. The exporter reads
+ *    the rest of OpenTelemetry's variables itself, such as its timeout.
+ * 3. To name the service other than `durachok-server`, set `OTEL_SERVICE_NAME`, and to describe
+ *    it further, `OTEL_RESOURCE_ATTRIBUTES`.
+ * 4. Start the server. The spans that are left go out when it stops.
+ *
+ * `OTEL_SDK_DISABLED=true` turns it off again.
  */
 export async function startTracing(env: NodeJS.ProcessEnv = process.env): Promise<void> {
     if (!tracingEnabled(env)) {
