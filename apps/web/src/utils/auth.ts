@@ -138,6 +138,9 @@ export interface RefreshedTokens {
     tokens: AuthTokens;
 }
 
+/** Refreshed tokens, as the event that announces them carries them, @see onRefreshedTokens. */
+const RefreshedTokensSchema: z.ZodType<RefreshedTokens> = z.object({ previous: z.string(), tokens: AuthTokensSchema });
+
 /** The auth with the refreshed tokens in place of the session's whose refresh token was sent. */
 export function replaceTokens(auth: StoredAuth, { previous, tokens }: RefreshedTokens): StoredAuth {
     const account = auth.account?.refreshToken === previous ? { ...auth.account, ...tokens } : auth.account;
@@ -200,7 +203,17 @@ export function saveRefreshedTokens(previous: string | undefined, tokens: AuthTo
  * @returns A function that stops listening.
  */
 export function onRefreshedTokens(listener: (refreshed: RefreshedTokens) => void): () => void {
-    const handler = (event: Event) => listener((event as CustomEvent<RefreshedTokens>).detail);
+    const handler = (event: Event) => {
+        if (!(event instanceof CustomEvent)) {
+            return;
+        }
+        // Only this module announces them, but what an event carries is checked rather than assumed.
+        const refreshed = RefreshedTokensSchema.safeParse(event.detail);
+        if (!refreshed.success) {
+            return;
+        }
+        listener(refreshed.data);
+    };
     window.addEventListener(REFRESHED_TOKENS_EVENT, handler);
 
     return () => window.removeEventListener(REFRESHED_TOKENS_EVENT, handler);

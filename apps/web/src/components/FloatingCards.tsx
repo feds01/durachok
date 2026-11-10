@@ -1,4 +1,4 @@
-import { CSSProperties, useState } from "react";
+import { useState } from "react";
 
 import PlayingCard from "@/assets/image/playing-card.svg?react";
 
@@ -34,15 +34,13 @@ export default function FloatingCards() {
                 <PlayingCard
                     key={card.id}
                     className="absolute top-full size-16 fill-primary opacity-25 max-sm:size-10"
-                    style={
-                        {
-                            left: card.left,
-                            filter: card.blur ? `blur(${card.blur}px)` : undefined,
-                            animation: `float-card ${card.duration}s linear ${card.delay}s infinite`,
-                            "--card-scale": card.scale,
-                            "--card-rotate": `${card.rotate}deg`,
-                        } as CSSProperties
-                    }
+                    style={{
+                        left: card.left,
+                        filter: card.blur ? `blur(${card.blur}px)` : undefined,
+                        animation: `float-card ${card.duration}s linear ${card.delay}s infinite`,
+                        "--card-scale": card.scale,
+                        "--card-rotate": `${card.rotate}deg`,
+                    }}
                 />
             ))}
         </div>
