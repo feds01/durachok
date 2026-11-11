@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { LayoutDashboard, LogIn, UserPlus } from "lucide-react";
+import { flushSync } from "react-dom";
 
 import Logo from "@/components/Logo";
 import OrDivider from "@/components/OrDivider";
@@ -25,8 +26,10 @@ function Index() {
 
     const redirectToLobby = ({ pin, seat }: LobbyAuthInfo) => {
         // Anonymous players, and spectators, get tokens for the lobby that they joined or watch.
+        // The lobby's guard reads the auth state that the router was last rendered with, so the new
+        // seat is rendered at once, before the player goes in, or the guard sends them back here.
         if (isDef(seat)) {
-            auth({ type: "join", pin, payload: seat });
+            flushSync(() => auth({ type: "join", pin, payload: seat }));
         }
 
         navigator({
