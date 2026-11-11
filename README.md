@@ -25,7 +25,7 @@ Start a lobby, share the pin, and play with up to eight friends, on a computer o
 
 <table>
   <tr>
-    <td width="38%"><img src="./docs/lobby.webp" alt="A lobby of three players, with its chat open" /></td>
+    <td width="38%"><img src="./docs/lobby.webp" alt="A lobby of three players, with its chat open and widened" /></td>
     <td width="38%"><img src="./docs/announcement.webp" alt="The table announcing that the player is defending" /></td>
     <td width="24%" rowspan="2"><img src="./docs/phone.webp" alt="The game on a phone" /></td>
   </tr>
