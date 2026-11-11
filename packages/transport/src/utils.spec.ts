@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { range } from "./index";
+import { range } from "./utils";
 
 describe("range", () => {
     test("counts the positions from 0", () => {

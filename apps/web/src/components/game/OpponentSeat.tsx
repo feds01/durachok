@@ -1,7 +1,9 @@
 import { motion } from "framer-motion";
+import { UserX } from "lucide-react";
 
 import PlayingCard from "@/components/game/PlayingCard";
 import RoleBadge from "@/components/game/RoleBadge";
+import { Button } from "@/components/ui/button";
 import UserAvatar from "@/components/UserAvatar";
 import { cn } from "@/lib/utils";
 import { range } from "@/utils";
@@ -22,10 +24,12 @@ type Props = {
     place?: number;
     /** Show the player's whole hand, for a player who can see it. Without it, the seat isn't a button. */
     onShowCards?: () => void;
+    /** Remove the player from the game, which the lobby's owner may. */
+    onRemove?: () => void;
 };
 
 /** Another player at the table: who they are, how many cards they hold, and what they're doing. */
-export default function OpponentSeat({ player, image, place, onShowCards }: Props) {
+export default function OpponentSeat({ player, image, place, onShowCards, onRemove }: Props) {
     const count = handSize(player);
     const shown = count === null ? SECRET_HAND : Math.min(count, SHOWN_CARDS);
     const inRound = player.out === null && player.action !== "none" && !player.turned;
@@ -55,7 +59,7 @@ export default function OpponentSeat({ player, image, place, onShowCards }: Prop
                     </span>
                 )}
             </div>
-            <RoleBadge action={player.action} turned={player.turned} place={place} />
+            <RoleBadge action={player.action} turned={player.turned} place={place} removed={player.removed} />
         </>
     );
 
@@ -63,7 +67,7 @@ export default function OpponentSeat({ player, image, place, onShowCards }: Prop
         <motion.li
             layout
             className={cn(
-                "flex min-w-32 flex-col items-center gap-2 rounded-xl border bg-card/80 px-3 py-2 shadow-sm backdrop-blur-sm transition-shadow",
+                "group relative flex min-w-32 flex-col items-center gap-2 rounded-xl border bg-card/80 px-3 py-2 shadow-sm backdrop-blur-sm transition-shadow",
                 inRound && player.action === "attack" && "border-amber-400/60",
                 inRound && player.action === "defend" && "border-sky-400/60",
                 player.out !== null && "opacity-70",
@@ -80,6 +84,19 @@ export default function OpponentSeat({ player, image, place, onShowCards }: Prop
                 </button>
             ) : (
                 content
+            )}
+            {/* Beside the seat rather than in it, since the seat may be a button itself. */}
+            {onRemove && (
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-0.5 top-0.5 size-7 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100"
+                    onClick={onRemove}
+                    aria-label={`Remove ${player.name} from the game`}
+                    title={`Remove ${player.name} from the game`}
+                >
+                    <UserX />
+                </Button>
             )}
         </motion.li>
     );

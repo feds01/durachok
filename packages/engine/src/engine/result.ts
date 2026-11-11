@@ -8,9 +8,13 @@ export interface GameResult {
     durak: string | null;
 }
 
-/** How a finished game came out, from when each of its players went out, @see GameResult. */
-export function gameResult(players: Iterable<Pick<GamePlayer, "name" | "out">>): GameResult {
-    const all = Array.from(players);
+/**
+ * How a finished game came out, from when each of its players went out, @see GameResult. A
+ * player whom the lobby's owner removed didn't go out by playing, so they're neither a winner
+ * nor the durak.
+ */
+export function gameResult(players: Iterable<Pick<GamePlayer, "name" | "out" | "removed">>): GameResult {
+    const all = Array.from(players).filter(({ removed }) => !removed);
     const outs = all.flatMap(({ out }) => (out === null ? [] : [out]));
     const first = Math.min(...outs);
 

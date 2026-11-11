@@ -4,7 +4,7 @@ import { games, total } from "./statistic";
 export const STATISTICS = [
     games(
         { id: "gamesPlayed", name: "Games played", description: "The games that the player played to the end." },
-        () => true,
+        ({ removed }) => !removed,
     ),
     games(
         { id: "gamesWon", name: "Games won", description: "The games in which the player went out first." },
@@ -28,7 +28,20 @@ export const STATISTICS = [
             name: "Rounds played",
             description: "The rounds in all of the games that the player played to the end.",
         },
-        ({ rounds }) => rounds,
+        ({ removed, rounds }) => {
+            if (removed) {
+                return 0;
+            }
+            return rounds;
+        },
+    ),
+    games(
+        {
+            id: "gamesResigned",
+            name: "Games resigned",
+            description: "The games that the player left before the end, when the lobby's owner removed them.",
+        },
+        ({ removed }) => removed,
     ),
 ] as const;
 

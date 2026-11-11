@@ -1,4 +1,4 @@
-import { InvalidGameState } from "@durachok/engine";
+import { InaccessibleOperation, InvalidGameState } from "@durachok/engine";
 import { ErrorMessage } from "@durachok/transport";
 import { TRPCError } from "@trpc/server";
 import { ZodError } from "zod";
@@ -27,7 +27,7 @@ export function transformErrorIntoMessage(error: Error): ErrorMessage {
             message: "That request isn't valid.",
             details: transformZodErrorIntoErrorSummary(error),
         };
-    } else if (error instanceof InvalidGameState) {
+    } else if (error instanceof InvalidGameState || error instanceof InaccessibleOperation) {
         return { type: "invalid_move", message: error.message };
     } else if (error instanceof TRPCError) {
         // The services report errors as tRPC errors, which the API shares.

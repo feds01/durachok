@@ -148,4 +148,30 @@ export class GameService {
             return { game, actions: game.history.serialize().nodes.slice(before), version };
         });
     }
+
+    /**
+     * Remove a player from the game, as the lobby's owner may, and save it. Their cards leave
+     * play, and the game goes on without them, @see Game.removePlayer.
+     *
+     * @returns The game after it, what happened, and its version, or nothing if the player was
+     * already out of the game, which removing them doesn't change.
+     */
+    public async removePlayer(name: string): Promise<MoveResult | null> {
+        return transaction(async () => {
+            const raw = await this.commonService.getGameDbObject(this.lobby.pin);
+            const game = await this.enrich(raw);
+
+            if (!game.players.has(name)) {
+                throw new PlayerNotInLobbyError();
+            }
+
+            const before = game.history.serialize().nodes.length;
+            if (!game.removePlayer(name)) {
+                return null;
+            }
+
+            const version = await this.save(raw.id, game);
+            return { game, actions: game.history.serialize().nodes.slice(before), version };
+        });
+    }
 }

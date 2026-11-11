@@ -4,10 +4,14 @@ import { PlayerOutcome, STATISTICS, countOutcome, toUserStatistics } from ".";
 
 /** A player's part in a game of 12 rounds, which anna won, and boris lost as the durak. */
 function outcome(name: string, owner = false): PlayerOutcome {
-    return { name, owner, result: { winners: ["anna"], durak: "boris" }, rounds: 12, history: [] };
+    return { name, owner, removed: false, result: { winners: ["anna"], durak: "boris" }, rounds: 12, history: [] };
 }
 
 describe("countOutcome", () => {
+    test("counts a game that the owner removed the player from only as resigned", () => {
+        expect(countOutcome({ ...outcome("dmitri"), removed: true })).toEqual({ gamesResigned: 1 });
+    });
+
     test("counts a game that the player won in their games played and won, and its rounds", () => {
         expect(countOutcome(outcome("anna"))).toEqual({ gamesPlayed: 1, gamesWon: 1, roundsPlayed: 12 });
     });
@@ -35,19 +39,27 @@ describe("the registry", () => {
 
 describe("toUserStatistics", () => {
     test("averages the rounds over the games played", () => {
-        const stored = { gamesPlayed: 4, gamesWon: 1, gamesLost: 2, gamesHosted: 3, roundsPlayed: 50 };
+        const stored = {
+            gamesPlayed: 4,
+            gamesWon: 1,
+            gamesLost: 2,
+            gamesHosted: 3,
+            gamesResigned: 1,
+            roundsPlayed: 50,
+        };
 
         expect(toUserStatistics(stored)).toEqual({
             gamesPlayed: 4,
             gamesWon: 1,
             gamesLost: 2,
             gamesHosted: 3,
+            gamesResigned: 1,
             averageRounds: 12.5,
         });
     });
 
     test("has no average without any games", () => {
-        const stored = { gamesPlayed: 0, gamesWon: 0, gamesLost: 0, gamesHosted: 0, roundsPlayed: 0 };
+        const stored = { gamesPlayed: 0, gamesWon: 0, gamesLost: 0, gamesHosted: 0, gamesResigned: 0, roundsPlayed: 0 };
 
         expect(toUserStatistics(stored).averageRounds).toBe(0);
     });

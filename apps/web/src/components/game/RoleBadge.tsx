@@ -1,4 +1,4 @@
-import { Check, Hand, Shield, Swords, Trophy } from "lucide-react";
+import { Check, Hand, Shield, Swords, Trophy, UserX } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { PlayerRole } from "@durachok/transport";
@@ -9,14 +9,19 @@ type Props = {
     turned: boolean;
     /** The player's place, once they're out of the game. */
     place?: number;
+    /** Whether the lobby's owner removed the player from the game, who has no place. */
+    removed?: boolean;
     className?: string;
 };
 
 const ORDINALS = ["1st", "2nd", "3rd"];
 
 /** What a player is doing in the round, or their place once they're out of the game. */
-export default function RoleBadge({ action, turned, place, className }: Props) {
+export default function RoleBadge({ action, turned, place, removed, className }: Props) {
     const badge = (() => {
+        if (removed) {
+            return { icon: UserX, label: "Removed", tone: "bg-secondary text-muted-foreground" };
+        }
         if (place !== undefined) {
             return {
                 icon: Trophy,

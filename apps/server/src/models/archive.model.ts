@@ -36,6 +36,7 @@ const ArchivedGameSchema = new Schema<IArchivedGame>({
                             action: { type: String, default: "none" },
                             beganRound: { type: Boolean, default: false },
                             out: { type: Number, default: null },
+                            removed: { type: Boolean, required: false },
                             turned: { type: Boolean, default: false },
                         },
                     },

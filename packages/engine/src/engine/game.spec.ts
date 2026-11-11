@@ -1,4 +1,5 @@
 import { cardFromString } from "./card";
+import { InaccessibleOperation } from "./errors/InaccessibleOperation";
 import { DEFAULT_SETTINGS, Game } from "./game";
 import { describe, expect, test } from "bun:test";
 
@@ -335,5 +336,137 @@ describe("Making a move", () => {
         game.status = "finished";
 
         expect(() => game.makeMove("a", { type: "place", card: "6S" })).toThrow("The game has finished");
+    });
+});
+
+/** A round between three players, a attacking b, with c waiting, hearts as trumps and cards left in the deck. */
+function threePlayers(hands: Record<string, string[]>, deck = ["9C", "10C", "JC", "QC", "KC", "AC"]): Game {
+    const game = new Game(["a", "b", "c"], null, { ...DEFAULT_SETTINGS, randomisePlayerOrder: false });
+    game.trump = cardFromString("2H");
+    setUpRound(game, { hands, attacker: "a", defender: "b", deck });
+    return game;
+}
+
+/** The actions that the game added to its history since it had `before` of them. */
+function actionsSince(game: Game, before: number) {
+    return game.history.serialize().nodes.slice(before);
+}
+
+describe("Removing a player", () => {
+    test("takes their cards out of play, and leaves them out of the game without a place", () => {
+        const game = threePlayers({ a: ["6S", "7S"], b: ["8S", "9S"], c: ["6D", "7D"] });
+        game.makeMove("a", { type: "place", card: "6S" });
+        const discarded = game.getStateForPlayer("a").discardSize ?? 0;
+
+        expect(game.removePlayer("c")).toBe(true);
+
+        const c = game.getPlayer("c");
+        expect(c).toMatchObject({ deck: [], removed: true, action: "none", beganRound: false });
+        expect(c.out).not.toBeNull();
+        // Their two cards are put aside with the beaten ones.
+        expect(game.getStateForPlayer("a").discardSize).toBe(discarded + 2);
+        expect(game.getResults().map(({ name }) => name)).not.toContain("c");
+    });
+
+    test("ends the defender's round, and the player after them opens the next, as the defender would have", () => {
+        const game = threePlayers({ a: ["6S", "7S"], b: ["8S", "9S"], c: ["6D", "7D"] });
+        game.makeMove("a", { type: "place", card: "6S" });
+        const before = game.history.serialize().nodes.length;
+
+        game.removePlayer("b");
+
+        expect(game.tableTop.size).toBe(0);
+        expect(game.getAttackingPlayerName()).toBe("c");
+        expect(game.getDefendingPlayerName()).toBe("a");
+        // The others fill up their hands from the deck, the attacker first.
+        expect(game.getPlayer("a").deck).toHaveLength(6);
+        expect(actionsSince(game, before)).toEqual([
+            { type: "remove", player: "b" },
+            { type: "new_round", actors: { defender: "a", attacker: "c" } },
+        ]);
+    });
+
+    test("passes the opening of the attack to the player before the defender, and the round goes on", () => {
+        const game = threePlayers({ a: ["6S", "7S"], b: ["8S", "9S"], c: ["6D", "7D"] });
+        game.makeMove("a", { type: "place", card: "6S" });
+
+        game.removePlayer("a");
+
+        expect(game.getAttackingPlayerName()).toBe("c");
+        expect(game.getPlayer("c").action).toBe("attack");
+        expect(game.getDefendingPlayerName()).toBe("b");
+        // The card that the removed player played stays on the table, to be beaten.
+        game.makeMove("b", { type: "cover", card: "8S", position: 0 });
+        expect(game.tableTop.get("6S")).toBe("8S");
+    });
+
+    test("lets the round go on without an attacker who wasn't opening it", () => {
+        const game = new Game(["a", "b", "c", "d"], null, { ...DEFAULT_SETTINGS, randomisePlayerOrder: false });
+        setUpRound(game, {
+            hands: { a: ["6S"], b: ["8S"], c: ["6D"], d: ["7D"] },
+            attacker: "a",
+            defender: "b",
+            deck: ["9C"],
+        });
+        game.makeMove("a", { type: "place", card: "6S" });
+
+        game.removePlayer("d");
+
+        expect(game.getAttackingPlayerName()).toBe("a");
+        expect(game.getDefendingPlayerName()).toBe("b");
+        expect(game.tableTop.size).toBe(1);
+    });
+
+    test("ends the round once the attacker that it waited on is gone", () => {
+        const game = threePlayers({ a: ["6S", "7S"], b: ["8S", "9S"], c: ["6D", "7D"] });
+        game.makeMove("a", { type: "place", card: "6S" });
+        game.makeMove("b", { type: "cover", card: "8S", position: 0 });
+        // The opener is done, so c may add a card, and the round waits on them.
+        game.makeMove("a", { type: "forfeit" });
+        expect(game.tableTop.size).toBe(1);
+
+        game.removePlayer("c");
+
+        // b beat the attack, so b opens the next round, against a.
+        expect(game.tableTop.size).toBe(0);
+        expect(game.getAttackingPlayerName()).toBe("b");
+        expect(game.getDefendingPlayerName()).toBe("a");
+    });
+
+    test("finishes the game when one player is left, as the durak", () => {
+        const game = twoPlayers({ a: ["6S", "7S"], b: ["8S", "9S"] });
+        game.makeMove("a", { type: "place", card: "6S" });
+
+        game.removePlayer("a");
+
+        expect(game.isFinished()).toBe(true);
+        expect(game.tableTop.size).toBe(0);
+        expect(game.getResults()).toEqual([{ name: "b", out: null }]);
+        expect(game.history.serialize().nodes.at(-1)).toEqual({ type: "victory" });
+    });
+
+    test("finishes the game when the defender leaves one player, as the durak", () => {
+        const game = twoPlayers({ a: ["6S", "7S"], b: ["8S", "9S"] });
+
+        game.removePlayer("b");
+
+        expect(game.isFinished()).toBe(true);
+        expect(game.getResults()).toEqual([{ name: "a", out: null }]);
+    });
+
+    test("leaves a player who already went out in their place", () => {
+        const game = threePlayers({ a: ["6S"], b: ["8S"], c: [] });
+        game.getPlayer("c").out = 1;
+
+        expect(game.removePlayer("c")).toBe(false);
+        expect(game.getPlayer("c").removed).toBeUndefined();
+        expect(game.getResults().map(({ name }) => name)).toEqual(["c", "a", "b"]);
+    });
+
+    test("can't happen once the game has finished", () => {
+        const game = twoPlayers({ a: ["6S"], b: ["8S"] });
+        game.status = "finished";
+
+        expect(() => game.removePlayer("a")).toThrow(InaccessibleOperation);
     });
 });

@@ -72,11 +72,13 @@ export const JoinMessageSchema = z.discriminatedUnion("as", [
 export type JoinMessage = z.infer<typeof JoinMessageSchema>;
 
 /** A player at the end of a game, and when they went out of it. */
-const PlayerExitSchema = z.object({
+export const PlayerExitSchema = z.object({
     name: z.string(),
     /** When the player went out, as a timestamp, or null for the player who lost. */
     out: z.number().nullable(),
 });
+
+export type PlayerExit = z.infer<typeof PlayerExitSchema>;
 
 /**
  * Indicate to the client that the game has finished. The players are in the order

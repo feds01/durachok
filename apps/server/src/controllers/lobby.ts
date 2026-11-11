@@ -1,4 +1,4 @@
-import { CardSuits, gameResult, roundsOf } from "@durachok/engine";
+import { CardSuits, Game, gameResult, roundsOf } from "@durachok/engine";
 import { GameSettings, LobbyInfo } from "@durachok/transport";
 import { GameStatus } from "@durachok/transport";
 import { Lobby, Message } from "@durachok/transport";
@@ -10,7 +10,7 @@ import { Logger } from "pino";
 
 import { transaction } from "../lib/database";
 import { CHAT_HISTORY, MAX_LOBBIES_PER_OWNER } from "../lib/limits";
-import { countOutcome } from "../lib/statistics";
+import { PlayerOutcome, countOutcome } from "../lib/statistics";
 import Lobbies, { PopulatedLobbyDocument, PopulatedLobbyFields } from "../models/lobby.model";
 import Users from "../models/user.model";
 import { TokenPayload } from "../schemas/auth";
@@ -28,12 +28,47 @@ import {
     PlayerNotInLobbyError,
     TooManyLobbiesError,
 } from "./common";
+import { CreatedGame, GameService, MoveResult } from "./game";
 import { ImageService } from "./image";
+
+/** The update that adds what a player's part in a game counts for to their account's statistics, @see countOutcome. */
+function statisticsUpdate(account: string, outcome: PlayerOutcome) {
+    const counts = countOutcome(outcome);
+    const $inc = Object.fromEntries(Object.entries(counts).map(([field, amount]) => [`statistics.${field}`, amount]));
+    return { updateOne: { filter: { _id: account }, update: { $inc } } };
+}
+
+/** A player whom the owner kicked out of their lobby, and what leaving its game did, if it was being played. */
+export interface KickResult {
+    player: DBPlayer;
+    removal: MoveResult | null;
+}
+
+/** A lobby's game, as it starts: who plays it, and the game itself. */
+export interface StartedGame extends CreatedGame {
+    players: string[];
+}
 
 /** Options for reading a lobby's state. */
 interface LobbyStateOptions {
     /** Whether to include the passphrase, which only the owner may see. */
     withPassphrase?: boolean;
+}
+
+/** The player in a lobby with the given name. */
+function playerIn(lobby: DBLobby, name: string): DBPlayer {
+    const player = lobby.players.find((p) => p.name === name);
+    if (!isDef(player)) {
+        throw new PlayerNotInLobbyError();
+    }
+    return player;
+}
+
+/** Refuse to take the lobby's owner out of it. */
+function ensureNotOwner(lobby: DBLobby, player: DBPlayer): void {
+    if (player.registered === lobby.owner.id) {
+        throw new InvalidLobbyStateError("The owner can't leave their lobby");
+    }
 }
 
 export class LobbyService {
@@ -327,36 +362,63 @@ export class LobbyService {
     }
 
     /**
-     * Remove a player from a waiting lobby. The owner can't be removed. A player whom the owner
-     * kicks out can't join the lobby again, @see identityOf.
+     * Remove a player from a waiting lobby. The owner can't be removed.
      *
      * @returns The removed player, e.g. to notify their connection.
      */
-    public async removePlayer(pin: string, name: string, { kick = false } = {}): Promise<DBPlayer> {
+    public async removePlayer(pin: string, name: string): Promise<DBPlayer> {
         return transaction(async () => {
             const lobby = await this.getRaw(pin);
             if (!isDef(lobby)) {
                 throw new LobbyNotFoundError();
             }
 
+            const player = playerIn(lobby, name);
+            ensureNotOwner(lobby, player);
+
             if (lobby.status !== "waiting") {
                 throw new InvalidLobbyStateError("Players can only leave a lobby before the game starts");
             }
 
-            const player = lobby.players.find((p) => p.name === name);
-            if (!isDef(player)) {
-                throw new PlayerNotInLobbyError();
+            await Lobbies.updateOne({ pin }, { $pull: { players: { name } } });
+            return player;
+        });
+    }
+
+    /**
+     * The owner kicks a player out of their lobby, who can't join it again, @see identityOf. During
+     * a game, the player leaves the game too, which goes on without them. The owner can't be kicked.
+     *
+     * @param game The lobby's game, which the player leaves if it's being played.
+     * @returns The kicked player, e.g. to notify their connection, and what leaving the game did.
+     */
+    public async kick(pin: string, name: string, game: GameService): Promise<KickResult> {
+        return transaction(async () => {
+            const lobby = await this.getRaw(pin);
+            if (!isDef(lobby)) {
+                throw new LobbyNotFoundError();
             }
 
-            if (player.registered === lobby.owner.id) {
-                throw new InvalidLobbyStateError("The owner can't leave their lobby");
-            }
+            const player = playerIn(lobby, name);
+            ensureNotOwner(lobby, player);
 
+            // The game and the lobby change together, so that nobody holds a place in a game
+            // whose lobby they're no longer in, from which nobody could remove them.
+            const removal = await expr(async () => {
+                // Only a game in progress has a place for the player to leave.
+                if (lobby.status !== "playing") {
+                    return null;
+                }
+                return game.removePlayer(name);
+            });
             await Lobbies.updateOne(
                 { pin },
-                { $pull: { players: { name } }, ...(kick && { $addToSet: { kicked: identityOf(player) } }) },
+                { $pull: { players: { name } }, $addToSet: { kicked: identityOf(player) } },
             );
-            return player;
+            if (isDef(removal) && isDef(player.registered)) {
+                await this.countRemoval(player.registered, name, removal.game);
+            }
+            return { player, removal };
         });
     }
 
@@ -390,12 +452,14 @@ export class LobbyService {
     }
 
     /**
-     * Mark a waiting lobby as playing. Only the players who are connected take part,
-     * so everyone else loses their place.
+     * Mark a waiting lobby as playing, and create its game. Only the players who are connected
+     * take part, so everyone else loses their place. The lobby and its game change together, so
+     * that nothing sees a lobby that's playing without its game, e.g. a kick, @see kick.
      *
-     * @returns The names of the players in the game.
+     * @param game The lobby's game, to create.
+     * @returns The names of the players in the game, the game, and its version.
      */
-    public async startGame(pin: string): Promise<string[]> {
+    public async startGame(pin: string, game: GameService): Promise<StartedGame> {
         return transaction(async () => {
             const lobby = await this.getRaw(pin);
             if (!isDef(lobby)) {
@@ -412,7 +476,8 @@ export class LobbyService {
             }
 
             await Lobbies.updateOne({ pin }, { $set: { status: "playing", players } });
-            return players.map((p) => p.name);
+            const names = players.map((p) => p.name);
+            return { players: names, ...(await game.create(names)) };
         });
     }
 
@@ -461,21 +526,36 @@ export class LobbyService {
                 return [];
             }
 
-            const counts = countOutcome({
+            const outcome = {
                 name,
                 owner: registered === owner,
+                removed: false,
                 result,
                 rounds,
                 history: game.history.nodes,
-            });
-            const $inc = Object.fromEntries(
-                Object.entries(counts).map(([field, amount]) => [`statistics.${field}`, amount]),
-            );
-            return [{ updateOne: { filter: { _id: registered }, update: { $inc } } }];
+            };
+            return [statisticsUpdate(registered, outcome)];
         });
         if (updates.length > 0) {
             await Users.bulkWrite(updates);
         }
+    }
+
+    /**
+     * Count a game that the owner removed a registered player from in their statistics, as it
+     * happens: they leave the lobby too, so the game's end doesn't count them, @see countGame.
+     */
+    private async countRemoval(account: string, name: string, game: Game): Promise<void> {
+        const history = game.history.serialize().nodes;
+        const outcome = {
+            name,
+            owner: false,
+            removed: true,
+            result: gameResult(game.players.values()),
+            rounds: roundsOf(history),
+            history,
+        };
+        await Users.bulkWrite([statisticsUpdate(account, outcome)]);
     }
 
     /**

@@ -17,10 +17,10 @@ const onStart = factory.build({
         await ensureOwnerAccess(context, client, pin);
 
         // Lock in the connected players, and create the game for them.
-        const players = await context.lobbyService.startGame(pin);
-        const lobby = await context.lobbyService.get(pin);
-        const { game, version } = await context.gameService(lobby).create(players);
+        const settings = await context.lobbyService.get(pin);
+        const { players, game, version } = await context.lobbyService.startGame(pin, context.gameService(settings));
         logger.info({ ...meta, players }, "game created");
+        const lobby = await context.lobbyService.get(pin);
 
         await withRooms(pin).broadcast("lobbyState", { update: { type: "settings_update" }, lobby });
         await withRooms(pin).broadcast("countdown");

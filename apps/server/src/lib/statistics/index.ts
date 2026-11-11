@@ -28,12 +28,13 @@ export function countOutcome(outcome: PlayerOutcome): Partial<StoredStatistics> 
 
 /** A player's statistics, as the server keeps them, as the player is sent them. */
 export function toUserStatistics(stored: StoredStatistics): UserStatistics {
-    const { gamesPlayed, gamesWon, gamesLost, gamesHosted, roundsPlayed } = stored;
+    const { gamesPlayed, gamesWon, gamesLost, gamesHosted, gamesResigned, roundsPlayed } = stored;
     return {
         gamesPlayed,
         gamesWon,
         gamesLost,
         gamesHosted,
+        gamesResigned,
         averageRounds: gamesPlayed === 0 ? 0 : roundsPlayed / gamesPlayed,
     };
 }

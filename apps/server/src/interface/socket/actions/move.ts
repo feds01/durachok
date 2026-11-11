@@ -1,8 +1,8 @@
-import { InvalidGameState } from "@durachok/engine";
+import { InaccessibleOperation, InvalidGameState } from "@durachok/engine";
 import { ClientEvents } from "@durachok/transport";
 
 import { ensureLobbyAccess } from "../common/auth";
-import { emitActions, emitVictory } from "../common/game";
+import { emitGameChange } from "../common/game";
 import { context } from "../context";
 import { factory } from "./ctx";
 
@@ -36,21 +36,9 @@ const onMove = factory.build({
         const gameService = context.gameService(lobby);
 
         try {
-            const { game, actions, version } = await gameService.makeMove(name, move);
-            await emitActions(context, withRooms, pin, game, actions, version);
-
-            if (game.isFinished()) {
-                logger.info(meta, "game finished");
-                await context.lobbyService.finishGame(pin);
-                await emitVictory(withRooms, pin, game);
-                // The lobby waits for another game, so the players go back to its waiting room.
-                await withRooms(pin).broadcast("lobbyState", {
-                    update: { type: "game_over" },
-                    lobby: await context.lobbyService.get(pin),
-                });
-            }
+            await emitGameChange(context, withRooms, pin, await gameService.makeMove(name, move));
         } catch (e: unknown) {
-            if (!(e instanceof InvalidGameState)) {
+            if (!(e instanceof InvalidGameState) && !(e instanceof InaccessibleOperation)) {
                 throw e;
             }
 
