@@ -4,13 +4,21 @@ import { FormEvent, KeyboardEvent, PointerEvent, useId, useRef, useState } from 
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { CHAT_WIDTH, MAX_CHAT_WIDTH, MIN_CHAT_WIDTH, resizeChat } from "@/lib/chat";
 import { cn } from "@/lib/utils";
 import { formatTime } from "@/utils";
 import { Message } from "@durachok/transport";
 
 /** The longest message that the server takes. */
 const MAX_LENGTH = 200;
+
+/** How wide the chat is, in pixels, until the player drags its left border. */
+const CHAT_WIDTH = 320;
+
+/** The narrowest that the player can make the chat. */
+const MIN_CHAT_WIDTH = 280;
+
+/** The widest that the player can make the chat, unless the window is narrower still. */
+const MAX_CHAT_WIDTH = 640;
 
 /** How far an arrow key moves the chat's left border, in pixels. */
 const KEY_STEP = 32;
@@ -163,6 +171,11 @@ function ResizeBorder({ chat, width, onResize }: ResizeBorderProps) {
     // Where the pointer was, and how wide the chat was, when the player started dragging.
     const drag = useRef<{ x: number; width: number } | null>(null);
 
+    // The chat sits in the right corner, so it widens as its left border moves left.
+    const resize = (from: number, right: number) => {
+        onResize(Math.min(MAX_CHAT_WIDTH, Math.max(MIN_CHAT_WIDTH, from - right)));
+    };
+
     const start = (event: PointerEvent<HTMLDivElement>) => {
         if (event.button !== 0) {
             return;
@@ -174,7 +187,7 @@ function ResizeBorder({ chat, width, onResize }: ResizeBorderProps) {
 
     const move = (event: PointerEvent<HTMLDivElement>) => {
         if (drag.current) {
-            onResize(resizeChat(drag.current.width, event.clientX - drag.current.x));
+            resize(drag.current.width, event.clientX - drag.current.x);
         }
     };
 
@@ -187,11 +200,11 @@ function ResizeBorder({ chat, width, onResize }: ResizeBorderProps) {
         switch (event.key) {
             case "ArrowLeft":
                 event.preventDefault();
-                onResize(resizeChat(width, -KEY_STEP));
+                resize(width, -KEY_STEP);
                 return;
             case "ArrowRight":
                 event.preventDefault();
-                onResize(resizeChat(width, KEY_STEP));
+                resize(width, KEY_STEP);
                 return;
         }
     };
