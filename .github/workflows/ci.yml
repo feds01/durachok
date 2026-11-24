@@ -51,7 +51,7 @@ jobs:
             - name: Install dependencies
               run: just install
 
-            - uses: feds01/zenith@v0.7.0
+            - uses: feds01/zenith@v0.8.1
               with:
                   binary: node_modules/.bin/zenith
                   # Pull requests from forks can't upload to code scanning, so annotate them instead.
